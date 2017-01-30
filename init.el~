@@ -1,0 +1,7 @@
+(add-to-list 'package-archives
+	     '("melpa" . "http://melpa.org/packages/"))
+(load-theme 'deeper-blue t)
+
+(require 'neotree)
+(global-set-key [f8] 'neotree-toggle)
+                 
