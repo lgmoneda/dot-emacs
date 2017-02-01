@@ -24,6 +24,10 @@
 
 ;(global-set-key [f8] 'neotree-toggle)
 
+;Hiding menu and tool bar
+(menu-bar-mode -99)
+(tool-bar-mode -99)
+
 ;Defining switch tabs commands
 (global-set-key [C-iso-lefttab] 
     (lambda ()
