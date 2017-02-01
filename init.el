@@ -28,13 +28,13 @@
       (other-window 1)))
 
 
-;Defining switch franes command
+;Defining switch frames command
 (global-set-key (kbd "C-2")
     (lambda ()
       (interactive)
       (other-frame 1)))
 
-;Defining switch franes command
+;Defining switch buffer command
 (global-set-key (kbd "C-1")
     (lambda ()
       (interactive)
@@ -54,5 +54,9 @@
 
 ;Beacon minor mode
 (add-to-list 'load-path "~/.emacs.d/elpa/beacon-20161004.756")
-(require 'which-key)
-(which-key-mode)
+(require 'beacon)
+(beacon-mode 1)
+(setq beacon-color "#00ff00")
+(setq beacon-size 60)
+(setq beacon-blink-delay 0.5)
+
