@@ -100,6 +100,7 @@
 (use-package ein
   :ensure t)
 
-;Hide passwords in shell
-(add-hook 'comint-output-filter-functions
-'comint-watch-for-password-prompt)
+;Hide passwords in shell for git pushs
+(setq comint-password-prompt-regexp
+      (concat comint-password-prompt-regexp
+              "\\|^Password for .*:\\s *\\'"))
