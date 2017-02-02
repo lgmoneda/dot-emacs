@@ -100,4 +100,6 @@
 (use-package ein
   :ensure t)
 
-
+;Hide passwords in shell
+(add-hook 'comint-output-filter-functions
+'comint-watch-for-password-prompt)
