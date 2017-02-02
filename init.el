@@ -22,6 +22,10 @@
   :ensure t
   :bind ([f8] . neotree-toggle))
 
+
+(use-package helm-spotify
+  :ensure t)
+
 ;(global-set-key [f8] 'neotree-toggle)
 
 ;Hiding menu and tool bar
