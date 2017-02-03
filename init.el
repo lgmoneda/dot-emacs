@@ -18,15 +18,14 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
+;Neotree
 (use-package neotree
   :ensure t
   :bind ([f8] . neotree-toggle))
 
-
+;Spotify
 (use-package helm-spotify
   :ensure t)
-
-;(global-set-key [f8] 'neotree-toggle)
 
 ;Hiding menu and tool bar
 (menu-bar-mode -99)
@@ -61,46 +60,34 @@
 (put 'upcase-region 'disabled nil)
 
 ;Which-key minor mode
-;(add-to-list 'load-path "~/.emacs.d/elpa/which-key-20161222.1221")
-
 (use-package which-key
   :ensure t
   :init (which-key-mode)
   :bind ([f8] . neotree-toggle))
 
-
-;; (require 'which-key)
-;; (which-key-mode)
-
-;Turn the system sound off
+;;Turn the system sound off
 (setq ring-bell-function 'ignore)
 
-
-;Beacon minor mode
-;(add-to-list 'load-path "~/.emacs.d/elpa/beacon-20161004.756")
-(require 'beacon)
-(beacon-mode 1)
-(setq beacon-color "#00ff00")
-(setq beacon-size 60)
-(setq beacon-blink-delay 0.5)
-
+;;Beacon minor mode
 (use-package beacon
   :ensure t
   :init (beacon-mode 1)
         (setq beacon-color "#00ff00")
 	(setq beacon-size 60)
-	(setq beacon-blink-delay 0.5)
-	(which-key-mode))
+	(setq beacon-blink-delay 0.5))
 
-
-
-;Beacon minor mode
-;(add-to-list 'load-path "~/.emacs.d/elpa/ein-20170131.844")
-;(require 'ein)
+;;(require 'ein)
 (use-package ein
   :ensure t)
 
-;Hide passwords in shell for git pushs
+
+;;Hide passwords in shell for git pushs
+;;(setq comint-password-prompt-regexp)
 (setq comint-password-prompt-regexp
       (concat comint-password-prompt-regexp
               "\\|^Password for .*:\\s *\\'"))
+
+;; Automatic enable anaconda-mode in all Python buffers
+(add-hook 'python-mode-hook 'anaconda-mode)
+
+
