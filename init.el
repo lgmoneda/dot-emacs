@@ -76,18 +76,14 @@
 	(setq beacon-size 60)
 	(setq beacon-blink-delay 0.5))
 
-;;(require 'ein)
+;; Emacs Ipython Notebook
 (use-package ein
   :ensure t)
-
-
-;;Hide passwords in shell for git pushs
-;;(setq comint-password-prompt-regexp)
-(setq comint-password-prompt-regexp
-      (concat comint-password-prompt-regexp
-              "\\|^Password for .*:\\s *\\'"))
 
 ;; Automatic enable anaconda-mode in all Python buffers
 (add-hook 'python-mode-hook 'anaconda-mode)
 
-
+(require 'comint)
+(setq comint-password-prompt-regexp
+		    (concat comint-password-prompt-regexp
+			    "\\|^Password for .*:\\s *\\'"))
