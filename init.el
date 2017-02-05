@@ -96,3 +96,6 @@
 
 ;; Enable paren mode at start
 (show-paren-mode 1)
+
+;; Enable line numbers
+(global-linum-mode 1)
