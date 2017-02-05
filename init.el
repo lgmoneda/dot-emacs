@@ -47,6 +47,12 @@
 (global-set-key (kbd "C-1")
     (lambda ()
       (interactive)
+      (switch-to-prev-buffer)))
+
+;Defining switch buffer command
+(global-set-key (kbd "C-'")
+    (lambda ()
+      (interactive)
       (bury-buffer)))
 
 ;Defining switch frames command
@@ -87,3 +93,6 @@
 (setq comint-password-prompt-regexp
 		    (concat comint-password-prompt-regexp
 			    "\\|^Password for .*:\\s *\\'"))
+
+;; Enable paren mode at start
+(show-paren-mode 1)
