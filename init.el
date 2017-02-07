@@ -99,3 +99,7 @@
 
 ;; Enable line numbers
 (global-linum-mode 1)
+
+;; avy
+(global-set-key (kbd "C-:") 'avy-goto-char-2)
+(global-set-key (kbd "C-?") 'avy-goto-line)
