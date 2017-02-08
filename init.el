@@ -18,20 +18,43 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
-;Neotree
+;; Helm
+(use-package helm
+  :ensure t)
+
+;; Neotree
 (use-package neotree
   :ensure t
   :bind ([f8] . neotree-toggle))
 
-;Spotify
+;; Spotify
 (use-package helm-spotify
   :ensure t)
 
-;Hiding menu and tool bar
+;; Automatic enable anaconda-mode in all Python buffers
+(add-hook 'python-mode-hook 'anaconda-mode)
+
+;; Enable hide definitions functions
+(add-hook 'prog-mode-hook 'hs-minor-mode)
+
+;; Company to display pop-ups 
+(use-package company
+  :ensure t)
+
+(add-hook 'after-init-hook 'global-company-mode)
+
+;; Company-Anaconda
+(use-package company-anaconda
+  :ensure t)
+
+ (eval-after-load "company"
+ '(add-to-list 'company-backends '(company-anaconda :with company-capf)))
+
+;; Hiding menu and tool bar
 (menu-bar-mode -99)
 (tool-bar-mode -99)
 
-;Defining switch tabs commands
+;; Defining switch tabs commands
 (global-set-key [C-iso-lefttab] 
     (lambda ()
       (interactive)
@@ -86,9 +109,6 @@
 (use-package ein
   :ensure t)
 
-;; Automatic enable anaconda-mode in all Python buffers
-(add-hook 'python-mode-hook 'anaconda-mode)
-
 (require 'comint)
 (setq comint-password-prompt-regexp
 		    (concat comint-password-prompt-regexp
@@ -101,5 +121,17 @@
 (global-linum-mode 1)
 
 ;; avy
+(use-package avy
+  :ensure t)
+
 (global-set-key (kbd "C-:") 'avy-goto-char-2)
-(global-set-key (kbd "C-?") 'avy-goto-line)
+	 (global-set-key (kbd "C-?") 'avy-goto-line)
+
+
+;; custom package
+;; load the custom helm-spotify-plus
+(use-package multi
+  :ensure t)
+
+(load-file "~/repos/helm-spotify-plus/helm-spotify-plus.el")
+
