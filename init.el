@@ -135,3 +135,12 @@
 
 (load-file "~/repos/helm-spotify-plus/helm-spotify-plus.el")
 
+;; Replace highlighted text
+(delete-selection-mode 1)
+
+;; Highlight matching tags
+(load-file "~/.emacs.d/others/hl-tags-mode/hl-tags-mode.el")
+(require 'hl-tags-mode)
+(add-hook 'sgml-mode-hook (lambda () (hl-tags-mode)))
+(add-hook 'html-mode-hook (lambda () (hl-tags-mode)))
+(add-hook 'nxml-mode-hook (lambda () (hl-tags-mode)))
