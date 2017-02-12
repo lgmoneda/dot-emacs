@@ -1,10 +1,10 @@
-;; Load Theme
+;Load Theme
 (add-hook 'emacs-startup-hook
   (lambda ()
     (load-theme 'deeper-blue)
     ))
 
-;; Package Management
+;Package Management
 (require 'package)
 (setq package-enable-at-startup nil)
 (add-to-list 'package-archives
@@ -47,11 +47,12 @@
 (use-package company-anaconda
   :ensure t)
 
+
 ;; Pair parenthesis
-(use-package autopair
+(use-package autopait
   :ensure t)
 
-(autopair-global-mode)
+(autopair-global-mode) ;; enable autopair in all buffers
 
 (eval-after-load "company"
  '(add-to-list 'company-backends 'company-anaconda))
