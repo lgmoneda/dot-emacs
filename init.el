@@ -53,9 +53,11 @@
 
 (autopair-global-mode)
 
+;; (eval-after-load "company"
+;;   '(add-to-list 'company-backends 'company-anaconda))
+
 (eval-after-load "company"
- '(add-to-list 'company-backends 'company-anaconda))
- ;;'(add-to-list 'company-backends '(company-anaconda :with company-capf)))
+  '(add-to-list 'company-backends '(company-anaconda :with company-capf)))
 
 ;; Run python first time 
 (defun run-python-once ()
@@ -138,7 +140,7 @@
 (use-package avy
   :ensure t)
 
-(global-set-key (kbd "C-:") 'avy-goto-char-2)
+(global-set-key (kbd "C-:") 'avy-goto-char-1)
 	 (global-set-key (kbd "C-?") 'avy-goto-line)
 
 
@@ -161,6 +163,12 @@
 
 ;; enable eldoc in your programming modes
 (add-hook 'prog-mode-hook 'turn-on-eldoc-mode)
+(add-hook 'python-mode-hook 'anaconda-eldoc-mode)
+
+;; Jedi
+;; (setq jedi-mode t)
+;; (add-hook 'python-mode-hook 'jedi:setup)
+;; (setq jedi:complete-on-dot t)
 
 ;; Disable auto-save
 (setq auto-save-default nil)

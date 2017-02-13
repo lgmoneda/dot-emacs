@@ -13,3 +13,17 @@ pytest *.py
 pytest *.py
 echo $PATH
 source activate pytevec
+git add .
+git commit -m "disable autos"
+git config user.email lg.moneda@gmail.com
+git config user.name lgmoneda
+git commit -m "disable autos"
+emacs .gitignore 
+git push
+emacs .gitignore
+git add .
+git commit -m "gitignore"
+git push
+cp mlp.py 
+cp mlp.py /
+cp mlp.py linear_regression.py

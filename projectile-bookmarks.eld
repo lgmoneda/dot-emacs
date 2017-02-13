@@ -1,1 +1,1 @@
-("~/repos/dot-emacs/" "~/tevec/cliente-chiquita-banana/" "~/tevec/tevec-vega/" "~/tevec/tevec-nostradamus/" "~/tevec/tevec-mira/" "~/tevec/tevec-corporativo/" "~/tevec/tevec-ace/" "~/tevec/cliente-fleury/" "~/tevec/cliente-danone/")
+("~/repos/dot-emacs/" "~/miniconda2/envs/pytevec/lib/python3.4/site-packages/sklearn/linear_model/" "~/tevec/tevec-mira/" "~/tevec/cliente-chiquita-banana/" "~/tevec/tevec-vega/" "~/tevec/tevec-nostradamus/" "~/tevec/tevec-corporativo/" "~/tevec/tevec-ace/" "~/tevec/cliente-fleury/" "~/tevec/cliente-danone/")
