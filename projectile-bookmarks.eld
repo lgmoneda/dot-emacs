@@ -1,0 +1,1 @@
+("~/repos/dot-emacs/" "~/tevec/cliente-chiquita-banana/" "~/tevec/tevec-vega/" "~/tevec/tevec-nostradamus/" "~/tevec/tevec-mira/" "~/tevec/tevec-corporativo/" "~/tevec/tevec-ace/" "~/tevec/cliente-fleury/" "~/tevec/cliente-danone/")

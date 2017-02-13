@@ -1,0 +1,15 @@
+ls
+find-file teste.py 
+cd tevec/tevec-mira/
+git branch -a
+git branch
+git checkout models_linear_regr
+git status
+git reset --hard HEAD~1
+git pull
+git pull
+cd mira/test/
+pytest *.py
+pytest *.py
+echo $PATH
+source activate pytevec

@@ -162,6 +162,8 @@
 ;; enable eldoc in your programming modes
 (add-hook 'prog-mode-hook 'turn-on-eldoc-mode)
 
+;; Disable auto-save
+(setq auto-save-default nil)
 
 ;; Python
 (require 'python)
@@ -195,7 +197,6 @@ if breakpoints are present in `python-mode' files"
                                (point-max) t)
             ;; set COMINT argument to `t'.
             (ad-set-arg 1 t))))))
-
 
 ;; Run python and pop-up its shell
 (defun my-python-shell-run ()
