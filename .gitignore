@@ -1,2 +1,4 @@
-/elpa
-/auto-save-list
+elpa/
+auto-save-list/
+anaconda-mode/
+url/
