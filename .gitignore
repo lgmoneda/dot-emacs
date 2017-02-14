@@ -1,5 +1,5 @@
-/elpa
-/auto-save-list
-/anaconda-mode
-/url
-/eshell
+/elpa/*
+/auto-save-list/*
+/anaconda-mode/*
+/url/*
+/eshell/*
