@@ -222,13 +222,20 @@ if breakpoints are present in `python-mode' files"
 ;; Solving the reload modules problem
 (defun my-python-shell-run ()
   (interactive)
-  (set-process-query-on-exit-flag (get-buffer-process "*Python*") nil);
-  ;; If you want to clean the buffer too.
-  ;;(kill-buffer "*Python*")
+  (when (get-buffer-process "*Python*")
+     (set-process-query-on-exit-flag (get-buffer-process "*Python*") nil)
+     (kill-process (get-buffer-process "*Python*"))
+     ;; If you want to clean the buffer too.
+     ;;(kill-buffer "*Python*")
+     ;; Not so fast!
+     (sleep-for 0.5)
+     )
   (run-python (python-shell-parse-command) nil nil)
   (python-shell-send-buffer)
   (python-shell-switch-to-shell)
   )
+
+(get-buffer-process "*Python*")
 
 (defun my-python-shell-run-region ()
   (interactive)
