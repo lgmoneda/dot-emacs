@@ -22,6 +22,19 @@
 (use-package helm
   :ensure t)
 
+;; Ido
+(use-package ido
+  :ensure t
+  :init (ido-mode)
+        (ido-enable-flex-matching t)
+        (ido-everywhere t)
+	(ido-file-extensions-order '(".py" ".org" ".txt" ".emacs" ".xml" ".el" ".ini" ".cfg" ".cnf")))
+
+;; Ido
+(use-package ido-vertical
+  :ensure t
+  :init (ido-vertical-mode))
+
 ;; Neotree
 (use-package neotree
   :ensure t
@@ -53,18 +66,18 @@
 
 (autopair-global-mode)
 
-;; (eval-after-load "company"
-;;   '(add-to-list 'company-backends 'company-anaconda))
-
 (eval-after-load "company"
-  '(add-to-list 'company-backends '(company-anaconda :with company-capf)))
+  '(add-to-list 'company-backends 'company-anaconda))
+
+;; (eval-after-load "company"
+;;   '(add-to-list 'company-backends '(company-anaconda :with company-capf)))
 
 ;; Run python first time 
-(defun run-python-once ()
-  (remove-hook 'python-mode-hook 'run-python-once)
-  (run-python (python-shell-parse-command)))
+;; (defun run-python-once ()
+;;   (remove-hook 'python-mode-hook 'run-python-once)
+;;   (run-python (python-shell-parse-command)))
 
-(add-hook 'python-mode-hook 'run-python-once)
+;; (add-hook 'python-mode-hook 'run-python-once)
 
 ;; Hiding menu and tool bar
 (menu-bar-mode -99)
@@ -206,20 +219,18 @@ if breakpoints are present in `python-mode' files"
             ;; set COMINT argument to `t'.
             (ad-set-arg 1 t))))))
 
-;; Run python and pop-up its shell
 
-(define-advice python-shell-make-comint
-    (:filter-return (buf) no-query-on-exit)
-  (set-process-query-on-exit-flag (get-buffer-process buf) nil)
-  buf)
-
+;; (setq pop-up-frames nil)
 ;; (defun my-python-shell-run ()
 ;;   (interactive)
 ;;   (python-shell-send-buffer)
 ;;   (python-shell-switch-to-shell)
 ;;   )
 
-;; Solving the reload modules problem
+;; Run python and pop-up its shell.
+;; Kill process to solve the reload modules problem.
+;; When Neotree is open in the python script frame,
+;; a new frame will open.
 (defun my-python-shell-run ()
   (interactive)
   (when (get-buffer-process "*Python*")
@@ -232,10 +243,12 @@ if breakpoints are present in `python-mode' files"
      )
   (run-python (python-shell-parse-command) nil nil)
   (python-shell-send-buffer)
-  (python-shell-switch-to-shell)
-  )
-
-(get-buffer-process "*Python*")
+  ;; Pop new window only if shell isn't visible
+  ;; in any frame.
+  (unless (get-buffer-window "*Python*" t) 
+    (python-shell-switch-to-shell)
+    )
+ )
 
 (defun my-python-shell-run-region ()
   (interactive)
