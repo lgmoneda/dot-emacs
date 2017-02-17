@@ -9,6 +9,7 @@
 (setq package-enable-at-startup nil)
 (add-to-list 'package-archives
      '("melpa" . "https://melpa.org/packages/"))
+     ;; '("melpa-stable" . "https://stable.melpa.org/packages/"))
 (add-to-list 'package-archives
      '("gnu" . "http://elpa.gnu.org/packages/"))
 (package-initialize)
@@ -35,6 +36,12 @@
 (use-package ido-vertical-mode
   :ensure t
   :init (ido-vertical-mode))
+
+;; Ido ubiquitous
+(use-package ido-ubiquitous
+  :ensure t
+  :init (ido-ubiquitous-mode))
+
 
 ;; Neotree
 (use-package neotree
