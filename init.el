@@ -26,12 +26,13 @@
 (use-package ido
   :ensure t
   :init (ido-mode)
-        (ido-enable-flex-matching t)
+        (setq ido-enable-flex-matching t)
         (ido-everywhere t)
-	(ido-file-extensions-order '(".py" ".org" ".txt" ".emacs" ".xml" ".el" ".ini" ".cfg" ".cnf")))
+	(setq ido-file-extensions-order '(".py" ".org" ".txt" ".emacs" ".xml" ".el" ".ini" ".cfg" ".cnf")))
+
 
 ;; Ido
-(use-package ido-vertical
+(use-package ido-vertical-mode
   :ensure t
   :init (ido-vertical-mode))
 
