@@ -193,6 +193,9 @@
 
 ;; Disable auto-save
 (setq auto-save-default nil)
+;; Disable backup
+(setq backup-inhibited t)
+
 
 ;; Python
 (require 'python)
