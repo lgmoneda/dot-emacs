@@ -270,3 +270,35 @@ if breakpoints are present in `python-mode' files"
      (define-key python-mode-map (kbd "C-c C-r") 'my-python-shell-run-region)
      (define-key python-mode-map (kbd "C-h f") 'python-eldoc-at-point)
      ))
+
+
+;; Trying to make TAB great again
+(defun indent-or-complete ()
+  "Complete if point is at end of a word, otherwise indent line."
+  (interactive)
+  (if (looking-at "\\>")
+      (dabbrev-expand nil)
+    (indent-for-tab-command)
+    ))
+
+;; (defun indent-or-complete ()
+;;   "Complete if point is at end of line, and indent line."
+;;   (interactive)
+;;   (if (and (looking-at "$") (not (looking-back "^\\s-*")))
+;;       (hippie-expand nil))
+;;   (indent-for-tab-command)
+;;   )
+
+(define-key python-mode-map (kbd "TAB") 'indent-or-complete)
+
+;; Adjusting Mouse sensitivity
+(setq mouse-wheel-progressive-speed nil)
+
+;; Trying to reproduce arrow keys
+(define-key key-translation-map (kbd "C-l") (kbd "\C-b"))
+(define-key key-translation-map (kbd "M-l") (kbd "M-b"))
+(define-key key-translation-map (kbd "<C-dead-tilde>") (kbd "\C-f"))
+(define-key key-translation-map (kbd "<C-dead-tilde>") (kbd "M-f"))
+(define-key key-translation-map (kbd "C-ç") (kbd "\C-n"))
+
+
