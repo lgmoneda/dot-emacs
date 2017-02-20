@@ -31,8 +31,9 @@
         (ido-everywhere t)
 	(setq ido-file-extensions-order '(".py" ".org" ".txt" ".emacs" ".xml" ".el" ".ini" ".cfg" ".cnf")))
 
+(setq ido-use-faces nil)
 
-;; Ido
+;; Ido-vertical
 (use-package ido-vertical-mode
   :ensure t
   :init (ido-vertical-mode))
@@ -41,6 +42,20 @@
 (use-package ido-ubiquitous
   :ensure t
   :init (ido-ubiquitous-mode))
+
+;; Ido ubiquitous
+(use-package flx-ido
+  :ensure t
+  :init (flx-ido-mode))
+
+;; Projectile
+(use-package projectile
+  :ensure t
+  :init (projectile-global-mode)
+  :bind (("C-c p s" . projectile-ag)
+         ("C-c p g" . projectile-grep)))
+
+(setq projectile-switch-project-action 'projectile-find-file)
 
 
 ;; Neotree
@@ -288,7 +303,9 @@ if breakpoints are present in `python-mode' files"
 
 (setq company-idle-delay nil)
 
-(define-key company-mode-map (kbd "TAB") 'company-complete-common)
+(setq-default tab-always-indent 'complete)
+
+;;(define-key company-mode-map (kbd "TAB") 'company-complete-common)
 
 ;; (defun indent-or-complete ()
 ;;   "Complete if point is at end of line, and indent line."
