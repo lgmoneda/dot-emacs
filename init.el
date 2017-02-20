@@ -284,6 +284,12 @@ if breakpoints are present in `python-mode' files"
     (indent-for-tab-command)
     ))
 
+;;(define-key python-mode-map (kbd "TAB") 'indent-or-complete)
+
+(setq company-idle-delay nil)
+
+(define-key company-mode-map (kbd "TAB") 'company-complete-common)
+
 ;; (defun indent-or-complete ()
 ;;   "Complete if point is at end of line, and indent line."
 ;;   (interactive)
@@ -291,8 +297,6 @@ if breakpoints are present in `python-mode' files"
 ;;       (hippie-expand nil))
 ;;   (indent-for-tab-command)
 ;;   )
-
-(define-key python-mode-map (kbd "TAB") 'indent-or-complete)
 
 ;; Adjusting Mouse sensitivity
 (setq mouse-wheel-progressive-speed nil)
