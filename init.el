@@ -1,8 +1,7 @@
 ;; Load Theme
 (add-hook 'emacs-startup-hook
   (lambda ()
-    (load-theme 'deeper-blue)
-    ))
+    (load-theme 'deeper-blue)))
 
 ;; Package Management
 (require 'package)
@@ -255,8 +254,6 @@ if breakpoints are present in `python-mode' files"
 
 ;; Run python and pop-up its shell.
 ;; Kill process to solve the reload modules problem.
-;; When Neotree is open in the python script frame,
-;; a new frame will open.
 (defun my-python-shell-run ()
   (interactive)
   (when (get-buffer-process "*Python*")
@@ -299,11 +296,11 @@ if breakpoints are present in `python-mode' files"
     (indent-for-tab-command)
     ))
 
-;;(define-key python-mode-map (kbd "TAB") 'indent-or-complete)
+(define-key python-mode-map (kbd "TAB") 'indent-or-complete)
 
-(setq company-idle-delay nil)
+;; (setq company-idle-delay nil)
 
-(setq-default tab-always-indent 'complete)
+;; (setq-default tab-always-indent 'complete)
 
 ;;(define-key company-mode-map (kbd "TAB") 'company-complete-common)
 
@@ -319,10 +316,10 @@ if breakpoints are present in `python-mode' files"
 (setq mouse-wheel-progressive-speed nil)
 
 ;; Trying to reproduce arrow keys
-(define-key key-translation-map (kbd "C-l") (kbd "\C-b"))
-(define-key key-translation-map (kbd "M-l") (kbd "M-b"))
-(define-key key-translation-map (kbd "<C-dead-tilde>") (kbd "\C-f"))
-(define-key key-translation-map (kbd "<C-dead-tilde>") (kbd "M-f"))
-(define-key key-translation-map (kbd "C-ç") (kbd "\C-n"))
+;; (define-key key-translation-map (kbd "C-l") (kbd "\C-b"))
+;; (define-key key-translation-map (kbd "M-l") (kbd "M-b"))
+;; (define-key key-translation-map (kbd "<C-dead-tilde>") (kbd "\C-f"))
+;; (define-key key-translation-map (kbd "<C-dead-tilde>") (kbd "M-f"))
+;; (define-key key-translation-map (kbd "C-ç") (kbd "\C-n"))
 
 
