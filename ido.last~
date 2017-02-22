@@ -1,0 +1,47 @@
+;;; -*- coding: utf-8 -*-
+
+;; ----- ido-last-directory-list -----
+(
+ ("/home/lgmoneda/tevec/tevec-mira/docs/sources/" . "models/")
+ ("/home/lgmoneda/" . ".emacs.d/")
+)
+
+;; ----- ido-work-directory-list -----
+(
+ "/home/lgmoneda/.emacs.d/"
+ "/home/lgmoneda/tevec/tevec-mira/docs/"
+ "/home/lgmoneda/tevec/tevec-mira/docs/sources/models/"
+)
+
+;; ----- ido-work-file-list -----
+(
+ "init.el"
+ "mkdocs.yml"
+ "linear_regression.md"
+)
+
+;; ----- ido-dir-file-cache -----
+(
+ ("/home/lgmoneda/tevec/tevec-mira/docs/" (22693 53456 863371 277000) "README.md" "Especificacao.xlsx" "./" ".empty" "sources/" "../" "mira_uml.mdj" "mkdocs.yml")
+
+ ("/home/lgmoneda/.emacs.d/" (22693 39836 518006 88000) "smex-items" ".gitignore" "anaconda-mode/" "./" "a.out" "tutorial/" "others/" "projectile-bookmarks.eld" "elpa/" "session.1035e813057d24a486148701577924393500000013260049" ".git/" "url/" "auto-save-list/" "recentf" "emacs/" "../" "init.el~" "eshell/" "init.el" "ac-comphist.dat")
+
+ ("/home/lgmoneda/tevec/tevec-mira/docs/sources/models/" (22693 52322 436737 620000) "./" "../")
+
+ ("/home/lgmoneda/tevec/tevec-mira/docs/sources/" (22693 52324 724775 232000) "benchmarks/" "./" "package_installation_guide.md" "about.md" "models/" "data_representation/" "../" "db/" "index.md" "styleGuide.md")
+
+ ("/home/lgmoneda/tevec/tevec-mira/mira/lab/" (22693 52048 580251 907000) "console.py" "./" "../" "console_linreg.py~" "console_linreg.py")
+
+ ("/home/lgmoneda/tevec/" (22692 44631 111030 362000) "tevec-nostradamus/" "tevec-mira/" "tevec-corporativo/" "./" "lasso.py" "tevec-ace/" "cliente-fleury/" "own-chiquita/" "Lançamentos/" "cliente-chiquita-banana/" "tevec-vega/" "../" "cliente-danone/" "Notebooks/" ".ipynb_checkpoints/")
+
+ ("/home/lgmoneda/tevec/tevec-mira/" (22689 57271 295561 846000) "#requirements.txt#" "README.md" "README.txt" "docs/" ".project" "Especificacao.xlsx" ".gitignore" "mira.egg-info/" "./" "requirements.txt" "setup.py" ".git/" "service/" "mira/" "CHANGES.txt" "../" ".cache/" "LICENSE" ".eggs/" ".pydevproject" "setup.cfg")
+
+ ("/home/lgmoneda/tevec/tevec-mira/mira/" (22691 21671 321377 357000) "__init__.py" "benchmarks/" "database/" "lab/" "./" "web/" ".empty" "mira.ini" "entities/" "utils/" "models/" "test/" "prompt.py" "../" "__pycache__/")
+
+ ("/home/lgmoneda/tevec/tevec-mira/mira/models/" (22692 43178 288569 849000) "__init__.py" "./" "linear_regression.py~" "mlp.py" "scaler.py" "../" "linear_regression.py" "__pycache__/")
+
+ ("/home/lgmoneda/" (22693 33354 48020 896000) ".jupyter/" ".gnome2_private/" "Dropbox/" "Documents/" "Desktop/" ".gnome2/" ".gphoto/" ".ipython/" ".gconf/" ".emacs.d/" "miniconda2/" "Mirela/" ".bashrc-miniconda2.bak" ".dbus/" "net-map/" ".continuum/" ".gimp-2.8/" ".bash_history" ".dropbox/" "Downloads/" "./" ".bash_logout" "Music/" "Templates/" "teste.py~" ".mozilla/" ".python_history" ".ICEauthority" ".dropbox-dist/" ".profile" ".mysql/" ".local/" "teste.py" ".keras/" ".pki/" ".thumbnails/" ".gnupg/" ".config/" "NLP_meetup/" ".conda/" ".tmux.conf" "../" "repos/" "Pictures/" ".ssh/" "publico/" ".cache/" "#bla#" "tevec/" ".bashrc" "nltk_data/" "Videos/" "Public/")
+)
+
+;; ----- ido-unc-hosts-cache -----
+t

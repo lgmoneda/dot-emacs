@@ -1,0 +1,98 @@
+;;; -*- coding: utf-8 -*-
+
+;; ----- ido-last-directory-list -----
+(
+ ("/home/lgmoneda/Dropbox/Projetos/" . #("Git/" 0 4 (face flx-highlight-face)))
+ ("/home/lgmoneda/Dropbox/Estudos/AI/Machine Learning/" . "Projetos/")
+ ("/home/lgmoneda/Dropbox/Estudos/AI/" . "Machine Learning/")
+ ("/home/lgmoneda/Dropbox/" . #("Projetos/" 0 5 (face flx-highlight-face)))
+ ("/home/" . "lgmoneda/")
+ ("/home/lgmoneda/miniconda2/envs/" . "pytevec/")
+ ("/home/lgmoneda/miniconda2/" . "envs/")
+ ("/home/lgmoneda/tevec/tevec-mira/mira/" . "test/")
+ ("/home/lgmoneda/tevec/" . "tevec-mira/")
+ ("/home/lgmoneda/tevec/tevec-mira/docs/sources/" . "models/")
+ ("/home/lgmoneda/" . #("Dropbox/" 0 4 (face flx-highlight-face)))
+)
+
+;; ----- ido-work-directory-list -----
+(
+ #("/home/lgmoneda/Dropbox/Projetos/Git/" 15 19 (face flx-highlight-face) 23 28 (face flx-highlight-face) 32 36 (face flx-highlight-face))
+ #("/home/lgmoneda/Dropbox/Projetos/Emacs/" 15 19 (face flx-highlight-face) 23 27 (face flx-highlight-face) 32 38 (face flx-highlight-face))
+ #("/home/lgmoneda/.emacs.d/" 15 24 (face flx-highlight-face))
+ "/home/lgmoneda/tevec/"
+ "/home/lgmoneda/"
+ "/home/lgmoneda/tevec/tevec-mira/"
+ "/home/lgmoneda/tevec/tevec-mira/mira/lab/"
+ "/home/lgmoneda/tevec/tevec-mira/mira/test/"
+ "/home/lgmoneda/tevec/tevec-mira/docs/"
+ "/home/lgmoneda/tevec/tevec-mira/docs/sources/models/"
+)
+
+;; ----- ido-work-file-list -----
+(
+ "git-saberes.txt"
+ #("colinha.txt" 0 3 (face flx-highlight-face))
+ "init.el"
+ "lasso.py"
+ "teste.py"
+ "CHANGES.txt"
+ "console_linreg.py"
+ "test_dataset.py"
+ "console.py"
+ "test_models.py"
+)
+
+;; ----- ido-dir-file-cache -----
+(
+ (#("/home/lgmoneda/Dropbox/Projetos/Git/" 15 19 (face flx-highlight-face) 23 28 (face flx-highlight-face) 32 36 (face flx-highlight-face)) (22700 32105 512701 768000) "Git.pptx" "Anotações das aulas.odt" "git-saberes.txt~" "./" "saberes.txt" "git-saberes.txt" "../" "anotações codecademy.odt")
+
+ ("/home/lgmoneda/tevec/tevec-mira/" (22701 41562 738362 940000) "#requirements.txt#" "README.md" "README.txt" "docs/" ".project" ".gitignore" "mira.egg-info/" "./" "requirements.txt" "setup.py" ".git/" "service/" "mira/" "CHANGES.txt" "../" ".cache/" "LICENSE" ".eggs/" ".pydevproject" "setup.cfg")
+
+ (#("/home/lgmoneda/Dropbox/Projetos/Emacs/" 15 19 (face flx-highlight-face) 23 27 (face flx-highlight-face) 32 38 (face flx-highlight-face)) (22701 36365 759099 412000) "./" ".emacs" "helm-spotify-plus/" "colinha.txt" "../" "colinha.txt~" "dot-emacs/")
+
+ ("/home/lgmoneda/tevec/tevec-mira/mira/test/" (22701 38409 705852 157000) "README.md" "test_linreg.py" "./" "test_metric.py" "mongo_connection.py" "test_views.py" "test_dataset.py" "test_lasso.py" "test_models.py" "_fixtures.py" "../" "test_scenario.py" "_fixtures_request.py" "test_moving_average.py" "__pycache__/")
+
+ ("/home/lgmoneda/.emacs.d/" (22701 36239 108407 342000) "smex-items" ".gitignore" "anaconda-mode/" "./" "a.out" ".#init.el" "tutorial/" "others/" "projectile-bookmarks.eld" "elpa/" "session.1035e813057d24a486148701577924393500000013260049" ".git/" "url/" "auto-save-list/" "recentf~" "recentf" "emacs/" "../" "init.el~" "eshell/" "init.el" "ac-comphist.dat" "ido.last" "ido.last~")
+
+ ("/home/lgmoneda/Dropbox/" (22701 29177 520180 297000) "relatorio_estagio-preenchido.pdf" "Machine learning lSTM.pdf" "artigo_emilio.pdf" "horarios_20162.png" "Carrasco - Selection of optimal.pdf" "lecun-98b-backprop-tanh-sigmoid.pdf" "passaporte/" "Instance Normalization style transfer.pdf" "task2.py" ".dropbox.cache/" "bag of tricks.pdf" "why deep learning is good.pdf" "relatorio_estagio-sitepoli.doc" "mantra.odt" "teste.c" "mantra (deb-rc530's conflicted copy 2016-12-20).odt" ".dropbox" "./" "Estudos/" "relatorio_estagio-preenchido.doc" "teste.py~" "horarios_201622.png" "2010SpPS10Soln.pdf" "teste.py" "Fotos e imagens/" "Declaração de Desistência de Integrante.docx" "pytevec.yml" "horarios-2017-feb.png" "Projetos/" "kaggle-presentation-160918221740.pdf" "reinforcement learning.pdf" "neat.pdf" "horarios_teorico_20162.png" "economics_trends.jpg" "Minha vida em 2016.ods" "Minha vida em 2016 (deb1310's conflicted copy 2017-02-11).ods" "aquecimento.py" "2017-02-17-google-spell-checker.md" "Financeiro.ods" "task3.py" "2017/" "task1.py" "../" "Interactive Multi-Task Relationship Learning.pdf" "estagio-scan.pdf" "ml.yml" "publico/" "Declaração de Desistência de Integrante.pdf" "superinteressante~" "imagens/" "Milky-Way-Galaxy-Wallpaper-1920X1080.jpg" "mantra (deb1310's conflicted copy 2017-02-11).odt" "Apostila Wireless.pdf" ".ipynb_checkpoints/" "tevec/" "Prova Feita.ipynb" "grade.ods")
+
+ ("/home/lgmoneda/" (22701 28969 70808 621000) ".jupyter/" ".gnome2_private/" "Dropbox/" "Documents/" "Desktop/" ".gnome2/" ".gphoto/" ".ipython/" ".gconf/" ".emacs.d/" "miniconda2/" "Mirela/" ".bashrc-miniconda2.bak" ".dbus/" "net-map/" ".continuum/" ".gimp-2.8/" ".bash_history" ".dropbox/" "Downloads/" "./" ".bash_logout" "Music/" "Templates/" "teste.py~" ".mozilla/" ".python_history" ".ICEauthority" ".dropbox-dist/" ".profile" ".mysql/" ".local/" "teste.py" ".keras/" ".pki/" ".thumbnails/" ".gnupg/" ".config/" "NLP_meetup/" ".conda/" ".tmux.conf" "../" "repos/" "Pictures/" ".ssh/" "publico/" ".cache/" "#bla#" "tevec/" ".bashrc" "nltk_data/" "Videos/" "Public/")
+
+ ("/home/lgmoneda/tevec/tevec-mira/docs/" (22700 35439 546434 153000) "README.md" "Especificacao.xlsx" "./" ".empty" "sources/" "../" "mira_uml.mdj" "mkdocs.yml")
+
+ ("/home/lgmoneda/tevec/" (22700 29352 568896 153000) "tevec-nostradamus/" "tevec-mira/" "tevec-corporativo/" "./" "lasso.py" "tevec-ace/" "cliente-fleury/" "own-chiquita/" "Lançamentos/" "cliente-chiquita-banana/" "tevec-vega/" "../" "cliente-danone/" "linear_regression.py" "Notebooks/" ".ipynb_checkpoints/")
+
+ ("/home/lgmoneda/tevec/tevec-mira/mira/entities/" (22700 32003 998938 954000) "dataset.py" "__init__.py" "./" "metric.py" "scenario.py" "accuracy.py" "security.py" "#enumerators.py#" "models.py" "../" "io_layer.py" "enumerators.py" "pipeline.py" "__pycache__/")
+
+ ("/home/lgmoneda/Dropbox/Projetos/" (22671 5040 23017 758000) "Economia/" "Francês/" "Arduino/" "neet guide.txt" "Windows Phone Dev/" "Quadrinhos/" "Rotina - 2015 - 2.xlsx" "Rendimentos 2015.xlsx" "Traduções/" "Mercado Livre/" "WordPress Conteúdo/" "Digiathan/" "./" "Gradiador/" "Rotina - 2015.xlsx" "pygame/" "video aulas/" "teste/" "Git/" "Microeconomia/" "Fetiche Matcher/" "NossaParteSP/" "image hacks/" "Ruby/" "sitios/" "Humor/" "Site Aprender programar/" "Machine Learning/" "Morar FOra/" "Youtube/" "Raspberry Pi/" "Rotina - 2015 - 2 teste.xls" "Linux/" "FreeCell/" "Temas Jekyll/" "Blog Pessoal/" "funcao.txt" "Programação Linguagens/" "Compyler/" "Rotina - 2015 - 2 teste (vostro-debian's conflicted copy 2015-08-10).xls" "sketchbook/" "2424C300" "../" "Música/" "Planejamento/" "Emacs/" "github site/" "Mobile/" "violino/" "Hobby/" "Old Rotinas/" "Imagens para montagens/")
+
+ ("/home/lgmoneda/Dropbox/Estudos/AI/Machine Learning/Projetos/" (22694 56573 794248 316000) "yellowsub/" "Classificador Monetário/" "recomenda_livros/" "Big Brown Bag/" "Contador Monetário/" "./" "Joao Leilao/" "Code Club email automático/" "Twitter/" "kmeans-quant/" "wally-ips/" "Proust/" "../" "NLP/" "Couting Cells/")
+
+ ("/home/lgmoneda/Dropbox/Estudos/AI/Machine Learning/" (22695 21133 465804 825000) "DeepLearning/" "rules_of_ml.pdf" "Infográficos, guias/" "CS229T-STAT231: Statistical Learning Theory.pdf" "Tevec/" "Estatistica/" "tic-tac-toe.jpg" "Pandas_Cheat_Sheet.pdf" "Libraries/" "Databases/" "Email AAAI/" "ReinforcementLearning/" "OpenAI/" "Jobs Requeriments/" "./" "Scripts/" "Virtual Machine/" "My Datasets/" "(Institute of Mathematical Statistics Monographs) Bradley Efron, Trevor Hastie-Computer Age Statistical Inference_ Algorithms, Evidence, and Data Science-Cambridge University Press (2016).pdf" "reinforcement_learningbookdraft2016sep.pdf" "Meetups/" "production-machine-learning.pdf" "Econometria/" "Programas/" "deep_cards.jpeg" "Projetos/" "Slides, apresentações/" "Packages/" "Next Papers/" "Controle de estudos.xlsx" "Séries temporais/" "Papers/" "TensorFlow/" "Hackatons/" "Apostilas para impressão/" "FinancialMarket/" "../" "Bayesian Netwoks/" "Time Series/" "Programas, scripts/" "Coisas minhas/" "Learning/" "Notebooks/" "Text Books/" "main-qimg-fa26fa7e8001fd19dd53057397da999f.png" "Code/" "accuracy-explainability.jpeg")
+
+ ("/home/lgmoneda/Dropbox/Estudos/AI/" (22521 22713 853649 122000) "Introduction/" "./" "Grupo de estudos AI - Poli/" "Machine Learning/" "../")
+
+ ("/home/lgmoneda/Dropbox/Estudos/" (22652 42228 454296 46000) "Economia/" "Projetinhos/" "Francês/" "CodeAcademy/" "Python/" "business_model_canvas_poster.pdf" "./" "Scripts/" "email.pyc" "1427770331305.png" "Meetups/" "IME Algoritmos/" "Game Programming/" "Certificados/" "Markdown.pdf" "email.py" "model.h5" "POO Coursera/" "Matemática/" "../" "testando o gmail.py" "MOOCs/" "Octave/" "model.json" "Ruby on Rails/" "AI/" "Empreendedorismo/" "Escritos/")
+
+ ("/home/" (22521 17834 470318 866000) "lgmoneda/" "./" "../" "lost+found/")
+
+ ("/home/lgmoneda/tevec/tevec-mira/mira/lab/" (22698 54973 769307 635000) "console.py" "./" ".#console.py" "../" "console_linreg.py~" "console_linreg.py")
+
+ ("/home/lgmoneda/miniconda2/envs/pytevec/" (22618 31995 397357 615000) "var/" "./" "ssl/" "etc/" "include/" "plugins/" "share/" "bin/" "conda-meta/" "lib/" "mkspecs/" "../" "imports/")
+
+ ("/home/lgmoneda/miniconda2/envs/" (22614 37012 689474 35000) "./" "tensorflow/" "../" "gensim/" "ml/" "pytevec/")
+
+ ("/home/lgmoneda/miniconda2/" (22524 7097 764486 375000) "./" "ssl/" "etc/" "pkgs/" "include/" "share/" "bin/" "conda-meta/" "lib/" "envs/" "selenium/" "../" "LICENSE.txt")
+
+ ("/home/lgmoneda/tevec/tevec-mira/docs/sources/models/" (22693 63922 308327 303000) "./" "linear_regression.md" "../" "linear_regression.md~")
+
+ ("/home/lgmoneda/tevec/tevec-mira/docs/sources/" (22693 52324 724775 232000) "benchmarks/" "./" "package_installation_guide.md" "about.md" "models/" "data_representation/" "../" "db/" "index.md" "styleGuide.md")
+
+ ("/home/lgmoneda/tevec/tevec-mira/mira/" (22691 21671 321377 357000) "__init__.py" "benchmarks/" "database/" "lab/" "./" "web/" ".empty" "mira.ini" "entities/" "utils/" "models/" "test/" "prompt.py" "../" "__pycache__/")
+
+ ("/home/lgmoneda/tevec/tevec-mira/mira/models/" (22692 43178 288569 849000) "__init__.py" "./" "linear_regression.py~" "mlp.py" "scaler.py" "../" "linear_regression.py" "__pycache__/")
+)
+
+;; ----- ido-unc-hosts-cache -----
+t

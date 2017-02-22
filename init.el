@@ -296,7 +296,67 @@ if breakpoints are present in `python-mode' files"
     (indent-for-tab-command)
     ))
 
-(define-key python-mode-map (kbd "TAB") 'indent-or-complete)
+(defun smart-tab ()
+  "This smart tab is minibuffer compliant: it acts as usual in
+    the minibuffer. Else, if mark is active, indents region. Else if
+    point is at the end of a symbol, expands it. Else indents the
+    current line."
+  (interactive)
+  (if (minibufferp)
+      (unless (minibuffer-complete)
+	(dabbrev-expand nil))
+    (if mark-active
+	(indent-region (region-beginning)
+		       (region-end))
+      (if (looking-at "\\_>")
+	  (dabbrev-expand nil)
+	(indent-for-tab-command)))))
+
+(defun my-smart-tab ()
+  "This smart tab is minibuffer compliant: it acts as usual in
+    the minibuffer. Else, if mark is active, indents region. Else if
+    point is at the end of a symbol, expands it. Else indents the
+    current line."
+  (interactive)
+  (if (minibufferp)
+      (unless (minibuffer-complete)
+	(dabbrev-expand nil))
+   (if mark-active
+	(python-indent-shift-right (region-beginning)
+		       (region-end))
+      (if (looking-at "\\_>")
+	  (dabbrev-expand nil)
+	(indent-for-tab-command)))))
+
+(defun my-smart-backtab ()
+  (interactive)
+  (if mark-active
+      (python-indent-shift-left (region-beginning)
+				 (region-end))
+    (if (looking-at "\\_>")
+	(dabbrev-expand nil)
+      (python-indent-dedent-line))))
+
+;;(define-key python-mode-map (kbd "TAB") 'indent-or-complete)
+(define-key python-mode-map (kbd "TAB") 'my-smart-tab)
+(define-key python-mode-map (kbd "<backtab>") 'my-smart-backtab)
+
+(defun fancy-tab (arg)
+  (interactive "P")
+  (setq this-command last-command)
+  (if (or (eq this-command 'hippie-expand) (looking-at "\\_>"))
+      (progn
+	(setq this-command 'hippie-expand)
+	(hippie-expand arg))
+    (setq this-command 'indent-for-tab-command)
+    (indent-for-tab-command arg)))
+
+
+;; (define-key read-expression-map [(tab)] 'hippie-expand)
+;; (global-set-key (kbd "TAB") 'fancy-tab)
+
+;; (add-hook 'python-mode-hook
+;;   (lambda () (setq indent-tabs-mode t)))
 
 ;; (setq company-idle-delay nil)
 
