@@ -54,7 +54,7 @@
   :bind (("C-c p s" . projectile-ag)
          ("C-c p g" . projectile-grep)))
 
-(setq projectile-switch-project-action 'projectile-find-file)
+;;(setq projectile-switch-project-action 'projectile-find-file)
 
 
 ;; Neotree
