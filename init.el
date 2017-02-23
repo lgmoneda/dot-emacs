@@ -54,9 +54,6 @@
   :bind (("C-c p s" . projectile-ag)
          ("C-c p g" . projectile-grep)))
 
-;;(setq projectile-switch-project-action 'projectile-find-file)
-
-
 ;; Neotree
 (use-package neotree
   :ensure t
@@ -87,6 +84,17 @@
   :ensure t)
 
 (autopair-global-mode)
+
+;; Multiple cursors
+;; First mark the word, then add more cursors
+;; If you want to insert a new line in multiple cursors mode, use C-j
+(use-package multiple-cursors
+  :ensure t
+  :bind
+  (("C->" . mc/mark-next-like-this)
+   ("C-<" . mc/mark-previous-like-this)
+   ("C-c C->" . mc/mark-all-like-this)
+   ("C-x , m" . mc/edit-lines)))
 
 (eval-after-load "company"
   '(add-to-list 'company-backends 'company-anaconda))
@@ -151,6 +159,7 @@
 ;;Beacon minor mode
 (use-package beacon
   :ensure t
+  :diminish beacon-mode "Bacon"
   :init (beacon-mode 1)
         (setq beacon-color "#00ff00")
 	(setq beacon-size 60)
