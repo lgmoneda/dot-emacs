@@ -1,5 +1,6 @@
-/elpa/*
-/auto-save-list/*
-/anaconda-mode/*
-/url/*
-/eshell/*
+elpa/*
+!/elpa/monokai-theme-20161216.628
+auto-save-list/*
+anaconda-mode/*
+url/*
+eshell/*

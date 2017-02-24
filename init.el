@@ -1,7 +1,9 @@
 ;; Load Theme
+;; Use 'monokai when missing sublime
+(setq custom-safe-themes t)
 (add-hook 'emacs-startup-hook
-  (lambda ()
-    (load-theme 'deeper-blue)))
+	  (lambda ()
+	    (load-theme 'monokai)))
 
 ;; Package Management
 (require 'package)
@@ -68,6 +70,7 @@
 
 ;; Enable hide definitions functions
 (add-hook 'prog-mode-hook 'hs-minor-mode)
+(global-set-key [f4] 'hs-toggle-hiding)
 
 ;; Company to display pop-ups 
 (use-package company
@@ -80,10 +83,18 @@
   :ensure t)
 
 ;; Pair parenthesis
-(use-package autopair
-  :ensure t)
+(use-package smartparens
+  :ensure t
+  :init (smartparens-global-mode))
 
-(autopair-global-mode)
+;; Display time in the mode-line
+(display-time-mode)
+
+;; Autopair inhibits eldoc!
+;; (use-package autopair
+;;   :ensure t)
+
+;;(autopair-global-mode)
 
 ;; Multiple cursors
 ;; First mark the word, then add more cursors
@@ -161,7 +172,10 @@
   :ensure t
   :diminish beacon-mode "Bacon"
   :init (beacon-mode 1)
-        (setq beacon-color "#00ff00")
+        ;; For deeper-blue theme
+        ;;(setq beacon-color "#00ff00")
+        ;; For monokai theme
+        (setq beacon-color "#A6E22E")
 	(setq beacon-size 60)
 	(setq beacon-blink-delay 0.5))
 
@@ -390,5 +404,4 @@ if breakpoints are present in `python-mode' files"
 ;; (define-key key-translation-map (kbd "<C-dead-tilde>") (kbd "\C-f"))
 ;; (define-key key-translation-map (kbd "<C-dead-tilde>") (kbd "M-f"))
 ;; (define-key key-translation-map (kbd "C-ç") (kbd "\C-n"))
-
 
