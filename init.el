@@ -65,8 +65,31 @@
 (use-package helm-spotify
   :ensure t)
 
-;; Automatic enable anaconda-mode in all Python buffers
-(add-hook 'python-mode-hook 'anaconda-mode)
+;; Anaconda Anaconda+Eldoc
+(use-package anaconda-mode
+    :ensure t
+    :diminish anaconda-mode
+    :config
+    (add-hook 'python-mode-hook 'anaconda-mode)
+    (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
+    (add-hook 'python-mode-hook 'python--add-debug-highlight)
+    )
+;; Company-anaconda
+(use-package company-anaconda
+  :ensure t
+  :config
+  (eval-after-load "company"
+    '(add-to-list 'company-backends '(company-anaconda company-dabbrev company-capf))))
+
+;; enable eldoc in programming modes
+(add-hook 'prog-mode-hook 'turn-on-eldoc-mode)
+;; (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
+
+;; Jedi
+;; (setq jedi-mode t)
+;; (add-hook 'python-mode-hook 'jedi:setup)
+;; (setq jedi:complete-on-dot t)
+
 
 ;; Enable hide definitions functions
 (add-hook 'prog-mode-hook 'hs-minor-mode)
@@ -78,10 +101,6 @@
 
 (add-hook 'after-init-hook 'global-company-mode)
 
-;; Company-Anaconda
-(use-package company-anaconda
-  :ensure t)
-
 ;; Pair parenthesis
 (use-package smartparens
   :ensure t
@@ -90,11 +109,11 @@
 ;; Display time in the mode-line
 (display-time-mode)
 
-;; Autopair inhibits eldoc!
-;; (use-package autopair
-;;   :ensure t)
-
-;;(autopair-global-mode)
+;; To activate pytevec environment
+(defun apytevec ()
+  (interactive)
+  (pythonic-activate "~/miniconda2/envs/pytevec")
+  )
 
 ;; Multiple cursors
 ;; First mark the word, then add more cursors
@@ -106,12 +125,6 @@
    ("C-<" . mc/mark-previous-like-this)
    ("C-c C->" . mc/mark-all-like-this)
    ("C-x , m" . mc/edit-lines)))
-
-(eval-after-load "company"
-  '(add-to-list 'company-backends 'company-anaconda))
-
-;; (eval-after-load "company"
-;;   '(add-to-list 'company-backends '(company-anaconda :with company-capf)))
 
 ;; Run python first time 
 ;; (defun run-python-once ()
@@ -161,8 +174,7 @@
 ;Which-key minor mode
 (use-package which-key
   :ensure t
-  :init (which-key-mode)
-  :bind ([f8] . neotree-toggle))
+  :init (which-key-mode))
 
 ;;Turn the system sound off
 (setq ring-bell-function 'ignore)
@@ -170,7 +182,7 @@
 ;;Beacon minor mode
 (use-package beacon
   :ensure t
-  :diminish beacon-mode "Bacon"
+  :diminish beacon-mode
   :init (beacon-mode 1)
         ;; For deeper-blue theme
         ;;(setq beacon-color "#00ff00")
@@ -218,15 +230,6 @@
 (add-hook 'sgml-mode-hook (lambda () (hl-tags-mode)))
 (add-hook 'html-mode-hook (lambda () (hl-tags-mode)))
 (add-hook 'nxml-mode-hook (lambda () (hl-tags-mode)))
-
-;; enable eldoc in your programming modes
-(add-hook 'prog-mode-hook 'turn-on-eldoc-mode)
-(add-hook 'python-mode-hook 'anaconda-eldoc-mode)
-
-;; Jedi
-;; (setq jedi-mode t)
-;; (add-hook 'python-mode-hook 'jedi:setup)
-;; (setq jedi:complete-on-dot t)
 
 ;; Disable auto-save
 (setq auto-save-default nil)
