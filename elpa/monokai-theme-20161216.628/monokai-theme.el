@@ -430,8 +430,8 @@ Also affects 'linum-mode' background."
                                         :weight bold))))
 
    `(cursor
-     ((,monokai-class (:foreground ,monokai-green
-                                   :background , monokai-green
+     ((,monokai-class (:foreground ,monokai-violet
+                                   :background , monokai-violet
                                    :inverse-video t))
       (,monokai-256-class  (:foreground ,monokai-256-background
                                         :background ,monokai-256-foreground

@@ -79,8 +79,10 @@
   :ensure t
   :config
   (eval-after-load "company"
-    '(add-to-list 'company-backends '(company-anaconda company-dabbrev company-capf))))
+    ;;    '(add-to-list 'company-backends '(company-anaconda company-dabbrev company-capf))))
+    '(add-to-list 'company-backends '(company-anaconda))))
 
+(add-hook 'python-mode-hook 'company-mode)
 ;; enable eldoc in programming modes
 (add-hook 'prog-mode-hook 'turn-on-eldoc-mode)
 ;; (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
@@ -96,10 +98,41 @@
 (global-set-key [f4] 'hs-toggle-hiding)
 
 ;; Company to display pop-ups 
-(use-package company
-  :ensure t)
+;; (use-package company
+;;   :ensure t)
 
-(add-hook 'after-init-hook 'global-company-mode)
+;; (add-hook 'after-init-hook 'global-company-mode)
+;; (setq company-minimum-prefix-length 2)
+
+(use-package company
+  :ensure t
+  :defer 4
+  :init (progn
+          (global-company-mode)
+          (setq company-global-modes '(not python-mode cython-mode sage-mode))
+          )
+  :config (progn
+            (setq company-tooltip-limit 6
+                  company-idle-delay .1
+                  company-echo-delay 0
+                  company-begin-commands '(self-insert-command)
+                  company-transformers '(company-sort-by-occurrence)
+                  company-selection-wrap-around t
+                  company-idle-delay .1
+                  company-minimum-prefix-length 3
+                  company-selection-wrap-around t
+                  company-dabbrev-downcase nil
+                  )
+            (bind-keys :map company-active-map
+                       ("C-n" . company-select-next)
+                       ("C-p" . company-select-previous)
+                       ("C-d" . company-show-doc-buffer)
+                       ("<tab>" . company-complete)
+                       ("<escape>" . company-abort)
+                       )
+            )
+  )
+
 
 ;; Pair parenthesis
 (use-package smartparens
@@ -187,13 +220,20 @@
         ;; For deeper-blue theme
         ;;(setq beacon-color "#00ff00")
         ;; For monokai theme
-        (setq beacon-color "#A6E22E")
-	(setq beacon-size 60)
+        (setq beacon-color "#AE81FF")
+        (setq beacon-size 60)
 	(setq beacon-blink-delay 0.5))
 
 ;; Emacs Ipython Notebook
 (use-package ein
-  :ensure t)
+  :ensure t
+  :init (setq ein:use-auto-complete t)
+;;  (setq ein:use-smartrep t)
+  (setq auto-complete-mode t)
+  )
+
+(setq ein:use-auto-complete-superpack t)
+;;(setq ein:use-smartrep t)
 
 (require 'comint)
 (setq comint-password-prompt-regexp
@@ -367,6 +407,11 @@ if breakpoints are present in `python-mode' files"
 (define-key python-mode-map (kbd "TAB") 'my-smart-tab)
 (define-key python-mode-map (kbd "<backtab>") 'my-smart-backtab)
 
+;; (define-key ein:notebook-mode-map (kbd "TAB") 'ein:completer-complete)
+
+(setq ein:notebook-modes '(ein:notebook-multilang-mode ein:notebook-python-mode))
+
+
 (defun fancy-tab (arg)
   (interactive "P")
   (setq this-command last-command)
@@ -383,9 +428,9 @@ if breakpoints are present in `python-mode' files"
 
 ;; (add-hook 'python-mode-hook
 ;;   (lambda () (setq indent-tabs-mode t)))
-
 ;; (setq company-idle-delay nil)
 
+;; (setq company-idle-begin 0)
 ;; (setq-default tab-always-indent 'complete)
 
 ;;(define-key company-mode-map (kbd "TAB") 'company-complete-common)
