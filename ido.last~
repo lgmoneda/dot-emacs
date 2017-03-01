@@ -2,14 +2,18 @@
 
 ;; ----- ido-last-directory-list -----
 (
+ ("/home/lgmoneda/Dropbox/Estudos/MOOCs/Udacity/" . "Revisor ML/")
+ ("/home/lgmoneda/Dropbox/Estudos/MOOCs/" . "Udacity/")
+ ("/home/lgmoneda/Dropbox/Estudos/" . "MOOCs/")
+ ("/home/lgmoneda/Dropbox/Estudos/AI/Machine Learning/Projetos/" . "NLP/")
  ("/home/lgmoneda/Dropbox/Projetos/Emacs/" . "dot-emacs/")
  ("/home/lgmoneda/.config/fish/" . "conf.d/")
  ("/home/lgmoneda/.config/" . "fish/")
- ("/home/lgmoneda/.emacs.d/elpa/" . "monokai-theme-20161216.628/")
+ ("/home/lgmoneda/.emacs.d/elpa/" . "erc-5.3-extras/")
  ("/home/lgmoneda/.emacs.d/" . "elpa/")
  ("/home/lgmoneda/miniconda3/envs/" . "pytevec/")
  ("/home/lgmoneda/miniconda3/" . "envs/")
- ("/home/lgmoneda/Dropbox/Projetos/" . "Emacs/")
+ ("/home/lgmoneda/Dropbox/Projetos/" . "github site/")
  ("/home/lgmoneda/Dropbox/Estudos/AI/Machine Learning/" . "Projetos/")
  ("/home/lgmoneda/Dropbox/Estudos/AI/" . "Machine Learning/")
  ("/home/lgmoneda/Dropbox/" . "Projetos/")
@@ -19,22 +23,26 @@
  ("/home/lgmoneda/tevec/tevec-mira/mira/" . "test/")
  ("/home/lgmoneda/tevec/" . "tevec-mira/")
  ("/home/lgmoneda/tevec/tevec-mira/docs/sources/" . "models/")
- ("/home/lgmoneda/" . "miniconda2/")
+ ("/home/lgmoneda/" . ".emacs.d/")
 )
 
 ;; ----- ido-work-directory-list -----
 (
  #("/home/lgmoneda/.emacs.d/" 15 24 (face flx-highlight-face))
- "/home/lgmoneda/Dropbox/Projetos/Emacs/"
  "/home/lgmoneda/"
+ "/home/lgmoneda/Dropbox/Projetos/Emacs/"
+ "/home/lgmoneda/Dropbox/Estudos/MOOCs/Udacity/Revisor ML/"
+ "/home/lgmoneda/tevec/tevec-mira/"
+ "/home/lgmoneda/.emacs.d/elpa/erc-5.3-extras/"
+ "/home/lgmoneda/Dropbox/Estudos/AI/Machine Learning/Projetos/greenpyce/tests/"
+ "/home/lgmoneda/.emacs.d/elpa/camcorder-20160404.2134/"
+ "/home/lgmoneda/.emacs.d/elpa/monokai-theme-20161216.628/"
  "/home/lgmoneda/Dropbox/Projetos/Emacs/dot-emacs/"
  "/home/lgmoneda/.config/fish/"
  "/home/lgmoneda/.config/fish/conf.d/"
  "/home/lgmoneda/Dropbox/Projetos/Linux/"
- "/home/lgmoneda/.emacs.d/elpa/monokai-theme-20161216.628/"
  "/home/lgmoneda/Dropbox/Projetos/Git/"
  "/home/lgmoneda/tevec/"
- "/home/lgmoneda/tevec/tevec-mira/"
  "/home/lgmoneda/tevec/tevec-mira/mira/lab/"
  "/home/lgmoneda/tevec/tevec-mira/mira/test/"
  "/home/lgmoneda/tevec/tevec-mira/docs/"
@@ -44,26 +52,64 @@
 ;; ----- ido-work-file-list -----
 (
  "init.el"
+ ".authinfo.gpg"
  "colinha.txt"
+ "roteiro_dicas_revisao.txt"
+ "setup.py"
+ "README.extras"
+ "encoding_test.txt"
+ "test_feat_eng_cat.py"
+ "camcorder.el"
  "teste.py"
- ".gitignore"
- "config.fish"
- "init.fish"
- "omf.fish"
- "comandos linus.txt"
- "monokai-theme.el"
- ".bash_aliases"
 )
 
 ;; ----- ido-dir-file-cache -----
 (
- (#("/home/lgmoneda/.emacs.d/" 15 24 (face flx-highlight-face)) (22704 62680 834633 682000) "ac-comphist.dat" "themes/" "anaconda-mode/" "ido.last" "ido.last~" "elpa/" ".gitignore" "request/" "others/" "eshell/" "../" "auto-save-list/" ".git/" "init.el" "./" "projectile-bookmarks.eld")
+ (#("/home/lgmoneda/.emacs.d/" 15 24 (face flx-highlight-face)) (22709 62705 736995 36000) "ac-comphist.dat" "themes/" "anaconda-mode/" "ido.last" "games/" "ido.last~" "elpa/" ".gitignore" "request/" "others/" "eshell/" "elisp/" "../" "auto-save-list/" "sounds/" "gifs/" ".git/" "init.el" "./" "projectile-bookmarks.eld")
 
- ("/home/lgmoneda/" (22704 51485 752619 440000) ".gnupg/" "The Proust Dataset/" "Desktop/" ".emacs~" ".mysql_history" ".vimperator/" "udacity_correct.pdf" ".Xauthority" "R/" ".profile" ".bundle/" ".asoundrc" ".processing/" "processing-3.0.1/" ".theano/" "Videos/" ".profile.save" "octave-workspace" ".java/" "out.ogv" ".graphlab/" "octave/" ".dropbox/" "sketchbook/" ".ssh/" ".dbus/" "python_packages/" ".gconf/" "root locus.pdf" ".pip/" "gtk-recordMyDesktop-crash.log" "Music/" ".local/" ".gnome2_private/" ".pki/" ".ICEauthority" ".octave_packages" "Dropbox/" ".hardinfo/" ".gem/" ".filezilla/" "Udacity Reviews 2017-01-01 12-47-41.png" ".dmrc" ".bash_history" ".python_history" "Pictures/" "root_matlab.png" ".theanorc" "webcam fotos/" "a.out" ".ipython/" ".gimp-2.8/" "[FLEURY]_Modelagem_PCR.ipynb" ".gtk-recordmydesktop" ".rstudio-desktop/" ".conda/" "wirth_notation.pdf" ".keras/" ".codeblocks/" ".ipynb_checkpoints/" ".gnome/" "ruby-2.2.5/" "data_dictionary.xlsx_0ods" "anaconda/" ".theanorc.txt" ".fltk/" ".kde/" ".gitconfig" "PCS2520 - Comp Gráfica/" ".continuum/" ".recently-used" ".gphoto/" ".credentials/" "Templates/" "ipykernel/" "dumps/" ".octave_hist" "frompi/" ".bashrc" ".xsession-errors" "Downloads/" ".pulse-cookie" "repos/" "fotos minhas que tirei sem querer enquanto fazia projeto com webcam/" "gnome-terminal-colors-solarized/" ".rodeorc" ".pulse/" "../" "teste.py" ".dropbox-dist/" ".gstreamer-0.10/" "Untitled.ipynb" ".emacs.d/" ".config/" "TEVEC - Documentos para Admissao.pdf" "-u lgmoneda" ".matlab/" ".mozilla/" "Public/" "temp_video" ".jupyter/" ".gvfs/" ".cache/" ".thumbnails/" ".fontconfig/" ".subversion/" "Relatório_Final.pdf" ".mysql/" ".gnome2/" "./" ".bash_logout" "ruby-2.3.1/" "Documents/" "conf.png" "Recordings/" ".macromedia/")
+ ("/home/lgmoneda/" (22709 55791 989699 621000) ".gnupg/" "The Proust Dataset/" "Desktop/" ".emacs~" ".mysql_history" ".vimperator/" "udacity_correct.pdf" ".Xauthority" "R/" ".profile" ".bundle/" ".asoundrc" ".processing/" "processing-3.0.1/" ".theano/" "Videos/" ".profile.save" "octave-workspace" ".java/" "out3.gif" "out.ogv" ".authinfo" ".graphlab/" "octave/" "out2.gif" ".dropbox/" "sketchbook/" "encoding_test.txt" ".ssh/" ".dbus/" "teste.py~" "python_packages/" ".gconf/" "root locus.pdf" ".pip/" "gtk-recordMyDesktop-crash.log" "Music/" ".local/" ".gnome2_private/" ".pki/" ".ICEauthority" ".octave_packages" "out.gif" "Dropbox/" ".hardinfo/" "out-1.ogv" ".gem/" ".filezilla/" "Udacity Reviews 2017-01-01 12-47-41.png" ".dmrc" ".bash_history" ".python_history" "Pictures/" "root_matlab.png" ".theanorc" "webcam fotos/" "a.out" "python-project.org" ".ipython/" ".gimp-2.8/" "[FLEURY]_Modelagem_PCR.ipynb" ".gtk-recordmydesktop" "bartuka" ".rstudio-desktop/" ".conda/" "wirth_notation.pdf" ".keras/" ".codeblocks/" ".ipynb_checkpoints/" ".gnome/" "ruby-2.2.5/" "data_dictionary.xlsx_0ods" "anaconda/" ".theanorc.txt" ".fltk/" ".kde/" ".gitconfig" ".mplayer/" "PCS2520 - Comp Gráfica/" "tevec/" ".continuum/" ".recently-used" ".gphoto/" ".credentials/" "Templates/" "ipykernel/" "dumps/" ".octave_hist" "frompi/" ".bashrc" ".xsession-errors" "Downloads/" ".pulse-cookie" "repos/" "fotos minhas que tirei sem querer enquanto fazia projeto com webcam/" "gnome-terminal-colors-solarized/" "*message*-20170228-164654" ".rodeorc" ".pulse/" "../" "teste.py" ".dropbox-dist/" "*message*-20170228-163618" ".gstreamer-0.10/" "out-2.ogv" "Untitled.ipynb" ".emacs.d/" ".config/" "TEVEC - Documentos para Admissao.pdf" "-u lgmoneda" ".matlab/" ".mozilla/" "Public/" "temp_video" ".jupyter/" ".gvfs/" ".cache/" ".thumbnails/" ".fontconfig/" ".subversion/" "Relatório_Final.pdf" ".mysql/" ".gnome2/" "./" ".bash_logout" "ruby-2.3.1/" ".goutputstream-SGMLWY" "Documents/" "conf.png" "Recordings/" ".macromedia/")
+
+ ("/home/lgmoneda/Dropbox/Projetos/Emacs/dot-emacs/" (22709 52503 926171 294000) "ac-comphist.dat" "themes/" "anaconda-mode/" "ido.last" "games/" "ido.last~" "elpa/" ".gitignore" "request/" ".#init.el" "others/" "eshell/" "elisp/" "../" "auto-save-list/" "gifs/" ".git/" "init.el" "./" "projectile-bookmarks.eld")
+
+ ("/home/lgmoneda/Dropbox/Projetos/Emacs/" (22709 34896 475326 631000) "colinha.txt" "dot-emacs/" ".emacs" "helm-spotify-plus/" "../" "colinha.txt~" "./")
+
+ ("/home/lgmoneda/Dropbox/Estudos/MOOCs/Udacity/Revisor ML/" (22709 51102 750825 523000) "machine-learning-master.zip" "ud120-projects/" "machine-learning-master/" "Meus projetos como aluno/" "roteiro_dicas_revisao.txt" "../" "Data Science/" "Training Reviews/" "./")
+
+ ("/home/lgmoneda/Dropbox/Estudos/MOOCs/Udacity/" (22657 26675 634220 396000) "rules_of_ml.pdf" "webDev/" "UX Design/" "Design of Computer Programs/" "Revisor ML/" "production-machine-learning.pdf" "Deep Learning/" "../" "Startup/" "./")
+
+ ("/home/lgmoneda/Dropbox/Estudos/MOOCs/" (21039 38742 0 0) "FUN/" "../" "Edx/" "Udacity/" "DataCamp/" "lista sites.txt" "Coursera/" "./")
+
+ ("/home/lgmoneda/Dropbox/" (22709 28357 752301 819000) "passaporte/" "Financeiro.ods" "horarios_20162.png" "Estudos/" "2017/" "why deep learning is good.pdf" "Projetos/" "neat.pdf" "superinteressante~" ".dropbox" "Ismart Online/" "grade.ods" "teste.py~" "Fotos e imagens/" ".dropbox.cache/" "horarios-2017-feb.png" "teste.c" "Declaração de Desistência de Integrante.docx" "economics_trends.jpg" "Milky-Way-Galaxy-Wallpaper-1920X1080.jpg" "Interactive Multi-Task Relationship Learning.pdf" "horarios_201622.png" "Machine learning lSTM.pdf" "Prova Feita.ipynb" "publico/" "task2.py" "artigo_emilio.pdf" "mantra.odt" ".ipynb_checkpoints/" "Carrasco - Selection of optimal.pdf" "horarios_teorico_20162.png" "tevec/" "mantra (deb-rc530's conflicted copy 2016-12-20).odt" "relatorio_estagio-preenchido.doc" "task1.py" "Minha vida em 2016.ods" "mantra (deb1310's conflicted copy 2017-02-11).odt" "Poli 2.0/" "Pessoal/" "relatorio_estagio-sitepoli.doc" "Instance Normalization style transfer.pdf" "pytevec.yml" "2010SpPS10Soln.pdf" "../" "teste.py" "bag of tricks.pdf" "2017-02-17-google-spell-checker.md" "relatorio_estagio-preenchido.pdf" "kaggle-presentation-160918221740.pdf" "aquecimento.py" "ml.yml" "task3.py" "Declaração de Desistência de Integrante.pdf" "lecun-98b-backprop-tanh-sigmoid.pdf" "estagio-scan.pdf" "Apostila Wireless.pdf" "cv/" "reinforcement learning.pdf" "./" "Minha vida em 2016 (deb1310's conflicted copy 2017-02-11).ods")
+
+ ("/home/lgmoneda/Dropbox/Projetos/github site/" (22698 11344 729212 417000) "lgmoneda.github.io/" "../" "guia.txt" "back_lgmoneda.github.io/" ".git/" "./")
+
+ ("/home/lgmoneda/Dropbox/Projetos/" (22670 26494 706618 79000) "Mobile/" "Git/" "video aulas/" "sitios/" "Digiathan/" "pygame/" "Hobby/" "Ruby/" "sketchbook/" "Humor/" "Machine Learning/" "Site Aprender programar/" "Programação Linguagens/" "github site/" "Música/" "Traduções/" "Rendimentos 2015.xlsx" "Rotina - 2015.xlsx" "2424C300" "Gradiador/" "Youtube/" "Planejamento/" "Arduino/" "Temas Jekyll/" "Microeconomia/" "Raspberry Pi/" "FreeCell/" "Rotina - 2015 - 2.xlsx" "image hacks/" "teste/" "Economia/" "Rotina - 2015 - 2 teste (vostro-debian's conflicted copy 2015-08-10).xls" "Old Rotinas/" "WordPress Conteúdo/" "Blog Pessoal/" "Compyler/" "Emacs/" "Quadrinhos/" "../" "funcao.txt" "Fetiche Matcher/" "Linux/" "Rotina - 2015 - 2 teste.xls" "Mercado Livre/" "Imagens para montagens/" "violino/" "Morar Fora/" "NossaParteSP/" "./" "neet guide.txt" "Francês/")
+
+ ("/home/lgmoneda/Dropbox/Estudos/AI/Machine Learning/Projetos/greenpyce/" (22708 38243 287109 756000) "setup.py" "greenpyce/" "references/" ".gitignore" "README.md" "greenpyce.egg-info/" "../" ".git/" "./")
+
+ ("/home/lgmoneda/Dropbox/Estudos/AI/Machine Learning/Projetos/greenpyce/greenpyce/" (22708 38406 722828 334000) "tests/" "__init__.pyc" "feature_engineering/" "greenpyce.pyc" "__init__.py" "../" "greenpyce.py" "./")
+
+ ("/home/lgmoneda/Dropbox/Estudos/" (22651 53291 131319 113000) "Matemática/" "AI/" "model.json" "Empreendedorismo/" "Markdown.pdf" "POO Coursera/" "email.py" "Certificados/" "Meetups/" "IME Algoritmos/" "business_model_canvas_poster.pdf" "model.h5" "Octave/" "Python/" "Economia/" "Ruby on Rails/" "Escritos/" "testando o gmail.py" "email.pyc" "../" "Projetinhos/" "MOOCs/" "CodeAcademy/" "Scripts/" "1427770331305.png" "Game Programming/" "./" "Francês/")
+
+ ("/home/lgmoneda/Dropbox/Estudos/AI/" (22123 10747 134496 989000) "Machine Learning/" "Introduction/" "../" "Grupo de estudos AI - Poli/" "./")
+
+ ("/home/lgmoneda/Dropbox/Estudos/AI/Machine Learning/" (22707 3679 380925 210000) "rules_of_ml.pdf" "Libraries/" "Databases/" "Programas/" "Estatistica/" "Next Papers/" "DeepLearning/" "Projetos/" "main-qimg-fa26fa7e8001fd19dd53057397da999f.png" "Time Series/" "accuracy-explainability.jpeg" "Controle de estudos.xlsx" "Jobs Requeriments/" "ReinforcementLearning/" "Séries temporais/" "Papers/" "Bayesian Netwoks/" "Code/" "Meetups/" "Apostilas para impressão/" "Infográficos, guias/" "tic-tac-toe.jpg" "Hackatons/" "Econometria/" "Coisas minhas/" "Packages/" "reinforcement_learningbookdraft2016sep.pdf" "FinancialMarket/" "production-machine-learning.pdf" "TensorFlow/" "Virtual Machine/" "(Institute of Mathematical Statistics Monographs) Bradley Efron, Trevor Hastie-Computer Age Statistical Inference_ Algorithms, Evidence, and Data Science-Cambridge University Press (2016).pdf" "repos/" "OpenAI/" "Programas, scripts/" "../" "CS229T-STAT231: Statistical Learning Theory.pdf" "Tevec/" "Slides, apresentações/" "Scripts/" "Learning/" "Text Books/" "Notebooks/" "Email AAAI/" "Pandas_Cheat_Sheet.pdf" "./" "deep_cards.jpeg" "My Datasets/")
+
+ ("/home/lgmoneda/Dropbox/Estudos/AI/Machine Learning/Projetos/" (22702 5148 552512 100000) "Contador Monetário/" "greenpyce/" "Proust/" "NLP/" "yellowsub/" "Twitter/" "kmeans-quant/" "Couting Cells/" "Big Brown Bag/" "Code Club email automático/" "Joao Leilao/" "../" "recomenda_livros/" "Classificador Monetário/" "wally-ips/" "./")
+
+ ("/home/lgmoneda/Dropbox/Estudos/AI/Machine Learning/Projetos/greenpyce/greenpyce/feature_engineering/" (22708 36871 154582 811000) "__init__.pyc" "numerical.py" ".#__init__.py" "categorical.py" "__init__.py" "../" "./" "categorical.pyc")
+
+ ("/home/lgmoneda/tevec/tevec-mira/docs/" (22707 4516 824713 185000) ".empty" "mkdocs.yml" "sources/" "mira_uml.mdj" "Especificacao.xlsx" "README.md" "../" "./")
+
+ ("/home/lgmoneda/tevec/tevec-mira/mira/test/" (22707 4516 856716 475000) "test_views.py" "_fixtures_request.py" "mongo_connection.py" "README.md" "test_scenario.py" "test_metric.py" "../" "test_dataset.py" "_fixtures.py" "./")
+
+ ("/home/lgmoneda/tevec/tevec-mira/mira/lab/" (22707 4516 856716 475000) "console.py" "../" "./")
+
+ ("/home/lgmoneda/tevec/tevec-mira/" (22707 4516 856716 475000) "setup.py" "mira/" ".gitignore" "LICENSE" "docs/" "service/" "README.md" ".project" "README.txt" "requirements.txt" ".pydevproject" "CHANGES.txt" "../" "setup.cfg" ".git/" "./")
+
+ ("/home/lgmoneda/tevec/" (22707 4492 733646 969000) "../" "tevec-mira/" "./")
 
  ("/home/lgmoneda/Dropbox/Projetos/Git/" (22701 62043 532664 715000) "git-saberes.txt~" "saberes.txt" "Anotações das aulas.odt" "Git.pptx" "anotações codecademy.odt" "../" "git-saberes.txt" "./")
-
- ("/home/lgmoneda/.emacs.d/elpa/monokai-theme-20161216.628/" (22704 49848 518131 765000) "monokai-theme-pkg.el" "monokai-theme.el" "monokai-theme-pkg.elc" "monokai-theme-autoloads.el" "../" "./")
 
  ("/home/lgmoneda/Dropbox/Projetos/Linux/" (22704 50233 340245 58000) "../" "google app engine" "comandos linus.txt" "./")
 
@@ -71,67 +117,17 @@
 
  ("/home/lgmoneda/.config/fish/" (22703 39081 155325 419000) "conf.d/" "functions/" "fishd.e81132dedec4" "../" "./")
 
- ("/home/lgmoneda/Dropbox/Projetos/Emacs/dot-emacs/" (22704 50776 390932 354000) "ac-comphist.dat" "themes/" "ido.last" "ido.last~" "elpa/" ".gitignore" "others/" "eshell/" "../" "auto-save-list/" ".git/" "init.el" "./" "projectile-bookmarks.eld")
+ ("/home/lgmoneda/.emacs.d/elpa/monokai-theme-20161216.628/" (22705 10268 120164 274000) "monokai-theme-pkg.el" "monokai-theme.el" "monokai-theme-pkg.elc" "monokai-theme-autoloads.el" "../" "./")
 
- ("/home/lgmoneda/repos/" (22704 51011 201821 388000) "jedi/" "helm-spotify-plus/" "../" "./")
+ ("/home/lgmoneda/.emacs.d/elpa/camcorder-20160404.2134/" (22705 52782 179698 528000) "camcorder-autoloads.el" "camcorder-pkg.el" "camcorder.el" "../" "./")
 
- ("/home/lgmoneda/repos/jedi/" (22704 51338 256947 78000) "setup.py" "dist/" "conftest.py" ".gitignore" "test/" "LICENSE.txt" "jedi/" "AUTHORS.txt" "CONTRIBUTING.md" "docs/" "README.rst" "sith.py" ".travis.yml" "MANIFEST.in" ".coveragerc" "tox.ini" "scripts/" "../" "CHANGELOG.rst" "pytest.ini" ".git/" "jedi.egg-info/" "./")
+ ("/home/lgmoneda/Dropbox/Estudos/AI/Machine Learning/Projetos/greenpyce/tests/" (22707 23087 8275 537000) "_fixtures.pyc" "test_feat_eng_cat.py" "../" "_fixtures.py" ".cache/" "__pycache__/" "./")
 
- ("/home/lgmoneda/repos/jedi/dist/" (22704 51338 48942 20000) "jedi-0.10.0.tar.gz" "../" "./")
+ ("/home/lgmoneda/Documents/" (22598 4837 997236 340000) "Untitled.xcf" "brain.png" "MATLAB/" "DIAGRAMA SO.png" "Aulas 01 a 16.pdf" "Untitled 1.odg" "crud.ppt" "../" "reviews.xls" "contas.ods" "./" "python1-progressao.png")
 
- ("/home/lgmoneda/Dropbox/Projetos/Emacs/" (22703 21507 719694 467000) "colinha.txt" "dot-emacs/" ".emacs" "helm-spotify-plus/" "../" "colinha.txt~" "./")
+ ("/home/lgmoneda/.emacs.d/elpa/erc-5.3-extras/" (22708 23876 668086 684000) "erc-list-old.el" "erc-bbdb.el" "erc-chess.el" "erc-speak.el" "COPYING" "erc-nicklist.el" "../" "images/" "./" "README.extras")
 
- ("/home/lgmoneda/Dropbox/Projetos/" (22670 26494 706618 79000) "Mobile/" "Git/" "video aulas/" "sitios/" "Digiathan/" "pygame/" "Hobby/" "Ruby/" "sketchbook/" "Humor/" "Machine Learning/" "Site Aprender programar/" "Programação Linguagens/" "github site/" "Música/" "Traduções/" "Rendimentos 2015.xlsx" "Rotina - 2015.xlsx" "2424C300" "Gradiador/" "Youtube/" "Planejamento/" "Arduino/" "Temas Jekyll/" "Microeconomia/" "Raspberry Pi/" "FreeCell/" "Rotina - 2015 - 2.xlsx" "image hacks/" "teste/" "Economia/" "Rotina - 2015 - 2 teste (vostro-debian's conflicted copy 2015-08-10).xls" "Old Rotinas/" "WordPress Conteúdo/" "Blog Pessoal/" "Compyler/" "Emacs/" "Quadrinhos/" "../" "funcao.txt" "Fetiche Matcher/" "Linux/" "Rotina - 2015 - 2 teste.xls" "Mercado Livre/" "Imagens para montagens/" "violino/" "Morar Fora/" "NossaParteSP/" "./" "neet guide.txt" "Francês/")
-
- ("/home/lgmoneda/Dropbox/" (22704 49990 467798 300000) "passaporte/" "Financeiro.ods" "horarios_20162.png" "Estudos/" "2017/" "why deep learning is good.pdf" "Projetos/" "neat.pdf" "superinteressante~" ".dropbox" "Ismart Online/" "grade.ods" "teste.py~" "Fotos e imagens/" ".dropbox.cache/" "horarios-2017-feb.png" "teste.c" "Declaração de Desistência de Integrante.docx" "economics_trends.jpg" "Milky-Way-Galaxy-Wallpaper-1920X1080.jpg" "Interactive Multi-Task Relationship Learning.pdf" "horarios_201622.png" "Machine learning lSTM.pdf" "Prova Feita.ipynb" "publico/" "task2.py" "artigo_emilio.pdf" "mantra.odt" ".ipynb_checkpoints/" "Carrasco - Selection of optimal.pdf" "horarios_teorico_20162.png" "tevec/" "mantra (deb-rc530's conflicted copy 2016-12-20).odt" "relatorio_estagio-preenchido.doc" "task1.py" "Minha vida em 2016.ods" "mantra (deb1310's conflicted copy 2017-02-11).odt" "Poli 2.0/" "Pessoal/" "relatorio_estagio-sitepoli.doc" "Instance Normalization style transfer.pdf" "pytevec.yml" "2010SpPS10Soln.pdf" "../" "teste.py" "bag of tricks.pdf" "2017-02-17-google-spell-checker.md" "relatorio_estagio-preenchido.pdf" "kaggle-presentation-160918221740.pdf" "aquecimento.py" "ml.yml" "task3.py" "Declaração de Desistência de Integrante.pdf" "lecun-98b-backprop-tanh-sigmoid.pdf" "estagio-scan.pdf" "Apostila Wireless.pdf" "cv/" "reinforcement learning.pdf" "./" "Minha vida em 2016 (deb1310's conflicted copy 2017-02-11).ods")
-
- ("/home/lgmoneda/tevec/tevec-mira/mira/entities/" (22704 44199 965646 160000) "dataset.py" "__init__.py" "webcrawler.py" "agenda.py" ".#dataset.py" "./" "metric.py" "scenario.py" "accuracy.py" "security.py" "../" "io_layer.py" "enumerators.py" "pipeline.py" "__pycache__/")
-
- ("/home/lgmoneda/.emacs.d/elpa/" (22704 19759 879997 428000) "projectile-20170106.606/" "beacon-20161004.756/" "monokai-theme-20161216.628/" "request-20170131.1747/" "all-the-icons-20161219.329/" "helm-core-20170210.5/" "multi-20131013.844/" "f-20161002.800/" "jedi-20160425.2156/" "neotree-20170110.321/" "company-anaconda-20160809.705/" "jedi-core-20170121.610/" "auto-complete-20170124.1845/" "bind-key-20161218.1520/" "archives/" "pkg-info-20150517.443/" "gnupg/" "color-theme-20080305.34/" "diminish-20151215.915/" "./" "pythonic-20160221.1123/" "websocket-20161113.1736/" "color-theme-buffer-local-20170125.2201/" "flx-ido-20151030.1112/" "helm-spotify-20160905.1447/" "s-20160928.636/" "async-20161103.1036/" "epc-20140609.2234/" "seq-2.19/" "ido-vertical-mode-20160429.1037/" "company-20170112.2005/" "ctable-20140304.1659/" "dash-20161121.55/" "epl-20150517.433/" "smartparens-20170209.246/" "ido-ubiquitous-20170211.1432/" "helm-20170211.2302/" "concurrent-20161228.1930/" "../" "flx-20151030.1112/" "cl-generic-0.3/" "python-environment-20150310.153/" "cl-generic-0.3.signed" "font-lock+-20170101.947/" "autopair-20160304.437/" "use-package-20170116.1309/" "anaconda-mode-20161121.1137/" "popup-20160709.729/" "which-key-20161222.1221/" "seq-2.19.signed" "smex-20151212.1409/" "multiple-cursors-20170215.552/" "ein-20170131.844/" "ido-completing-read+-20161211.910/" "deferred-20161228.1930/" "avy-20170208.148/")
-
- ("/home/lgmoneda/tevec/tevec-mira/docs/sources/models/" (22702 60982 295442 241000) "lasso.md" "./" "linear_regression.md" "../")
-
- ("/home/lgmoneda/tevec/tevec-mira/docs/" (22702 60982 227441 96000) "README.md" "Especificacao.xlsx" "./" ".empty" "sources/" "../" "mira_uml.mdj" "mkdocs.yml")
-
- ("/home/lgmoneda/tevec/tevec-mira/mira/test/" (22703 14008 87007 627000) "README.md" "test_linreg.py" "./" "test_metric.py" "test_views.py" "test_dataset.py" "test_lasso.py" "test_models.py" "_fixtures.py" "../" "test_scenario.py" "_fixtures_request.py" "test_moving_average.py" "test_web_ipca.py" "__pycache__/" "test_mira_agenda.py")
-
- ("/home/lgmoneda/tevec/tevec-mira/mira/lab/" (22701 39648 254148 657000) "console.py" "./" "../" "console_linreg.py")
-
- ("/home/lgmoneda/.config/" (22704 20752 996808 845000) "enchant/" "Trolltech.conf" "gedit/" "eog/" "evince/" "user-dirs.dirs" "mimeapps.list" "omf/" "monitors.xml~" "matplotlib/" "./" "libreoffice/" "nautilus/" "gtk-3.0/" "gnome-session/" "monitors.xml" "sublime-text-3/" "cef_user_data/" "dleyna-renderer-service.conf" "ibus/" "gtk-2.0/" "dleyna-server-service.conf" "spotify/" "gnome-control-center/" "tracker/" "../" "pulse/" "autostart/" "user-dirs.locale" "dconf/" "goa-1.0/" "htop/" "evolution/" "StarUML/" "fish/")
-
- ("/home/lgmoneda/Downloads/" (22703 15795 74707 422000) "14689166_1777935022453481_228401004_o.jpg" "Case GuiaBolso_22062016.xlsx" "humble_bundle/" "Pesquisa TPRO-TTPA-FIBRIN-TTROMB - 01012015 a 30062016.xlsx" "humble_bundle.zip" "simulacao.png" "repeticoes-capturadas.png" "./" "ApostilaCursoConfiabilidadeSegurança-Graduação-Versão 2013.pdf" "custos.png" "libgcrypt11-dbg_1.4.5-2+squeeze1_amd64.deb" "sublime-text_build-3126_amd64.deb" "pytevec.yml" "Miniconda3-latest-Linux-x86_64.sh" "Aula 09 - Meta-reconhecedor para Gramáticas Wirth.pdf" "Artigo5 .pdf" "dropbox_2015.10.28_amd64.deb" ".~lock.Pesquisa TPRO-TTPA-FIBRIN-TTROMB - 01012015 a 30062016.xlsx#" "../" "index.md" "StarUML-v2.8.0-64-bit.deb" "libgcrypt11_1.5.4-3_amd64.deb" "aeloop.svg" "2016_04_18_WCCI_2016_FINAL.pdf" "Aula 10 - Exemplo de conversão automática de Wirth para APE.pdf" "Milky-Way-Galaxy-Wallpaper-1920X1080.jpg" "Case remoto de carros 30062016.xlsx" "Aula 08 - Reconhecedor de Gramáticas de Wirth.pdf" "fish_2.5.0-1_amd64.deb" "20161016_160355.jpg" "Miniconda2-latest-Linux-x86_64.sh")
-
- ("/home/lgmoneda/miniconda2/envs/" (22703 14440 202031 945000) "./" "tensorflow/" "../" "gensim/" "ml/" "npytevec/" "pytevec/")
-
- ("/home/lgmoneda/miniconda3/envs/pytevec/" (22703 14991 252228 833000) "./" "ssl/" "include/" "share/" "bin/" "conda-meta/" "lib/" "../")
-
- ("/home/lgmoneda/miniconda3/envs/" (22703 14974 7880 694000) "./" "../" "pytevec/")
-
- ("/home/lgmoneda/miniconda3/" (22703 14841 53103 941000) "./" "ssl/" "etc/" "pkgs/" "include/" "share/" "bin/" "conda-meta/" "lib/" "envs/" "../" "LICENSE.txt")
-
- ("/home/lgmoneda/tevec/tevec-mira/mira/models/" (22703 14008 83007 559000) "__init__.py" "./" "mlp.py" "scaler.py" "lasso.py" "../" "linear_regression.py" "moving_average.py" "__pycache__/")
-
- ("/home/lgmoneda/tevec/tevec-mira/mira/" (22702 60982 483445 402000) "__init__.py" "environments.py" "benchmarks/" "database/" "lab/" "./" "web/" ".empty" "crawlers/" "entities/" "utils/" "models/" "test/" "prompt.py" "../" "__pycache__/")
-
- ("/home/lgmoneda/tevec/tevec-mira/" (22702 60982 303442 374000) "#requirements.txt#" "README.md" "README.txt" "docs/" ".project" ".gitignore" "mira.egg-info/" "./" "requirements.txt" "setup.py" ".git/" "mira.ini" "service/" "mira/" "CHANGES.txt" "../" ".cache/" "LICENSE" ".eggs/" ".pydevproject" "setup.cfg")
-
- ("/home/lgmoneda/tevec/" (22700 29352 568896 153000) "tevec-nostradamus/" "tevec-mira/" "tevec-corporativo/" "./" "lasso.py" "tevec-ace/" "cliente-fleury/" "own-chiquita/" "Lançamentos/" "cliente-chiquita-banana/" "tevec-vega/" "../" "cliente-danone/" "linear_regression.py" "Notebooks/" ".ipynb_checkpoints/")
-
- ("/home/lgmoneda/Dropbox/Estudos/AI/Machine Learning/Projetos/" (22694 56573 794248 316000) "yellowsub/" "Classificador Monetário/" "recomenda_livros/" "Big Brown Bag/" "Contador Monetário/" "./" "Joao Leilao/" "Code Club email automático/" "Twitter/" "kmeans-quant/" "wally-ips/" "Proust/" "../" "NLP/" "Couting Cells/")
-
- ("/home/lgmoneda/Dropbox/Estudos/AI/Machine Learning/" (22695 21133 465804 825000) "DeepLearning/" "rules_of_ml.pdf" "Infográficos, guias/" "CS229T-STAT231: Statistical Learning Theory.pdf" "Tevec/" "Estatistica/" "tic-tac-toe.jpg" "Pandas_Cheat_Sheet.pdf" "Libraries/" "Databases/" "Email AAAI/" "ReinforcementLearning/" "OpenAI/" "Jobs Requeriments/" "./" "Scripts/" "Virtual Machine/" "My Datasets/" "(Institute of Mathematical Statistics Monographs) Bradley Efron, Trevor Hastie-Computer Age Statistical Inference_ Algorithms, Evidence, and Data Science-Cambridge University Press (2016).pdf" "reinforcement_learningbookdraft2016sep.pdf" "Meetups/" "production-machine-learning.pdf" "Econometria/" "Programas/" "deep_cards.jpeg" "Projetos/" "Slides, apresentações/" "Packages/" "Next Papers/" "Controle de estudos.xlsx" "Séries temporais/" "Papers/" "TensorFlow/" "Hackatons/" "Apostilas para impressão/" "FinancialMarket/" "../" "Bayesian Netwoks/" "Time Series/" "Programas, scripts/" "Coisas minhas/" "Learning/" "Notebooks/" "Text Books/" "main-qimg-fa26fa7e8001fd19dd53057397da999f.png" "Code/" "accuracy-explainability.jpeg")
-
- ("/home/lgmoneda/Dropbox/Estudos/AI/" (22521 22713 853649 122000) "Introduction/" "./" "Grupo de estudos AI - Poli/" "Machine Learning/" "../")
-
- ("/home/lgmoneda/Dropbox/Estudos/" (22652 42228 454296 46000) "Economia/" "Projetinhos/" "Francês/" "CodeAcademy/" "Python/" "business_model_canvas_poster.pdf" "./" "Scripts/" "email.pyc" "1427770331305.png" "Meetups/" "IME Algoritmos/" "Game Programming/" "Certificados/" "Markdown.pdf" "email.py" "model.h5" "POO Coursera/" "Matemática/" "../" "testando o gmail.py" "MOOCs/" "Octave/" "model.json" "Ruby on Rails/" "AI/" "Empreendedorismo/" "Escritos/")
-
- ("/home/" (22521 17834 470318 866000) "lgmoneda/" "./" "../" "lost+found/")
-
- ("/home/lgmoneda/miniconda2/envs/pytevec/" (22618 31995 397357 615000) "var/" "./" "ssl/" "etc/" "include/" "plugins/" "share/" "bin/" "conda-meta/" "lib/" "mkspecs/" "../" "imports/")
-
- ("/home/lgmoneda/miniconda2/" (22524 7097 764486 375000) "./" "ssl/" "etc/" "pkgs/" "include/" "share/" "bin/" "conda-meta/" "lib/" "envs/" "selenium/" "../" "LICENSE.txt")
-
- ("/home/lgmoneda/tevec/tevec-mira/docs/sources/" (22693 52324 724775 232000) "benchmarks/" "./" "package_installation_guide.md" "about.md" "models/" "data_representation/" "../" "db/" "index.md" "styleGuide.md")
+ ("/home/lgmoneda/.emacs.d/elpa/" (22708 23926 992912 938000) "flx-ido-20151030.1112/" "projectile-20170106.606/" "helm-spotify-20160905.1447/" "neotree-20170206.804/" "erc-nicklist/" "s-20160928.636/" "request-20170131.1747/" "seq-2.19.signed" "pkg-info-20150517.443/" "highlight-operators-20170213.1420/" "archives/" "seq-2.19/" "popup-20160709.729/" "monokai-theme-20161216.628/" "use-package-20170218.132/" "camcorder-20160404.2134/" "company-anaconda-20160809.705/" "websocket-20161113.1736/" "ein-20170224.1115/" "anaconda-mode-20161121.1137/" "company-20170112.2005/" "which-key-20170209.729/" "f-20161002.800/" "auto-complete-20170124.1845/" "cl-generic-0.3/" "multi-20131013.844/" "beacon-20161004.756/" "ac-anaconda-20160221.1123/" "bind-key-20161218.1520/" "diminish-20151215.915/" "ido-vertical-mode-20160429.1037/" "autopair-20160304.437/" "cl-generic-0.3.signed" "flx-20151030.1112/" "smartparens-20170209.246/" "gnupg/" "erc-hl-nicks-20160202.1150/" "ido-completing-read+-20161211.910/" "async-20161103.1036/" "erc-5.3-extras/" "helm-core-20170210.5/" "avy-20170208.148/" "dash-20170207.2056/" "pythonic-20160221.1123/" "../" "anaconda-mode-20170214.556/" "names-20151201.404/" "multiple-cursors-20170215.552/" "epl-20150517.433/" "./" "ido-ubiquitous-20170211.1432/" "helm-20170211.2302/")
 )
 
 ;; ----- ido-unc-hosts-cache -----

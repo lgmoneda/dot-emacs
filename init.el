@@ -15,6 +15,15 @@
      '("gnu" . "http://elpa.gnu.org/packages/"))
 (package-initialize)
 
+
+;; Fast jump to elisp function
+(global-set-key (kbd "C-h C-f") 'jump-to-elisp-func-def)
+
+(defun jump-to-elisp-func-def ()
+  (interactive)
+  (find-function (function-called-at-point))
+  ) 
+
 ;; Bootstrap `use-package'
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
@@ -53,6 +62,7 @@
 (use-package projectile
   :ensure t
   :init (projectile-global-mode)
+  :config (setq projectile-mode-line '(:eval (format " Proj[%s]" (projectile-project-name))))
   :bind (("C-c p s" . projectile-ag)
          ("C-c p g" . projectile-grep)))
 
@@ -77,14 +87,28 @@
 ;; Company-anaconda
 (use-package company-anaconda
   :ensure t
+  :diminish
   :config
   (eval-after-load "company"
     ;;    '(add-to-list 'company-backends '(company-anaconda company-dabbrev company-capf))))
     '(add-to-list 'company-backends '(company-anaconda))))
 
-(add-hook 'python-mode-hook 'company-mode)
+;;(add-hook 'python-mode-hook 'company-mode)
+
 ;; enable eldoc in programming modes
-(add-hook 'prog-mode-hook 'turn-on-eldoc-mode)
+;;(add-hook 'prog-mode-hook 'turn-on-eldoc-mode)
+
+;; enable eldoc in your programming modes
+(use-package eldoc
+  :ensure t
+  :diminish 
+  :commands eldoc-mode
+  :init
+  (setq eldoc-idle-delay 0.1
+	eldoc-echo-area-use-multiline-p nil)
+  :config
+  (add-hook 'prog-mode-hook 'turn-on-eldoc-mode))
+
 ;; (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
 
 ;; Jedi
@@ -106,6 +130,7 @@
 
 (use-package company
   :ensure t
+  :diminish
   :defer 4
   :init (progn
           (global-company-mode)
@@ -113,14 +138,12 @@
           )
   :config (progn
             (setq company-tooltip-limit 6
-                  company-idle-delay .1
-                  company-echo-delay 0
+                  company-idle-delay .3
+                  company-echo-delay 0.3
                   company-begin-commands '(self-insert-command)
                   company-transformers '(company-sort-by-occurrence)
                   company-selection-wrap-around t
-                  company-idle-delay .1
                   company-minimum-prefix-length 3
-                  company-selection-wrap-around t
                   company-dabbrev-downcase nil
                   )
             (bind-keys :map company-active-map
@@ -137,10 +160,21 @@
 ;; Pair parenthesis
 (use-package smartparens
   :ensure t
-  :init (smartparens-global-mode))
+  :init (smartparens-global-mode)
+  (sp-pair "'" nil :actions :rem)
+  (sp-pair "`" nil :actions :rem))
+
+  ;; Disable smartparens for most pairs, my editing style doesn't play well with it
+  ;; (eval-after-load 'smartparens
+  ;;   '(progn
+  ;;      (sp-pair "(" nil :actions :rem)
+  ;;      (sp-pair "[" nil :actions :rem)
+  ;;      (sp-pair "'" nil :actions :rem)
+;;      (sp-pair "\"" nil :actions :rem)))
 
 ;; Display time in the mode-line
-(display-time-mode)
+(setq display-time-format "%Hh%M")
+(display-time-mode 0)
 
 ;; To activate pytevec environment
 (defun apytevec ()
@@ -157,7 +191,8 @@
   (("C->" . mc/mark-next-like-this)
    ("C-<" . mc/mark-previous-like-this)
    ("C-c C->" . mc/mark-all-like-this)
-   ("C-x , m" . mc/edit-lines)))
+   ("C-x , m" . mc/edit-lines)
+   ("C-x , n" . mc/edit-ends-of-lines)))
 
 ;; Run python first time 
 ;; (defun run-python-once ()
@@ -453,3 +488,125 @@ if breakpoints are present in `python-mode' files"
 ;; (define-key key-translation-map (kbd "<C-dead-tilde>") (kbd "M-f"))
 ;; (define-key key-translation-map (kbd "C-ç") (kbd "\C-n"))
 
+
+;; Pair parenthesis
+;; (use-package autopair
+;;   :ensure t)
+
+;; (autopair-global-mode)
+
+;; ERC
+(add-to-list 'load-path "~/.emacs.d/elisp/erc-extras" t)
+(require 'erc-hl-nicks)
+(require 'erc-nicklist)
+(require 'erc-notify)
+(require 'erc-match)
+
+(erc-spelling-mode 1)
+
+(erc :server "irc.freenode.net" :port 6667 :nick "lgmoneda")
+
+;; Prevents Erc buffers flashing at start
+(setq erc-join-buffer 'bury)
+(setq erc-autojoin-channels-alist
+          '(("freenode.net" "#emacs" "#sptk" "##machinelearning")))
+
+
+;; Log in a buffer when people talk to me
+(setq erc-log-matches-flag t)
+(setq erc-log-matches-types-alist
+          '((keyword . "###Keywords")
+            (current-nick . "###Me")))
+
+;; Smarter beep
+(add-hook 'erc-text-matched-hook 'erc-sound-if-not-server)
+(defun erc-sound-if-not-server (match-type nickuserhost msg)
+      (unless (or (string-match "Server:[0-9]+" nickuserhost) (string-match nickuserhost (erc-current-nick)))
+	(start-process-shell-command "lolsound" nil "mplayer ~/.emacs.d/sounds/icq-message.wav")
+	(setq mode-line-end-spaces 
+	      (format "[%s|<%s:%s> %s]"
+	      	      (format-time-string "%Hh%M" (date-to-time (current-time-string)))
+	      	      (subseq nickuserhost 0 (string-match "!" nickuserhost))
+		      (or (erc-default-target) "")
+		      ;;(subseq msg (length (erc-current-nick)) 30)
+		      (if (eq (string-match (erc-current-nick) msg) 0)
+			  (subseq msg (+ 1 (length (erc-current-nick))) 30)
+			  msg
+			  )
+		      ))))
+
+;; Beep when mention me
+;; (add-hook 'erc-text-matched-hook 'erc-beep-on-match)
+;; (setq erc-beep-match-types '(current-nick keyword))
+
+;; Sound for private msg
+(defun erc-my-privmsg-sound (proc parsed)
+  (let* ((tgt (car (erc-response.command-args parsed)))
+	 (privp (erc-current-nick-p tgt)))
+    (and
+     privp
+     (sound)
+     nil))) ;We must return nil. See help for `erc-server-PRIVMSG-functions'
+
+(add-hook 'erc-server-PRIVMSG-functions
+	  'erc-my-privmsg-sound)
+
+(setq sound-default "~/.emacs.d/sounds/beep.wav")
+
+(defun sound (&optional path)
+  (start-process-shell-command
+   "sound"
+   nil
+   (concat "aplay -fcd " (or path sound-default))))
+
+;; E-mail config
+(setq user-mail-address "lg.moneda@gmail.com")
+(setq user-full-name "Luis Moneda")
+
+(setq send-mail-function 'smtpmail-send-it)
+(setq smtpmail-auth-credentials (expand-file-name "~/.authinfo"))
+(setq smtpmail-smtp-server "smtp.gmail.com")
+(setq smtpmail-smtp-service 587)
+(setq message-signature "Luis Moneda
+http://lgmoneda.github.io/")
+
+;; Mode line
+
+(defvar mode-line-cleaner-alist
+  `((auto-complete-mode . " α")
+    (yas/minor-mode . " υ")
+    (paredit-mode . " π")
+    (eldoc-mode . "")
+    (hs-minor-mode . "")
+    (which-key-mode . "")
+    (smartparens-mode . "")
+    (abbrev-mode . "")
+    (company-mode . "")
+    ;; Major modes
+    (fundamental-mode . "Fund")
+    (lisp-interaction-mode . "λ")
+    (hi-lock-mode . "")
+    (python-mode . "Py")
+    (emacs-lisp-mode . "EL")
+    (nxhtml-mode . "nx"))
+  "Alist for `clean-mode-line'.
+
+When you add a new element to the alist, keep in mind that you
+must pass the correct minor/major mode symbol and a string you
+want to use in the modeline *in lieu of* the original.")
+
+
+(defun clean-mode-line ()
+  (interactive)
+  (loop for cleaner in mode-line-cleaner-alist
+        do (let* ((mode (car cleaner))
+                 (mode-str (cdr cleaner))
+                 (old-mode-str (cdr (assq mode minor-mode-alist))))
+             (when old-mode-str
+                 (setcar old-mode-str mode-str))
+               ;; major mode
+             (when (eq mode major-mode)
+               (setq mode-name mode-str)))))
+
+
+(add-hook 'after-change-major-mode-hook 'clean-mode-line)
