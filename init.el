@@ -33,6 +33,10 @@
 (use-package helm
   :ensure t)
 
+;; Auto Complete
+(use-package auto-complete
+  :ensure t)
+
 ;; Ido
 (use-package ido
   :ensure t
@@ -72,8 +76,12 @@
   :bind ([f8] . neotree-toggle))
 
 ;; Spotify
-(use-package helm-spotify
-  :ensure t)
+;; (use-package helm-spotify
+;;   :ensure t)
+
+;; (use-package todochiku
+;;   :ensure t
+;;   :config (setq todochiku-icons-directory "~/.emacs.d/todochiku-icons"))
 
 ;; Anaconda Anaconda+Eldoc
 (use-package anaconda-mode
@@ -84,6 +92,7 @@
     (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
     (add-hook 'python-mode-hook 'python--add-debug-highlight)
     )
+
 ;; Company-anaconda
 (use-package company-anaconda
   :ensure t
@@ -515,13 +524,13 @@ if breakpoints are present in `python-mode' files"
 ;; Log in a buffer when people talk to me
 (setq erc-log-matches-flag t)
 (setq erc-log-matches-types-alist
-          '((keyword . "###Keywords")
-            (current-nick . "###Me")))
+          '((keyword . "### Keywords")
+            (current-nick . "### Me")))
 
 ;; Smarter beep
 (add-hook 'erc-text-matched-hook 'erc-sound-if-not-server)
 (defun erc-sound-if-not-server (match-type nickuserhost msg)
-      (unless (or (string-match "Server:[0-9]+" nickuserhost) (string-match nickuserhost (erc-current-nick)))
+      (unless (or (string-match "Server" nickuserhost) (string-match nickuserhost (erc-current-nick)))
 	(start-process-shell-command "lolsound" nil "mplayer ~/.emacs.d/sounds/icq-message.wav")
 	(setq mode-line-end-spaces 
 	      (format "[%s|<%s:%s> %s]"
@@ -530,7 +539,7 @@ if breakpoints are present in `python-mode' files"
 		      (or (erc-default-target) "")
 		      ;;(subseq msg (length (erc-current-nick)) 30)
 		      (if (eq (string-match (erc-current-nick) msg) 0)
-			  (subseq msg (+ 1 (length (erc-current-nick))) 30)
+			  (subseq msg (+ 1 (length (erc-current-nick))) 40)
 			  msg
 			  )
 		      ))))
@@ -540,24 +549,38 @@ if breakpoints are present in `python-mode' files"
 ;; (setq erc-beep-match-types '(current-nick keyword))
 
 ;; Sound for private msg
-(defun erc-my-privmsg-sound (proc parsed)
-  (let* ((tgt (car (erc-response.command-args parsed)))
-	 (privp (erc-current-nick-p tgt)))
-    (and
-     privp
-     (sound)
-     nil))) ;We must return nil. See help for `erc-server-PRIVMSG-functions'
+;; (defun erc-my-privmsg-sound (proc parsed)
+;;   (let* ((tgt (car (erc-response.command-args parsed)))
+;; 	 (privp (erc-current-nick-p tgt)))
+;;     (and
+;;      privp
+;;      (sound)
+;;      nil))) ;We must return nil. See help for `erc-server-PRIVMSG-functions'
 
-(add-hook 'erc-server-PRIVMSG-functions
-	  'erc-my-privmsg-sound)
+;; (add-hook 'erc-server-PRIVMSG-functions
+;; 	  'erc-my-privmsg-sound)
 
-(setq sound-default "~/.emacs.d/sounds/beep.wav")
+;; (setq sound-default "~/.emacs.d/sounds/beep.wav")
 
-(defun sound (&optional path)
-  (start-process-shell-command
-   "sound"
-   nil
-   (concat "aplay -fcd " (or path sound-default))))
+;; (defun sound (&optional path)
+;;   (start-process-shell-command
+;;    "sound"
+;;    nil
+;;    (concat "mplayer -fcd " (or path sound-default))))
+
+
+(defun notify-privmsg-mode-line (proc parsed)
+  (let ((nick (car (erc-parse-user (erc-response.sender parsed))))
+        (target (car (erc-response.command-args parsed)))
+        (msg (erc-response.contents parsed)))
+    (when (and (erc-current-nick-p target)
+               (not (erc-is-message-ctcp-and-not-action-p msg)))
+      (setq mode-line-end-spaces (format "[pvt:%s]" nick)
+                         msg
+                         nil)))
+  nil)
+
+(add-hook 'erc-server-PRIVMSG-functions 'fg/notify-privmsg t)
 
 ;; E-mail config
 (setq user-mail-address "lg.moneda@gmail.com")
