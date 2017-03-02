@@ -515,10 +515,25 @@ if breakpoints are present in `python-mode' files"
 
 (erc :server "irc.freenode.net" :port 6667 :nick "lgmoneda")
 
+(load "~/.ercfile")
+(require 'erc-services)
+(erc-services-mode 1)
+(setq erc-prompt-for-nickserv-password nil)
+(setq erc-nickserv-passwords
+      `((freenode     (("lgmoneda" . ,lgmonedanick)))))
+
+
 ;; Prevents Erc buffers flashing at start
+(erc-autojoin-mode t)
+(setq erc-autojoin-timing :ident)
+(setq erc-autojoin-delay 20)
 (setq erc-join-buffer 'bury)
 (setq erc-autojoin-channels-alist
           '(("freenode.net" "#emacs" "#sptk" "##machinelearning")))
+(erc-autojoin-after-ident "irc.freenode.net" "lgmoneda")
+
+(add-hook 'erc-nickserv-identified-hook 'erc-autojoin-after-ident)
+;;(erc :server "irc.freenode.net" :port 6667 :nick "lgmoneda")
 
 
 ;; Log in a buffer when people talk to me
@@ -527,21 +542,24 @@ if breakpoints are present in `python-mode' files"
           '((keyword . "### Keywords")
             (current-nick . "### Me")))
 
+(setq erc-keywords '("keras" "bayes" "causality" "tensorflow" "python"))
+
 ;; Smarter beep
 (add-hook 'erc-text-matched-hook 'erc-sound-if-not-server)
 (defun erc-sound-if-not-server (match-type nickuserhost msg)
       (unless (or (string-match "Server" nickuserhost) (string-match nickuserhost (erc-current-nick)))
 	(start-process-shell-command "lolsound" nil "mplayer ~/.emacs.d/sounds/icq-message.wav")
-	(setq mode-line-end-spaces 
+	;;(setq mode-line-end-spaces
+	(message
 	      (format "[%s|<%s:%s> %s]"
 	      	      (format-time-string "%Hh%M" (date-to-time (current-time-string)))
 	      	      (subseq nickuserhost 0 (string-match "!" nickuserhost))
 		      (or (erc-default-target) "")
-		      ;;(subseq msg (length (erc-current-nick)) 30)
-		      (if (eq (string-match (erc-current-nick) msg) 0)
-			  (subseq msg (+ 1 (length (erc-current-nick))) 40)
-			  msg
-			  )
+		      (subseq msg 0 (- (length msg) 1))
+		      ;; (if (eq (string-match (erc-current-nick) msg) 0)
+		      ;; 	  (subseq msg (+ 1 (length (erc-current-nick))) 40)
+		      ;; 	  msg
+		      ;; 	  )
 		      ))))
 
 ;; Beep when mention me
@@ -568,7 +586,6 @@ if breakpoints are present in `python-mode' files"
 ;;    nil
 ;;    (concat "mplayer -fcd " (or path sound-default))))
 
-
 (defun notify-privmsg-mode-line (proc parsed)
   (let ((nick (car (erc-parse-user (erc-response.sender parsed))))
         (target (car (erc-response.command-args parsed)))
@@ -577,10 +594,43 @@ if breakpoints are present in `python-mode' files"
                (not (erc-is-message-ctcp-and-not-action-p msg)))
       (setq mode-line-end-spaces (format "[pvt:%s]" nick)
                          msg
-                         nil)))
+                         nil)
+      ))
   nil)
 
-(add-hook 'erc-server-PRIVMSG-functions 'fg/notify-privmsg t)
+(setq unread-pvt-msgs '(("placeholder" . 1)))
+(defun notify-privmsg-mode-line (proc parsed)
+  (let ((nick (car (erc-parse-user (erc-response.sender parsed))))
+        (target (car (erc-response.command-args parsed)))
+        (msg (erc-response.contents parsed)))
+    (when (and (erc-current-nick-p target)
+               (not (erc-is-message-ctcp-and-not-action-p msg)))
+      (setq mode-line-end-spaces (format "[pvt:%s]" nick)
+                         msg
+                         nil)
+      (if (eq (cdr (assoc nick unread-pvt-msgs)) nil)
+	  (add-to-list 'unread-pvt-msgs `(,nick . 1))
+	(progn
+	  (setq new-value  (+ (cdr (assoc nick unread-pvt-msgs)) 1)    )
+	  (setf (cdr (assoc nick unread-pvt-msgs)) new-value)
+	  (setq mode-line-end-spaces (format "[pvt:%s (%d)]" nick (cdr (assoc nick unread-pvt-msgs)) )
+		msg
+		nil)
+	  )
+	)
+      ;;(print unread-pvt-msgs)
+      ))
+  nil)
+
+;; (+ (cdr (assoc "nick" unread-pvt-msgs)) 1
+
+(add-hook 'erc-server-PRIVMSG-functions 'notify-privmsg-mode-line t)
+
+;; (setq amigo "amigo")
+;; (setq minha-lista `(("amigo" . 1)))
+;; (setq x (+ (cdr (assoc amigo minha-lista)) 1))
+;; (add-to-list 'minha-lista `("amigo" . ,x))
+
 
 ;; E-mail config
 (setq user-mail-address "lg.moneda@gmail.com")
