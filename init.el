@@ -15,6 +15,8 @@
      '("gnu" . "http://elpa.gnu.org/packages/"))
 (package-initialize)
 
+;; Fast init.el open
+(global-set-key (kbd "<f6>") (lambda() (interactive)(find-file "~/.emacs.d/init.el")))
 
 ;; Fast jump to elisp function
 (global-set-key (kbd "C-h C-f") 'jump-to-elisp-func-def)
@@ -24,10 +26,13 @@
   (find-function (function-called-at-point))
   ) 
 
+;; Garbage Collector teste
+(setq gc-cons-threshold 20000000)
+
 ;; Bootstrap `use-package'
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
-  (package-install 'use-package))
+   (package-install 'use-package))
 
 ;; Helm
 (use-package helm
@@ -99,8 +104,8 @@
   :diminish
   :config
   (eval-after-load "company"
-    ;;    '(add-to-list 'company-backends '(company-anaconda company-dabbrev company-capf))))
-    '(add-to-list 'company-backends '(company-anaconda))))
+     '(add-to-list 'company-backends '(company-anaconda company-dabbrev company-capf))))
+    ;;'(add-to-list 'company-backends '(company-anaconda))))
 
 ;;(add-hook 'python-mode-hook 'company-mode)
 
@@ -115,6 +120,7 @@
   :init
   (setq eldoc-idle-delay 0.1
 	eldoc-echo-area-use-multiline-p nil)
+  (eldoc-mode 1)
   :config
   (add-hook 'prog-mode-hook 'turn-on-eldoc-mode))
 
@@ -131,11 +137,11 @@
 (global-set-key [f4] 'hs-toggle-hiding)
 
 ;; Company to display pop-ups 
-;; (use-package company
-;;   :ensure t)
+(use-package company
+  :ensure t)
 
-;; (add-hook 'after-init-hook 'global-company-mode)
-;; (setq company-minimum-prefix-length 2)
+(add-hook 'after-init-hook 'global-company-mode)
+(setq company-minimum-prefix-length 2)
 
 (use-package company
   :ensure t
@@ -172,6 +178,48 @@
   :init (smartparens-global-mode)
   (sp-pair "'" nil :actions :rem)
   (sp-pair "`" nil :actions :rem))
+
+;; Smartparens keyibinding management
+(define-key smartparens-mode-map (kbd "C-M-f") 'sp-forward-sexp)
+(define-key smartparens-mode-map (kbd "C-M-b") 'sp-backward-sexp)
+
+(define-key smartparens-mode-map (kbd "C-M-d") 'sp-down-sexp)
+(define-key smartparens-mode-map (kbd "C-M-a") 'sp-backward-down-sexp)
+(define-key smartparens-mode-map (kbd "C-S-d") 'sp-beginning-of-sexp)
+;; (define-key smartparens-mode-map (kbd "C-S-a") 'sp-end-of-sexp)
+
+(define-key smartparens-mode-map (kbd "C-M-e") 'sp-up-sexp)
+(define-key smartparens-mode-map (kbd "C-M-u") 'sp-backward-up-sexp)
+(define-key smartparens-mode-map (kbd "C-M-t") 'sp-transpose-sexp)
+
+(define-key smartparens-mode-map (kbd "C-M-n") 'sp-next-sexp)
+(define-key smartparens-mode-map (kbd "C-M-p") 'sp-previous-sexp)
+
+(define-key smartparens-mode-map (kbd "C-M-k") 'sp-kill-sexp)
+(define-key smartparens-mode-map (kbd "C-M-w") 'sp-copy-sexp)
+
+(define-key smartparens-mode-map (kbd "M-<delete>") 'sp-unwrap-sexp)
+(define-key smartparens-mode-map (kbd "M-<backspace>") 'sp-backward-unwrap-sexp)
+
+;; (define-key smartparens-mode-map (kbd "C-<right>") 'sp-forward-slurp-sexp)
+;; (define-key smartparens-mode-map (kbd "C-<left>") 'sp-forward-barf-sexp)
+;; (define-key smartparens-mode-map (kbd "C-M-<left>") 'sp-backward-slurp-sexp)
+;; (define-key smartparens-mode-map (kbd "C-M-<right>") 'sp-backward-barf-sexp)
+
+(define-key smartparens-mode-map (kbd "M-D") 'sp-splice-sexp)
+(define-key smartparens-mode-map (kbd "C-M-<delete>") 'sp-splice-sexp-killing-forward)
+(define-key smartparens-mode-map (kbd "C-M-<backspace>") 'sp-splice-sexp-killing-backward)
+(define-key smartparens-mode-map (kbd "C-S-<backspace>") 'sp-splice-sexp-killing-around)
+
+(define-key smartparens-mode-map (kbd "C-]") 'sp-select-next-thing-exchange)
+(define-key smartparens-mode-map (kbd "C-<left_bracket>") 'sp-select-previous-thing)
+(define-key smartparens-mode-map (kbd "C-M-]") 'sp-select-next-thing)
+
+(define-key smartparens-mode-map (kbd "M-F") 'sp-forward-symbol)
+(define-key smartparens-mode-map (kbd "M-B") 'sp-backward-symbol)
+
+(--each '(python-mode python)
+  (eval-after-load it                      '(require 'smartparens-python)))
 
   ;; Disable smartparens for most pairs, my editing style doesn't play well with it
   ;; (eval-after-load 'smartparens
@@ -289,6 +337,9 @@
 
 ;; Enable line numbers
 (global-linum-mode 1)
+
+;; Column break
+(global-visual-line-mode t)
 
 ;; avy
 (use-package avy
@@ -495,10 +546,10 @@ if breakpoints are present in `python-mode' files"
 ;; (define-key key-translation-map (kbd "M-l") (kbd "M-b"))
 ;; (define-key key-translation-map (kbd "<C-dead-tilde>") (kbd "\C-f"))
 ;; (define-key key-translation-map (kbd "<C-dead-tilde>") (kbd "M-f"))
-;; (define-key key-translation-map (kbd "C-ç") (kbd "\C-n"))
+;; (define-key key-translation-map (kbd "C-ç") (kbd "\C-n")
 
 
-;; Pair parenthesis
+;;  Pair) parenthesis
 ;; (use-package autopair
 ;;   :ensure t)
 
@@ -520,7 +571,7 @@ if breakpoints are present in `python-mode' files"
 (erc-services-mode 1)
 (setq erc-prompt-for-nickserv-password nil)
 (setq erc-nickserv-passwords
-      `((freenode     (("lgmoneda" . ,lgmonedanick)))))
+      `((freenode (("lgmoneda" . ,lgmonedanick)))))
 
 
 ;; Prevents Erc buffers flashing at start
@@ -529,7 +580,8 @@ if breakpoints are present in `python-mode' files"
 (setq erc-autojoin-delay 20)
 (setq erc-join-buffer 'bury)
 (setq erc-autojoin-channels-alist
-          '(("freenode.net" "#emacs" "#sptk" "##machinelearning")))
+      '(("freenode.net" "#emacs" "#sptk" "##machinelearning"
+	 "#pydata" "#scikit-learn" "##statistics" "#tensorflow")))
 (erc-autojoin-after-ident "irc.freenode.net" "lgmoneda")
 
 (add-hook 'erc-nickserv-identified-hook 'erc-autojoin-after-ident)
@@ -542,15 +594,18 @@ if breakpoints are present in `python-mode' files"
           '((keyword . "### Keywords")
             (current-nick . "### Me")))
 
-(setq erc-keywords '("keras" "bayes" "causality" "tensorflow" "python"))
+(setq erc-keywords '("keras" "bayes" "causality" " tensorflow" "python"))
 
 ;; Smarter beep
+;; todo: no beep when buffer is visible
 (add-hook 'erc-text-matched-hook 'erc-sound-if-not-server)
 (defun erc-sound-if-not-server (match-type nickuserhost msg)
       (unless (or (string-match "Server" nickuserhost) (string-match nickuserhost (erc-current-nick)))
 	(start-process-shell-command "lolsound" nil "mplayer ~/.emacs.d/sounds/icq-message.wav")
 	;;(setq mode-line-end-spaces
-	(message
+        ;; to-do use message-truncate-lines or messages-buffer-max-lines
+        
+       	(message
 	      (format "[%s|<%s:%s> %s]"
 	      	      (format-time-string "%Hh%M" (date-to-time (current-time-string)))
 	      	      (subseq nickuserhost 0 (string-match "!" nickuserhost))
@@ -560,7 +615,12 @@ if breakpoints are present in `python-mode' files"
 		      ;; 	  (subseq msg (+ 1 (length (erc-current-nick))) 40)
 		      ;; 	  msg
 		      ;; 	  )
-		      ))))
+		      )
+	      ;; Show msg for 20s
+	       (run-with-timer 20 nil
+                  (lambda ()
+                    (message nil)))
+	      )))
 
 ;; Beep when mention me
 ;; (add-hook 'erc-text-matched-hook 'erc-beep-on-match)
@@ -598,6 +658,13 @@ if breakpoints are present in `python-mode' files"
       ))
   nil)
 
+
+;; TODO
+;; 1) do not show alert when the buffer the message is
+;; from is visible
+;; 2) mark as read when visit origin buffer
+;; 3) group all unread (pvt and channel) in one alist
+;; 4) ignore not from a user msgs
 (setq unread-pvt-msgs '(("placeholder" . 1)))
 (defun notify-privmsg-mode-line (proc parsed)
   (let ((nick (car (erc-parse-user (erc-response.sender parsed))))
@@ -643,10 +710,9 @@ if breakpoints are present in `python-mode' files"
 (setq message-signature "Luis Moneda
 http://lgmoneda.github.io/")
 
-;; Mode line
-
+;; Mode line α
 (defvar mode-line-cleaner-alist
-  `((auto-complete-mode . " α")
+  `((auto-complete-mode . "")
     (yas/minor-mode . " υ")
     (paredit-mode . " π")
     (eldoc-mode . "")
@@ -655,6 +721,7 @@ http://lgmoneda.github.io/")
     (smartparens-mode . "")
     (abbrev-mode . "")
     (company-mode . "")
+    (eldoc-mode . "")
     ;; Major modes
     (fundamental-mode . "Fund")
     (lisp-interaction-mode . "λ")
@@ -683,3 +750,63 @@ want to use in the modeline *in lieu of* the original.")
 
 
 (add-hook 'after-change-major-mode-hook 'clean-mode-line)
+
+
+ 
+
+;; ;; trocar por auto-complete later.
+;; (use-package auto-complete
+;;   :ensure t
+;;   :init
+;;   (setq auto-complete-mode)
+;;   (ac-config-default)
+;;   (setq ac-use-fuzzy t
+;;         ac-fuzzy-enable t)
+  
+;;   (setq ac-use-menu-map t)
+;;   ;; ;; start completion but wait me to type 4 characters
+;;   (setq ac-auto-start 2)
+;;   (setq ac-delay nil)
+  
+  
+;;   ;; ;; dont start the completion menu automatically
+;;   (setq ac-auto-show-menu 1)
+
+;;   ;; ;; do what I mean.
+;;   ;; ;; a. TAB behave as completion (ac-complete) when only one candidate is left
+;;   ;; ;; b. TAB behaves as completion (ac-complete) after you select candidate
+;;   ;; ;; c. Disapears automatically when you complete a candidate
+;;   (setq ac-dwim t)
+  
+;;   :config
+;;   (use-package fuzzy
+;;     :ensure t)
+  
+;;   (use-package pos-tip
+;;     ;; show help beautifully
+;;     ;; auto-complete-mode uses its native rendering for displaying quickhelp
+;;     :ensure t
+;;     :config
+;;     (ac-config-default)
+;;     (setq ac-quick-help-delay 4))
+;;   (add-to-list 'ac-modes 'anaconda-mode)
+  
+;;   ;; (add-hook 'python-mode-hook '(add-to-list ac-sources '(company-anaconda)))
+  
+;;   ;; start the completion manually
+;;   (define-key ac-mode-map (kbd "C-<return>") 'auto-complete)
+
+;;   ;; navigate inside the completion popup using C-n/C-p keys
+;;   (define-key ac-menu-map "\C-n" 'ac-next)
+;;   (define-key ac-menu-map "\C-p" 'ac-previous)
+
+;;   ;; the isearch over the candidates in the popup menu is just an amazing feature.
+;;   (define-key ac-menu-map "\C-s" 'ac-isearch)
+;;   (define-key ac-mode-map (kbd "C-x /") 'ac-complete-filename)
+
+;;   ;; finish completion by tab
+;;   (define-key ac-completing-map "\t" 'ac-complete)
+;;   (define-key ac-completing-map "\r" nil))
+
+(with-eval-after-load 'company
+  (company-flx-mode +1))
