@@ -1,4 +1,6 @@
-((("global-visual-line-mode" .
+((("/" .
+   [1])
+  ("global-visual-line-mode" .
    [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1])
   ("sleep-for" .
    [0 0 0 0 0 1 0 0 0])

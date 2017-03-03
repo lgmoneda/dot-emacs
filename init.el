@@ -19,9 +19,10 @@
 (global-set-key (kbd "<f6>") (lambda() (interactive)(find-file "~/.emacs.d/init.el")))
 
 ;; Fast jump to elisp function
-(global-set-key (kbd "C-h C-f") 'jump-to-elisp-func-def)
+;; The .el files are not in the folder, onlye the elc
+(global-set-key (kbd "C-h C-f") 'lgm/jump-to-elisp-func-def)
 
-(defun jump-to-elisp-func-def ()
+(defun lgm/jump-to-elisp-func-def ()
   (interactive)
   (find-function (function-called-at-point))
   ) 
@@ -38,9 +39,10 @@
 (use-package helm
   :ensure t)
 
-;; Auto Complete
-(use-package auto-complete
-  :ensure t)
+
+;; ;; Auto Complete
+;; (use-package auto-complete
+;;   :ensure t)
 
 ;; Ido
 (use-package ido
@@ -80,13 +82,6 @@
   :ensure t
   :bind ([f8] . neotree-toggle))
 
-;; Spotify
-;; (use-package helm-spotify
-;;   :ensure t)
-
-;; (use-package todochiku
-;;   :ensure t
-;;   :config (setq todochiku-icons-directory "~/.emacs.d/todochiku-icons"))
 
 ;; Anaconda Anaconda+Eldoc
 (use-package anaconda-mode
@@ -99,20 +94,17 @@
     )
 
 ;; Company-anaconda
-(use-package company-anaconda
-  :ensure t
-  :diminish
-  :config
-  (eval-after-load "company"
-     '(add-to-list 'company-backends '(company-anaconda company-dabbrev company-capf))))
-    ;;'(add-to-list 'company-backends '(company-anaconda))))
+;; (use-package company-anaconda
+;;   :ensure t
+;;   :diminish
+;;   :config
+;;   (eval-after-load "company"
+;;      '(add-to-list 'company-backends '(company-anaconda company-dabbrev company-capf))))
+;;     ;;'(add-to-list 'company-backends '(company-anaconda))))
 
 ;;(add-hook 'python-mode-hook 'company-mode)
 
-;; enable eldoc in programming modes
-;;(add-hook 'prog-mode-hook 'turn-on-eldoc-mode)
-
-;; enable eldoc in your programming modes
+;; Enable eldoc in your programming modes
 (use-package eldoc
   :ensure t
   :diminish 
@@ -124,8 +116,6 @@
   :config
   (add-hook 'prog-mode-hook 'turn-on-eldoc-mode))
 
-;; (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
-
 ;; Jedi
 ;; (setq jedi-mode t)
 ;; (add-hook 'python-mode-hook 'jedi:setup)
@@ -136,40 +126,41 @@
 (add-hook 'prog-mode-hook 'hs-minor-mode)
 (global-set-key [f4] 'hs-toggle-hiding)
 
-;; Company to display pop-ups 
-(use-package company
-  :ensure t)
 
-(add-hook 'after-init-hook 'global-company-mode)
-(setq company-minimum-prefix-length 2)
+;; ;; Company to display pop-ups 
+;; (use-package company
+;;   :ensure t)
 
-(use-package company
-  :ensure t
-  :diminish
-  :defer 4
-  :init (progn
-          (global-company-mode)
-          (setq company-global-modes '(not python-mode cython-mode sage-mode))
-          )
-  :config (progn
-            (setq company-tooltip-limit 6
-                  company-idle-delay .3
-                  company-echo-delay 0.3
-                  company-begin-commands '(self-insert-command)
-                  company-transformers '(company-sort-by-occurrence)
-                  company-selection-wrap-around t
-                  company-minimum-prefix-length 3
-                  company-dabbrev-downcase nil
-                  )
-            (bind-keys :map company-active-map
-                       ("C-n" . company-select-next)
-                       ("C-p" . company-select-previous)
-                       ("C-d" . company-show-doc-buffer)
-                       ("<tab>" . company-complete)
-                       ("<escape>" . company-abort)
-                       )
-            )
-  )
+;; (add-hook 'after-init-hook 'global-company-mode)
+;; (setq company-minimum-prefix-length 2)
+
+;; (use-package company
+;;   :ensure t
+;;   :diminish
+;;   :defer 4
+;;   :init (progn
+;;           (global-company-mode)
+;;           (setq company-global-modes '(not python-mode cython-mode sage-mode))
+;;           )
+;;   :config (progn
+;;             (setq company-tooltip-limit 6
+;;                   company-idle-delay .3
+;;                   company-echo-delay 0.3
+;;                   company-begin-commands '(self-insert-command)
+;;                   company-transformers '(company-sort-by-occurrence)
+;;                   company-selection-wrap-around t
+;;                   company-minimum-prefix-length 3
+;;                   company-dabbrev-downcase nil
+;;                   )
+;;             (bind-keys :map company-active-map
+;;                        ("C-n" . company-select-next)
+;;                        ("C-p" . company-select-previous)
+;;                        ("C-d" . company-show-doc-buffer)
+;;                        ("<tab>" . company-complete)
+;;                        ("<escape>" . company-abort)
+;;                        )
+;;             )
+;;   )
 
 
 ;; Pair parenthesis
@@ -220,14 +211,6 @@
 
 (--each '(python-mode python)
   (eval-after-load it                      '(require 'smartparens-python)))
-
-  ;; Disable smartparens for most pairs, my editing style doesn't play well with it
-  ;; (eval-after-load 'smartparens
-  ;;   '(progn
-  ;;      (sp-pair "(" nil :actions :rem)
-  ;;      (sp-pair "[" nil :actions :rem)
-  ;;      (sp-pair "'" nil :actions :rem)
-;;      (sp-pair "\"" nil :actions :rem)))
 
 ;; Display time in the mode-line
 (setq display-time-format "%Hh%M")
@@ -502,7 +485,6 @@ if breakpoints are present in `python-mode' files"
 (define-key python-mode-map (kbd "TAB") 'my-smart-tab)
 (define-key python-mode-map (kbd "<backtab>") 'my-smart-backtab)
 
-;; (define-key ein:notebook-mode-map (kbd "TAB") 'ein:completer-complete)
 
 (setq ein:notebook-modes '(ein:notebook-multilang-mode ein:notebook-python-mode))
 
@@ -591,10 +573,23 @@ if breakpoints are present in `python-mode' files"
 ;; Log in a buffer when people talk to me
 (setq erc-log-matches-flag t)
 (setq erc-log-matches-types-alist
-          '((keyword . "### Keywords")
-            (current-nick . "### Me")))
+          '((keyword . "### Keywords Log ###")
+            (current-nick . "### Me Log ###")))
 
 (setq erc-keywords '("keras" "bayes" "causality" " tensorflow" "python"))
+
+
+(defun bk/nicklist-toggle ()
+  "Function to toggle the nicklist in ERC mode."
+  (interactive)
+  (let ((nicklist-buffer-name (format " *%s-nicklist*" (buffer-name))))
+    (if (get-buffer nicklist-buffer-name)
+        (kill-buffer nicklist-buffer-name)
+      (erc-nicklist))))
+
+(define-key erc-mode-map (kbd "<f9>") 'bk/nicklist-toggle)
+
+
 
 ;; Smarter beep
 ;; todo: no beep when buffer is visible
@@ -660,44 +655,52 @@ if breakpoints are present in `python-mode' files"
 
 
 ;; TODO
-;; 1) do not show alert when the buffer the message is
-;; from is visible
-;; 2) mark as read when visit origin buffer
-;; 3) group all unread (pvt and channel) in one alist
-;; 4) ignore not from a user msgs
-(setq unread-pvt-msgs '(("placeholder" . 1)))
+;; 
+(setq unread-pvt-msgs '())
 (defun notify-privmsg-mode-line (proc parsed)
   (let ((nick (car (erc-parse-user (erc-response.sender parsed))))
         (target (car (erc-response.command-args parsed)))
         (msg (erc-response.contents parsed)))
     (when (and (erc-current-nick-p target)
                (not (erc-is-message-ctcp-and-not-action-p msg)))
-      (setq mode-line-end-spaces (format "[pvt:%s]" nick)
-                         msg
-                         nil)
+      ;; (setq mode-line-end-spaces (format "[last pvt:%s]" nick)
+      ;;                    msg
+      ;;                    nil)
       (if (eq (cdr (assoc nick unread-pvt-msgs)) nil)
 	  (add-to-list 'unread-pvt-msgs `(,nick . 1))
 	(progn
 	  (setq new-value  (+ (cdr (assoc nick unread-pvt-msgs)) 1)    )
 	  (setf (cdr (assoc nick unread-pvt-msgs)) new-value)
-	  (setq mode-line-end-spaces (format "[pvt:%s (%d)]" nick (cdr (assoc nick unread-pvt-msgs)) )
+	  (setq mode-line-end-spaces (format "[last pvt:%s (%d)]" nick (cdr (assoc nick unread-pvt-msgs)) )
 		msg
 		nil)
+	  (display-unread-pvts)
 	  )
 	)
       ;;(print unread-pvt-msgs)
       ))
   nil)
 
-;; (+ (cdr (assoc "nick" unread-pvt-msgs)) 1
+(add-hook 'after-change-major-mode-hook 'read-erc-msgs)
+
+(defun display-unread-pvts ()
+  (interactive)
+  (setq pvt-status-string "[unread pvt:")
+  (mapcar (lambda (element)
+	    (print element)
+	   (setq pvt-status-string (concat pvt-status-string (format " %s(%d)," (car element) (cdr element))))	    
+	    )
+	  unread-pvt-msgs
+	  )
+  (setq pvt-status-string (subseq pvt-status-string 0 (- (length pvt-status-string) 1)))
+
+  (setq pvt-status-string (concat  pvt-status-string "]"))
+  (message pvt-status-string)
+  )
+
+(defun read-erc-msgs ())
 
 (add-hook 'erc-server-PRIVMSG-functions 'notify-privmsg-mode-line t)
-
-;; (setq amigo "amigo")
-;; (setq minha-lista `(("amigo" . 1)))
-;; (setq x (+ (cdr (assoc amigo minha-lista)) 1))
-;; (add-to-list 'minha-lista `("amigo" . ,x))
-
 
 ;; E-mail config
 (setq user-mail-address "lg.moneda@gmail.com")
@@ -722,6 +725,8 @@ http://lgmoneda.github.io/")
     (abbrev-mode . "")
     (company-mode . "")
     (eldoc-mode . "")
+    (visual-line-mode . "")
+    (flyspell-mode . "")
     ;; Major modes
     (fundamental-mode . "Fund")
     (lisp-interaction-mode . "λ")
@@ -789,7 +794,8 @@ want to use in the modeline *in lieu of* the original.")
 ;;     :config
 ;;     (ac-config-default)
 ;;     (setq ac-quick-help-delay 4))
-;;   (add-to-list 'ac-modes 'anaconda-mode)
+
+;; 					;(add-to-list 'ac-modes 'anaconda-mode)
   
 ;;   ;; (add-hook 'python-mode-hook '(add-to-list ac-sources '(company-anaconda)))
   
@@ -808,5 +814,83 @@ want to use in the modeline *in lieu of* the original.")
 ;;   (define-key ac-completing-map "\t" 'ac-complete)
 ;;   (define-key ac-completing-map "\r" nil))
 
-(with-eval-after-load 'company
-  (company-flx-mode +1))
+
+;; ;; (with-eval-after-load 'company
+;; ;;   (company-flx-mode +1))
+
+(use-package auto-complete
+  :ensure t
+  :init
+  (setq ac-use-menu-map t)
+  (setq ac-auto-start 1)
+  (setq ac-auto-show-menu 0.5)
+  (setq ac-use-fuzzy t)
+  :config
+  (ac-config-default)
+  (define-key ac-completing-map "\C-n" 'ac-next)
+  (define-key ac-completing-map "\C-p" 'ac-previous)
+
+  ;; show help menu beautifully
+  (use-package pos-tip
+    :ensure t))
+
+
+
+
+(add-hook 'python-mode-hook 'ac-anaconda-setup)
+
+
+;; auto complete package
+(add-to-list 'load-path "~/.emacs.d/site-packages/ac-anaconda" t)
+
+;; (use-package auto-yasnippet
+;;   :ensure t)
+
+;; if you only want to try a package without literally installing it
+(use-package try
+  :ensure t)
+
+;; expand region
+(use-package expand-region
+  :ensure t
+  :commands er/expand-region
+  :init
+  (setq er--show-expansion-message t
+	expand-region-fast-keys-enabled nil)
+  :bind
+  ("C-=" . er/expand-region))
+
+;; hippie expand is dabbrev expand on steroids
+(defvar hippie-expand-verbose)
+(setq hippie-expand-verbose t)
+(setq hippie-expand-try-functions-list '(
+                                         ;; try to expand word "dynamically", searching the current buffer
+                                         try-expand-dabbrev
+
+                                         ;; try to expand word "dynamically", searching all other buffers
+                                         
+					 try-expand-dabbrev-all-buffers
+
+                                         ;; try to expand word "dynamically", searching the kill ring
+					 try-expand-dabbrev-from-kill
+
+                                         ;; try to complete text as a file name, as many characters as unique
+					 try-complete-file-name-partially
+
+                                         ;; try to complete text as a file name
+					 try-complete-file-name
+
+                                         ;; try to expand word before point according to all abbrev tables
+					 try-expand-all-abbrevs
+
+                                         ;; try to complete the current line to an entine line in the buffer
+					 try-expand-list
+
+                                         ;; try to complete the current line to an entire line in the buffer 
+					 try-expand-line
+
+                                         ;; try to complete as an Emacs lisp symbol, as many characters as unique
+					 try-complete-lisp-symbol-partially
+
+                                         ;; try to complete word as an Emacs lisp symbol
+					 try-complete-lisp-symbol))
