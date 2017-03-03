@@ -5,6 +5,9 @@
 	  (lambda ()
 	    (load-theme 'monokai)))
 
+;; Start with my to-do
+(find-file "~/Dropbox/Agenda/todo.org") 
+
 ;; Package Management
 (require 'package)
 (setq package-enable-at-startup nil)
@@ -19,7 +22,7 @@
 (global-set-key (kbd "<f6>") (lambda() (interactive)(find-file "~/.emacs.d/init.el")))
 
 ;; Fast jump to elisp function
-;; The .el files are not in the folder, onlye the elc
+;; The .el files are not in the folder, only the elc
 (global-set-key (kbd "C-h C-f") 'lgm/jump-to-elisp-func-def)
 
 (defun lgm/jump-to-elisp-func-def ()
@@ -168,7 +171,9 @@
   :ensure t
   :init (smartparens-global-mode)
   (sp-pair "'" nil :actions :rem)
-  (sp-pair "`" nil :actions :rem))
+  (sp-pair "`" nil :actions :rem)
+  :config
+  (sp-local-pair 'erc-mode "(" nil :actions nil))
 
 ;; Smartparens keyibinding management
 (define-key smartparens-mode-map (kbd "C-M-f") 'sp-forward-sexp)
@@ -241,9 +246,29 @@
 
 ;; (add-hook 'python-mode-hook 'run-python-once)
 
-;; Hiding menu and tool bar
+
+(setq  truncate-lines nil
+       inhibit-startup-screen t
+       initial-scratch-message ""
+       fill-column 80)
+
+;; highlight current line
+(global-hl-line-mode)
+(set-face-background 'hl-line "#3e4446")
+
+
+(defalias 'yes-or-no-p 'y-or-n-p)
+
+;; global visual line
+(global-visual-line-mode t)
+(diminish 'visual-line-mode)
+
+;; Hiding menu, tool bar and scroll bar
 (menu-bar-mode -99)
 (tool-bar-mode -99)
+(scroll-bar-mode -1)
+;; More thinner window divisions
+(fringe-mode '(1 . 1))
 
 ;; Defining switch tabs commands
 (global-set-key [C-iso-lefttab] 
@@ -545,6 +570,17 @@ if breakpoints are present in `python-mode' files"
 (require 'erc-match)
 
 (erc-spelling-mode 1)
+(add-hook 'erc-mode-hook (lambda () (auto-fill-mode 0)))
+(make-variable-buffer-local 'erc-fill-column)
+ (add-hook 'window-configuration-change-hook 
+	   '(lambda ()
+	      (save-excursion
+	        (walk-windows
+		 (lambda (w)
+		   (let ((buffer (window-buffer w)))
+		     (set-buffer buffer)
+		     (when (eq major-mode 'erc-mode)
+		       (setq erc-fill-column (- (window-width w) 2)))))))))
 
 (erc :server "irc.freenode.net" :port 6667 :nick "lgmoneda")
 
@@ -576,7 +612,7 @@ if breakpoints are present in `python-mode' files"
           '((keyword . "### Keywords Log ###")
             (current-nick . "### Me Log ###")))
 
-(setq erc-keywords '("keras" "bayes" "causality" " tensorflow" "python"))
+(setq erc-keywords '("keras" "bayes" "bayesian" "causality" " tensorflow" "reinforcement"))
 
 
 (defun bk/nicklist-toggle ()
@@ -759,11 +795,11 @@ want to use in the modeline *in lieu of* the original.")
 
  
 
-;; ;; trocar por auto-complete later.
+;; trocar por auto-complete later.
 ;; (use-package auto-complete
 ;;   :ensure t
 ;;   :init
-;;   (setq auto-complete-mode)
+;;   (setq auto-complete-mode t)
 ;;   (ac-config-default)
 ;;   (setq ac-use-fuzzy t
 ;;         ac-fuzzy-enable t)
@@ -771,8 +807,7 @@ want to use in the modeline *in lieu of* the original.")
 ;;   (setq ac-use-menu-map t)
 ;;   ;; ;; start completion but wait me to type 4 characters
 ;;   (setq ac-auto-start 2)
-;;   (setq ac-delay nil)
-  
+;;   (setq ac-delay 0.1)
   
 ;;   ;; ;; dont start the completion menu automatically
 ;;   (setq ac-auto-show-menu 1)
@@ -792,12 +827,12 @@ want to use in the modeline *in lieu of* the original.")
 ;;     ;; auto-complete-mode uses its native rendering for displaying quickhelp
 ;;     :ensure t
 ;;     :config
-;;     (ac-config-default)
+;;     ;;(ac-config-default)
 ;;     (setq ac-quick-help-delay 4))
 
 ;; 					;(add-to-list 'ac-modes 'anaconda-mode)
   
-;;   ;; (add-hook 'python-mode-hook '(add-to-list ac-sources '(company-anaconda)))
+;;   (add-hook 'python-mode-hook '(add-to-list ac-sources '(ac-anaconda)))
   
 ;;   ;; start the completion manually
 ;;   (define-key ac-mode-map (kbd "C-<return>") 'auto-complete)
@@ -818,30 +853,37 @@ want to use in the modeline *in lieu of* the original.")
 ;; ;; (with-eval-after-load 'company
 ;; ;;   (company-flx-mode +1))
 
+;; (use-package auto-complete
+;;   :ensure t
+;;   :init
+;;   (setq ac-use-menu-map t)
+;;   (setq ac-auto-start 1)
+;;   (setq ac-auto-show-menu 0.5)
+;;   (setq ac-use-fuzzy t
+;;         ac-fuzzy-enable t)
+;;   :config
+;;   (ac-config-default)
+;;   (define-key ac-completing-map "\C-n" 'ac-next)
+;;   (define-key ac-completing-map "\C-p" 'ac-previous)
+;;   (define-key ac-menu-map "\C-s" 'ac-isearch)
+
+;;   ;; show help menu beautifully
+;;   (use-package pos-tip
+;;     :ensure t))
+
 (use-package auto-complete
   :ensure t
-  :init
-  (setq ac-use-menu-map t)
-  (setq ac-auto-start 1)
-  (setq ac-auto-show-menu 0.5)
-  (setq ac-use-fuzzy t)
-  :config
-  (ac-config-default)
-  (define-key ac-completing-map "\C-n" 'ac-next)
-  (define-key ac-completing-map "\C-p" 'ac-previous)
+  :init (auto-complete-mode)
+  :config (ac-config-default))
 
-  ;; show help menu beautifully
-  (use-package pos-tip
-    :ensure t))
-
-
-
-
-(add-hook 'python-mode-hook 'ac-anaconda-setup)
-
+(use-package ac-anaconda
+ :ensure t)
 
 ;; auto complete package
 (add-to-list 'load-path "~/.emacs.d/site-packages/ac-anaconda" t)
+
+(add-hook 'python-mode-hook 'ac-anaconda-setup)
+
 
 ;; (use-package auto-yasnippet
 ;;   :ensure t)
@@ -894,3 +936,16 @@ want to use in the modeline *in lieu of* the original.")
 
                                          ;; try to complete word as an Emacs lisp symbol
 					 try-complete-lisp-symbol))
+
+
+
+
+
+
+
+
+
+
+
+;; Start with my to-do
+(find-file "~/Dropbox/Agenda/todo.org") 
