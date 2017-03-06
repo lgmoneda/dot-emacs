@@ -7,4 +7,4 @@ eshell/*
 projectile-bookmarks.eld
 ido.last
 saveplace.log
-.python-environment/*
+.python-environments/*

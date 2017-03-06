@@ -906,8 +906,6 @@ want to use in the modeline *in lieu of* the original.")
 ;;   (define-key ac-completing-map "\r" nil))
 
 
-
-
 ;; ORG MODE
 
 ;; Start with my to-do
