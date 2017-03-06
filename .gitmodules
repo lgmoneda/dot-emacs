@@ -1,0 +1,3 @@
+[submodule "site-packages/python-experiment-mode"]
+	path = site-packages/python-experiment-mode
+	url = https://github.com/wandersoncferreira/python-experiment-mode
