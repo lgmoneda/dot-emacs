@@ -1,10 +1,3 @@
-;; Load Theme
-;; Themes i like: monokai, deeper-blue and hc-zenburn 
-(setq custom-safe-themes t)
-(add-hook 'emacs-startup-hook
-	  (lambda ()
-	    (load-theme 'hc-zenburn)))
-
 ;; Package Management
 (require 'package)
 (setq package-enable-at-startup nil)
@@ -13,6 +6,22 @@
 (add-to-list 'package-archives
      '("gnu" . "http://elpa.gnu.org/packages/"))
 (package-initialize)
+
+;; Bootstrap `use-package'
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+   (package-install 'use-package))
+
+;; High contrast Zenburn theme
+(use-package hc-zenburn-theme
+  :ensure t)
+
+;; Load Theme
+;; Themes i like: monokai, deeper-blue and hc-zenburn 
+(setq custom-safe-themes t)
+(add-hook 'emacs-startup-hook
+	  (lambda ()
+	    (load-theme 'hc-zenburn)))
 
 ;; Fast init.el open
 (global-set-key (kbd "<f6>") (lambda() (interactive)(find-file "~/.emacs.d/init.el")))
@@ -43,11 +52,6 @@
 
 ;; Garbage Collector teste
 (setq gc-cons-threshold 20000000)
-
-;; Bootstrap `use-package'
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-   (package-install 'use-package))
 
 ;; Helm
 (use-package helm
@@ -916,18 +920,28 @@ want to use in the modeline *in lieu of* the original.")
 (add-hook 'after-init-hook 'org-agenda-list)
 (setq org-agenda-block-separator "-")
 
+;; New states to to-do
+(setq org-todo-keywords
+      '((sequence "TODO(t)" "STARTED(s)"  "WAIT(w)" "|" "DONE(d)" "CANCELED(c)")))
+
+(setq org-todo-keyword-faces
+      '(("TODO" . org-warning)
+	("STARTED" . "yellow")
+	("WAIT" . "purple") 
+        ("CANCELED" . (:foreground "blue" :weight bold))))
+
 ;; Dict.cc wrap
 (add-to-list 'load-path "~/.emacs.d/elisp/dict-cc" t)
 (require 'dict-cc)
 
 ;; Python Experiment Mode!
-(add-to-list 'load-path "~/.emacs.d/site-packages/python-experiment-mode")
-(require 'python-experiment-mode)
+;; (add-to-list 'load-path "~/.emacs.d/site-packages/python-experiment-mode")
+;; (require 'python-experiment-mode)
 
-(global-set-key (kbd "<f9>") 'python-experiment)
-(global-set-key (kbd "<f10>") 'python-experiment-lived-too-long)
-(global-set-key (kbd "<f11>") 'python-experiment-reload)
-(global-set-key (kbd "<f12>") 'python-experiment-buffer-to-file)
+;; (global-set-key (kbd "<f9>") 'python-experiment)
+;; (global-set-key (kbd "<f10>") 'python-experiment-lived-too-long)
+;; (global-set-key (kbd "<f11>") 'python-experiment-reload)
+;; (global-set-key (kbd "<f12>") 'python-experiment-buffer-to-file)
 
   ;; (use-package ac-anaconda
   ;;   :ensure t
