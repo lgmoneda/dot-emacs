@@ -926,6 +926,14 @@ want to use in the modeline *in lieu of* the original.")
 (add-hook 'after-init-hook 'org-agenda-list)
 (setq org-agenda-block-separator "-")
 
+(defun org-tell-me-first-header ()
+  (interactive)
+  (save-excursion
+    (outline-up-heading 3)
+    (print (substring-no-properties (org-get-heading t t)))
+  )
+ )
+
 ;; Start with my to-do
 ;; The org mode file is opened with
 (find-file "~/Dropbox/Agenda/todo.org")
@@ -935,9 +943,9 @@ want to use in the modeline *in lieu of* the original.")
 (add-to-list 'load-path "~/.emacs.d/elisp/dict-cc" t)
 (require 'dict-cc)
 
-;; Python Experiment Mode!
-(add-to-list 'load-path "~/.emacs.d/site-packages/python-experiment-mode")
-(require 'python-experiment-mode)
+;; Python Experiment!
+(add-to-list 'load-path "~/.emacs.d/site-packages/python-experiment")
+(require 'python-experiment)
 
 (global-set-key (kbd "<f9>") 'python-experiment)
 (global-set-key (kbd "<f10>") 'python-experiment-lived-too-long)
