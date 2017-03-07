@@ -106,15 +106,15 @@
     )
 
 ;;Company-anaconda
-(use-package company-anaconda
-  :ensure t
-  :diminish
-  :config
-  (eval-after-load "company"
-     '(add-to-list 'company-backends '(company-anaconda company-dabbrev company-capf))))
-    ;;'(add-to-list 'company-backends '(company-anaconda))))
+;; (use-package company-anaconda
+;;   :ensure t
+;;   :diminish
+;;   :config
+;;   (eval-after-load "company"
+;;      '(add-to-list 'company-backends '(company-anaconda company-dabbrev company-capf))))
+;;     ;;'(add-to-list 'company-backends '(company-anaconda))))
 
-(add-hook 'python-mode-hook 'company-mode)
+;; (add-hook 'python-mode-hook 'company-mode)
 
 ;; Enable eldoc in your programming modes
 (use-package eldoc
@@ -129,53 +129,51 @@
   (add-hook 'prog-mode-hook 'turn-on-eldoc-mode))
 
 ;; Jedi
- (use-package jedi
-    :ensure t
-    :config
-    (setq jedi:server-command '("~/.emacs.d/elpa/jedi-core-20170121.610/jediepcserver.py"))
-    (setq jedi:complete-on-dot t)
-    ;;(setq jedi:tooltip-method '(eldoc-style))
-    ;;(add-hook 'python-mode-hook 'jedi:setup)
+ ;; (use-package jedi
+ ;;    :ensure t
+ ;;    :config
+ ;;    (setq jedi:server-command '("~/.emacs.d/elpa/jedi-core-20170121.610/jediepcserver.py"))
+ ;;    (setq jedi:complete-on-dot t)
+ ;;    ;;(setq jedi:tooltip-method '(eldoc-style))
+ ;;    ;;(add-hook 'python-mode-hook 'jedi:setup)
 
-    (add-hook 'python-mode-hook 'jedi:ac-setup)
-    )
+ ;;    (add-hook 'python-mode-hook 'jedi:ac-setup)
+ ;;    )
 
 ;; Enable hide definitions functions
 (add-hook 'prog-mode-hook 'hs-minor-mode)
 (global-set-key [f4] 'hs-toggle-hiding)
 
-(use-package company
-  :ensure t
-  :diminish
-  :defer 4
-  :init (progn
-          (global-company-mode)
-          (setq company-global-modes '(not python-mode cython-mode sage-mode))
-          )
-  :config (progn
-            (setq company-tooltip-limit 6
-                  company-idle-delay .3
-                  company-echo-delay 0.3
-                  company-begin-commands '(self-insert-command)
-                  company-transformers '(company-sort-by-occurrence)
-                  company-selection-wrap-around t
-                  company-minimum-prefix-length 3
-                  company-dabbrev-downcase nil
-                  )
-            (bind-keys :map company-active-map
-		       ("C-s" . helm-fuzzy-match)
-                       ("C-n" . company-select-next)
-                       ("C-p" . company-select-previous)
-                       ("C-d" . company-show-doc-buffer)
-                       ("<tab>" . company-complete)
-                       ("<escape>" . company-abort)
-                       )
-            )
-  )
-
-
-(with-eval-after-load 'company
-  (company-flx-mode +1))
+;; (use-package company
+;;   :ensure t
+;;   :diminish
+;;   :defer 4
+;;   :init (progn
+;;           (global-company-mode)
+;;           (setq company-global-modes '(not python-mode cython-mode sage-mode))
+;;           )
+;;   :config (progn
+;;             (setq company-tooltip-limit 6
+;;                   company-idle-delay .3
+;;                   company-echo-delay 0.3
+;;                   company-begin-commands '(self-insert-command)
+;;                   company-transformers '(company-sort-by-occurrence)
+;;                   company-selection-wrap-around t
+;;                   company-minimum-prefix-length 3
+;;                   company-dabbrev-downcase nil
+;;                   )
+;;             (bind-keys :map company-active-map
+;; 		       ("C-s" . helm-fuzzy-match)
+;;                        ("C-n" . company-select-next)
+;;                        ("C-p" . company-select-previous)
+;;                        ("C-d" . company-show-doc-buffer)
+;;                        ("<tab>" . company-complete)
+;;                        ("<escape>" . company-abort)
+;;                        )
+;;             )
+;;   )
+;; (with-eval-after-load 'company
+;;   (company-flx-mode +1))
 
 
 
@@ -912,13 +910,6 @@ want to use in the modeline *in lieu of* the original.")
 
 ;; ORG MODE
 
-;; Start with my to-do
-;; The org mode file is opened with
-(find-file "~/Dropbox/Agenda/todo.org")
-;; No line number in org mode, please
-(add-hook 'org-mode-hook (linum-mode 0))
-(add-hook 'after-init-hook 'org-agenda-list)
-(setq org-agenda-block-separator "-")
 
 ;; New states to to-do
 (setq org-todo-keywords
@@ -930,21 +921,79 @@ want to use in the modeline *in lieu of* the original.")
 	("WAIT" . "purple") 
         ("CANCELED" . (:foreground "blue" :weight bold))))
 
+;; No line number in org mode, please
+(add-hook 'org-mode-hook (linum-mode 0))
+(add-hook 'after-init-hook 'org-agenda-list)
+(setq org-agenda-block-separator "-")
+
+;; Start with my to-do
+;; The org mode file is opened with
+(find-file "~/Dropbox/Agenda/todo.org")
+
+
 ;; Dict.cc wrap
 (add-to-list 'load-path "~/.emacs.d/elisp/dict-cc" t)
 (require 'dict-cc)
 
 ;; Python Experiment Mode!
-;; (add-to-list 'load-path "~/.emacs.d/site-packages/python-experiment-mode")
-;; (require 'python-experiment-mode)
+(add-to-list 'load-path "~/.emacs.d/site-packages/python-experiment-mode")
+(require 'python-experiment-mode)
 
-;; (global-set-key (kbd "<f9>") 'python-experiment)
-;; (global-set-key (kbd "<f10>") 'python-experiment-lived-too-long)
-;; (global-set-key (kbd "<f11>") 'python-experiment-reload)
-;; (global-set-key (kbd "<f12>") 'python-experiment-buffer-to-file)
+(global-set-key (kbd "<f9>") 'python-experiment)
+(global-set-key (kbd "<f10>") 'python-experiment-lived-too-long)
+(global-set-key (kbd "<f11>") 'python-experiment-reload)
+(global-set-key (kbd "<f12>") 'python-experiment-buffer-to-file)
 
-  ;; (use-package ac-anaconda
-  ;;   :ensure t
-  ;;   :config
-  ;;   (add-hook 'python-mode-hook 'ac-anaconda-setup))
+
+;; Bk's python
+(use-package python
+  :mode ("\\.py" . python-mode)
+  :config
+  (setq python-shell-interpreter-args "")
+  (eval-after-load "python"
+    '(progn
+       (define-key python-mode-map (kbd "<f5>") 'python-insert-breakpoint)))
+  (use-package anaconda-mode
+    :ensure t
+    :diminish anaconda-mode
+    :config)
+    ;;(bk-python-hooks '(anaconda-mode python--add-debug-highlight)))
+  (use-package jedi
+    :ensure t
+    :config
+    (setq jedi:server-command '("~/.emacs.d/elpa/jedi-core-20170121.610/jediepcserver.py"))
+    (setq jedi:complete-on-dot t)
+    ;;I'm happy with Anaconda-Eldoc
+    (setq jedi:tooltip-method '(pos-tip popup))
+    (add-hook 'python-mode-hook 'jedi:setup))
+  )
+
+
+;; auto complete mode
+(use-package auto-complete
+  :ensure t
+  :diminish auto-complete-mode
+  :init
+  (setq ac-use-menu-map t)
+  (setq ac-auto-start 3)
+  (setq ac-fuzzy-enable t)
+  (setq ac-use-fuzzy t)
+  (setq ac-use-quick-help nil)
+  :config
+  (ac-config-default)
+  (define-key ac-completing-map "\C-n" 'ac-next)
+  (define-key ac-completing-map "\C-p" 'ac-previous)
+  (define-key ac-completing-map "\C-s" 'ac-isearch)
+  ;; show help menu beautifully
+  (use-package pos-tip
+    :ensure t)
+
+ 
+
+  (use-package popup
+    :ensure t)
+  )
+
+
+
 
