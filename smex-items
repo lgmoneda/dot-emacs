@@ -1,0 +1,18 @@
+
+;; ----- smex-history -----
+(
+ company-flx-mode
+ ein:worksheet-move-cell-up
+ ein:worksheet-insert-cell-below
+ cd
+ 5x5
+ arp
+ dbx
+)
+
+;; ----- smex-data -----
+(
+ (ein:worksheet-insert-cell-below . 1)
+ (ein:worksheet-move-cell-up . 1)
+ (company-flx-mode . 1)
+)

@@ -82,6 +82,17 @@
   :ensure t
   :init (flx-ido-mode))
 
+;; Smex
+(use-package smex
+  :ensure t
+  :init (smex-initialize)
+  :config
+  (global-set-key (kbd "M-X") 'smex)
+  ;;(global-set-key (kbd "M-X") 'smex-major-mode-commands)
+  ;; This is your old M-x.
+  ;;(global-set-key (kbd "M-x") 'execute-extended-command)
+  )
+
 ;; Projectile
 (use-package projectile
   :ensure t
@@ -326,35 +337,41 @@
       (interactive)
       (other-window -1)))
 
-;Defining switch tabs commands
+;; Defining switch tabs commands
 (global-set-key [C-tab] 
     (lambda ()
       (interactive)
       (other-window 1)))
 
-;Defining switch buffer command
+;; Defining switch buffer command
 (global-set-key (kbd "C-1")
     (lambda ()
       (interactive)
       (switch-to-prev-buffer)))
 
-;Defining switch buffer command
+;; Defining switch buffer command
 (global-set-key (kbd "C-'")
     (lambda ()
       (interactive)
       (bury-buffer)))
 
-;Defining switch frames command
+;; Defining switch frames command
 (global-set-key (kbd "C-2")
     (lambda ()
       (interactive)
       (other-frame 1)))
 
-;Initialize in full screen
+;; Tryng to save my hand
+(global-set-key (kbd "C-0")
+    (lambda ()
+      (interactive)
+      (other-frame 1)))
+
+;; Initialize in full screen
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 (put 'upcase-region 'disabled nil)
 
-;Which-key minor mode
+;; Which-key minor mode
 (use-package which-key
   :ensure t
   :init (which-key-mode))
@@ -946,13 +963,13 @@ want to use in the modeline *in lieu of* the original.")
 (require 'dict-cc)
 
 ;; Python Experiment!
-;; (add-to-list 'load-path "~/.emacs.d/site-packages/python-experiment")
-;; (require 'python-experiment)
+(add-to-list 'load-path "~/.emacs.d/site-packages/python-experiment")
+(require 'python-experiment)
 
-;; (global-set-key (kbd "<f9>") 'python-experiment)
-;; (global-set-key (kbd "<f10>") 'python-experiment-lived-too-long)
-;; (global-set-key (kbd "<f11>") 'python-experiment-reload)
-;; (global-set-key (kbd "<f12>") 'python-experiment-buffer-to-file)
+(global-set-key (kbd "<f9>") 'python-experiment)
+(global-set-key (kbd "<f10>") 'python-experiment-lived-too-long)
+(global-set-key (kbd "<f11>") 'python-experiment-reload)
+(global-set-key (kbd "<f12>") 'python-experiment-buffer-to-file)
 
 
 ;; Bk's python
