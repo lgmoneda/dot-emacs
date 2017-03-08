@@ -588,6 +588,8 @@ if breakpoints are present in `python-mode' files"
 
 ;; ERC
 (add-to-list 'load-path "~/.emacs.d/elisp/erc-extras" t)
+(use-package erc-hl-nicks
+  :ensure t)
 (require 'erc-hl-nicks)
 (require 'erc-nicklist)
 (require 'erc-notify)
@@ -944,13 +946,13 @@ want to use in the modeline *in lieu of* the original.")
 (require 'dict-cc)
 
 ;; Python Experiment!
-(add-to-list 'load-path "~/.emacs.d/site-packages/python-experiment")
-(require 'python-experiment)
+;; (add-to-list 'load-path "~/.emacs.d/site-packages/python-experiment")
+;; (require 'python-experiment)
 
-(global-set-key (kbd "<f9>") 'python-experiment)
-(global-set-key (kbd "<f10>") 'python-experiment-lived-too-long)
-(global-set-key (kbd "<f11>") 'python-experiment-reload)
-(global-set-key (kbd "<f12>") 'python-experiment-buffer-to-file)
+;; (global-set-key (kbd "<f9>") 'python-experiment)
+;; (global-set-key (kbd "<f10>") 'python-experiment-lived-too-long)
+;; (global-set-key (kbd "<f11>") 'python-experiment-reload)
+;; (global-set-key (kbd "<f12>") 'python-experiment-buffer-to-file)
 
 
 ;; Bk's python
@@ -974,6 +976,7 @@ want to use in the modeline *in lieu of* the original.")
     ;;I'm happy with Anaconda-Eldoc
     (setq jedi:tooltip-method '(pos-tip popup))
     (add-hook 'python-mode-hook 'jedi:setup))
+    (define-key jedi-mode-map (kbd "<C-tab>") nil)
   )
 
 
@@ -1001,7 +1004,5 @@ want to use in the modeline *in lieu of* the original.")
   (use-package popup
     :ensure t)
   )
-
-
 
 
