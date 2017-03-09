@@ -8,4 +8,6 @@ projectile-bookmarks.eld
 ido.last
 saveplace.log
 .python-environments/*
-ac-comphist.dat 
+ac-comphist.dat
+smex-items
+.mc-list.el
