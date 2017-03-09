@@ -262,6 +262,16 @@
   (pythonic-activate "~/miniconda2/envs/pytevec")
   )
 
+
+;; Check if i'm at work and activate
+;; the right environment
+(defun activate-work-env ()
+  (if (string= (system-name) "deb3550")
+      (apytevec))
+  )
+
+(activate-work-env)
+
 ;; Multiple cursors
 ;; First mark the word, then add more cursors
 ;; If you want to insert a new line in multiple cursors mode, use C-j
@@ -994,27 +1004,57 @@ want to use in the modeline *in lieu of* the original.")
     (setq jedi:tooltip-method '(pos-tip popup))
     (add-hook 'python-mode-hook 'jedi:setup))
     (define-key jedi-mode-map (kbd "<C-tab>") nil)
-  )
+    )
 
+(add-hook 'python-mode-hook
+	  '(lambda ()
+	     (local-set-key (kbd "M-?") 'jedi:show-doc)
+	     (local-set-key (kbd "M-.") 'jedi:goto-definition)
+	     (local-set-key (kbd "M-,") 'jedi:goto-definition-pop-marker)))
+
+
+;; auto complete mode
+;; (use-package auto-complete
+;;   :ensure t
+;;   :diminish auto-complete-mode
+;;   :init
+;;   (setq ac-use-menu-map t)
+;;   (setq ac-auto-start 3)
+;;   (setq ac-fuzzy-enable t)
+;;   (setq ac-use-fuzzy t)
+;;   (setq ac-use-quick-help nil)
+;;   :config
+;;   (ac-config-default)
+;;   (define-key ac-completing-map "\C-n" 'ac-next)
+;;   (define-key ac-completing-map "\C-p" 'ac-previous)
+;;   (define-key ac-completing-map "\C-s" 'ac-isearch)
+;;   ;; show help menu beautifully
+;;   (use-package pos-tip
+;;     :ensure t)
 
 ;; auto complete mode
 (use-package auto-complete
   :ensure t
   :diminish auto-complete-mode
   :init
+  
   (setq ac-use-menu-map t)
-  (setq ac-auto-start 3)
-  (setq ac-fuzzy-enable t)
+  (setq ac-auto-start 4)
   (setq ac-use-fuzzy t)
   (setq ac-use-quick-help nil)
+  
   :config
   (ac-config-default)
   (define-key ac-completing-map "\C-n" 'ac-next)
   (define-key ac-completing-map "\C-p" 'ac-previous)
-  (define-key ac-completing-map "\C-s" 'ac-isearch)
-  ;; show help menu beautifully
-  (use-package pos-tip
-    :ensure t)
+  (define-key ac-completing-map (kbd "C-<return>") 'auto-complete))
+
+
+;;; use 'complete when auto-complete is disabled
+(setq-default indent-tabs-mode nil)
+(setq tab-always-indent 'complete)
+(add-to-list 'completion-styles 'initials t)
+
 
  
 
