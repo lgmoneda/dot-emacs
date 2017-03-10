@@ -944,13 +944,14 @@ want to use in the modeline *in lieu of* the original.")
 
 ;; New states to to-do
 (setq org-todo-keywords
-      '((sequence "TODO(t)" "STARTED(s)"  "WAIT(w)" "|" "DONE(d)" "CANCELED(c)")))
+      '((sequence "TODO(t)" "STARTED(s)"  "WAIT(w)" "|" "DONE(d)" "CANCELED(c)" "FAIL(f)")))
 
 (setq org-todo-keyword-faces
       '(("TODO" . org-warning)
 	("STARTED" . "yellow")
 	("WAIT" . "purple") 
-        ("CANCELED" . (:foreground "blue" :weight bold))))
+        ("CANCELED" . (:foreground "blue" :weight bold))
+        ("FAIL" . (:foreground "blue" :weight bold))))
 
 ;; No line number in org mode, please
 (add-hook 'org-mode-hook (linum-mode 0))
