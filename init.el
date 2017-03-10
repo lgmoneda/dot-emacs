@@ -445,6 +445,8 @@
   :ensure t)
 
 (global-set-key (kbd "C-:") 'avy-goto-char)
+(global-set-key (kbd "C-x a") 'avy-goto-char)
+(global-set-key (kbd "C-x C-a") 'avy-goto-char-2)
 (global-set-key (kbd "C-?") 'avy-goto-line)
 
 ;; custom package
@@ -1056,10 +1058,8 @@ want to use in the modeline *in lieu of* the original.")
 (add-to-list 'completion-styles 'initials t)
 
 
- 
-
-  (use-package popup
+(use-package popup
     :ensure t)
-  )
+
 
 
