@@ -53,6 +53,9 @@
 ;; Garbage Collector teste
 (setq gc-cons-threshold 20000000)
 
+;; Adjusting Mouse sensitivity
+(setq mouse-wheel-progressive-speed nil)
+
 ;; Helm
 (use-package helm
   :ensure t)
@@ -445,8 +448,8 @@
   :ensure t)
 
 (global-set-key (kbd "C-:") 'avy-goto-char)
-(global-set-key (kbd "C-x a") 'avy-goto-char)
-(global-set-key (kbd "C-x C-a") 'avy-goto-char-2)
+(global-set-key (kbd "C-x C-a") 'avy-goto-char)
+(global-set-key (kbd "C-x a") 'avy-goto-char-2)
 (global-set-key (kbd "C-?") 'avy-goto-line)
 
 ;; custom package
@@ -602,10 +605,28 @@ if breakpoints are present in `python-mode' files"
     (indent-for-tab-command arg)))
 
 
+;; Put white spaces between operators in Python
+(use-package electric-operator
+  :ensure t
+  :config (add-hook 'python-mode-hook #'electric-operator-mode))
+
+;; Warning about imports in python
+;; Requires pyflakes
+;; M-x pyimport-remove-unused
+;; M-x pyimport-insert-missing
+;; https://github.com/Wilfred/pyimport
+(use-package pyimport
+  :ensure t)
+
+(define-key python-mode-map (kbd "C-c C-i") #'pyimport-insert-missing)
+
+;; Test http rest webservices inside emacs
+;; https://github.com/pashky/restclient.el
+(use-package restclient
+  :ensure t)
+
 ;;(define-key company-mode-map (kbd "TAB") 'company-complete-common)
 
-;; Adjusting Mouse sensitivity
-(setq mouse-wheel-progressive-speed nil)
 
 ;; Trying to reproduce arrow keys
 ;; (define-key key-translation-map (kbd "C-l") (kbd "\C-b"))
@@ -958,6 +979,9 @@ want to use in the modeline *in lieu of* the original.")
 (add-hook 'after-init-hook 'org-agenda-list)
 (setq org-agenda-block-separator "-")
 
+(define-key org-mode-map (kbd "C-S-s /") 'helm-org-agenda-files-headings)
+
+
 (defun org-tell-me-first-header ()
   (interactive)
   (save-excursion
@@ -970,6 +994,43 @@ want to use in the modeline *in lieu of* the original.")
 ;; The org mode file is opened with
 (find-file "~/Dropbox/Agenda/todo.org")
 
+;; Org Journal
+(use-package org-journal
+  :ensure t
+  :init (setq org-journal-dir "~/Dropbox/Agenda/Journal"))
+
+
+(setf org-journal-dir "~/Dropbox/Agenda/Journal")
+(setf org-journal-file-format "my-journal.org")
+(setf org-journal-date-prefix "* ")
+(setf org-journal-time-prefix "** ")
+
+;; Make Org Journal remember me about
+;; writing my day thoughts like in Memento mode
+
+(defcustom journal-file "~/Dropbox/Agenda/Journal/my-journal.org" 
+  "Customizable variable to specify any file, which will be used for Memento." 
+  :type 'string
+  :group 'journal)
+
+(defun journal-get-modification-date ()
+  "Returns the last modified date of the current memento file."
+  (format-time-string "%Y-%m-%d"
+(nth 5 (file-attributes journal-file))))
+
+(defun journal-check-when-quit ()
+  (interactive)
+  (if (file-exists-p journal-file)
+      ;; Check if there was a log written today. If this is not the case, then check if it's already tonight except the night.
+      (if (and (string< (journal-get-modification-date) (format-time-string "%Y-%m-%d")) (string< "20" (format-time-string "%k")))
+          ;; Invoke Memento if the user wants to proceed. 
+          (if (yes-or-no-p "Do you want to tell how your day was?")
+              (progn (call-interactively 'org-journal-new-entry))))
+    ;; If the Memento file doesn't exist yet, create a file and proceed with creating a log.
+    (write-region "" nil journal-file)
+    (progn (call-interactively 'org-journal-new-entry))))
+
+(add-hook 'kill-emacs-hook 'journal-check-when-quit)
 
 ;; Dict.cc wrap
 (add-to-list 'load-path "~/.emacs.d/elisp/dict-cc" t)
