@@ -627,7 +627,6 @@ if breakpoints are present in `python-mode' files"
 
 ;;(define-key company-mode-map (kbd "TAB") 'company-complete-common)
 
-
 ;; Trying to reproduce arrow keys
 ;; (define-key key-translation-map (kbd "C-l") (kbd "\C-b"))
 ;; (define-key key-translation-map (kbd "M-l") (kbd "M-b"))
