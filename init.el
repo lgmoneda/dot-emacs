@@ -964,7 +964,7 @@ want to use in the modeline *in lieu of* the original.")
 
 
 ;; ORG MODE
-
+(require 'org)
 
 ;; New states to to-do
 (setq org-todo-keywords
@@ -1026,7 +1026,7 @@ want to use in the modeline *in lieu of* the original.")
       ;; Check if there was a log written today. If this is not the case, then check if it's already tonight except the night.
       (if (and (string< (journal-get-modification-date) (format-time-string "%Y-%m-%d")) (string< "20" (format-time-string "%k")))
           ;; Invoke Memento if the user wants to proceed. 
-          (if (yes-or-no-p "Do you want to tell how your day was?")
+          (if (yes-or-no-p "Do you want to write your Journal?")
               (progn (call-interactively 'org-journal-new-entry))))
     ;; If the Memento file doesn't exist yet, create a file and proceed with creating a log.
     (write-region "" nil journal-file)
