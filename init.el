@@ -56,6 +56,10 @@
 ;; Adjusting Mouse sensitivity
 (setq mouse-wheel-progressive-speed nil)
 
+;; Let Elisp be less conservative
+(setq max-specpdl-size (* 15 max-specpdl-size))
+(setq max-list-eval-depth (* 15 max-lisp-eval-depth))
+
 ;; Helm
 (use-package helm
   :ensure t)
@@ -978,8 +982,7 @@ want to use in the modeline *in lieu of* the original.")
 (add-hook 'after-init-hook 'org-agenda-list)
 (setq org-agenda-block-separator "-")
 
-(define-key org-mode-map (kbd "C-S-s /") 'helm-org-agenda-files-headings)
-
+(org-defkey org-mode-map (kbd "C-S-s /") 'helm-org-agenda-files-headings)
 
 (defun org-tell-me-first-header ()
   (interactive)
