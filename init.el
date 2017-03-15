@@ -436,6 +436,7 @@
          ("\\.markdown\\'" . markdown-mode))
   :init (setq markdown-command "multimarkdown"))
 
+;; Use M-x markdown-preview-mode in a md buffer
 (use-package markdown-preview-mode
   :ensure t)
 
@@ -1015,10 +1016,80 @@ want to use in the modeline *in lieu of* the original.")
   :type 'string
   :group 'journal)
 
+(defun lgm/org-journal-new-today-entry (prefix &optional event)
+  "Open the journal for the date indicated by point and start a new entry.
+If the date is not today, it won't be given a time heading. If a
+prefix is given, don't add a new heading."
+  (interactive
+   (list current-prefix-arg last-nonmenu-event))
+  (let* ((time (current-time)))
+    (lgm/org-journal-new-entry prefix time)))
+
+(defun lgm/org-journal-new-entry (prefix &optional time)
+  "Open today's journal file and start a new entry.
+Giving the command a PREFIX arg will just open a today's file,
+without adding an entry. If given a TIME, create an entry for the
+time's day.
+
+Whenever a journal entry is created the
+`org-journal-after-entry-create-hook' hook is run"
+  (interactive "P")
+  (org-journal-dir-check-or-create)
+  (let* ((entry-path (org-journal-get-entry-path time))
+         (should-add-entry-p (not prefix)))
+
+    ;; open journal file
+    (unless (string= entry-path (buffer-file-name))
+      (funcall org-journal-find-file entry-path))
+    (org-journal-decrypt)
+    (goto-char (point-max))
+    (let ((unsaved (buffer-modified-p))
+          (new-file-p (equal (point-max) 1)))
+
+      ;; empty file? Add a date timestamp
+      (insert "\n")
+      (insert org-journal-date-prefix
+              (format-time-string org-journal-date-format time))
+
+      ;; add crypt tag if encryption is enabled and tag is not present
+      (when org-journal-enable-encryption
+        (goto-char (point-min))
+        (unless (member org-crypt-tag-matcher (org-get-tags))
+          (org-set-tags-to org-crypt-tag-matcher))
+        (goto-char (point-max)))
+
+      ;; move TODOs from previous day here
+      (when (and new-file-p org-journal-carryover-items)
+        (save-excursion (org-journal-carryover)))
+
+      ;; insert the header of the entry
+      (when should-add-entry-p
+        (unless (eq (current-column) 0) (insert "\n"))
+        (let ((timestamp (if (= (time-to-days (current-time)) (time-to-days time))
+                             (format-time-string org-journal-time-format)
+                           "")))
+          (insert "\n" org-journal-time-prefix timestamp))
+        (run-hooks 'org-journal-after-entry-create-hook))
+
+      ;; switch to the outline, hide subtrees
+      (org-journal-mode)
+      (if (and org-journal-hide-entries-p (org-journal-time-entry-level))
+          (hide-sublevels (org-journal-time-entry-level))
+        (show-all))
+
+      ;; open the recent entry when the prefix is given
+      (when should-add-entry-p
+        (show-entry))
+
+      (set-buffer-modified-p unsaved))))
+
+
 (defun journal-get-modification-date ()
   "Returns the last modified date of the current memento file."
   (format-time-string "%Y-%m-%d"
-(nth 5 (file-attributes journal-file))))
+                      (nth 5 (file-attributes journal-file))))
+
+(format-time-string "%d/%m/%Y")
 
 (defun journal-check-when-quit ()
   (interactive)
@@ -1030,7 +1101,7 @@ want to use in the modeline *in lieu of* the original.")
               (progn (call-interactively 'org-journal-new-entry))))
     ;; If the Memento file doesn't exist yet, create a file and proceed with creating a log.
     (write-region "" nil journal-file)
-    (progn (call-interactively 'org-journal-new-entry))))
+    (progn (call-interactively 'lgm/org-journal-new-today-entry))))
 
 (add-hook 'kill-emacs-hook 'journal-check-when-quit)
 
@@ -1039,13 +1110,13 @@ want to use in the modeline *in lieu of* the original.")
 (require 'dict-cc)
 
 ;; Python Experiment!
-(add-to-list 'load-path "~/.emacs.d/site-packages/python-experiment")
-(require 'python-experiment)
+;; (add-to-list 'load-path "~/.emacs.d/site-packages/python-experiment")
+;; (require 'python-experiment)
 
-(global-set-key (kbd "<f9>") 'python-experiment)
-(global-set-key (kbd "<f10>") 'python-experiment-lived-too-long)
-(global-set-key (kbd "<f11>") 'python-experiment-reload)
-(global-set-key (kbd "<f12>") 'python-experiment-buffer-to-file)
+;; (global-set-key (kbd "<f9>") 'python-experiment)
+;; (global-set-key (kbd "<f10>") 'python-experiment-lived-too-long)
+;; (global-set-key (kbd "<f11>") 'python-experiment-reload)
+;; (global-set-key (kbd "<f12>") 'python-experiment-buffer-to-file)
 
 
 ;; Bk's python
@@ -1124,6 +1195,4 @@ want to use in the modeline *in lieu of* the original.")
 
 (use-package popup
     :ensure t)
-
-
 
