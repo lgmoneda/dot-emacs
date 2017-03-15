@@ -23,6 +23,13 @@
 	  (lambda ()
 	    (load-theme 'hc-zenburn)))
 
+;; Custom faces:
+;; Make selected text background #012050
+;; Set matching parens background color and bold
+(custom-set-faces
+ '(region ((t (:background "#102050"))))
+ '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
+
 ;; Fast init.el open
 (global-set-key (kbd "<f6>") (lambda() (interactive)(find-file "~/.emacs.d/init.el")))
 
@@ -63,6 +70,11 @@
 ;; Helm
 (use-package helm
   :ensure t)
+
+;; Unique color identifier
+(use-package color-identifiers-mode
+  :ensure t
+  :config (add-hook 'after-init-hook 'global-color-identifiers-mode))
 
 ;; Ido
 (use-package ido
@@ -123,16 +135,16 @@
     (add-hook 'python-mode-hook 'python--add-debug-highlight)
     )
 
-;;Company-anaconda
-;; (use-package company-anaconda
-;;   :ensure t
-;;   :diminish
-;;   :config
-;;   (eval-after-load "company"
-;;      '(add-to-list 'company-backends '(company-anaconda company-dabbrev company-capf))))
-;;     ;;'(add-to-list 'company-backends '(company-anaconda))))
+;; Company-anaconda
+(use-package company-anaconda
+  :ensure t
+  :diminish
+  :config
+  (eval-after-load "company"
+     '(add-to-list 'company-backends '(company-anaconda company-dabbrev company-capf))))
+    ;;'(add-to-list 'company-backends '(company-anaconda))))
 
-;; (add-hook 'python-mode-hook 'company-mode)
+(add-hook 'python-mode-hook 'company-mode)
 
 ;; Enable eldoc in your programming modes
 (use-package eldoc
@@ -162,38 +174,41 @@
 (add-hook 'prog-mode-hook 'hs-minor-mode)
 (global-set-key [f4] 'hs-toggle-hiding)
 
-;; (use-package company
-;;   :ensure t
-;;   :diminish
-;;   :defer 4
-;;   :init (progn
-;;           (global-company-mode)
-;;           (setq company-global-modes '(not python-mode cython-mode sage-mode))
-;;           )
-;;   :config (progn
-;;             (setq company-tooltip-limit 6
-;;                   company-idle-delay .3
-;;                   company-echo-delay 0.3
-;;                   company-begin-commands '(self-insert-command)
-;;                   company-transformers '(company-sort-by-occurrence)
-;;                   company-selection-wrap-around t
-;;                   company-minimum-prefix-length 3
-;;                   company-dabbrev-downcase nil
-;;                   )
-;;             (bind-keys :map company-active-map
-;; 		       ("C-s" . helm-fuzzy-match)
-;;                        ("C-n" . company-select-next)
-;;                        ("C-p" . company-select-previous)
-;;                        ("C-d" . company-show-doc-buffer)
-;;                        ("<tab>" . company-complete)
-;;                        ("<escape>" . company-abort)
-;;                        )
-;;             )
-;;   )
-;; (with-eval-after-load 'company
-;;   (company-flx-mode +1))
+(use-package company
+  :ensure t
+  :diminish
+  :defer 4
+  :init (progn
+          (global-company-mode)
+          (setq company-global-modes '(not python-mode cython-mode sage-mode))
+          )
+  :config (progn
+            (setq company-tooltip-limit 6
+                  company-idle-delay 0.3
+                  company-echo-delay 0.3
+                  company-begin-commands '(self-insert-command  self-insert-command org-self-insert-command orgtbl-self-insert-command c-scope-operator c-electric-colon c-electric-lt-gt c-electric-slash )
+                  company-transformers '(company-sort-by-occurrence)
+                  company-selection-wrap-around t
+                  company-minimum-prefix-length 3
+                  company-dabbrev-downcase nil
+                  )
+            (bind-keys :map company-active-map
+		       ("C-s" . company-search-words-in-any-order-regexp)
+                       ("C-n" . company-select-next)
+                       ("C-p" . company-select-previous)
+                       ("C-d" . company-show-doc-buffer)
+                       ("<tab>" . company-complete)
+                       ("<escape>" . company-abort)
+                       )
+            )
+  )
 
+(with-eval-after-load 'company
+  (company-flx-mode +1))
 
+(use-package company-quickhelp
+  :ensure t
+  :init (company-quickhelp-mode 1))
 
 ;; Pair parenthesis
 (use-package smartparens
@@ -264,17 +279,16 @@
 (display-time-mode 0)
 
 ;; To activate pytevec environment
-(defun apytevec ()
+(defun anpytevec ()
   (interactive)
-  (pythonic-activate "~/miniconda2/envs/pytevec")
+  (pythonic-activate "~/miniconda2/envs/npytevec")
   )
-
 
 ;; Check if i'm at work and activate
 ;; the right environment
 (defun activate-work-env ()
   (if (string= (system-name) "deb3550")
-      (apytevec))
+      (anpytevec))
   )
 
 (activate-work-env)
@@ -319,7 +333,7 @@
 (use-package highlight-current-line
   :ensure t
   :config (highlight-current-line-on t)
-	   (set-face-background 'highlight-current-line-face "black")
+  (set-face-background 'highlight-current-line-face "black")
   )
 
 ;; Replace highlighted text
@@ -343,6 +357,12 @@
 
 ;; Enable paren mode at start
 (show-paren-mode 1)
+
+;; Change matching paren color
+;; (require 'paren)
+;; (set-face-background 'show-paren-match "#5C888B")
+;; (set-face-foreground 'show-paren-match "#def")
+;; (set-face-attribute 'show-paren-match nil :weight 'extra-bold)
 
 ;; Enable line numbers
 (global-linum-mode 1)
@@ -440,13 +460,17 @@
 (use-package markdown-preview-mode
   :ensure t)
 
+
+;; Change selected text highlight color #102050
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(markdown-command "/usr/bin/pandoc")
- '(org-agenda-files (quote ("~/Dropbox/Agenda/todo.org"))))
+ '(org-agenda-files (quote ("~/Dropbox/Agenda/todo.org")))
+ '(region ((t (:background "#102050"))))
+ '(show-paren-match ((t (:weight (quote extra-bold))))))
 
 ;; avy
 (use-package avy
@@ -880,6 +904,7 @@ http://lgmoneda.github.io/")
     (eldoc-mode . "")
     (visual-line-mode . "")
     (flyspell-mode . "")
+    (color-identifiers-mode . "")
     ;; Major modes
     (fundamental-mode . "Fund")
     (lisp-interaction-mode . "λ")
@@ -1083,13 +1108,10 @@ Whenever a journal entry is created the
 
       (set-buffer-modified-p unsaved))))
 
-
 (defun journal-get-modification-date ()
   "Returns the last modified date of the current memento file."
   (format-time-string "%Y-%m-%d"
                       (nth 5 (file-attributes journal-file))))
-
-(format-time-string "%d/%m/%Y")
 
 (defun journal-check-when-quit ()
   (interactive)
@@ -1120,34 +1142,34 @@ Whenever a journal entry is created the
 
 
 ;; Bk's python
-(use-package python
-  :mode ("\\.py" . python-mode)
-  :config
-  (setq python-shell-interpreter-args "")
-  (eval-after-load "python"
-    '(progn
-       (define-key python-mode-map (kbd "<f5>") 'python-insert-breakpoint)))
-  (use-package anaconda-mode
-    :ensure t
-    :diminish anaconda-mode
-    :config)
-    ;;(bk-python-hooks '(anaconda-mode python--add-debug-highlight)))
-  (use-package jedi
-    :ensure t
-    :config
-    (setq jedi:server-command '("~/.emacs.d/elpa/jedi-core-20170121.610/jediepcserver.py"))
-    (setq jedi:complete-on-dot t)
-    ;;I'm happy with Anaconda-Eldoc
-    (setq jedi:tooltip-method '(pos-tip popup))
-    (add-hook 'python-mode-hook 'jedi:setup))
-    (define-key jedi-mode-map (kbd "<C-tab>") nil)
-    )
+;; (use-package python
+;;   :mode ("\\.py" . python-mode)
+;;   :config
+;;   (setq python-shell-interpreter-args "")
+;;   (eval-after-load "python"
+;;     '(progn
+;;        (define-key python-mode-map (kbd "<f5>") 'python-insert-breakpoint)))
+;;   (use-package anaconda-mode
+;;     :ensure t
+;;     :diminish anaconda-mode
+;;     :config)
+;;     ;;(bk-python-hooks '(anaconda-mode python--add-debug-highlight)))
+;;   (use-package jedi
+;;     :ensure t
+;;     :config
+;;     (setq jedi:server-command '("~/.emacs.d/elpa/jedi-core-20170121.610/jediepcserver.py"))
+;;     (setq jedi:complete-on-dot t)
+;;     ;;I'm happy with Anaconda-Eldoc
+;;     (setq jedi:tooltip-method '(pos-tip popup))
+;;     (add-hook 'python-mode-hook 'jedi:setup))
+;;     (define-key jedi-mode-map (kbd "<C-tab>") nil)
+;;     )
 
-(add-hook 'python-mode-hook
-	  '(lambda ()
-	     (local-set-key (kbd "M-?") 'jedi:show-doc)
-	     (local-set-key (kbd "M-.") 'jedi:goto-definition)
-	     (local-set-key (kbd "M-,") 'jedi:goto-definition-pop-marker)))
+;; (add-hook 'python-mode-hook
+;; 	  '(lambda ()
+;; 	     (local-set-key (kbd "M-?") 'jedi:show-doc)
+;; 	     (local-set-key (kbd "M-.") 'jedi:goto-definition)
+;; 	     (local-set-key (kbd "M-,") 'jedi:goto-definition-pop-marker)))
 
 
 ;; auto complete mode
@@ -1170,29 +1192,28 @@ Whenever a journal entry is created the
 ;;     :ensure t)
 
 ;; auto complete mode
-(use-package auto-complete
-  :ensure t
-  :diminish auto-complete-mode
-  :init
+;; (use-package auto-complete
+;;   :ensure t
+;;   :diminish auto-complete-mode
+;;   :init
   
-  (setq ac-use-menu-map t)
-  (setq ac-auto-start 4)
-  (setq ac-use-fuzzy t)
-  (setq ac-use-quick-help nil)
+;;   (setq ac-use-menu-map t)
+;;   (setq ac-auto-start 4)
+;;   (setq ac-use-fuzzy t)
+;;   (setq ac-use-quick-help nil)
   
-  :config
-  (ac-config-default)
-  (define-key ac-completing-map "\C-n" 'ac-next)
-  (define-key ac-completing-map "\C-p" 'ac-previous)
-  (define-key ac-completing-map (kbd "C-<return>") 'auto-complete))
+;;   :config
+;;   (ac-config-default)
+;;   (define-key ac-completing-map "\C-n" 'ac-next)
+;;   (define-key ac-completing-map "\C-p" 'ac-previous)
+;;   (define-key ac-completing-map (kbd "C-<return>") 'auto-complete))
 
 
 ;;; use 'complete when auto-complete is disabled
-(setq-default indent-tabs-mode nil)
-(setq tab-always-indent 'complete)
-(add-to-list 'completion-styles 'initials t)
+;; (setq-default indent-tabs-mode nil)
+;; (setq tab-always-indent 'complete)
+;; (add-to-list 'completion-styles 'initials t)
 
 
 (use-package popup
-    :ensure t)
-
+  :ensure t)
