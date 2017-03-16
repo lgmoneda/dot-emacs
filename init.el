@@ -27,6 +27,12 @@
 ;; Make selected text background #012050
 ;; Set matching parens background color and bold
 (custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(company-tooltip-search ((t (:inherit highlight :background "steel blue"))))
+ '(company-tooltip-search-selection ((t (:background "steel blue"))))
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
 
@@ -141,8 +147,8 @@
   :diminish
   :config
   (eval-after-load "company"
-     '(add-to-list 'company-backends '(company-anaconda company-dabbrev company-capf))))
-    ;;'(add-to-list 'company-backends '(company-anaconda))))
+     '(add-to-list 'company-backends '(company-anaconda company-capf))))
+    ;;'(add-to-list 'company-backends '(company-anaconda company-dabbrev))))
 
 (add-hook 'python-mode-hook 'company-mode)
 
@@ -183,32 +189,44 @@
           (setq company-global-modes '(not python-mode cython-mode sage-mode))
           )
   :config (progn
-            (setq company-tooltip-limit 6
-                  company-idle-delay 0.3
-                  company-echo-delay 0.3
+            (setq company-tooltip-limit 8
+                  company-idle-delay 0.5
+                  company-echo-delay 0
                   company-begin-commands '(self-insert-command  self-insert-command org-self-insert-command orgtbl-self-insert-command c-scope-operator c-electric-colon c-electric-lt-gt c-electric-slash )
                   company-transformers '(company-sort-by-occurrence)
                   company-selection-wrap-around t
-                  company-minimum-prefix-length 3
+                  company-minimum-prefix-length 2
                   company-dabbrev-downcase nil
+		  company-require-match nil
                   )
             (bind-keys :map company-active-map
-		       ("C-s" . company-search-words-in-any-order-regexp)
+		       ("C-s" . company-filter-candidates)
                        ("C-n" . company-select-next)
                        ("C-p" . company-select-previous)
-                       ("C-d" . company-show-doc-buffer)
+		       ("C-d" . company-quickhelp-manual-begin)
+                       ;;("C-d" . company-show-doc-buffer)
                        ("<tab>" . company-complete)
                        ("<escape>" . company-abort)
                        )
             )
   )
 
+
+(use-package company-flx
+  :ensure t)
+
 (with-eval-after-load 'company
   (company-flx-mode +1))
 
+;; Pop documentation help for Company
+;; M-x customize-group <RET> company-quickhelp <RET>
 (use-package company-quickhelp
   :ensure t
-  :init (company-quickhelp-mode 1))
+  ;; To see doc just press C-d in company candidate
+  :init (company-quickhelp-mode 0)
+  :config
+  (eval-after-load 'company
+  '(define-key company-active-map (kbd "C-d") #'company-quickhelp-manual-begin)))
 
 ;; Pair parenthesis
 (use-package smartparens
@@ -288,7 +306,10 @@
 ;; the right environment
 (defun activate-work-env ()
   (if (string= (system-name) "deb3550")
-      (anpytevec))
+      (pythonic-activate "~/miniconda2/envs/npytevec"))
+  (if (string= (system-name) "rc530")
+      (pythonic-activate "~/miniconda2/envs/ml")
+    )
   )
 
 (activate-work-env)
@@ -358,15 +379,8 @@
 ;; Enable paren mode at start
 (show-paren-mode 1)
 
-;; Change matching paren color
-;; (require 'paren)
-;; (set-face-background 'show-paren-match "#5C888B")
-;; (set-face-foreground 'show-paren-match "#def")
-;; (set-face-attribute 'show-paren-match nil :weight 'extra-bold)
-
 ;; Enable line numbers
 (global-linum-mode 1)
-
 
 ;; Defining switch tabs commands
 (global-set-key [C-iso-lefttab] 
@@ -467,6 +481,8 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(company-quickhelp-color-background "dark slate gray")
+ '(company-quickhelp-color-foreground "wheat")
  '(markdown-command "/usr/bin/pandoc")
  '(org-agenda-files (quote ("~/Dropbox/Agenda/todo.org")))
  '(region ((t (:background "#102050"))))
@@ -1215,5 +1231,56 @@ Whenever a journal entry is created the
 ;; (add-to-list 'completion-styles 'initials t)
 
 
-(use-package popup
-  :ensure t)
+;; (use-package popup
+;;   :ensure t)
+
+
+
+;; Functions to copy words at point, from:
+;; https://www.emacswiki.org/emacs/CopyWithoutSelection
+(defun get-point (symbol &optional arg)
+  "get the point"
+  (funcall symbol arg)
+  (point)
+  )
+
+(defun paste-to-mark(&optional arg)
+  "Paste things to mark, or to the prompt in shell-mode"
+  (let ((pasteMe 
+     	 (lambda()
+     	   (if (string= "shell-mode" major-mode)
+	       (progn (comint-next-prompt 25535) (yank))
+	     (progn (goto-char (mark)) (yank) )))))
+    (if arg
+	(if (= arg 1)
+	    nil
+	  (funcall pasteMe))
+      (funcall pasteMe))
+    ))
+
+(defun copy-thing (begin-of-thing end-of-thing &optional arg)
+  "copy thing between beg & end into kill ring"
+  (save-excursion
+    (let ((beg (get-point begin-of-thing 1))
+	  (end (get-point end-of-thing arg)))
+      (copy-region-as-kill beg end)))
+  )
+
+(defun copy-word (&optional arg)
+  "Copy words at point into kill-ring"
+  (interactive "P")
+  (copy-thing 'backward-word 'forward-word arg)
+  ;;(paste-to-mark arg)
+  )
+
+(global-set-key (kbd "C-c w")         (quote copy-word))
+
+(defun copy-line (&optional arg)
+  "Save current line into Kill-Ring without mark the line "
+  (interactive "P")
+  (copy-thing 'beginning-of-line 'end-of-line arg)
+  (paste-to-mark arg)
+  )
+(global-set-key (kbd "C-c l")         (quote copy-line))
+
+
