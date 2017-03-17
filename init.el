@@ -497,6 +497,30 @@
 (global-set-key (kbd "C-x a") 'avy-goto-char-2)
 (global-set-key (kbd "C-?") 'avy-goto-line)
 
+;; Show differences between local and repo
+(use-package diff-hl
+  :ensure t
+  :init
+  (setq diff-hl-side 'left)
+  :config
+  (add-hook 'prog-mode-hook 'diff-hl-mode)
+  (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
+  (diff-hl-flydiff-mode)
+
+  ;; defining the custom colors to the diff-hl
+
+  (custom-set-faces
+   '(diff-hl-change ((t (:background "#3a81c3"))))
+   '(diff-hl-insert ((t (:background "#7ccd7c"))))
+   '(diff-hl-delete ((t (:background "#ee6363"))))))
+
+
+;; Show in mode line info about current func body
+(use-package which-func
+  :ensure t
+  :config
+  (add-hook 'python-mode-hook 'which-func-mode))
+
 ;; custom package
 ;; load the custom helm-spotify-plus
 (use-package multi
@@ -1136,7 +1160,7 @@ Whenever a journal entry is created the
       (if (and (string< (journal-get-modification-date) (format-time-string "%Y-%m-%d")) (string< "20" (format-time-string "%k")))
           ;; Invoke Memento if the user wants to proceed. 
           (if (yes-or-no-p "Do you want to write your Journal?")
-              (progn (call-interactively 'org-journal-new-entry))))
+              (progn (call-interactively 'lgm/org-journal-new-today-entry))))
     ;; If the Memento file doesn't exist yet, create a file and proceed with creating a log.
     (write-region "" nil journal-file)
     (progn (call-interactively 'lgm/org-journal-new-today-entry))))
