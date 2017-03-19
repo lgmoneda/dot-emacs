@@ -73,6 +73,10 @@
 (setq max-specpdl-size (* 15 max-specpdl-size))
 (setq max-list-eval-depth (* 15 max-lisp-eval-depth))
 
+;; Dash
+(use-package dash
+  :ensure t)
+
 ;; Helm
 (use-package helm
   :ensure t)
@@ -714,7 +718,7 @@ if breakpoints are present in `python-mode' files"
 (setq erc-join-buffer 'bury)
 (setq erc-autojoin-channels-alist
       '(("freenode.net" "#emacs" "#sptk" "##machinelearning"
-	 "#pydata" "#scikit-learn" "##statistics" "#tensorflow")))
+	 "#scikit-learn" "#tensorflow")))
 (erc-autojoin-after-ident "irc.freenode.net" "lgmoneda")
 
 (add-hook 'erc-nickserv-identified-hook 'erc-autojoin-after-ident)
