@@ -182,7 +182,7 @@
           )
   :config (progn
             (setq company-tooltip-limit 12 
-                  company-idle-delay 1.5
+                  company-idle-delay 1.0
                   company-echo-delay 0.5
                   company-begin-commands '(self-insert-command  self-insert-command org-self-insert-command orgtbl-self-insert-command c-scope-operator c-electric-colon c-electric-lt-gt c-electric-slash )
                   company-transformers '(company-sort-by-occurrence)
@@ -219,6 +219,14 @@
   :config
   (eval-after-load 'company
   '(define-key company-active-map (kbd "C-d") #'company-quickhelp-manual-begin)))
+
+;; Not so useful, but eventually...
+(use-package helm-company
+  :ensure t
+  :config (eval-after-load 'company
+  '(progn
+     (define-key company-mode-map (kbd "C-:") 'helm-company)
+     (define-key company-active-map (kbd "C-:") 'helm-company))))
 
 ;; Pair parenthesis
 (use-package smartparens
@@ -736,7 +744,6 @@ if breakpoints are present in `python-mode' files"
 ;; Erc-tracking
 ;; Exclude not interesting messages
 ;; Blue for keyword
-;; 
 (setq erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT" "MODE"))
 				;; "324" "329" "332" "333" "353" "477"))
 
@@ -745,13 +752,19 @@ if breakpoints are present in `python-mode' files"
 
 ;; Track only mentions and keywords
 (setq erc-track-use-faces t)
-;;(setq erc-format-query-as-channel-p t)
-;; Show pvt, current-nick and keyword
+(setq erc-format-query-as-channel-p t)
+
+;;Show pvt, current-nick and keyword
 (setq erc-track-faces-priority-list
       '(erc-current-nick-face
 	erc-keyword-face
 	erc-direct-msg-face))
+
 (setq erc-track-priority-faces-only 'all)
+
+;; That fixes the modeline notification for nick mention
+(setq erc-current-nick-highlight-type 'nick)
+
 ;;(setq erc-query-display 'bury)
 ;; Prevent the new created buffer from pvt to be brought visible
 (setq erc-auto-query 'bury)
@@ -779,6 +792,7 @@ if breakpoints are present in `python-mode' files"
 (define-key erc-mode-map (kbd "<f7>") 'bk/nicklist-toggle)
 
 ;; Smarter beep
+;; Remember to apt-get install mplayer!
 ;; todo: no beep when buffer is visible
 (add-hook 'erc-text-matched-hook 'erc-sound-if-not-server)
 (defun erc-sound-if-not-server (match-type nickuserhost msg)

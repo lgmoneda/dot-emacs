@@ -1,7 +1,7 @@
 (require 'url)
 (require 'json)
 
-(setq my-wallet-stocks '("petr4" "itub4" "lame4"))
+(setq my-wallet-stocks '("cgas5" "qual3" "flry3" "parc3" "smle3" "csan3" "petr4" "itub4" "lame4" "vale3"))
       
 (defun my-wallet-alist-get (symbols alist)
   "Look up the value for the chain of SYMBOLS in ALIST."
@@ -83,12 +83,12 @@
 					   trade-info
 					   )
 		      (concat (propertize "Open Market" 'font-lock-face '(:foreground "green" :weight 'bold))
-			      (format " (Trade date: %s)" (my-wallet-alist-get '(query results quote TradeDate)
+			      (format " (Trade Date: %s)" (my-wallet-alist-get '(query results quote TradeDate)
 					   trade-info
 					   ))
 			      )
 		     (concat (propertize "Closed Market" 'font-lock-face '(:foreground "red" :weight 'bold))
-			      (format " (Last Trade date: %s)" (my-wallet-alist-get '(query results quote LastTradeDate)
+			      (format " (Last Trade Date: %s)" (my-wallet-alist-get '(query results quote LastTradeDate)
 					   trade-info
 					   ))
 			      )
@@ -111,4 +111,4 @@
     (special-mode)
     ))
 
-;;(my-wallet-info-buffer my-wallet-stocks)
+(my-wallet-info-buffer my-wallet-stocks)
