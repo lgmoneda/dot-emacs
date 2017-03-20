@@ -491,8 +491,9 @@
   :ensure t
   :init
   (setq diff-hl-side 'left)
+  (diff-hl-mode t)
   :config
-  (add-hook 'prog-mode-hook 'diff-hl-mode)
+  ;;(add-hook 'prog-mode-hook 'diff-hl-mode)
   (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
   (diff-hl-flydiff-mode)
 
