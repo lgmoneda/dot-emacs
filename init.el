@@ -491,7 +491,7 @@
   :ensure t
   :init
   (setq diff-hl-side 'left)
-  (diff-hl-mode t)
+  (diff-hl-mode)
   :config
   ;;(add-hook 'prog-mode-hook 'diff-hl-mode)
   (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
@@ -1124,14 +1124,16 @@ Whenever a journal entry is created the
       (copy-region-as-kill beg end)))
   )
 
+
 (defun copy-word (&optional arg)
   "Copy words at point into kill-ring"
   (interactive "P")
-  (copy-thing 'backward-word 'forward-word arg)
+  (kill-new (thing-at-point 'word))
+  ;;(copy-thing 'backward-word 'forward-word arg)
   ;;(paste-to-mark arg)
   )
 
-(global-set-key (kbd "C-c w")         (quote copy-word))
+(global-set-key (kbd "C-c w") (quote copy-word))
 
 (defun copy-line (&optional arg)
   "Save current line into Kill-Ring without mark the line "
@@ -1141,4 +1143,10 @@ Whenever a journal entry is created the
   )
 (global-set-key (kbd "C-c l")         (quote copy-line))
 
-
+;; Trying to start using marker
+;; C-<space> C-<space> to leave mark
+;; C-u C-<space>
+;; C-<space> again to previous marks
+;; C-<space> C-s "char" to selec region between mark and I-search
+;; ^ or use ace-jump!
+(setq set-mark-command-repeat-pop t)
