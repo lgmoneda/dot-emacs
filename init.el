@@ -73,6 +73,10 @@
 (setq max-specpdl-size (* 15 max-specpdl-size))
 (setq max-list-eval-depth (* 15 max-lisp-eval-depth))
 
+;; Magit
+(use-package magit
+  :ensure t)
+
 ;; Dash
 (use-package dash
   :ensure t)
@@ -86,6 +90,9 @@
   :ensure t
   :config (add-hook 'after-init-hook 'global-color-identifiers-mode))
 
+;; thing-cmd
+(use-package thing-cmds
+  :ensure t)
 ;; Ido
 (use-package ido
   :ensure t
@@ -110,6 +117,11 @@
 (use-package flx-ido
   :ensure t
   :init (flx-ido-mode))
+
+;; imenu-anywhere
+(use-package imenu-anywhere
+  :ensure t
+  :init (imenu-anywhere))
 
 ;; Smex
 (use-package smex
@@ -477,6 +489,8 @@
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
 
+;; Disable edebug key binds
+
 ;; avy
 (use-package avy
   :ensure t)
@@ -666,6 +680,10 @@ if breakpoints are present in `python-mode' files"
 ;;(define-key python-mode-map (kbd "TAB") 'indent-or-complete)
 (define-key python-mode-map (kbd "TAB") 'my-smart-tab)
 (define-key python-mode-map (kbd "<backtab>") 'my-smart-backtab)
+
+;; Maybe it's a good idea to use it in all prog modes 
+(define-key prog-mode-map (kbd "TAB") 'my-smart-tab)
+(define-key prog-mode-map (kbd "<backtab>") 'my-smart-backtab)
 
 ;; Put white spaces between operators in Python
 (use-package electric-operator
@@ -980,6 +998,9 @@ want to use in the modeline *in lieu of* the original.")
   :ensure t
   :init (setq org-journal-dir "~/Dropbox/Agenda/Journal"))
 
+;; I want imenu, not new journal entry!
+(global-set-key (kbd "C-c C-j") 'imenu-anywhere)
+(define-key python-mode-map (kbd "C-c C-j") 'imenu-anywhere)
 
 (setf org-journal-dir "~/Dropbox/Agenda/Journal")
 (setf org-journal-file-format "my-journal.org")
@@ -1078,6 +1099,7 @@ Whenever a journal entry is created the
     (write-region "" nil journal-file)
     (progn (call-interactively 'lgm/org-journal-new-today-entry))))
 
+
 (add-hook 'kill-emacs-hook 'journal-check-when-quit)
 
 ;; Dict.cc wrap
@@ -1149,4 +1171,41 @@ Whenever a journal entry is created the
 ;; C-<space> again to previous marks
 ;; C-<space> C-s "char" to selec region between mark and I-search
 ;; ^ or use ace-jump!
+;; C-x C-<space> global jump to last mark 
 (setq set-mark-command-repeat-pop t)
+
+;; Selection functions utilities
+;; Stop using arrows for selection!
+;; It requires thing-cmds 
+(defun mark-a-word-or-thing (arg)
+   "..."
+  (interactive "P")
+  (cond ((or arg mark-active)
+         (when (consp arg) (setq current-prefix-arg nil))
+         (call-interactively 'mark-thing))
+        (t
+         (skip-syntax-backward "w_")
+         (mark-thing 'word))))
+
+(global-set-key (kbd "C-ç") 'mark-a-word-or-thing)
+(global-set-key (kbd "C-=") 'er/expand-region)
+
+
+;; Fix it later
+;; (setq package-enable-at-startup nil)
+;; (package-initialize)
+
+;; ;; Enable arrow keys in some modes
+;; (defun arrow-keys-disable ()
+;; (mapc 'global-unset-key '([left] [right] [up] [down]))
+
+;; (let ((arrow-key-mode-maps '(help-mode-map org-agenda-mode-map Info-mode-map org-mode-map)))
+;;   (mapc
+;;    (lambda (map)
+;;      (define-key (symbol-value map) [left] 'left-char)
+;;      (define-key (symbol-value map) [right] 'right-char)
+;;      (define-key (symbol-value map) [up] 'previous-line)
+;;      (define-key (symbol-value map) [down] 'next-line))
+;;    arrow-key-mode-maps)))
+
+;; (add-hook 'after-init-hook 'arrow-keys-disable)
