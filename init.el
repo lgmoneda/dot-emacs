@@ -33,6 +33,10 @@
  ;; If there is more than one, they won't work right.
  '(company-tooltip-search ((t (:inherit highlight :background "steel blue"))))
  '(company-tooltip-search-selection ((t (:background "steel blue"))))
+ '(diff-hl-change ((t (:background "#3a81c3"))))
+ '(diff-hl-delete ((t (:background "#ee6363"))))
+ '(diff-hl-insert ((t (:background "#7ccd7c"))))
+ '(ein:cell-input-area ((t (:background "dim gray"))))
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
 
@@ -190,7 +194,7 @@
   :defer 4
   :init (progn
           (global-company-mode)
-          (setq company-global-modes '(not python-mode cython-mode sage-mode))
+          (setq company-global-modes '(not python-mode cython-mode sage-mode ein:notebook-modes))
           )
   :config (progn
             (setq company-tooltip-limit 12 
@@ -505,11 +509,11 @@
   :ensure t
   :init
   (setq diff-hl-side 'left)
-  (diff-hl-mode)
   :config
-  ;;(add-hook 'prog-mode-hook 'diff-hl-mode)
   (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
   (diff-hl-flydiff-mode)
+  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
+  (global-diff-hl-mode)
 
   ;; defining the custom colors to the diff-hl
 
@@ -931,6 +935,7 @@ http://lgmoneda.github.io/")
     (visual-line-mode . "")
     (flyspell-mode . "")
     (color-identifiers-mode . "")
+;;    (auto-revert-mode . "")
     ;; Major modes
     (fundamental-mode . "Fund")
     (lisp-interaction-mode . "λ")
@@ -965,11 +970,12 @@ want to use in the modeline *in lieu of* the original.")
 
 ;; New states to to-do
 (setq org-todo-keywords
-      '((sequence "TODO(t)" "STARTED(s)"  "WAIT(w)" "|" "DONE(d)" "CANCELED(c)" "FAIL(f)")))
+      ;;      '((sequence "TODO(t)" "STARTED(s)"  "WAIT(w)" "|" "DONE(d)" "CANCELED(c)" "FAIL(f)")))
+            '((sequence "TODO(t)" "WAIT(w)" "|" "DONE(d)" "CANCELED(c)" "FAIL(f)")))
 
 (setq org-todo-keyword-faces
       '(("TODO" . org-warning)
-	("STARTED" . "yellow")
+;;	("STARTED" . "yellow")
 	("WAIT" . "purple") 
         ("CANCELED" . (:foreground "blue" :weight bold))
         ("FAIL" . (:foreground "blue" :weight bold))))
@@ -1091,7 +1097,7 @@ Whenever a journal entry is created the
   (interactive)
   (if (file-exists-p journal-file)
       ;; Check if there was a log written today. If this is not the case, then check if it's already tonight except the night.
-      (if (and (string< (journal-get-modification-date) (format-time-string "%Y-%m-%d")) (string< "20" (format-time-string "%k")))
+      (if (and (string< (journal-get-modification-date) (format-time-string "%Y-%m-%d")) (or (string< (format-time-string "%k") "06") (string< "20" (format-time-string "%k"))))
           ;; Invoke Memento if the user wants to proceed. 
           (if (yes-or-no-p "Do you want to write your Journal?")
               (progn (call-interactively 'lgm/org-journal-new-today-entry))))
@@ -1161,8 +1167,9 @@ Whenever a journal entry is created the
   "Save current line into Kill-Ring without mark the line "
   (interactive "P")
   (copy-thing 'beginning-of-line 'end-of-line arg)
-  (paste-to-mark arg)
+  ;;(paste-to-mark arg)
   )
+
 (global-set-key (kbd "C-c l")         (quote copy-line))
 
 ;; Trying to start using marker
@@ -1209,3 +1216,19 @@ Whenever a journal entry is created the
 ;;    arrow-key-mode-maps)))
 
 ;; (add-hook 'after-init-hook 'arrow-keys-disable)
+
+;; Creates a new line without breaking the current line
+(defun newline-without-break-of-line ()
+  "1. move to end of the line.
+  2. insert newline with index"
+
+  (interactive)
+  (let ((oldpos (point)))
+    (end-of-line)
+    (newline-and-indent)))
+
+(global-set-key (kbd "<C-return>") 'newline-without-break-of-line)
+
+;; Changes the search face
+(custom-set-faces
+  `(lazy-highlight ((t (:foreground "white" :background "SteelBlue")))))
