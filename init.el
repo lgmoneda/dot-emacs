@@ -17,7 +17,7 @@
   :ensure t)
 
 ;; Load Theme
-;; Themes i like: monokai, deeper-blue and hc-zenburn 
+;; Themes to use: monokai, deeper-blue and hc-zenburn 
 (setq custom-safe-themes t)
 (add-hook 'emacs-startup-hook
 	  (lambda ()
@@ -93,6 +93,11 @@
 (use-package color-identifiers-mode
   :ensure t
   :config (add-hook 'after-init-hook 'global-color-identifiers-mode))
+
+;; Rainbow delimiters in Elisp erc
+(use-package rainbow-delimiters
+  :ensure t
+  :config (add-hook 'emacs-lisp-mode-hook 'rainbow-delimiters-mode))
 
 ;; thing-cmd
 (use-package thing-cmds
@@ -935,7 +940,7 @@ http://lgmoneda.github.io/")
     (visual-line-mode . "")
     (flyspell-mode . "")
     (color-identifiers-mode . "")
-;;    (auto-revert-mode . "")
+    (auto-revert-mode . "")
     ;; Major modes
     (fundamental-mode . "Fund")
     (lisp-interaction-mode . "λ")
@@ -986,6 +991,9 @@ want to use in the modeline *in lieu of* the original.")
 (setq org-agenda-block-separator "-")
 
 (org-defkey org-mode-map (kbd "C-S-s /") 'helm-org-agenda-files-headings)
+
+(use-package org-dashboard
+  :ensure t)
 
 (defun org-tell-me-first-header ()
   (interactive)
