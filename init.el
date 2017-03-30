@@ -89,6 +89,14 @@
 (use-package helm
   :ensure t)
 
+;; Try
+(use-package try
+  :ensure t)
+
+;; Expand-region
+(use-package expand-region
+  :ensure t)
+
 ;; Unique color identifier
 (use-package color-identifiers-mode
   :ensure t
@@ -991,9 +999,6 @@ want to use in the modeline *in lieu of* the original.")
 (setq org-agenda-block-separator "-")
 
 (org-defkey org-mode-map (kbd "C-S-s /") 'helm-org-agenda-files-headings)
-
-(use-package org-dashboard
-  :ensure t)
 
 (defun org-tell-me-first-header ()
   (interactive)
