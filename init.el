@@ -21,7 +21,7 @@
 (setq custom-safe-themes t)
 (add-hook 'emacs-startup-hook
 	  (lambda ()
-	    (load-theme 'hc-zenburn)))
+	    (load-theme 'monokai)))
 
 ;; Custom faces:
 ;; Make selected text background #012050
@@ -398,7 +398,7 @@
 (show-paren-mode 1)
 
 ;; Enable line numbers
-(global-linum-mode 1)
+(global-linum-mode 0)
 
 ;; Defining switch tabs commands
 (global-set-key [C-iso-lefttab] 
@@ -1110,7 +1110,7 @@ Whenever a journal entry is created the
   (interactive)
   (if (file-exists-p journal-file)
       ;; Check if there was a log written today. If this is not the case, then check if it's already tonight except the night.
-      (if (and (string< (journal-get-modification-date) (format-time-string "%Y-%m-%d")) (or (string< (format-time-string "%k") "06") (string< "20" (format-time-string "%k"))))
+      (if (and (string< (journal-get-modification-date) (format-time-string "%Y-%m-%d")) (or (string< (format-time-string "%k") " 6") (string< "20" (format-time-string "%k"))))
           ;; Invoke Memento if the user wants to proceed. 
           (if (yes-or-no-p "Do you want to write your Journal?")
               (progn (call-interactively 'lgm/org-journal-new-today-entry))))
