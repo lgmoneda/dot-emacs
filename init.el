@@ -207,7 +207,7 @@
   :defer 4
   :init (progn
           (global-company-mode)
-          (setq company-global-modes '(not python-mode cython-mode sage-mode ein:notebook-modes))
+          (setq company-global-modes '(not python-mode cython-mode sage-mode ein:notebook-modes org-mode markdown-mode))
           )
   :config (progn
             (setq company-tooltip-limit 12 
@@ -1007,6 +1007,14 @@ want to use in the modeline *in lieu of* the original.")
     (print (substring-no-properties (org-get-heading t t)))
   )
  )
+
+;; TODO entry automatically change to done when all children are done (from orgmode.org)
+(defun org-summary-todo (n-done n-not-done)
+       "Switch entry to DONE when all subentries are done, to TODO otherwise."
+       (let (org-log-done org-log-states)   ; turn off logging
+         (org-todo (if (= n-not-done 0) "DONE" "TODO"))))
+     
+(add-hook 'org-after-todo-statistics-hook 'org-summary-todo)
 
 ;; Start with my to-do
 ;; The org mode file is opened with
