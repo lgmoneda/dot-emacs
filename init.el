@@ -220,20 +220,23 @@
                   company-dabbrev-downcase nil
 		  company-require-match nil
                   )
-	    (bind-keys :map company-mode-map
-		       ("<tab>" . company-complete))
+;;	    (bind-keys :map company-mode-map
+;;		       ("<tab>" . company-complete))
             (bind-keys :map company-active-map
 		       ("C-s" . company-filter-candidates)
                        ("C-n" . company-select-next)
                        ("C-p" . company-select-previous)
 		       ("C-d" . company-quickhelp-manual-begin)
                        ;;("C-d" . company-show-doc-buffer)
-                       ("<tab>" . company-complete)
+                       ("<tab>" . company--insert-candidate)
                        ("<escape>" . company-abort)
                        )
             )
   )
 
+;; I don't want to see the error buffer
+(remove-hook 'anaconda-mode-response-read-fail-hook
+             'anaconda-mode-show-unreadable-response)
 
 (use-package company-flx
   :ensure t)
@@ -1256,4 +1259,5 @@ Whenever a journal entry is created the
 
 ;; Changes the search face
 (custom-set-faces
-  `(lazy-highlight ((t (:foreground "white" :background "SteelBlue")))))
+ `(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
+ `(isearch ((t (:foreground "white" :background "DarkOrchid")))))
