@@ -254,7 +254,7 @@
   :ensure t
   :config (eval-after-load 'company
   '(progn
-     (define-key company-mode-map (kbd "C-:") 'helm-company)
+     ;;(define-key company-mode-map (kbd "C-:") 'helm-company)
      (define-key company-active-map (kbd "C-:") 'helm-company))))
 
 ;; Pair parenthesis
@@ -512,9 +512,9 @@
 (use-package avy
   :ensure t)
 
-(global-set-key (kbd "C-:") 'avy-goto-char)
+(global-set-key (kbd "C-:") 'avy-goto-char-timer)
 (global-set-key (kbd "C-x C-a") 'avy-goto-char)
-(global-set-key (kbd "C-x a") 'avy-goto-char-2)
+(global-set-key (kbd "C-x a") 'avy-goto-char-timer)
 (global-set-key (kbd "C-?") 'avy-goto-line)
 
 ;; Show differences between local and repo

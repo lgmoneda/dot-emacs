@@ -13,3 +13,5 @@ site-packages/python-experiment/*
 ac-comphist.dat
 smex-items
 .mc-list.el
+.#init.el
+session*
