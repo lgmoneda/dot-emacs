@@ -220,6 +220,8 @@
                   company-dabbrev-downcase nil
 		  company-require-match nil
                   )
+	    (bind-keys :map company-mode-map
+		       ("<tab>" . company-complete))
             (bind-keys :map company-active-map
 		       ("C-s" . company-filter-candidates)
                        ("C-n" . company-select-next)
@@ -701,6 +703,8 @@ if breakpoints are present in `python-mode' files"
 ;; Maybe it's a good idea to use it in all prog modes 
 (define-key prog-mode-map (kbd "TAB") 'my-smart-tab)
 (define-key prog-mode-map (kbd "<backtab>") 'my-smart-backtab)
+
+(define-key markdown-mode-map (kbd "TAB") 'indent-or-complete)
 
 ;; Put white spaces between operators in Python
 (use-package electric-operator
