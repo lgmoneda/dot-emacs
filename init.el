@@ -13,8 +13,8 @@
    (package-install 'use-package))
 
 ;; High contrast Zenburn theme
-(use-package hc-zenburn-theme
-  :ensure t)
+;; (use-package hc-zenburn-theme
+;;   :ensure t)
 
 ;; Load Theme
 ;; Themes to use: monokai, deeper-blue and hc-zenburn 
@@ -77,6 +77,10 @@
 (setq max-specpdl-size (* 15 max-specpdl-size))
 (setq max-list-eval-depth (* 15 max-lisp-eval-depth))
 
+;; Move cursor after split
+(global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
+(global-set-key "\C-x3" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
+
 ;; Magit
 (use-package magit
   :ensure t)
@@ -136,6 +140,7 @@
   :init (flx-ido-mode))
 
 ;; imenu-anywhere
+;; Changes the C-c C-j behavior
 (use-package imenu-anywhere
   :ensure t
   :init (imenu-anywhere))
@@ -969,7 +974,6 @@ When you add a new element to the alist, keep in mind that you
 must pass the correct minor/major mode symbol and a string you
 want to use in the modeline *in lieu of* the original.")
 
-
 (defun clean-mode-line ()
   (interactive)
   (loop for cleaner in mode-line-cleaner-alist
@@ -1139,6 +1143,8 @@ Whenever a journal entry is created the
 ;; Dict.cc wrap
 (add-to-list 'load-path "~/.emacs.d/elisp/dict-cc" t)
 (require 'dict-cc)
+;; PATH append
+(setenv "PATH" (concat "/home/lgmoneda/miniconda2/bin:" (getenv "PATH")))
 
 ;; Python Experiment!
 ;; (add-to-list 'load-path "~/.emacs.d/site-packages/python-experiment")
