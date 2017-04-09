@@ -106,7 +106,7 @@
   :ensure t
   :config (add-hook 'after-init-hook 'global-color-identifiers-mode))
 
-;; Rainbow delimiters in Elisp erc
+;; Rainbow delimiters in Elisp mode 
 (use-package rainbow-delimiters
   :ensure t
   :config (add-hook 'emacs-lisp-mode-hook 'rainbow-delimiters-mode))
@@ -114,6 +114,12 @@
 ;; thing-cmd
 (use-package thing-cmds
   :ensure t)
+
+;; Anzu shows total matchs for searchs
+(use-package anzu 
+	     :ensure t
+	     :config (global-anzu-mode))
+
 ;; Ido
 (use-package ido
   :ensure t
@@ -280,7 +286,6 @@
 ;; Smartparens keyibinding management
 ;; Sexp is a Symbolic Expression, something like (+ 40 2)
 
-(+ 2 (- 10 2)) 
 ;; Big jump, jumps the outer ()
 (define-key smartparens-mode-map (kbd "C-M-f") 'sp-forward-sexp)
 (define-key smartparens-mode-map (kbd "C-M-b") 'sp-backward-sexp)
@@ -737,28 +742,50 @@ if breakpoints are present in `python-mode' files"
 ;;(define-key company-mode-map (kbd "TAB") 'company-complete-common)
 
 ;; ERC
-(add-to-list 'load-path "~/.emacs.d/elisp/erc-extras" t)
-(use-package erc-hl-nicks
-  :ensure t)
-(require 'erc-hl-nicks)
-(require 'erc-nicklist)
-(require 'erc-notify)
-(require 'erc-match)
+;;(add-to-list 'load-path "~/.emacs.d/elisp/erc-extras" t)
+;;(use-package erc-hl-nicks
+;;  :ensure t)
+;; (require 'erc-hl-nicks)
+;;(require 'erc-nicklist)
+;; (require 'erc-notify)
+;; (require 'erc-match)
 
-(erc-spelling-mode 1)
-(add-hook 'erc-mode-hook (lambda () (auto-fill-mode 0)))
-(make-variable-buffer-local 'erc-fill-column)
- (add-hook 'window-configuration-change-hook 
-	   '(lambda ()
-	      (save-excursion
-	        (walk-windows
-		 (lambda (w)
-		   (let ((buffer (window-buffer w)))
-		     (set-buffer buffer)
-		     (when (eq major-mode 'erc-mode)
-		       (setq erc-fill-column (- (window-width w) 2)))))))))
+;; (erc-spelling-mode 1)
+;; (add-hook 'erc-mode-hook (lambda () (auto-fill-mode 0)))
+;; (make-variable-buffer-local 'erc-fill-column)
+;;  (add-hook 'window-configuration-change-hook 
+;; 	   '(lambda ()
+;; 	      (save-excursion
+;; 	        (walk-windows
+;; 		 (lambda (w)
+;; 		   (let ((buffer (window-buffer w)))
+;; 		     (set-buffer buffer)
+;; 		     (when (eq major-mode 'erc-mode)
+;; 		       (setq erc-fill-column (- (window-width w) 2)))))))))
 
 (erc :server "irc.freenode.net" :port 6667 :nick "lgmoneda")
+
+(progn
+     (require 'erc)
+     (require 'erc-track)
+
+     (erc-track-mode +1)
+
+     ;; keywords to track
+     (setq erc-keywords '("bayes" "reinforcement" "unsupervised" "bayesian"))
+
+     ;; Ignore Server Buffer
+     (setq erc-track-exclude-server-buffer t)
+
+     ;; show only when my nickname is mentioned in any channel
+     (setq erc-current-nick-highlight-type 'nick)
+     (setq erc-track-exclude-types '("JOIN" "PART" "QUIT" "NICK" "MODE"))
+     (setq erc-track-use-faces t)
+     (setq erc-track-faces-priority-list
+           '(erc-current-nick-face
+             erc-keyword-face
+             erc-direct-msg-face))
+     (setq erc-track-priority-faces-only 'all))
 
 (load "~/.ercfile")
 (require 'erc-services)
@@ -778,8 +805,6 @@ if breakpoints are present in `python-mode' files"
 (erc-autojoin-after-ident "irc.freenode.net" "lgmoneda")
 
 (add-hook 'erc-nickserv-identified-hook 'erc-autojoin-after-ident)
-;;(erc :server "irc.freenode.net" :port 6667 :nick "lgmoneda")
-
 
 ;; Log in a buffer when people talk to me
 (setq erc-log-matches-flag t)
@@ -787,31 +812,34 @@ if breakpoints are present in `python-mode' files"
           '((keyword . "### Keywords Log ###")
             (current-nick . "### Me Log ###")))
 
-(setq erc-keywords '("keras" "bayes" "bayesian" "causality" "reinforcement"))
+;; (setq erc-keywords '("keras" "bayes" "bayesian" "causality" "reinforcement"))
 
-;; Erc-tracking
-;; Exclude not interesting messages
-;; Blue for keyword
-(setq erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT" "MODE"))
-				;; "324" "329" "332" "333" "353" "477"))
+;; ;; Erc-tracking
+;; (require 'erc-track)
+;; (erc-track-mode t)
 
-;; Ignore Server Buffer
-(setq erc-track-exclude-server-buffer t)
+;; ;; Exclude not interesting messages
+;; ;; Blue for keyword
+;; (setq erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT" "MODE"))
+;; 				;; "324" "329" "332" "333" "353" "477"))
 
-;; Track only mentions and keywords
-(setq erc-track-use-faces t)
-(setq erc-format-query-as-channel-p t)
+;; ;; Ignore Server Buffer
+;; (setq erc-track-exclude-server-buffer t)
 
-;;Show pvt, current-nick and keyword
-(setq erc-track-faces-priority-list
-      '(erc-current-nick-face
-	erc-keyword-face
-	erc-direct-msg-face))
+;; ;; That fixes the modeline notification for nick mention
+;; (setq erc-current-nick-highlight-type 'nick)
 
-(setq erc-track-priority-faces-only 'all)
+;; (setq erc-track-priority-faces-only 'all)
 
-;; That fixes the modeline notification for nick mention
-(setq erc-current-nick-highlight-type 'nick)
+;; ;; Track only mentions and keywords
+;; (setq erc-track-use-faces t)
+;; ;;(setq erc-format-query-as-channel-p t)
+
+;; ;;Show pvt, current-nick and keyword
+;; (setq erc-track-faces-priority-list
+;;       '(erc-current-nick-face
+;; 	erc-keyword-face
+;; 	erc-direct-msg-face))
 
 ;;(setq erc-query-display 'bury)
 ;; Prevent the new created buffer from pvt to be brought visible
@@ -828,16 +856,17 @@ if breakpoints are present in `python-mode' files"
   ad-do-it
   (if (erc-query-buffer-p) (setq erc-track-priority-faces-only 'all)))
 
-;; bk's toggle nicklist!
-(defun bk/nicklist-toggle ()
-  "Function to toggle the nicklist in ERC mode."
-  (interactive)
-  (let ((nicklist-buffer-name (format " *%s-nicklist*" (buffer-name))))
-    (if (get-buffer nicklist-buffer-name)
-        (kill-buffer nicklist-buffer-name)
-      (erc-nicklist))))
+;; (require 'erc-nicklist)
+;; ;; bk's toggle nicklist!
+;; (defun bk/nicklist-toggle ()
+;;   "Function to toggle the nicklist in ERC mode."
+;;   (interactive)
+;;   (let ((nicklist-buffer-name (format " *%s-nicklist*" (buffer-name))))
+;;     (if (get-buffer nicklist-buffer-name)
+;;         (kill-buffer nicklist-buffer-name)
+;;       (erc-nicklist))))
 
-(define-key erc-mode-map (kbd "<f7>") 'bk/nicklist-toggle)
+;; (define-key erc-mode-map (kbd "<f7>") 'bk/nicklist-toggle)
 
 ;; Smarter beep
 ;; Remember to apt-get install mplayer!
@@ -868,71 +897,71 @@ if breakpoints are present in `python-mode' files"
 	      )))
 
 
-(defun notify-privmsg-mode-line (proc parsed)
-  (let ((nick (car (erc-parse-user (erc-response.sender parsed))))
-        (target (car (erc-response.command-args parsed)))
-        (msg (erc-response.contents parsed)))
-    (when (and (erc-current-nick-p target)
-               (not (erc-is-message-ctcp-and-not-action-p msg)))
-      (setq mode-line-end-spaces (format "[pvt:%s]" nick)
-                         msg
-                         nil)
-      ))
-  nil)
+;; (defun notify-privmsg-mode-line (proc parsed)
+;;   (let ((nick (car (erc-parse-user (erc-response.sender parsed))))
+;;         (target (car (erc-response.command-args parsed)))
+;;         (msg (erc-response.contents parsed)))
+;;     (when (and (erc-current-nick-p target)
+;;                (not (erc-is-message-ctcp-and-not-action-p msg)))
+;;       (setq mode-line-end-spaces (format "[pvt:%s]" nick)
+;;                          msg
+;;                          nil)
+;;       ))
+;;   nil)
 
 
-;; TODO
-;; 
-(setq unread-pvt-msgs '())
-(defun notify-privmsg-mode-line (proc parsed)
-  (let ((nick (car (erc-parse-user (erc-response.sender parsed))))
-        (target (car (erc-response.command-args parsed)))
-        (msg (erc-response.contents parsed)))
-    (when (and (erc-current-nick-p target)
-               (not (erc-is-message-ctcp-and-not-action-p msg)))
-      ;; (setq mode-line-end-spaces (format "[last pvt:%s]" nick)
-      ;;                    msg
-      ;;                    nil)
-      (if (eq (cdr (assoc nick unread-pvt-msgs)) nil)
-	  (add-to-list 'unread-pvt-msgs `(,nick . 1))
-	(progn
-	  (setq new-value  (+ (cdr (assoc nick unread-pvt-msgs)) 1)    )
-	  (setf (cdr (assoc nick unread-pvt-msgs)) new-value)
-	  )
-	)
-	(setq mode-line-end-spaces (format "[%s:%s (%d)]"
-					   (format-time-string "%Hh%M" (date-to-time (current-time-string)))
-					   nick
-					   (cdr (assoc nick unread-pvt-msgs)) )
-	      msg
-	      nil)
-	(display-unread-pvts)      
-      ;;(print unread-pvt-msgs)
-      ))
-  nil)
+;; ;; TODO
+;; ;; 
+;; (setq unread-pvt-msgs '())
+;; (defun notify-privmsg-mode-line (proc parsed)
+;;   (let ((nick (car (erc-parse-user (erc-response.sender parsed))))
+;;         (target (car (erc-response.command-args parsed)))
+;;         (msg (erc-response.contents parsed)))
+;;     (when (and (erc-current-nick-p target)
+;;                (not (erc-is-message-ctcp-and-not-action-p msg)))
+;;       ;; (setq mode-line-end-spaces (format "[last pvt:%s]" nick)
+;;       ;;                    msg
+;;       ;;                    nil)
+;;       (if (eq (cdr (assoc nick unread-pvt-msgs)) nil)
+;; 	  (add-to-list 'unread-pvt-msgs `(,nick . 1))
+;; 	(progn
+;; 	  (setq new-value  (+ (cdr (assoc nick unread-pvt-msgs)) 1)    )
+;; 	  (setf (cdr (assoc nick unread-pvt-msgs)) new-value)
+;; 	  )
+;; 	)
+;; 	(setq mode-line-end-spaces (format "[%s:%s (%d)]"
+;; 					   (format-time-string "%Hh%M" (date-to-time (current-time-string)))
+;; 					   nick
+;; 					   (cdr (assoc nick unread-pvt-msgs)) )
+;; 	      msg
+;; 	      nil)
+;; 	(display-unread-pvts)      
+;;       ;;(print unread-pvt-msgs)
+;;       ))
+;;   nil)
 
-(add-hook 'after-change-major-mode-hook 'read-erc-msgs)
+;; (add-hook 'after-change-major-mode-hook 'read-erc-msgs)
 
-(defun display-unread-pvts ()
-  (interactive)
-  (setq pvt-status-string "[unread pvt:")
-  (mapcar (lambda (element)
-	    (print element)
-	   (setq pvt-status-string (concat pvt-status-string (format " %s(%d)," (car element) (cdr element))))	    
-	    )
-	  unread-pvt-msgs
-	  )
-  (setq pvt-status-string (subseq pvt-status-string 0 (- (length pvt-status-string) 1)))
+;; (defun display-unread-pvts ()
+;;   (interactive)
+;;   (setq pvt-status-string "[unread pvt:")
+;;   (mapcar (lambda (element)
+;; 	    (print element)
+;; 	   (setq pvt-status-string (concat pvt-status-string (format " %s(%d)," (car element) (cdr element))))	    
+;; 	    )
+;; 	  unread-pvt-msgs
+;; 	  )
+;;   (setq pvt-status-string (subseq pvt-status-string 0 (- (length pvt-status-string) 1)))
 
-  (setq pvt-status-string (concat  pvt-status-string "]"))
-  (message pvt-status-string)
-  )
+;;   (setq pvt-status-string (concat  pvt-status-string "]"))
+;;   (message pvt-status-string)
+;;   )
 
-;; Reference: https://www.emacswiki.org/emacs/SwitchToErc
-;; Use erc-query-buffer-p
-(defun read-erc-msgs ())
+;; ;; Reference: https://www.emacswiki.org/emacs/SwitchToErc
+;; ;; Use erc-query-buffer-p
+;; (defun read-erc-msgs ())
 
-(add-hook 'erc-server-PRIVMSG-functions 'notify-privmsg-mode-line t)
+;; (add-hook 'erc-server-PRIVMSG-functions 'notify-privmsg-mode-line t)
 
 ;; E-mail config
 (setq user-mail-address "lg.moneda@gmail.com")
@@ -958,6 +987,7 @@ http://lgmoneda.github.io/")
     (company-mode . "")
     (eldoc-mode . "")
     (visual-line-mode . "")
+    (anzu-mode . "")
     (flyspell-mode . "")
     (color-identifiers-mode . "")
     (auto-revert-mode . "")
@@ -992,14 +1022,62 @@ want to use in the modeline *in lieu of* the original.")
 ;; ORG MODE
 (require 'org)
 
+;; Indent tasks
+(setq org-startup-indented t)
+
+;; No blank lines between headers
+(setq org-cycle-separator-lines 0)
+
+;; Show deadlines 30 days before
+(setq org-deadline-warning-days 30)
+
+;; Consider everything under the tree to todo statistics
+(setq org-hierarchical-todo-statistics nil)
+
+;; Add close time when changing to DONE
+(setq org-log-done 'time)
+
+;; Configs to use org mode to track time in tasks
+
+;; Resume clocking task when emacs is restarted
+(org-clock-persistence-insinuate)
+
+;; Resume clocking task on clock-in if the clock is open
+(setq org-clock-in-resume t)
+
+;; Sometimes I change tasks I'm clocking quickly - this removes clocked tasks with 0:00 duration
+(setq org-clock-out-remove-zero-time-clocks t)
+
+;; Save the running clock and all clock history when exiting Emacs, load it on startup
+(setq org-clock-persist t)
+
+;; Clock out when moving task to a done state
+(setq org-clock-out-when-done t)
+
+;; Do not prompt to resume an active clock
+(setq org-clock-persist-query-resume nil)
+
+(defun lgm/clock-in-when-started ()
+ (message org-state)
+    (when (string= org-state "STARTED")
+      (org-clock-in)))
+
+(add-hook 'org-after-todo-state-change-hook 'lgm/clock-in-when-started)
+      
+;;(add-hook 'org-trigger-hook 'lgm/clock-in-when-started)
+;; From cashestocashes.com
+;; Once you've included this, activate org-columns with C-c C-x C-c while on a top-level heading, which will allow you to view the time you've spent at the different levels (you can exit the view by pressing q)
+;; Set default column view headings: Task Total-Time Time-Stamp
+(setq org-columns-default-format "%50ITEM(Task) %10CLOCKSUM %16CLOSED")
+
 ;; New states to to-do
 (setq org-todo-keywords
-      ;;      '((sequence "TODO(t)" "STARTED(s)"  "WAIT(w)" "|" "DONE(d)" "CANCELED(c)" "FAIL(f)")))
-            '((sequence "TODO(t)" "WAIT(w)" "|" "DONE(d)" "CANCELED(c)" "FAIL(f)")))
+      '((sequence "TODO(t)" "NEXT(n)" "STARTED(s)" "WAIT(w)" "|" "DONE(d)" "CANCELED(c)" "INACTIVE(i)" "FAIL(f)")))
 
 (setq org-todo-keyword-faces
       '(("TODO" . org-warning)
-;;	("STARTED" . "yellow")
+	("NEXT" . "pink")
+	("STARTED" . "yellow")
 	("WAIT" . "purple") 
         ("CANCELED" . (:foreground "blue" :weight bold))
         ("FAIL" . (:foreground "blue" :weight bold))))
@@ -1031,10 +1109,56 @@ want to use in the modeline *in lieu of* the original.")
 ;; The org mode file is opened with
 (find-file "~/Dropbox/Agenda/todo.org")
 
+;; Agenda views / configs
+
+(setq org-agenda-custom-commands
+      '(("c" "Simple agenda view"
+         ((agenda "")
+          (alltodo "")))))
+(defun air-org-skip-subtree-if-habit ()
+  "Skip an agenda entry if it has a STYLE property equal to \"habit\"."
+  (let ((subtree-end (save-excursion (org-end-of-subtree t))))
+    (if (string= (org-entry-get nil "STYLE") "habit")
+        subtree-end
+	nil)))
+
+(defun air-org-skip-subtree-if-priority (priority)
+  "Skip an agenda subtree if it has a priority of PRIORITY.
+
+PRIORITY may be one of the characters ?A, ?B, or ?C."
+  (let ((subtree-end (save-excursion (org-end-of-subtree t)))
+        (pri-value (* 1000 (- org-lowest-priority priority)))
+        (pri-current (org-get-priority (thing-at-point 'line t))))
+    (if (= pri-value pri-current)
+        subtree-end
+      nil)))
+
+
+(setq org-agenda-custom-commands
+      '(("d" "Daily agenda and all TODOs"
+         ((tags "PRIORITY=\"A\""
+                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                 (org-agenda-overriding-header "High-priority unfinished tasks:")))
+          (agenda "" ((org-agenda-ndays 1)))
+          (alltodo ""
+                   ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+                                                   (air-org-skip-subtree-if-priority ?A)
+                                                   (org-agenda-skip-if nil '(scheduled deadline))))
+                    (org-agenda-overriding-header "ALL normal priority tasks:"))))
+         ((org-agenda-compact-blocks t)))))
+
+
 ;; Org Journal
 (use-package org-journal
   :ensure t
   :init (setq org-journal-dir "~/Dropbox/Agenda/Journal"))
+
+;; Build progress bars
+;; #+BEGIN: block-dashboard
+;; #+END:
+;; C-c C-c to build/update bars
+(use-package org-dashboard
+   :ensure t)
 
 ;; I want imenu, not new journal entry!
 (global-set-key (kbd "C-c C-j") 'imenu-anywhere)
@@ -1047,7 +1171,6 @@ want to use in the modeline *in lieu of* the original.")
 
 ;; Make Org Journal remember me about
 ;; writing my day thoughts like in Memento mode
-
 (defcustom journal-file "~/Dropbox/Agenda/Journal/my-journal.org" 
   "Customizable variable to specify any file, which will be used for Memento." 
   :type 'string
@@ -1267,3 +1390,32 @@ Whenever a journal entry is created the
 (custom-set-faces
  `(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
  `(isearch ((t (:foreground "white" :background "DarkOrchid")))))
+
+;; Schema 
+(use-package quack
+  :ensure t)
+
+(use-package scheme-complete
+  :ensure t)
+
+;; If you use eldoc-mode (included in Emacs), you can also get live
+;; scheme documentation with:
+(autoload 'scheme-get-current-symbol-info "scheme-complete" nil t)
+(add-hook 'scheme-mode-hook
+  (lambda ()
+    (make-local-variable 'eldoc-documentation-function)
+    (setq eldoc-documentation-function 'scheme-get-current-symbol-info)
+    (eldoc-mode)))
+
+(eval-after-load 'scheme
+  '(define-key scheme-mode-map "\t" 'scheme-complete-or-indent))
+
+(setq lisp-indent-function 'scheme-smart-indent-function)
+
+;; Some functions from EmacsWiki
+(add-to-list 'load-path "~/.emacs.d/elisp/misc/" t)
+
+;; Jump to last change 
+(require 'goto-chg)
+(global-set-key [(control ?.)] 'goto-last-change)
+(global-set-key [(control ?,)] 'goto-last-change-reverse)
