@@ -112,9 +112,7 @@ The value can be `top', `bottom' or nil (don't sort)."
 
 (defcustom erc-nicklist-window-size 20.0
   "*The size of the nicklist window.
-
 This specifies a percentage of the channel window width.
-
 A negative value means the nicklist window appears on the left of the
 channel window, and vice versa."
   :group 'erc-nicklist
@@ -123,13 +121,11 @@ channel window, and vice versa."
 
 (defun erc-nicklist-buffer-name (&optional buffer)
   "Return the buffer name for a nicklist associated with BUFFER.
-
 If BUFFER is nil, use the value of `current-buffer'."
   (format " *%s-nicklist*" (buffer-name (or buffer (current-buffer)))))
 
 (defun erc-nicklist-make-window ()
   "Create an ERC nicklist window.
-
 See also `erc-nicklist-window-size'."
   (let ((width (floor (* (window-width) (/ erc-nicklist-window-size 100.0))))
 	(buffer (erc-nicklist-buffer-name))
@@ -279,7 +275,6 @@ Seach for the BBDB record of this contact.  If not found, return nil."
 
 (defun erc-nicklist-call-erc-command (command point buffer window)
   "Call an ERC COMMAND.
-
 Depending on what COMMAND is, it's called with one of POINT, BUFFER,
 or WINDOW as arguments."
   (when command
@@ -337,7 +332,6 @@ or WINDOW as arguments."
 
 (defun erc-nicklist-quit (&optional window)
   "Delete the ERC nicklist.
-
 Deletes WINDOW and stops updating the nicklist buffer."
   (interactive)
   (let ((b (window-buffer window)))
@@ -363,7 +357,6 @@ Deletes WINDOW and stops updating the nicklist buffer."
 
 (defun erc-nicklist-menu (&optional arg)
   "Show the ERC nicklist menu.
-
 ARG is a parametrized event (see `interactive')."
   (interactive "e")
   (let* ((point (nth 1 (cadr arg)))

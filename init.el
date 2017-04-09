@@ -742,7 +742,7 @@ if breakpoints are present in `python-mode' files"
 ;;(define-key company-mode-map (kbd "TAB") 'company-complete-common)
 
 ;; ERC
-;;(add-to-list 'load-path "~/.emacs.d/elisp/erc-extras" t)
+(add-to-list 'load-path "~/.emacs.d/elisp/erc-extras" t)
 ;;(use-package erc-hl-nicks
 ;;  :ensure t)
 ;; (require 'erc-hl-nicks)
@@ -856,17 +856,17 @@ if breakpoints are present in `python-mode' files"
   ad-do-it
   (if (erc-query-buffer-p) (setq erc-track-priority-faces-only 'all)))
 
-;; (require 'erc-nicklist)
-;; ;; bk's toggle nicklist!
-;; (defun bk/nicklist-toggle ()
-;;   "Function to toggle the nicklist in ERC mode."
-;;   (interactive)
-;;   (let ((nicklist-buffer-name (format " *%s-nicklist*" (buffer-name))))
-;;     (if (get-buffer nicklist-buffer-name)
-;;         (kill-buffer nicklist-buffer-name)
-;;       (erc-nicklist))))
+(require 'erc-nicklist)
+;; bk's toggle nicklist!
+(defun bk/nicklist-toggle ()
+  "Function to toggle the nicklist in ERC mode."
+  (interactive)
+  (let ((nicklist-buffer-name (format " *%s-nicklist*" (buffer-name))))
+    (if (get-buffer nicklist-buffer-name)
+        (kill-buffer nicklist-buffer-name)
+      (erc-nicklist))))
 
-;; (define-key erc-mode-map (kbd "<f7>") 'bk/nicklist-toggle)
+(define-key erc-mode-map (kbd "<f7>") 'bk/nicklist-toggle)
 
 ;; Smarter beep
 ;; Remember to apt-get install mplayer!
@@ -1058,7 +1058,7 @@ want to use in the modeline *in lieu of* the original.")
 (setq org-clock-persist-query-resume nil)
 
 (defun lgm/clock-in-when-started ()
- (message org-state)
+"Automatically clock in a task when status is changed to STARTED"
     (when (string= org-state "STARTED")
       (org-clock-in)))
 
@@ -1078,7 +1078,8 @@ want to use in the modeline *in lieu of* the original.")
       '(("TODO" . org-warning)
 	("NEXT" . "pink")
 	("STARTED" . "yellow")
-	("WAIT" . "purple") 
+	("WAIT" . "purple")
+	("INACTIVE", "white")
         ("CANCELED" . (:foreground "blue" :weight bold))
         ("FAIL" . (:foreground "blue" :weight bold))))
 
