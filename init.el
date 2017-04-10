@@ -743,9 +743,7 @@ if breakpoints are present in `python-mode' files"
 
 ;; ERC
 (add-to-list 'load-path "~/.emacs.d/elisp/erc-extras" t)
-(use-package erc-hl-nicks
-  :ensure t
-  :init (erc-hl-nicks))
+
 ;; (require 'erc-hl-nicks)
 ;;(require 'erc-nicklist)
 ;; (require 'erc-notify)
@@ -769,7 +767,6 @@ if breakpoints are present in `python-mode' files"
 (progn
      (require 'erc)
      (require 'erc-track)
-
      (erc-track-mode +1)
 
      ;; keywords to track
@@ -896,7 +893,6 @@ if breakpoints are present in `python-mode' files"
                   (lambda ()
                     (message nil)))
 	      )))
-
 
 ;; (defun notify-privmsg-mode-line (proc parsed)
 ;;   (let ((nick (car (erc-parse-user (erc-response.sender parsed))))
