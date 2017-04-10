@@ -409,6 +409,17 @@
 ;; More thinner window divisions
 (fringe-mode '(4 . 4))
 
+;; Fullscreen 
+;;(toggle-frame-fullscreen)
+(defun fullscreen ()
+       (interactive)
+       (x-send-client-message nil 0 nil "_NET_WM_STATE" 32
+                 '(2 "_NET_WM_STATE_FULLSCREEN" 0)))
+
+
+(run-with-idle-timer 0.1 nil (lambda () (fullscreen)) )
+;;(toggle-frame-fullscreen)
+
 ;; Enable paren mode at start
 (show-paren-mode 1)
 
@@ -1060,7 +1071,11 @@ want to use in the modeline *in lieu of* the original.")
       (org-clock-in)))
 
 (add-hook 'org-after-todo-state-change-hook 'lgm/clock-in-when-started)
-      
+
+;; Easy jump, clock in and clock out
+(global-set-key (kbd "<f11>") 'org-clock-goto)
+(global-set-key (kbd "C-<f11>") 'org-clock-in)
+(global-set-key (kbd "M-<f11>") 'org-clock-out)
 ;;(add-hook 'org-trigger-hook 'lgm/clock-in-when-started)
 ;; From cashestocashes.com
 ;; Once you've included this, activate org-columns with C-c C-x C-c while on a top-level heading, which will allow you to view the time you've spent at the different levels (you can exit the view by pressing q)
@@ -1417,3 +1432,5 @@ Whenever a journal entry is created the
 (require 'goto-chg)
 (global-set-key [(control ?.)] 'goto-last-change)
 (global-set-key [(control ?,)] 'goto-last-change-reverse)
+
+;;(fullscreen)
