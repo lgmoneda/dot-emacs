@@ -743,8 +743,9 @@ if breakpoints are present in `python-mode' files"
 
 ;; ERC
 (add-to-list 'load-path "~/.emacs.d/elisp/erc-extras" t)
-;;(use-package erc-hl-nicks
-;;  :ensure t)
+(use-package erc-hl-nicks
+  :ensure t
+  :init (erc-hl-nicks))
 ;; (require 'erc-hl-nicks)
 ;;(require 'erc-nicklist)
 ;; (require 'erc-notify)
@@ -1029,7 +1030,7 @@ want to use in the modeline *in lieu of* the original.")
 (setq org-cycle-separator-lines 0)
 
 ;; Show deadlines 30 days before
-(setq org-deadline-warning-days 30)
+(setq org-deadline-warning-days 60)
 
 ;; Consider everything under the tree to todo statistics
 (setq org-hierarchical-todo-statistics nil)
