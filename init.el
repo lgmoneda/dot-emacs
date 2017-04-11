@@ -170,6 +170,10 @@
   :bind (("C-c p s" . projectile-ag)
          ("C-c p g" . projectile-grep)))
 
+;; Auto-complete
+(use-package auto-complete
+  :ensure t)
+
 ;; Neotree
 (use-package neotree
   :ensure t
