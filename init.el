@@ -81,6 +81,11 @@
 (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
 (global-set-key "\C-x3" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
 
+;; Do not centralize cursor
+(setq scroll-step 1)
+(setq scroll-conservatively 10000)
+(setq auto-window-vscroll nil)
+
 ;; Magit
 (use-package magit
   :ensure t)
@@ -341,8 +346,9 @@
   (eval-after-load it '(require 'smartparens-python)))
 
 ;; Display time in the mode-line
-(setq display-time-format "%Hh%M")
-(display-time-mode 0)
+(setq display-time-format "%Hh%M ")
+(setq display-time-default-load-average nil)
+(display-time-mode 1)
 
 ;; To activate pytevec environment
 (defun anpytevec ()
@@ -567,11 +573,11 @@
 
 ;; Show in mode line info about current func body
 ;; It's only enabled in python-mode
-(use-package which-func
-  :ensure t
-  :config
-  (setq which-func-modes '(python-mode))
-  (add-hook 'python-mode-hook '(lambda () (which-func-mode t))))
+;; (use-package which-func
+;;   :ensure t
+;;   :config
+;;   (setq which-func-modes '(python-mode))
+;;   (add-hook 'python-mode-hook '(lambda () (which-function-mode t))))
 
 ;; Add Hydra
 (use-package hydra
@@ -1077,9 +1083,13 @@ want to use in the modeline *in lieu of* the original.")
 (add-hook 'org-after-todo-state-change-hook 'lgm/clock-in-when-started)
 
 ;; Easy jump, clock in and clock out
-(global-set-key (kbd "<f11>") 'org-clock-goto)
-(global-set-key (kbd "C-<f11>") 'org-clock-in)
-(global-set-key (kbd "M-<f11>") 'org-clock-out)
+(global-set-key (kbd "<f12>") 'org-clock-goto)
+(global-set-key (kbd "C-<f12>") 'org-clock-in)
+(global-set-key (kbd "M-<f12>") 'org-clock-out)
+
+;; Wrap clock tags in logbook
+(setq org-clock-into-drawer t)
+
 ;;(add-hook 'org-trigger-hook 'lgm/clock-in-when-started)
 ;; From cashestocashes.com
 ;; Once you've included this, activate org-columns with C-c C-x C-c while on a top-level heading, which will allow you to view the time you've spent at the different levels (you can exit the view by pressing q)

@@ -15,3 +15,4 @@ smex-items
 .mc-list.el
 .#init.el
 session*
+org-clock-save.el
