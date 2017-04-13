@@ -145,7 +145,7 @@
   :ensure t
   :init (ido-ubiquitous-mode))
 
-;; Ido ubiquitous
+;; Flx-ido (fuzzy for ido)
 (use-package flx-ido
   :ensure t
   :init (flx-ido-mode))
@@ -155,6 +155,10 @@
 (use-package imenu-anywhere
   :ensure t
   :init (imenu-anywhere))
+
+;; Ag (search)
+(use-package ag
+  :ensure t)
 
 ;; Smex
 (use-package smex
@@ -645,6 +649,19 @@ if breakpoints are present in `python-mode' files"
             ;; set COMINT argument to `t'.
             (ad-set-arg 1 t))))))
 
+;; Insert a execution time print
+(defun lgm/insert-timer()
+  (interactive)
+  (save-excursion 
+   (back-to-indentation)
+   (split-line)
+   (insert "from time import time; start = time() ## Timing from here")
+   (next-line)
+   (insert "print('Execution time: {0}m{1}s'.format(int((time()-start)/60), int((time()-start)%60 )))"))
+  )
+
+(define-key python-mode-map (kbd "<f4>") 'lgm/insert-timer)
+
 
 ;; Run python and pop-up its shell.
 ;; Kill process to solve the reload modules problem.
@@ -1089,6 +1106,7 @@ want to use in the modeline *in lieu of* the original.")
 
 ;; Wrap clock tags in logbook
 (setq org-clock-into-drawer t)
+(setq org-log-into-drawer t)
 
 ;;(add-hook 'org-trigger-hook 'lgm/clock-in-when-started)
 ;; From cashestocashes.com
