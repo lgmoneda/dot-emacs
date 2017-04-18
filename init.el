@@ -42,6 +42,8 @@
 
 ;; Fast init.el open
 (global-set-key (kbd "<f6>") (lambda() (interactive)(find-file "~/.emacs.d/init.el")))
+;; Open todo.org
+(global-set-key (kbd "<f6>") (lambda() (interactive)(find-file "~/Dropbox/Agenda/todo.org")))
 
 ;; Save place
 ;; Start from the last place you were in a file the next time you visit it
@@ -1149,6 +1151,19 @@ want to use in the modeline *in lieu of* the original.")
          (org-todo (if (= n-not-done 0) "DONE" "TODO"))))
      
 (add-hook 'org-after-todo-statistics-hook 'org-summary-todo)
+
+;; Org-babel
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((emacs-lisp . t)
+   (gnuplot . t)
+   (haskell . nil)
+   (latex . t)
+   (ledger . t)         ;this is the important one for this tutorial
+   (python . t)
+   (sh . t)
+   (sql . nil)
+   (sqlite . t)))
 
 ;; Start with my to-do
 ;; The org mode file is opened with
