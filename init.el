@@ -43,7 +43,7 @@
 ;; Fast init.el open
 (global-set-key (kbd "<f6>") (lambda() (interactive)(find-file "~/.emacs.d/init.el")))
 ;; Open todo.org
-(global-set-key (kbd "<f6>") (lambda() (interactive)(find-file "~/Dropbox/Agenda/todo.org")))
+(global-set-key (kbd "<f10>") (lambda() (interactive)(find-file "~/Dropbox/Agenda/todo.org")))
 
 ;; Save place
 ;; Start from the last place you were in a file the next time you visit it
@@ -432,8 +432,7 @@
        (x-send-client-message nil 0 nil "_NET_WM_STATE" 32
                  '(2 "_NET_WM_STATE_FULLSCREEN" 0)))
 
-
-(run-with-idle-timer 0.1 nil (lambda () (fullscreen)) )
+;;(run-with-idle-timer 0.1 nil (lambda () (fullscreen)) )
 ;;(toggle-frame-fullscreen)
 
 ;; Enable paren mode at start
