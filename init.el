@@ -354,7 +354,17 @@
 ;; Display time in the mode-line
 (setq display-time-format "%Hh%M ")
 (setq display-time-default-load-average nil)
-(display-time-mode 1)
+;;(display-time-mode 1)
+
+;; Show time in mode-line when using Emacs in fullscreen,
+;; avoiding using it three days in a row without sleeping
+(global-set-key (kbd "<f11>") (lambda()
+				(interactive)
+				(toggle-frame-fullscreen)
+				(if (eq display-time-mode nil)
+				    (display-time-mode 1)
+				    (display-time-mode 0))
+				))
 
 ;; To activate pytevec environment
 (defun anpytevec ()
@@ -1109,6 +1119,14 @@ want to use in the modeline *in lieu of* the original.")
 (setq org-clock-into-drawer t)
 (setq org-log-into-drawer t)
 
+;; Change viewer apps C-c C-o
+(setq org-file-apps
+      '((auto-mode . emacs)
+        ("\\.x?html?\\'" . "xdg-open %s")
+        ("\\.pdf\\'" . "evince \"%s\"")
+        ("\\.pdf::\\([0-9]+\\)\\'" . "xdg-open \"%s\" -p %1")
+        ("\\.pdf.xoj" . "xournal %s")))
+
 ;;(add-hook 'org-trigger-hook 'lgm/clock-in-when-started)
 ;; From cashestocashes.com
 ;; Once you've included this, activate org-columns with C-c C-x C-c while on a top-level heading, which will allow you to view the time you've spent at the different levels (you can exit the view by pressing q)
@@ -1479,4 +1497,30 @@ Whenever a journal entry is created the
 (global-set-key [(control ?.)] 'goto-last-change)
 (global-set-key [(control ?,)] 'goto-last-change-reverse)
 
-;;(fullscreen)
+;; LaTeX!
+(setq TeX-auto-save t)
+(setq TeX-parse-self t)
+(setq TeX-save-query nil)
+;(setq TeX-PDF-mode t)
+
+;; automatic formatting of a section: C-c C-q C-s;
+;; section preview: C-c C-p C-s; 
+
+(require 'flymake)
+
+(defun flymake-get-tex-args (file-name)
+(list "pdflatex"
+(list "-file-line-error" "-draftmode" "-interaction=nonstopmode" file-name)))
+
+(add-hook 'LaTeX-mode-hook 'flymake-mode)
+
+(add-hook 'LaTeX-mode-hook 'flyspell-mode)
+(add-hook 'LaTeX-mode-hook 'flyspell-buffer)
+
+;;To hide all the contents of your current section, use C-c C-o C-l. You can apply it to a chapter, subsection, etc. You can also move to a next unit of your document with C-c C-o C-n, or to a previous one with C-c C-o C-p. If you’re lost and want to see the whole document again, use C-c C-o C-a.
+(defun turn-on-outline-minor-mode ()
+(outline-minor-mode 1))
+
+(add-hook 'LaTeX-mode-hook 'turn-on-outline-minor-mode)
+(add-hook 'latex-mode-hook 'turn-on-outline-minor-mode)
+(setq outline-minor-mode-prefix "\C-c \C-o") ; Or something else
