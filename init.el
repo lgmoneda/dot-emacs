@@ -1512,8 +1512,11 @@ Whenever a journal entry is created the
 (list "pdflatex"
 (list "-file-line-error" "-draftmode" "-interaction=nonstopmode" file-name)))
 
-(add-hook 'LaTeX-mode-hook 'flymake-mode)
+(use-package latex-preview-pane
+	     :ensure t)
 
+(add-hook 'LaTeX-mode-hook 'flymake-mode)
+(add-hook 'LaTeX-mode-hook 'latex-preview-pane-mode)
 (add-hook 'LaTeX-mode-hook 'flyspell-mode)
 (add-hook 'LaTeX-mode-hook 'flyspell-buffer)
 
