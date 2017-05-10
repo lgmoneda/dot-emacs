@@ -44,9 +44,10 @@
  '(diff-hl-change ((t (:background "#3a81c3"))))
  '(diff-hl-delete ((t (:background "#ee6363"))))
  '(diff-hl-insert ((t (:background "#7ccd7c"))))
- '(ein:cell-input-area ((t (:background "dim gray"))))
+ '(ein:cell-input-area ((t (:background "black"))))
  '(isearch ((t (:foreground "white" :background "DarkOrchid"))))
  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
+ '(org-hide ((t (:foreground "#282936"))))
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
 
@@ -564,6 +565,8 @@
  ;; If there is more than one, they won't work right.
  '(company-quickhelp-color-background "dark slate gray")
  '(company-quickhelp-color-foreground "wheat")
+ '(ein:use-auto-complete t)
+ '(ein:use-auto-complete-superpack t)
  '(markdown-command "/usr/bin/pandoc")
  '(org-agenda-files (quote ("~/Dropbox/Agenda/todo.org")))
  '(paradox-github-token t)
@@ -1083,6 +1086,7 @@ want to use in the modeline *in lieu of* the original.")
 (require 'org)
 
 ;; Indent tasks
+;; Old star color: 626483
 (setq org-startup-indented t)
 
 ;; No blank lines between headers
