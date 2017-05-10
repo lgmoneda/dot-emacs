@@ -12,16 +12,24 @@
   (package-refresh-contents)
    (package-install 'use-package))
 
+;; Paradox (package-list)
+(use-package paradox
+    :ensure t)
+
 ;; High contrast Zenburn theme
 ;; (use-package hc-zenburn-theme
 ;;   :ensure t)
+
+;; Base16-theme, base16-dracula's home 
+(use-package base16-theme 
+  :ensure t)
 
 ;; Load Theme
 ;; Themes to use: monokai, deeper-blue and hc-zenburn 
 (setq custom-safe-themes t)
 (add-hook 'emacs-startup-hook
 	  (lambda ()
-	    (load-theme 'monokai)))
+	    (load-theme 'base16-dracula)))
 
 ;; Custom faces:
 ;; Make selected text background #012050
@@ -37,6 +45,8 @@
  '(diff-hl-delete ((t (:background "#ee6363"))))
  '(diff-hl-insert ((t (:background "#7ccd7c"))))
  '(ein:cell-input-area ((t (:background "dim gray"))))
+ '(isearch ((t (:foreground "white" :background "DarkOrchid"))))
+ '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
 
@@ -109,9 +119,9 @@
   :ensure t)
 
 ;; Unique color identifier
-(use-package color-identifiers-mode
-  :ensure t
-  :config (add-hook 'after-init-hook 'global-color-identifiers-mode))
+;; (use-package color-identifiers-mode
+;;   :ensure t
+;;   :config (add-hook 'after-init-hook 'global-color-identifiers-mode))
 
 ;; Rainbow delimiters in Elisp mode 
 (use-package rainbow-delimiters
@@ -505,10 +515,12 @@
   :diminish beacon-mode
   :init (beacon-mode 1)
         ;; For deeper-blue theme
-        ;;(setq beacon-color "#00ff00")
+        ;; (setq beacon-color "#00ff00")
         ;; For monokai theme
-        (setq beacon-color "#AE81FF")
-        (setq beacon-size 60)
+        ;;(setq beacon-color "#AE81FF")
+	;; base16-dracula
+	(setq beacon-color "#ea51b2")
+        (setq beacon-size 100)
 	(setq beacon-blink-delay 0.5))
 
 ;; Emacs Ipython Notebook
@@ -554,6 +566,7 @@
  '(company-quickhelp-color-foreground "wheat")
  '(markdown-command "/usr/bin/pandoc")
  '(org-agenda-files (quote ("~/Dropbox/Agenda/todo.org")))
+ '(paradox-github-token t)
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
 
@@ -798,18 +811,19 @@ if breakpoints are present in `python-mode' files"
 ;; (require 'erc-notify)
 ;; (require 'erc-match)
 
-;; (erc-spelling-mode 1)
-;; (add-hook 'erc-mode-hook (lambda () (auto-fill-mode 0)))
-;; (make-variable-buffer-local 'erc-fill-column)
-;;  (add-hook 'window-configuration-change-hook 
-;; 	   '(lambda ()
-;; 	      (save-excursion
-;; 	        (walk-windows
-;; 		 (lambda (w)
-;; 		   (let ((buffer (window-buffer w)))
-;; 		     (set-buffer buffer)
-;; 		     (when (eq major-mode 'erc-mode)
-;; 		       (setq erc-fill-column (- (window-width w) 2)))))))))
+;; Trying to display nicely
+(erc-spelling-mode 1)
+(add-hook 'erc-mode-hook (lambda () (auto-fill-mode 0)))
+(make-variable-buffer-local 'erc-fill-column)
+ (add-hook 'window-configuration-change-hook 
+	   '(lambda ()
+	      (save-excursion
+	        (walk-windows
+		 (lambda (w)
+		   (let ((buffer (window-buffer w)))
+		     (set-buffer buffer)
+		     (when (eq major-mode 'erc-mode)
+		       (setq erc-fill-column (- (window-width w) 2)))))))))
 
 (erc :server "irc.freenode.net" :port 6667 :nick "lgmoneda")
 
@@ -1464,9 +1478,7 @@ Whenever a journal entry is created the
 (global-set-key (kbd "<C-return>") 'newline-without-break-of-line)
 
 ;; Changes the search face
-(custom-set-faces
- `(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
- `(isearch ((t (:foreground "white" :background "DarkOrchid")))))
+
 
 ;; Schema 
 (use-package quack
