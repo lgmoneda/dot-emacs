@@ -571,8 +571,8 @@
  ;; If there is more than one, they won't work right.
  '(company-quickhelp-color-background "dark slate gray")
  '(company-quickhelp-color-foreground "wheat")
- '(ein:use-auto-complete t)
- '(ein:use-auto-complete-superpack t)
+ '(ein:use-auto-complete t t)
+ '(ein:use-auto-complete-superpack t t)
  '(markdown-command "/usr/bin/pandoc")
  '(org-agenda-files (quote ("~/Dropbox/Agenda/todo.org")))
  '(package-selected-packages
@@ -1038,30 +1038,25 @@ if breakpoints are present in `python-mode' files"
 ;; E-mail config
 (setq user-mail-address "lg.moneda@gmail.com")
 (setq user-full-name "Luis Moneda")
+(setq
+send-mail-function 'smtpmail-send-it
+message-send-mail-function 'smtpmail-send-it
+user-mail-address "lg.moneda@gmail.com"
+smtpmail-starttls-credentials '(("smtp.gmail.com" "587" nil nil))
+smtpmail-auth-credentials (expand-file-name "~/.authinfo")
+smtpmail-default-smtp-server "smtp.gmail.com"
+smtpmail-smtp-server "smtp.gmail.com"
+smtpmail-smtp-service 587
+smtpmail-debug-info t
+starttls-extra-arguments nil
+starttls-gnutls-program "/usr/bin/gnutls-cli"
+starttls-extra-arguments nil
+starttls-use-gnutls t
+message-signature "Luis Moneda
+http://lgmoneda.github.io/
+Sent from Emacs"
+)
 
-(setq send-mail-function 'smtpmail-send-it)
-(setq smtpmail-auth-credentials (expand-file-name "~/.authinfo"))
-(setq smtpmail-smtp-server "smtp.gmail.com")
-(setq smtpmail-smtp-service 465)
-(setq message-signature "Luis Moneda
-http://lgmoneda.github.io/")
-
-;; send mail
-;; (setq
-;; send-mail-function 'smtpmail-send-it
-;; message-send-mail-function 'smtpmail-send-it
-;; user-mail-address "lg.moneda@gmail.com"
-;; smtpmail-starttls-credentials '(("smtp.gmail.com" "587" nil nil))
-;; smtpmail-auth-credentials (expand-file-name "~/.authinfo")
-;; smtpmail-default-smtp-server "smtp.gmail.com"
-;; smtpmail-smtp-server "smtp.gmail.com"
-;; smtpmail-smtp-service 587
-;; smtpmail-debug-info t
-;; starttls-extra-arguments nil
-;; starttls-gnutls-program "/usr/bin/gnutls-cli"
-;; starttls-extra-arguments nil
-;; starttls-use-gnutls t
-;; )
 ;; Mode line α
 (defvar mode-line-cleaner-alist
   `((auto-complete-mode . "")
