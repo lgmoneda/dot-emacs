@@ -103,6 +103,10 @@
 (use-package magit
   :ensure t)
 
+;; Git-timemachine
+(use-package git-timemachine
+  :ensure t)
+
 ;; Dash
 (use-package dash
   :ensure t)
@@ -372,7 +376,9 @@
 (global-set-key (kbd "<f11>") (lambda()
 				(interactive)
 				(toggle-frame-fullscreen)
-				(if (eq display-time-mode nil)
+				;; Now it works with multiple screens :)
+				(if (eq (cdr (assoc 'fullscreen (frame-parameters))) 'fullboth)
+				;; (if (eq display-time-mode nil)
 				    (display-time-mode 1)
 				    (display-time-mode 0))
 				))
@@ -569,6 +575,9 @@
  '(ein:use-auto-complete-superpack t)
  '(markdown-command "/usr/bin/pandoc")
  '(org-agenda-files (quote ("~/Dropbox/Agenda/todo.org")))
+ '(package-selected-packages
+   (quote
+    (latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-ubiquitous ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
@@ -1033,10 +1042,26 @@ if breakpoints are present in `python-mode' files"
 (setq send-mail-function 'smtpmail-send-it)
 (setq smtpmail-auth-credentials (expand-file-name "~/.authinfo"))
 (setq smtpmail-smtp-server "smtp.gmail.com")
-(setq smtpmail-smtp-service 587)
+(setq smtpmail-smtp-service 465)
 (setq message-signature "Luis Moneda
 http://lgmoneda.github.io/")
 
+;; send mail
+;; (setq
+;; send-mail-function 'smtpmail-send-it
+;; message-send-mail-function 'smtpmail-send-it
+;; user-mail-address "lg.moneda@gmail.com"
+;; smtpmail-starttls-credentials '(("smtp.gmail.com" "587" nil nil))
+;; smtpmail-auth-credentials (expand-file-name "~/.authinfo")
+;; smtpmail-default-smtp-server "smtp.gmail.com"
+;; smtpmail-smtp-server "smtp.gmail.com"
+;; smtpmail-smtp-service 587
+;; smtpmail-debug-info t
+;; starttls-extra-arguments nil
+;; starttls-gnutls-program "/usr/bin/gnutls-cli"
+;; starttls-extra-arguments nil
+;; starttls-use-gnutls t
+;; )
 ;; Mode line α
 (defvar mode-line-cleaner-alist
   `((auto-complete-mode . "")
