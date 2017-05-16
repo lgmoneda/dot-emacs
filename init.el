@@ -1,4 +1,4 @@
-;; Package Management
+x;; Package Management
 (require 'package)
 (setq package-enable-at-startup nil)
 (add-to-list 'package-archives
@@ -369,6 +369,25 @@
 ;; Display time in the mode-line
 (setq display-time-format "%Hh%M ")
 (setq display-time-default-load-average nil)
+;; Hide the "MAIL" from mode-line
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(company-quickhelp-color-background "dark slate gray")
+ '(company-quickhelp-color-foreground "wheat")
+ '(display-time-mail-string "")
+ '(ein:use-auto-complete t t)
+ '(ein:use-auto-complete-superpack t t)
+ '(markdown-command "/usr/bin/pandoc")
+ '(org-agenda-files (quote ("~/Dropbox/Agenda/todo.org")))
+ '(package-selected-packages
+   (quote
+    (org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-ubiquitous ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+ '(paradox-github-token t)
+ '(region ((t (:background "#102050"))))
+ '(show-paren-match ((t (:weight (quote extra-bold))))))
 ;;(display-time-mode 1)
 
 ;; Show time in mode-line when using Emacs in fullscreen,
@@ -564,23 +583,7 @@
 
 
 ;; Change selected text highlight color #102050
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(company-quickhelp-color-background "dark slate gray")
- '(company-quickhelp-color-foreground "wheat")
- '(ein:use-auto-complete t t)
- '(ein:use-auto-complete-superpack t t)
- '(markdown-command "/usr/bin/pandoc")
- '(org-agenda-files (quote ("~/Dropbox/Agenda/todo.org")))
- '(package-selected-packages
-   (quote
-    (latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-ubiquitous ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
- '(paradox-github-token t)
- '(region ((t (:background "#102050"))))
- '(show-paren-match ((t (:weight (quote extra-bold))))))
+
 
 ;; Disable edebug key binds
 
@@ -870,7 +873,7 @@ if breakpoints are present in `python-mode' files"
 ;; Prevents Erc buffers flashing at start
 (erc-autojoin-mode t)
 (setq erc-autojoin-timing :ident)
-(setq erc-autojoin-delay 20)
+(setq erc-autojoin-delay 40)
 (setq erc-join-buffer 'bury)
 (setq erc-autojoin-channels-alist
       '(("freenode.net" "#emacs" "#sptk" "##machinelearning"
@@ -1053,8 +1056,7 @@ starttls-gnutls-program "/usr/bin/gnutls-cli"
 starttls-extra-arguments nil
 starttls-use-gnutls t
 message-signature "Luis Moneda
-http://lgmoneda.github.io/
-Sent from Emacs"
+http://lgmoneda.github.io/"
 )
 
 ;; Mode line α
@@ -1188,6 +1190,10 @@ want to use in the modeline *in lieu of* the original.")
 (add-hook 'org-mode-hook (linum-mode 0))
 (add-hook 'after-init-hook 'org-agenda-list)
 (setq org-agenda-block-separator "-")
+
+
+(require 'org-bullets)
+(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 
 (org-defkey org-mode-map (kbd "C-S-s /") 'helm-org-agenda-files-headings)
 
@@ -1566,3 +1572,15 @@ Whenever a journal entry is created the
 
 (setq TeX-parse-self t) ; Enable parse on load.
 (setq TeX-auto-save t) ; Enable parse on save.
+
+; Annoying 25.2 message when running Python
+(with-eval-after-load 'python
+  (defun python-shell-completion-native-try ()
+    "Return non-nil if can trigger native completion."
+    (let ((python-shell-completion-native-enable t)
+          (python-shell-completion-native-output-timeout
+           python-shell-completion-native-try-output-timeout))
+      (python-shell-completion-native-get-completions
+       (get-buffer-process (current-buffer))
+       nil "_"))))
+(setq python-shell-completion-native-enable nil)
