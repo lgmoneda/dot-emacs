@@ -1,4 +1,4 @@
-x;; Package Management
+;; Package Management
 (require 'package)
 (setq package-enable-at-startup nil)
 (add-to-list 'package-archives
@@ -1191,9 +1191,12 @@ want to use in the modeline *in lieu of* the original.")
 (add-hook 'after-init-hook 'org-agenda-list)
 (setq org-agenda-block-separator "-")
 
+(use-package org-bullets
+  :ensure t
+  :init (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
-(require 'org-bullets)
-(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+;; (require 'org-bullets)
+;; (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 
 (org-defkey org-mode-map (kbd "C-S-s /") 'helm-org-agenda-files-headings)
 
