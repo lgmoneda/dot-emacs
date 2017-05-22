@@ -16,3 +16,4 @@ smex-items
 .#init.el
 session*
 org-clock-save.el
+request/curl-cookie-jar

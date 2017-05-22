@@ -1071,6 +1071,7 @@ http://lgmoneda.github.io/"
     (abbrev-mode . "")
     (company-mode . "")
     (eldoc-mode . "")
+    (Org-Indent . "")
     (visual-line-mode . "")
     (anzu-mode . "")
     (flyspell-mode . "")
