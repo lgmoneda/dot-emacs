@@ -378,8 +378,8 @@
  '(company-quickhelp-color-background "dark slate gray")
  '(company-quickhelp-color-foreground "wheat")
  '(display-time-mail-string "")
- '(ein:use-auto-complete t t)
- '(ein:use-auto-complete-superpack t t)
+ '(ein:use-auto-complete t)
+ '(ein:use-auto-complete-superpack t)
  '(markdown-command "/usr/bin/pandoc")
  '(org-agenda-files (quote ("~/Dropbox/Agenda/todo.org")))
  '(package-selected-packages
