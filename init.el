@@ -383,13 +383,13 @@
  '(company-quickhelp-color-background "dark slate gray")
  '(company-quickhelp-color-foreground "wheat")
  '(display-time-mail-string "")
- '(ein:use-auto-complete t t)
- '(ein:use-auto-complete-superpack t t)
+ '(ein:use-auto-complete t)
+ '(ein:use-auto-complete-superpack t)
  '(markdown-command "/usr/bin/pandoc")
  '(org-agenda-files (quote ("~/Dropbox/Agenda/todo.org")))
  '(package-selected-packages
    (quote
-    (column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-ubiquitous ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-ubiquitous ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
@@ -474,7 +474,22 @@
 (scroll-bar-mode -1)
 
 ;; More thinner window divisions
-(fringe-mode '(4 . 1))
+(fringe-mode '(3 . 2))
+
+;; Outside border to make it better in fullscreen mode
+(add-to-list 'default-frame-alist '(internal-border-width . 2))
+
+;; Apply fringe width
+;; (defun lgm/set-fringe(arg)
+;;   (interactive)
+
+;;   (print arg)
+;;   ;; (fringe-mode '(arg . arg))
+;;   )
+;; (lgm/set-fringe 100)
+;; (setq wel 100)
+;; (fringe-mode '('wel . 'wel))
+
 
 ;; Fullscreen 
 ;;(toggle-frame-fullscreen)
