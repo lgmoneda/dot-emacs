@@ -226,6 +226,12 @@
     (add-hook 'python-mode-hook 'python--add-debug-highlight)
     )
 
+;; Column enforce
+(use-package column-enforce-mode
+	     :ensure t
+	     :config
+	     (add-hook 'python-mode-hook 'column-enforce-mode))
+
 ;; Company-anaconda
 (use-package company-anaconda
   :ensure t
