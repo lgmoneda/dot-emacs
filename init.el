@@ -1104,6 +1104,7 @@ http://lgmoneda.github.io/"
     (which-key-mode . "")
     (smartparens-mode . "")
     (abbrev-mode . "")
+    (column-enforce-mode . "")
     (company-mode . "")
     (eldoc-mode . "")
     (Org-Indent . "")
