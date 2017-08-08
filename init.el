@@ -25,11 +25,13 @@
   :ensure t)
 
 ;; Load Theme
-;; Themes to use: monokai, deeper-blue and hc-zenburn 
+;; Themes to use: monokai, deeper-blue and hc-zenburn
+;; 'base16-dracula 'base16-gruvbox-dark-medium
+;; 'base16-circus
 (setq custom-safe-themes t)
 (add-hook 'emacs-startup-hook
 	  (lambda ()
-	    (load-theme 'base16-dracula)))
+	    (load-theme 'base16-circus)))
 
 ;; Custom faces:
 ;; Make selected text background #012050
@@ -47,9 +49,11 @@
  '(ein:cell-input-area ((t (:background "black"))))
  '(isearch ((t (:foreground "white" :background "DarkOrchid"))))
  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
- '(org-hide ((t (:foreground "#282936"))))
- '(region ((t (:background "#102050"))))
+ '(org-hide ((t (:foreground "#191919"))))
+ '(region ((t (:background "#4C516D"))))
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
+
+;;
 
 ;; Fast init.el open
 (global-set-key (kbd "<f6>") (lambda() (interactive)(find-file "~/.emacs.d/init.el")))
@@ -169,9 +173,10 @@
   :init (ido-vertical-mode))
 
 ;; Ido ubiquitous
-(use-package ido-ubiquitous
+(use-package ido-completing-read+
   :ensure t
-  :init (ido-ubiquitous-mode))
+  :init (ido-ubiquitous-mode 1)
+)
 
 ;; Flx-ido (fuzzy for ido)
 (use-package flx-ido
@@ -215,6 +220,32 @@
 (use-package neotree
   :ensure t
   :bind ([f8] . neotree-toggle))
+
+;; Scala stuff
+(use-package scala-mode
+  :interpreter
+  ("scala" . scala-mode))
+
+(setq sbt:program-name "/usr/bin/sbt")
+(use-package ensime
+  :ensure t
+  :init
+(add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
+  (setq
+  ensime-sbt-command "/usr/bin/sbt"
+  sbt:program-name "/usr/bin/sbt")
+)
+
+ (defun scala-run () 
+    (interactive)   
+   (ensime-sbt-action "run")
+   (ensime-sbt-action "~compile")
+(let ((c (current-buffer)))
+    (switch-to-buffer-other-window
+   (get-buffer-create (ensime-sbt-build-buffer-name)))
+ (switch-to-buffer-other-window c))) 
+ (setq exec-path
+        (append exec-path (list "/usr/bin/sbt"))) ;;REPLACE THIS with the directory of your scalac executable!
 
 ;; Anaconda Anaconda+Eldoc
 (use-package anaconda-mode
@@ -401,7 +432,7 @@
  '(org-agenda-files (quote ("~/Dropbox/Agenda/todo.org")))
  '(package-selected-packages
    (quote
-    (writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-ubiquitous ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
@@ -577,7 +608,11 @@
         ;; For monokai theme
         ;;(setq beacon-color "#AE81FF")
 	;; base16-dracula
-	(setq beacon-color "#ea51b2")
+        ;; (setq beacon-color "#ea51b2")
+	;; gru-dark-medium
+        ;; (setq beacon-color "#fb4934")
+        ;; base16-circus
+  	(setq beacon-color "#dc657d")
         (setq beacon-size 100)
 	(setq beacon-blink-delay 0.5))
 
@@ -588,8 +623,8 @@
 ;;  (setq ein:use-smartrep t)
   (setq auto-complete-mode t)
   (setq ein:output-type-prefer-pretty-text-over-html t)
-  (setq ein:output-type-preference
-	'(emacs-lisp svg image/png svg image/svg image/png jpeg image/jpeg text html text/html latex text/latex javascript))
+  ;; (setq ein:output-type-preference
+  ;; 	'(emacs-lisp image image/png svg image/svg image/png jpeg image/jpeg text html text/html latex text/latex javascript))
   )
 
 ;; (setq ein:use-auto-complete-superpack t)
@@ -1148,6 +1183,12 @@ want to use in the modeline *in lieu of* the original.")
 ;; Old star color: 626483
 (setq org-startup-indented t)
 
+;; Always hide stars
+(setq org-hide-leading-stars t)
+
+;; Fix helm-org-heading style
+(setq helm-org-headings-fontify t)
+
 ;; No blank lines between headers
 (setq org-cycle-separator-lines 0)
 
@@ -1228,12 +1269,6 @@ want to use in the modeline *in lieu of* the original.")
 (add-hook 'after-init-hook 'org-agenda-list)
 (setq org-agenda-block-separator "-")
 
-(use-package org-bullets
-  :ensure t
-  :init (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
-
-;; (require 'org-bullets)
-;; (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 
 (org-defkey org-mode-map (kbd "C-S-s /") 'helm-org-agenda-files-headings)
 
@@ -1266,9 +1301,11 @@ want to use in the modeline *in lieu of* the original.")
    (sql . nil)
    (sqlite . t)))
 
-;; Start with my to-do
-;; The org mode file is opened with
-(find-file "~/Dropbox/Agenda/todo.org")
+
+(use-package org-bullets
+  :ensure t
+  :init (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
 
 ;; Agenda views / configs
 
@@ -1624,3 +1661,57 @@ Whenever a journal entry is created the
        (get-buffer-process (current-buffer))
        nil "_"))))
 (setq python-shell-completion-native-enable nil)
+
+;; Start with my to-do
+;; The org mode file is opened with
+(find-file "~/Dropbox/Agenda/todo.org")
+
+;; Slack
+(use-package slack
+  :commands (slack-start)
+  :init
+  (setq slack-buffer-emojify t) ;; if you want to enable emoji, default nil
+  (setq slack-prefer-current-team t)
+  )
+
+(load-file "~/.emacs.d/slack-credentials.el")
+
+(use-package alert
+  :commands (alert)
+  :init
+  (setq alert-default-style 'notifier))
+
+(defun lgm/insert-lisp-comment-header()
+  (interactive)
+  (setq header (read-string "Enter header: "))
+  (setq header-length (length header))
+  (back-to-indentation)
+  (split-line)
+  (insert ";;")
+  (insert (calendar-date-string (calendar-current-date)))
+  (next-line)
+  (insert ";;============================")
+  (next-line)
+  (insert ";;==")
+  (setq n-white-spaces (- 24 header-length))
+  (setq count 0)
+  (while (< count n-white-spaces)
+    (insert " ")
+    (setq count (1+ count))
+    (if (= count (/ n-white-spaces 2))
+	(insert header)
+	)
+    )
+  (insert "==")
+  (next-line)
+  (insert ";;============================")
+  )
+
+(define-key emacs-lisp-mode-map (kbd "<f5>") 'lgm/insert-lisp-comment-header)
+
+
+
+
+
+
+
