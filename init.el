@@ -432,7 +432,7 @@
  '(org-agenda-files (quote ("~/Dropbox/Agenda/todo.org")))
  '(package-selected-packages
    (quote
-    (slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
@@ -440,7 +440,7 @@
 
 ;; Show time in mode-line when using Emacs in fullscreen,
 ;; avoiding using it three days in a row without sleeping
-(global-set-key (kbd "<f11>") (lambda()
+(global-set-key (kbd "<f9>") (lambda()
 				(interactive)
 				(toggle-frame-fullscreen)
 				;; Now it works with multiple screens :)
@@ -450,10 +450,10 @@
 				    (display-time-mode 0))
 				))
 
-;; To activate pytevec environment
-(defun anpytevec ()
+;; To activate nupy environment
+(defun anupy ()
   (interactive)
-  (pythonic-activate "~/miniconda2/envs/npytevec")
+  (pythonic-activate "~/miniconda2/envs/nupy")
   )
 
 ;; Check if i'm at work and activate
@@ -463,7 +463,10 @@
       (pythonic-activate "~/miniconda2/envs/npytevec"))
   (if (string= (system-name) "rc530")
       (pythonic-activate "~/miniconda2/envs/ml")
-    )
+      )
+  (if (string= (system-name) "Luiss-MacBook-Pro.local")
+      (pythonic-activate "~/miniconda2/envs/nupy")
+      )
   )
 
 (activate-work-env)
@@ -1238,12 +1241,15 @@ want to use in the modeline *in lieu of* the original.")
 (setq org-log-into-drawer t)
 
 ;; Change viewer apps C-c C-o
+;; When not in MAC
+(unless (string= (system-name) "Luiss-MacBook-Pro.local")
 (setq org-file-apps
       '((auto-mode . emacs)
         ("\\.x?html?\\'" . "xdg-open %s")
         ("\\.pdf\\'" . "evince \"%s\"")
         ("\\.pdf::\\([0-9]+\\)\\'" . "xdg-open \"%s\" -p %1")
         ("\\.pdf.xoj" . "xournal %s")))
+      )
 
 ;;(add-hook 'org-trigger-hook 'lgm/clock-in-when-started)
 ;; From cashestocashes.com
@@ -1662,10 +1668,6 @@ Whenever a journal entry is created the
        nil "_"))))
 (setq python-shell-completion-native-enable nil)
 
-;; Start with my to-do
-;; The org mode file is opened with
-(find-file "~/Dropbox/Agenda/todo.org")
-
 ;; Slack
 (use-package slack
   :commands (slack-start)
@@ -1674,19 +1676,23 @@ Whenever a journal entry is created the
   (setq slack-prefer-current-team t)
   )
 
-(load-file "~/.emacs.d/slack-credentials.el")
+;; (load-file "~/.emacs.d/slack-credentials.el")
 
 (use-package alert
   :commands (alert)
   :init
   (setq alert-default-style 'notifier))
 
+;;Saturday, August 12, 2017
+;;============================
+;;==  Header func head :P   ==
+;;============================
 (defun lgm/insert-lisp-comment-header()
   (interactive)
   (setq header (read-string "Enter header: "))
   (setq header-length (length header))
   (back-to-indentation)
-  (split-line)
+  (open-line 3)
   (insert ";;")
   (insert (calendar-date-string (calendar-current-date)))
   (next-line)
@@ -1710,8 +1716,23 @@ Whenever a journal entry is created the
 (define-key emacs-lisp-mode-map (kbd "<f5>") 'lgm/insert-lisp-comment-header)
 
 
+;;Thursday, August 10, 2017
+;;============================
+;;==           R            ==
+;;============================
 
+(setq inferior-R-program-name "/Library/Frameworks/R.framework/Resources/R")
 
-
+(use-package ess
+  :init
+  (setq ess-eval-visibly-p nil)
+  (setq ess-ask-for-ess-directory nil)
+  (require 'ess-eldoc))
+ 
+;; Start with my to-do
+;; The org mode file is opened with
+(find-file "~/Dropbox/Agenda/todo.org")
+(kill-buffer "todo.org")
+(find-file "~/Dropbox/Agenda/todo.org")
 
 
