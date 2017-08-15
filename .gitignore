@@ -15,5 +15,7 @@ smex-items
 .mc-list.el
 .#init.el
 session*
+slack-credentials.el
 org-clock-save.el
 request/curl-cookie-jar
+org-gcal/*
