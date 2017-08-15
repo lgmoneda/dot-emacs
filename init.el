@@ -429,10 +429,9 @@
  '(ein:use-auto-complete t t)
  '(ein:use-auto-complete-superpack t t)
  '(markdown-command "/usr/bin/pandoc")
- '(org-agenda-files (quote ("~/Dropbox/Agenda/todo.org")))
  '(package-selected-packages
    (quote
-    (ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
@@ -891,7 +890,10 @@ if breakpoints are present in `python-mode' files"
 
 ;;(define-key company-mode-map (kbd "TAB") 'company-complete-common)
 
-;; ERC
+;;Tuesday, August 15, 2017
+;;============================
+;;==          ERC           ==
+;;============================
 (add-to-list 'load-path "~/.emacs.d/elisp/erc-extras" t)
 
 ;; (require 'erc-hl-nicks)
@@ -954,6 +956,7 @@ if breakpoints are present in `python-mode' files"
 (setq erc-autojoin-channels-alist
       '(("freenode.net" "#emacs" "#sptk" "##machinelearning"
 	 "#scikit-learn" "#tensorflow")))
+
 (erc-autojoin-after-ident "irc.freenode.net" "lgmoneda")
 
 (add-hook 'erc-nickserv-identified-hook 'erc-autojoin-after-ident)
@@ -1731,11 +1734,48 @@ Whenever a journal entry is created the
   (setq ess-eval-visibly-p nil)
   (setq ess-ask-for-ess-directory nil)
   (require 'ess-eldoc))
+
+;;Tuesday, August 15, 2017
+;;============================
+;;==       G Calendar       ==
+;;============================
+
+(use-package org-gcal 
+  :init
+  :ensure t
+  )
  
+;; Load Calendar
+(load "~/Dropbox/Projetos/Emacs/.gcalsync.el")
+
 ;; Start with my to-do
 ;; The org mode file is opened with
 (find-file "~/Dropbox/Agenda/todo.org")
-(kill-buffer "todo.org")
-(find-file "~/Dropbox/Agenda/todo.org")
 
 
+;;Tuesday, August 15, 2017
+;;============================
+;;==       OS Configs       ==
+;;============================
+(cond
+    ((string-equal system-type "gnu/linux")
+     (progn
+      (+ 1 1)
+    )
+    ((string-equal system-type "darwin")
+        (progn
+	 (add-to-list 'exec-path "/usr/local/bin")
+	 ;;add hookup shell
+	 (add-hook 'shell-mode-hook (lambda ()
+				      (setenv "PATH" (shell-command-to-string "$SHELL -cl \"printf %s \\\"\\\$PATH\\\"\""))
+				      (setq exec-path (append (parse-colon-path (getenv "PATH")) (list exec-directory)))
+
+				      ))
+	 (setq ispell-program-name "/usr/local/bin/ispell")
+	 ;; Shell
+	 ;; There's a .emacs_bash with .~/bash_profile
+	 ;; Maybe i should use this:
+	 ;;https://github.com/purcell/exec-path-from-shell
+        )
+    )
+))
