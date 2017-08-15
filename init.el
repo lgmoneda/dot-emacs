@@ -913,7 +913,10 @@ if breakpoints are present in `python-mode' files"
 		     (when (eq major-mode 'erc-mode)
 		       (setq erc-fill-column (- (window-width w) 2)))))))))
 
-(erc :server "irc.freenode.net" :port 6667 :nick "lgmoneda")
+
+(when (assoc "en0" (network-interface-list))
+  (erc :server "irc.freenode.net" :port 6667 :nick "lgmoneda"))
+
 
 (progn
      (require 'erc)
