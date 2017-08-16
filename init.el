@@ -1730,7 +1730,8 @@ Whenever a journal entry is created the
 (setq inferior-R-program-name "/Library/Frameworks/R.framework/Resources/R")
 
 (use-package ess
-  :init
+	     :ensure t
+	     :init
   (setq ess-eval-visibly-p nil)
   (setq ess-ask-for-ess-directory nil)
   (require 'ess-eldoc))
@@ -1761,7 +1762,7 @@ Whenever a journal entry is created the
     ((string-equal system-type "gnu/linux")
      (progn
       (+ 1 1)
-    )
+    ))
     ((string-equal system-type "darwin")
         (progn
 	 (add-to-list 'exec-path "/usr/local/bin")
@@ -1778,4 +1779,4 @@ Whenever a journal entry is created the
 	 ;;https://github.com/purcell/exec-path-from-shell
         )
     )
-))
+)
