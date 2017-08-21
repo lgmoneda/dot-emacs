@@ -431,7 +431,7 @@
  '(markdown-command "/usr/bin/pandoc")
  '(package-selected-packages
    (quote
-    (org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
@@ -463,7 +463,7 @@
   (if (string= (system-name) "rc530")
       (pythonic-activate "~/miniconda2/envs/ml")
       )
-  (if (string= (system-name) "Luiss-MacBook-Pro.local")
+  (if (string-match "lgmac" (system-name))
       (pythonic-activate "~/miniconda2/envs/nupy")
       )
   )
@@ -1028,7 +1028,10 @@ if breakpoints are present in `python-mode' files"
 ;; todo: no beep when buffer is visible
 (add-hook 'erc-text-matched-hook 'erc-sound-if-not-server)
 (defun erc-sound-if-not-server (match-type nickuserhost msg)
-      (unless (or (string-match "Server" nickuserhost) (string-match nickuserhost (erc-current-nick)))
+  (unless (or
+	   (string-match "Serv" nickuserhost)
+	   (string-match nickuserhost (erc-current-nick))
+	   (string-match "Server" nickuserhost))
 	(when (string= match-type "current-nick")
 	(start-process-shell-command "lolsound" nil "mplayer ~/.emacs.d/sounds/icq-message.wav"))
 	;;(setq mode-line-end-spaces
@@ -1185,12 +1188,18 @@ want to use in the modeline *in lieu of* the original.")
 
 (add-hook 'after-change-major-mode-hook 'clean-mode-line)
 
-;; ORG MODE
+;Sunday, August 20, 2017
+;============================
+;==        Org-mode        ==
+;============================
 (require 'org)
 
 ;; Indent tasks
 ;; Old star color: 626483
 (setq org-startup-indented t)
+
+;; Init hiding everything
+(setq org-startup-folded t)
 
 ;; Always hide stars
 (setq org-hide-leading-stars t)
@@ -1248,7 +1257,7 @@ want to use in the modeline *in lieu of* the original.")
 
 ;; Change viewer apps C-c C-o
 ;; When not in MAC
-(unless (string= (system-name) "Luiss-MacBook-Pro.local")
+(unless (string-equal system-type "darwin")
 (setq org-file-apps
       '((auto-mode . emacs)
         ("\\.x?html?\\'" . "xdg-open %s")
@@ -1278,9 +1287,9 @@ want to use in the modeline *in lieu of* the original.")
 
 ;; No line number in org mode, please
 (add-hook 'org-mode-hook (linum-mode 0))
-(add-hook 'after-init-hook 'org-agenda-list)
+;; Open org-agenda
+;; (add-hook 'after-init-hook 'org-agenda-list)
 (setq org-agenda-block-separator "-")
-
 
 (org-defkey org-mode-map (kbd "C-S-s /") 'helm-org-agenda-files-headings)
 
@@ -1316,8 +1325,8 @@ want to use in the modeline *in lieu of* the original.")
 
 (use-package org-bullets
   :ensure t
-  :init (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
-
+  ;; :init (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+  )
 
 ;; Agenda views / configs
 
@@ -1693,18 +1702,18 @@ Whenever a journal entry is created the
 ;;============================
 ;;==  Header func head :P   ==
 ;;============================
-(defun lgm/insert-lisp-comment-header()
+(defun lgm/insert-comment-header()
   (interactive)
   (setq header (read-string "Enter header: "))
   (setq header-length (length header))
   (back-to-indentation)
   (open-line 3)
-  (insert ";;")
+  (insert comment-start)
   (insert (calendar-date-string (calendar-current-date)))
   (next-line)
-  (insert ";;============================")
+  (insert (concat comment-start "============================"))
   (next-line)
-  (insert ";;==")
+  (insert (concat comment-start "=="))
   (setq n-white-spaces (- 24 header-length))
   (setq count 0)
   (while (< count n-white-spaces)
@@ -1716,7 +1725,7 @@ Whenever a journal entry is created the
     )
   (insert "==")
   (next-line)
-  (insert ";;============================")
+  (insert (concat comment-start "============================"))
   )
 
 (define-key emacs-lisp-mode-map (kbd "<f5>") 'lgm/insert-lisp-comment-header)
@@ -1752,7 +1761,9 @@ Whenever a journal entry is created the
 ;; Start with my to-do
 ;; The org mode file is opened with
 (find-file "~/Dropbox/Agenda/todo.org")
-
+(switch-to-buffer "todo.org")
+(org-bullets-mode)
+(org-agenda-list)
 
 ;;Tuesday, August 15, 2017
 ;;============================
@@ -1772,7 +1783,8 @@ Whenever a journal entry is created the
 				      (setq exec-path (append (parse-colon-path (getenv "PATH")) (list exec-directory)))
 
 				      ))
-	 (setq ispell-program-name "/usr/local/bin/ispell")
+	 (setq ispell-program-name "/usr/local/bin/ispell/")
+	 (setenv "PATH" "/usr/local/bin:/Library/TeX/texbin/:$PATH" t)
 	 ;; Shell
 	 ;; There's a .emacs_bash with .~/bash_profile
 	 ;; Maybe i should use this:
@@ -1780,3 +1792,10 @@ Whenever a journal entry is created the
         )
     )
 )
+
+(use-package default-text-scale
+	     :ensure t)
+
+(global-set-key (kbd "C-M-=") 'default-text-scale-increase)
+(global-set-key (kbd "C-M--") 'default-text-scale-decrease)
+
