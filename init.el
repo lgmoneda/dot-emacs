@@ -221,22 +221,46 @@
   :ensure t
   :bind ([f8] . neotree-toggle))
 
-;; Scala stuff
+;Wednesday, August 23, 2017
+;============================
+;==         Scala          ==
+;============================
 (use-package scala-mode
   :interpreter
   ("scala" . scala-mode))
 
-(setq sbt:program-name "/usr/bin/sbt")
-(use-package ensime
-  :ensure t
-  :init
-(add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
-  (setq
-  ensime-sbt-command "/usr/bin/sbt"
-  sbt:program-name "/usr/bin/sbt")
-)
+(add-hook 'scala-mode-hook (lambda () (setq tab-width 4)))
 
- (defun scala-run () 
+(cond ( (string-equal system-type "darwin")
+    (progn (setq sbt:program-name "/usr/local/bin/sbt")
+    (use-package ensime
+      :ensure t
+      :init
+    (add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
+      (setq
+      ensime-sbt-command "/usr/local/bin/sbt"
+      sbt:program-name "/usr/local/bin/sbt")
+      )
+    (setq ensime-exec-path "/usr/local/bin/sbt")
+    )
+
+    )
+
+      ((string-equal system-type "gnu/linux")
+	(setq sbt:program-name "/usr/bin/sbt")
+	(use-package ensime
+	  :ensure t
+	  :init
+	(add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
+	  (setq
+	  ensime-sbt-command "/usr/bin/sbt"
+	  sbt:program-name "/usr/bin/sbt")
+	)
+	(setq ensime-exec-path "/usr/bin/sbt")
+       )
+      )
+
+(defun scala-run () 
     (interactive)   
    (ensime-sbt-action "run")
    (ensime-sbt-action "~compile")
@@ -245,7 +269,10 @@
    (get-buffer-create (ensime-sbt-build-buffer-name)))
  (switch-to-buffer-other-window c))) 
  (setq exec-path
-        (append exec-path (list "/usr/bin/sbt"))) ;;REPLACE THIS with the directory of your scalac executable!
+(append exec-path (list ensime-exec-path))) ;;REPLACE THIS with the directory of your scalac executable!
+
+(setq ensime-startup-snapshot-notification nil)
+(setq ensime-eldoc-hints 'all)
 
 ;; Anaconda Anaconda+Eldoc
 (use-package anaconda-mode
@@ -431,7 +458,7 @@
  '(markdown-command "/usr/bin/pandoc")
  '(package-selected-packages
    (quote
-    (auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
@@ -1325,7 +1352,7 @@ want to use in the modeline *in lieu of* the original.")
 
 (use-package org-bullets
   :ensure t
-  ;; :init (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+  :init (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
   )
 
 ;; Agenda views / configs
@@ -1650,7 +1677,9 @@ Whenever a journal entry is created the
 
 (defun flymake-get-tex-args (file-name)
 (list "pdflatex"
-(list "-file-line-error" "-draftmode" "-interaction=nonstopmode" file-name)))
+      (list "-file-line-error" "-draftmode" "-interaction=nonstopmode" file-name)))
+
+
 
 (use-package latex-preview-pane
 	     :ensure t)
@@ -1762,8 +1791,9 @@ Whenever a journal entry is created the
 ;; The org mode file is opened with
 (find-file "~/Dropbox/Agenda/todo.org")
 (switch-to-buffer "todo.org")
-(org-bullets-mode)
+(setq org-agenda-window-setup 'other-window) 
 (org-agenda-list)
+
 
 ;;Tuesday, August 15, 2017
 ;;============================
@@ -1776,7 +1806,7 @@ Whenever a journal entry is created the
     ))
     ((string-equal system-type "darwin")
         (progn
-	 (add-to-list 'exec-path "/usr/local/bin")
+	 (add-to-list 'exec-path "/usr/local/bin" "/Library/TeX/texbin/pdflatex")
 	 ;;add hookup shell
 	 (add-hook 'shell-mode-hook (lambda ()
 				      (setenv "PATH" (shell-command-to-string "$SHELL -cl \"printf %s \\\"\\\$PATH\\\"\""))
@@ -1791,7 +1821,10 @@ Whenever a journal entry is created the
 	 ;;https://github.com/purcell/exec-path-from-shell
         )
     )
-)
+    )
+
+(when (memq window-system '(mac ns x))
+  (exec-path-from-shell-initialize))
 
 (use-package default-text-scale
 	     :ensure t)
