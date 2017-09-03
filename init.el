@@ -224,7 +224,6 @@
 ;Wednesday, August 23, 2017
 ;============================
 ;==         Scala          ==
-;============================
 (use-package scala-mode
   :interpreter
   ("scala" . scala-mode))
@@ -236,7 +235,7 @@
     (use-package ensime
       :ensure t
       :init
-    (add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
+    (add-hook 'scala-mode-hook 'ensime-mode-hook)
       (setq
       ensime-sbt-command "/usr/local/bin/sbt"
       sbt:program-name "/usr/local/bin/sbt")
@@ -251,7 +250,7 @@
 	(use-package ensime
 	  :ensure t
 	  :init
-	(add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
+	(add-hook 'scala-mode-hook 'ensime-mode-hook)
 	  (setq
 	  ensime-sbt-command "/usr/bin/sbt"
 	  sbt:program-name "/usr/bin/sbt")
