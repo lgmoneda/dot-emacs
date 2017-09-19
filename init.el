@@ -193,8 +193,8 @@
 	     :init 
 	     (ivy-mode 1)
 	     (setq ivy-initial-inputs-alist nil)
-	     (setq ivy-use-virtual-buffers t)
-	     (setq enable-recursive-minibuffers t)
+	     ;; (setq ivy-use-virtual-buffers t)
+	     ;; (setq enable-recursive-minibuffers t)
 
 	     (setq ivy-re-builders-alist
 		   '((ivy-switch-buffer . ivy--regex-plus)
@@ -625,6 +625,12 @@
 
 ;; Defining switch tabs commands
 (global-set-key [C-iso-lefttab] 
+    (lambda ()
+      (interactive)
+      (other-window -1)))
+
+;; MacOS version
+(global-set-key (kbd "C-S-<tab>") 
     (lambda ()
       (interactive)
       (other-window -1)))
