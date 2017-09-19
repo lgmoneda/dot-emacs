@@ -189,17 +189,44 @@
 ;============================
 
 (use-package ivy
-  :ensure t
-  :init (
-(setq ivy-initial-inputs-alist nil)
+	     :ensure t
+	     :init 
+	     (ivy-mode 1)
+	     (setq ivy-initial-inputs-alist nil)
+	     (setq ivy-use-virtual-buffers t)
+	     (setq enable-recursive-minibuffers t)
 
-(setq ivy-re-builders-alist
-      '((ivy-switch-buffer . ivy--regex-plus)
-	(t . ivy--regex-fuzzy)))
+	     (setq ivy-re-builders-alist
+		   '((ivy-switch-buffer . ivy--regex-plus)
+		     (t . ivy--regex-fuzzy)))
 
-	 )
-  )
+	     (setq ivy-use-virtual-buffers t)
+	     (setq ivy-count-format "(%d/%d) ")
 
+	     ;; Use C-j for immediate termination with the current value, and RET
+	     ;; for continuing completion for that directory. This is the ido
+	     ;; behaviour.
+	     (define-key ivy-minibuffer-map (kbd "C-j") #'ivy-immediate-done)
+	     (define-key ivy-minibuffer-map (kbd "RET") #'ivy-alt-done)
+	     )
+
+(use-package counsel
+	     :ensure t
+	     :init (counsel-mode)
+	     (global-set-key (kbd "M-X") 'counsel-M-x)
+	     ;; (global-set-key (kbd "C-s") 'swiper)
+	     (global-set-key (kbd "M-x") 'counsel-M-x)
+	     (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+	     (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+	     (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+	     (global-set-key (kbd "<f1> l") 'counsel-find-library)
+	     (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
+	     (global-set-key (kbd "<f2> u") 'counsel-unicode-char))
+
+(use-package counsel-projectile
+	     :ensure t
+	     :init
+	     (counsel-projectile-on))
 ;; imenu-anywhere
 ;; Changes the C-c C-j behavior
 (use-package imenu-anywhere
@@ -215,7 +242,8 @@
   :ensure t
   :init (smex-initialize)
   :config
-  (global-set-key (kbd "M-X") 'smex)
+  ;; Using counsel now
+  ;;(global-set-key (kbd "M-X") 'smex)
   ;;(global-set-key (kbd "M-X") 'smex-major-mode-commands)
   ;; This is your old M-x.
   ;;(global-set-key (kbd "M-x") 'execute-extended-command)
@@ -474,7 +502,7 @@
  '(markdown-command "/usr/bin/pandoc")
  '(package-selected-packages
    (quote
-    (ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
@@ -1362,6 +1390,7 @@ want to use in the modeline *in lieu of* the original.")
    (ledger . t)         ;this is the important one for this tutorial
    (python . t)
    (sh . t)
+   (dot . t)
    (sql . nil)
    (sqlite . t)))
 
