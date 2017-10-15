@@ -329,10 +329,10 @@
     )
 
 ;; Column enforce
-(use-package column-enforce-mode
-	     :ensure t
-	     :config
-	     (add-hook 'python-mode-hook 'column-enforce-mode))
+;; (use-package column-enforce-mode
+;; 	     :ensure t
+;; 	     :config
+;; 	     (add-hook 'python-mode-hook 'column-enforce-mode))
 
 ;; Company-anaconda
 (use-package company-anaconda
@@ -502,7 +502,7 @@
  '(markdown-command "/usr/bin/pandoc")
  '(package-selected-packages
    (quote
-    (counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
@@ -1736,7 +1736,7 @@ Whenever a journal entry is created the
 	     :ensure t)
 
 (add-hook 'LaTeX-mode-hook 'flymake-mode)
-(add-hook 'LaTeX-mode-hook 'latex-preview-pane-mode)
+;;(add-hook 'LaTeX-mode-hook 'latex-preview-pane-mode)
 (add-hook 'LaTeX-mode-hook 'flyspell-mode)
 (add-hook 'LaTeX-mode-hook 'flyspell-buffer)
 
@@ -1870,6 +1870,7 @@ Whenever a journal entry is created the
 	 ;; There's a .emacs_bash with .~/bash_profile
 	 ;; Maybe i should use this:
 	 ;;https://github.com/purcell/exec-path-from-shell
+	  (setq markdown-command "/usr/local/bin/pandoc")
         )
     )
     )
