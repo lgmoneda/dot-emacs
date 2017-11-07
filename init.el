@@ -31,7 +31,7 @@
 (setq custom-safe-themes t)
 (add-hook 'emacs-startup-hook
 	  (lambda ()
-	    (load-theme 'base16-circus)))
+	    (load-theme 'base16-dracula)))
 
 ;; Custom faces:
 ;; Make selected text background #012050
@@ -52,6 +52,10 @@
  '(org-hide ((t (:foreground "#191919"))))
  '(region ((t (:background "#4C516D"))))
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
+
+;; (set-face-attribute 'mode-line-inactive nil
+;; 		    :background (face-background 'default)
+;; 		    :foreground (face-background 'default))
 
 ;;
 
@@ -253,7 +257,7 @@
 (use-package projectile
   :ensure t
   :init (projectile-global-mode)
-  :config (setq projectile-mode-line '(:eval (format " Proj[%s]" (projectile-project-name))))
+  :config (setq projectile-mode-line'(:eval (format " P[%s]" (projectile-project-name))))
   :bind (("C-c p s" . projectile-ag)
          ("C-c p g" . projectile-grep)))
 
@@ -502,7 +506,7 @@
  '(markdown-command "/usr/bin/pandoc")
  '(package-selected-packages
    (quote
-    (0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
@@ -687,11 +691,11 @@
         ;; For monokai theme
         ;;(setq beacon-color "#AE81FF")
 	;; base16-dracula
-        ;; (setq beacon-color "#ea51b2")
+        (setq beacon-color "#ea51b2")
 	;; gru-dark-medium
         ;; (setq beacon-color "#fb4934")
         ;; base16-circus
-  	(setq beacon-color "#dc657d")
+  	;; (setq beacon-color "#dc657d")
         (setq beacon-size 100)
 	(setq beacon-blink-delay 0.5))
 
@@ -1227,6 +1231,8 @@ http://lgmoneda.github.io/"
     (hs-minor-mode . "")
     (which-key-mode . "")
     (smartparens-mode . "")
+    (counsel-mode . "")
+    (ivy-mode . "")
     (abbrev-mode . "")
     (column-enforce-mode . "")
     (company-mode . "")
@@ -1735,7 +1741,7 @@ Whenever a journal entry is created the
 (use-package latex-preview-pane
 	     :ensure t)
 
-(add-hook 'LaTeX-mode-hook 'flymake-mode)
+;;(add-hook 'LaTeX-mode-hook 'flymake-mode)
 ;;(add-hook 'LaTeX-mode-hook 'latex-preview-pane-mode)
 (add-hook 'LaTeX-mode-hook 'flyspell-mode)
 (add-hook 'LaTeX-mode-hook 'flyspell-buffer)
@@ -1883,4 +1889,103 @@ Whenever a journal entry is created the
 
 (global-set-key (kbd "C-M-=") 'default-text-scale-increase)
 (global-set-key (kbd "C-M--") 'default-text-scale-decrease)
+
+
+;Wednesday, October 25, 2017
+;============================
+;==       mode-line        ==
+;============================
+
+;; (use-package powerline
+;; 	     :ensure t)
+;;((:eval (when (powerline-selected-window-active) ...)))
+
+;; (set-face-attribute 'mode-line-inactive nil
+;;                     :underline t
+;;                     :background (face-background 'default))
+
+(set-face-attribute 'mode-line-inactive nil
+;;		    :underline t
+		    :background (face-background 'default)
+		    :foreground (face-background 'default))
+
+
+;; (set-face-attribute 'mode-line nil
+;;                     :box '(:line-width 3))
+
+(set-face-attribute 'mode-line nil
+                :box '(:line-width 2 :color "gray20"))
+
+
+;; (set-face-attribute 'mode-line-inactive nil
+;;                     :box '(:line-width 1))
+
+(set-face-attribute 'mode-line-inactive nil
+                :box '(:line-width 2 :color "gray20"))
+
+
+;; (setq-default mode-line-format
+;;   (list
+
+;;     mode-line-inactive ; +-- just like in the default mode-line-format
+
+;;     '(:eval (propertize (concat "\t[" mode-name "] %l:%i\t") 'face '(:foreground "black" :height 0.9 :weight normal)
+;;         'help-echo (buffer-file-name)))
+
+;;     '(:eval (propertize (file-name-directory buffer-file-name)  'face 'info-title-4
+;;         'help-echo (buffer-file-name)))
+
+;;     '(:eval (propertize (file-name-nondirectory buffer-file-name)  'face 'info-title-3
+;;         'help-echo (buffer-file-name)))
+
+;;     ))
+
+;; (custom-set-faces
+;;  ;; custom-set-faces was added by Custom.
+;;  ;; If you edit it by hand, you could mess it up, so be careful.
+;;  ;; Your init file should contain only one such instance.
+;;  ;; If there is more than one, they won't work right.
+;;  '(company-tooltip-search ((t (:inherit highlight :background "steel blue"))))
+;;  '(company-tooltip-search-selection ((t (:background "steel blue"))))
+;;  '(diff-hl-change ((t (:background "#3a81c3"))))
+;;  '(diff-hl-delete ((t (:background "#ee6363"))))
+;;  '(diff-hl-insert ((t (:background "#7ccd7c"))))
+;;  '(ein:cell-input-area ((t (:background "black"))))
+;;  '(isearch ((t (:foreground "white" :background "DarkOrchid"))))
+;;  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
+;;  '(org-hide ((t (:foreground "#191919"))))
+;;  '(region ((t (:background "#4C516D"))))
+;;  '(show-paren-match ((t (:background "#5C888B" :weight bold))))
+
+;;  '(mode-line-inactive ((t
+;; 			(:background (face-background 'default)
+;; 			)))
+;;  ))
+
+(set-face-attribute 'mode-line-inactive nil
+		    :background (face-background 'default)
+		    :foreground (face-background 'default))
+
+(set-face-attribute 'mode-line nil
+                :box '(:line-width 2 :color "gray20"))
+
+(set-face-attribute 'mode-line-inactive nil
+		    :box '(:line-width 2 :color "gray20"))
+
+
+(add-hook 'window-setup-hook (progn
+	    (set-face-attribute 'mode-line-inactive nil
+				:background (face-background 'default)
+				:foreground (face-background 'default))
+
+	    (set-face-attribute 'mode-line nil
+			    :box '(:line-width 2 :color "gray20"))
+
+	    (set-face-attribute 'mode-line-inactive nil
+				:box '(:line-width 2 :color "gray20"))
+	    ))
+
+ ;; `(mode-line-buffer-id ((t (:weight bold))))
+ ;; `(mode-line-emphasis ((t (:weight bold))))
+ ;; `(mode-line-inactive ((t (:background ,atom-one-dark-gray))))
 
