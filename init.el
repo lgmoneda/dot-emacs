@@ -225,7 +225,15 @@
 	     (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
 	     (global-set-key (kbd "<f1> l") 'counsel-find-library)
 	     (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
-	     (global-set-key (kbd "<f2> u") 'counsel-unicode-char))
+	     (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+
+	     :bind
+	     ;; Use ivy to search the kill-ring, but
+	     ;; keep the previous behavior
+	     (("M-y" . counsel-yank-pop)
+		    :map ivy-minibuffer-map
+		    ("M-y" . ivy-next-line-and-call))
+	     )
 
 (use-package counsel-projectile
 	     :ensure t
