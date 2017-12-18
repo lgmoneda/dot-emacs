@@ -7,6 +7,11 @@
      '("gnu" . "http://elpa.gnu.org/packages/"))
 (package-initialize)
 
+;Sunday, December 10, 2017
+;============================
+;==   Package Management   ==
+;============================
+
 ;; Bootstrap `use-package'
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
@@ -16,22 +21,62 @@
 (use-package paradox
     :ensure t)
 
-;; High contrast Zenburn theme
-;; (use-package hc-zenburn-theme
-;;   :ensure t)
+;Sunday, December 10, 2017
+;============================
+;== Themes and Aesthetics  ==
+;============================
 
 ;; Base16-theme, base16-dracula's home 
 (use-package base16-theme 
   :ensure t)
 
+(use-package dracula-theme
+  :ensure t)
+
+;; (load-file "~/.emacs.d/elpa/my-dracula-theme-20170412.845/my-dracula-theme.el")
+;; (use-package color-theme-sanityinc-tomorrow
+;;   :ensure t)
+
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
+
 ;; Load Theme
 ;; Themes to use: monokai, deeper-blue and hc-zenburn
 ;; 'base16-dracula 'base16-gruvbox-dark-medium
 ;; 'base16-circus
+;; 'base16-solarized-dark
+;; 'base16-tomorrow-night
+;; https://belak.github.io/base16-emacs/
+;; moe-dark
+;; sanityinc-tomorrow-night
+;; sanityinc-solarized-dark
 (setq custom-safe-themes t)
 (add-hook 'emacs-startup-hook
 	  (lambda ()
-	    (load-theme 'base16-dracula)))
+	    ;; (load-theme 'base16-dracula t)
+	    ;; (load-theme 'my-dracula t)
+	    ))
+
+(add-to-list 'custom-theme-load-path "~/.emacs.d/elpa/my-dracula-theme-20170412.845")
+
+(use-package powerline
+	     :ensure t)
+
+;; ;;https://github.com/kuanyui/moe-theme.el
+;; (use-package moe-theme
+;;   :ensure t)
+
+;; ;; Show highlighted buffer-id as decoration. (Default: nil)
+;; (setq moe-theme-highlight-buffer-id t)
+
+;; ;; Resize titles (optional).
+;; (setq moe-theme-resize-markdown-title '(1.5 1.4 1.3 1.2 1.0 1.0))
+;; (setq moe-theme-resize-org-title '(1.5 1.4 1.3 1.2 1.1 1.0 1.0 1.0 1.0))
+;; (setq moe-theme-resize-rst-title '(1.5 1.4 1.3 1.2 1.1 1.0))
+
+;;   ;; Choose a color for mode-line.(Default: blue)
+;; (moe-theme-set-color 'cyan)
+;; ;;(powerline-moe-theme)
+;; (moe-dark)
 
 ;; Custom faces:
 ;; Make selected text background #012050
@@ -49,15 +94,15 @@
  '(ein:cell-input-area ((t (:background "black"))))
  '(isearch ((t (:foreground "white" :background "DarkOrchid"))))
  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
- '(org-hide ((t (:foreground "#191919"))))
- '(region ((t (:background "#4C516D"))))
+ '(org-ellipsis ((t (:foreground "#969896" :underline nil))))
+ '(org-hide ((t (:background "#282936" :foreground "#282936"))))
+ '(region ((t (:background "#4C516D" :foreground "#00ff00"))))
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
 
-;; (set-face-attribute 'mode-line-inactive nil
-;; 		    :background (face-background 'default)
-;; 		    :foreground (face-background 'default))
-
-;;
+;Sunday, December 10, 2017
+;============================
+;==  Open File Shortcuts   ==
+;============================
 
 ;; Fast init.el open
 (global-set-key (kbd "<f6>") (lambda() (interactive)(find-file "~/.emacs.d/init.el")))
@@ -135,12 +180,30 @@
 
 ;; Expand-region
 (use-package expand-region
-  :ensure t)
+	     :ensure t)
+
+;; Smart Mode line
+(use-package smart-mode-line
+    :config
+  (setq sml/no-confirm-load-theme t)
+  (setq sml/theme 'respectful)
+  ;; (setq sml/theme 'dark)
+  (sml/setup))
+
+(require 'uniquify)
+(setq uniquify-buffer-name-style 'forward)
+
+(use-package diminish
+    :config
+  (eval-after-load "hideshow" '(diminish 'hs-minor-mode))
+  (eval-after-load "undo-tree" '(diminish 'undo-tree-mode))
+  (eval-after-load "simple" '(diminish 'overwrite-mode))
+  (eval-after-load "autorevert" '(diminish 'auto-revert-mode)))
 
 ;; Try
-(use-package column-enforce
-  :ensure t
-  :config (add-hook 'python-mode-hook 'column-enforce-mode))
+;; (use-package column-enforce
+;;   :ensure t
+;;   :config (add-hook 'python-mode-hook 'column-enforce-mode))
 
 ;; Unique color identifier
 ;; (use-package color-identifiers-mode
@@ -265,7 +328,9 @@
 (use-package projectile
   :ensure t
   :init (projectile-global-mode)
-  :config (setq projectile-mode-line'(:eval (format " P[%s]" (projectile-project-name))))
+  ;; Smart Mode Line already displays project name
+  ;; :config (setq projectile-mode-line'(:eval (format " P[%s]" (projectile-project-name))))
+  :config (setq projectile-mode-line'(:eval (format "" (projectile-project-name))))
   :bind (("C-c p s" . projectile-ag)
          ("C-c p g" . projectile-grep)))
 
@@ -514,9 +579,9 @@
  '(markdown-command "/usr/bin/pandoc")
  '(package-selected-packages
    (quote
-    (powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
- '(region ((t (:background "#102050"))))
+ '(region ((t (:background "#102050" :foreground "#FFFFFF"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
 ;;(display-time-mode 1)
 
@@ -525,6 +590,8 @@
 (global-set-key (kbd "<f9>") (lambda()
 				(interactive)
 				(toggle-frame-fullscreen)
+				;; In MacOS it takes a while to update frame params
+				(sit-for 1)
 				;; Now it works with multiple screens :)
 				(if (eq (cdr (assoc 'fullscreen (frame-parameters))) 'fullboth)
 				;; (if (eq display-time-mode nil)
@@ -541,13 +608,11 @@
 ;; Check if i'm at work and activate
 ;; the right environment
 (defun activate-work-env ()
-  (if (string= (system-name) "deb3550")
-      (pythonic-activate "~/miniconda2/envs/npytevec"))
   (if (string= (system-name) "rc530")
       (pythonic-activate "~/miniconda2/envs/ml")
       )
   (if (string-match "lgmac" (system-name))
-      (pythonic-activate "~/miniconda2/envs/nupy")
+      (pythonic-activate "~/miniconda2/envs/ml3")
       )
   )
 
@@ -602,7 +667,7 @@
 (scroll-bar-mode -1)
 
 ;; More thinner window divisions
-(fringe-mode '(3 . 2))
+(fringe-mode '(4 . 3))
 
 ;; Outside border to make it better in fullscreen mode
 (add-to-list 'default-frame-alist '(internal-border-width . 2))
@@ -631,6 +696,8 @@
 
 ;; Enable paren mode at start
 (show-paren-mode 1)
+;;Highlights the whole expression
+;;(setq show-paren-style 'expression)
 
 ;; Enable line numbers
 (global-linum-mode 0)
@@ -689,11 +756,14 @@
 ;;Turn the system sound off
 (setq ring-bell-function 'ignore)
 
+; Set cursor color 
+(set-cursor-color "##ea51b2")
+
 ;;Beacon minor mode
 (use-package beacon
   :ensure t
   :diminish beacon-mode
-  :init (beacon-mode 1)
+  :init (beacon-mode 0)
         ;; For deeper-blue theme
         ;; (setq beacon-color "#00ff00")
         ;; For monokai theme
@@ -704,8 +774,9 @@
         ;; (setq beacon-color "#fb4934")
         ;; base16-circus
   	;; (setq beacon-color "#dc657d")
-        (setq beacon-size 100)
-	(setq beacon-blink-delay 0.5))
+        ;; (setq beacon-size 300)
+	;; (setq beacon-blink-delay 1.8)
+	)
 
 ;; Emacs Ipython Notebook
 (use-package ein
@@ -1251,6 +1322,7 @@ http://lgmoneda.github.io/"
     (flyspell-mode . "")
     (color-identifiers-mode . "")
     (auto-revert-mode . "")
+    (org-indent-mode . "")
     ;; Major modes
     (fundamental-mode . "Fund")
     (lisp-interaction-mode . "λ")
@@ -1365,19 +1437,19 @@ want to use in the modeline *in lieu of* the original.")
 
 ;; New states to to-do
 (setq org-todo-keywords
-      '((sequence "TODO(t)" "NEXT(n)" "STARTED(s)" "WAIT(w)" "|" "DONE(d)" "CANCELED(c)" "INACTIVE(i)" "FAIL(f)")))
+      '((sequence "TODO(t)" "NEXT(n)" "WAIT(w)" "STARTED(s)" "|" "DONE(d)" "CANCELED(c)" "INACTIVE(i)" "FAIL(f)")))
 
 (setq org-todo-keyword-faces
       '(("TODO" . org-warning)
 	("NEXT" . "pink")
 	("STARTED" . "yellow")
 	("WAIT" . "purple")
-	("INACTIVE", "white")
+	("INACTIVE" . (:foreground "grey"))
         ("CANCELED" . (:foreground "blue" :weight bold))
         ("FAIL" . (:foreground "blue" :weight bold))))
 
 ;; No line number in org mode, please
-(add-hook 'org-mode-hook (linum-mode 0))
+;;(add-hook 'org-mode-hook (linum-mode 0))
 ;; Open org-agenda
 ;; (add-hook 'after-init-hook 'org-agenda-list)
 (setq org-agenda-block-separator "-")
@@ -1415,10 +1487,62 @@ want to use in the modeline *in lieu of* the original.")
    (sqlite . t)))
 
 
-(use-package org-bullets
-  :ensure t
-  :init (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
-  )
+;; (use-package org-bullets
+;;   :ensure t
+;;   :init (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+;;   )
+
+;Sunday, December 10, 2017
+;============================
+;==    Org beautifying     ==
+;============================
+
+;; set the fall-back font
+;; this is critical for displaying various unicode symbols, such as those used in my init-org.el settings
+;; http://endlessparentheses.com/manually-choose-a-fallback-font-for-unicode.html
+(set-fontset-font "fontset-default" nil 
+                  (font-spec :size 20 :name "Symbola"))
+
+;; Setting English Font
+;; (set-face-attribute
+;;   'default nil :stipple nil :height 130 :width 'normal :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant 'normal :weight 'normal :foundry "outline" :family "DejaVu Sans Mono for Powerline")
+
+;; disable CJK coding/encoding (Chinese/Japanese/Korean characters)
+(setq utf-translate-cjk-mode nil)
+
+(set-language-environment 'utf-8)
+(setq locale-coding-system 'utf-8)
+
+;; set the default encoding system
+(prefer-coding-system 'utf-8)
+(setq default-file-name-coding-system 'utf-8)
+(set-default-coding-systems 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+;; backwards compatibility as default-buffer-file-coding-system
+;; is deprecated in 23.2.
+(if (boundp buffer-file-coding-system)
+    (setq buffer-file-coding-system 'utf-8)
+  (setq default-buffer-file-coding-system 'utf-8))
+
+;; Treat clipboard input as UTF-8 string first; compound text next, etc.
+(setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING))
+
+;; use org-bullets-mode for utf8 symbols as org bullets
+(require 'org-bullets)
+;; make available "org-bullet-face" such that I can control the font size individually
+(setq org-bullets-face-name (quote org-bullet-face))
+(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+(setq org-bullets-bullet-list '("◉" "○" "✸" "✿" "✙" "♱" "♰" "☥" "✞" "✟" "✝" "†" "✠" "✚" "✜" "✛" "✢" "✣" "✤" "✥"))
+
+;; org ellipsis options, other than the default Go to Node...
+;; not supported in common font, but supported in Symbola (my fall-back font) ⬎, ⤷, ⤵
+(setq org-ellipsis " ▼")
+
+
+(set-display-table-slot standard-display-table 
+                        'selective-display (string-to-vector " ◦◦◦ ")) ; or whatever you like
+
 
 ;; Agenda views / configs
 
@@ -1443,21 +1567,6 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
     (if (= pri-value pri-current)
         subtree-end
       nil)))
-
-
-(setq org-agenda-custom-commands
-      '(("d" "Daily agenda and all TODOs"
-         ((tags "PRIORITY=\"A\""
-                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-                 (org-agenda-overriding-header "High-priority unfinished tasks:")))
-          (agenda "" ((org-agenda-ndays 1)))
-          (alltodo ""
-                   ((org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-                                                   (air-org-skip-subtree-if-priority ?A)
-                                                   (org-agenda-skip-if nil '(scheduled deadline))))
-                    (org-agenda-overriding-header "ALL normal priority tasks:"))))
-         ((org-agenda-compact-blocks t)))))
-
 
 ;; Org Journal
 (use-package org-journal
@@ -1532,7 +1641,7 @@ Whenever a journal entry is created the
       ;; move TODOs from previous day here
       (when (and new-file-p org-journal-carryover-items)
         (save-excursion (org-journal-carryover)))
-
+      (print "dbuga")
       ;; insert the header of the entry
       (when should-add-entry-p
         (unless (eq (current-column) 0) (insert "\n"))
@@ -1552,7 +1661,13 @@ Whenever a journal entry is created the
       (when should-add-entry-p
         (show-entry))
 
-      (set-buffer-modified-p unsaved))))
+      (set-buffer-modified-p unsaved)
+
+      ;; (delete-other-windows)
+
+      ;; (writeroom-mode)
+
+      )))
 
 (defun journal-get-modification-date ()
   "Returns the last modified date of the current memento file."
@@ -1796,6 +1911,7 @@ Whenever a journal entry is created the
 ;;============================
 ;;==  Header func head :P   ==
 ;;============================
+
 (defun lgm/insert-comment-header()
   (interactive)
   (setq header (read-string "Enter header: "))
@@ -1820,6 +1936,8 @@ Whenever a journal entry is created the
   (insert "==")
   (next-line)
   (insert (concat comment-start "============================"))
+  (open-line 1)
+  (back-to-indentation)
   )
 
 (define-key emacs-lisp-mode-map (kbd "<f5>") 'lgm/insert-lisp-comment-header)
@@ -1837,7 +1955,8 @@ Whenever a journal entry is created the
 	     :init
   (setq ess-eval-visibly-p nil)
   (setq ess-ask-for-ess-directory nil)
-  (require 'ess-eldoc))
+  ;; (require 'ess-eldoc)
+  )
 
 ;;Tuesday, August 15, 2017
 ;;============================
@@ -1856,9 +1975,11 @@ Whenever a journal entry is created the
 ;; The org mode file is opened with
 (find-file "~/Dropbox/Agenda/todo.org")
 (switch-to-buffer "todo.org")
-(setq org-agenda-window-setup 'other-window) 
-(org-agenda-list)
+(setq org-agenda-window-setup 'other-window)
+;; (org-agenda-list)
 
+;; Fix the bullets bug
+(add-hook 'after-init-hook (org-mode-restart))
 
 ;;Tuesday, August 15, 2017
 ;;============================
@@ -1906,94 +2027,136 @@ Whenever a journal entry is created the
 
 ;; (use-package powerline
 ;; 	     :ensure t)
-;;((:eval (when (powerline-selected-window-active) ...)))
 
-;; (set-face-attribute 'mode-line-inactive nil
-;;                     :underline t
-;;                     :background (face-background 'default))
+;; (add-hook 'window-setup-hook (progn
+;; 	    (set-face-attribute 'mode-line-inactive nil
+;; 				:background (face-background 'default)
+;; 				:foreground (face-background 'default))
 
-(set-face-attribute 'mode-line-inactive nil
-;;		    :underline t
-		    :background (face-background 'default)
-		    :foreground (face-background 'default))
+;; 	    (set-face-attribute 'mode-line nil
+;; 			    :box '(:line-width 2 :color "gray20"))
 
+;; 	    (set-face-attribute 'mode-line-inactive nil
+;; 				:box '(:line-width 2 :color "gray20"))
+;; 	    ))
 
-;; (set-face-attribute 'mode-line nil
-;;                     :box '(:line-width 3))
+(setq tramp-default-method "ssh")
+(setq tramp-auto-save-directory "~/tmp/tramp/")
+(setq tramp-chunksize 2000)
 
-(set-face-attribute 'mode-line nil
-                :box '(:line-width 2 :color "gray20"))
+(setq max-mini-window-height 1)
 
+(require 'docker-tramp-compat)
+;; Open files in Docker containers like so: /docker:drunk_bardeen:/etc/passwd
+(push
+ (cons
+  "docker"
+  '((tramp-login-program "docker")
+    (tramp-login-args (("exec" "-it") ("%h") ("/bin/bash")))
+    (tramp-remote-shell "/bin/sh")
+    (tramp-remote-shell-args ("-i") ("-c"))))
+ tramp-methods)
 
-;; (set-face-attribute 'mode-line-inactive nil
-;;                     :box '(:line-width 1))
-
-(set-face-attribute 'mode-line-inactive nil
-                :box '(:line-width 2 :color "gray20"))
-
-
-;; (setq-default mode-line-format
-;;   (list
-
-;;     mode-line-inactive ; +-- just like in the default mode-line-format
-
-;;     '(:eval (propertize (concat "\t[" mode-name "] %l:%i\t") 'face '(:foreground "black" :height 0.9 :weight normal)
-;;         'help-echo (buffer-file-name)))
-
-;;     '(:eval (propertize (file-name-directory buffer-file-name)  'face 'info-title-4
-;;         'help-echo (buffer-file-name)))
-
-;;     '(:eval (propertize (file-name-nondirectory buffer-file-name)  'face 'info-title-3
-;;         'help-echo (buffer-file-name)))
-
-;;     ))
-
-;; (custom-set-faces
-;;  ;; custom-set-faces was added by Custom.
-;;  ;; If you edit it by hand, you could mess it up, so be careful.
-;;  ;; Your init file should contain only one such instance.
-;;  ;; If there is more than one, they won't work right.
-;;  '(company-tooltip-search ((t (:inherit highlight :background "steel blue"))))
-;;  '(company-tooltip-search-selection ((t (:background "steel blue"))))
-;;  '(diff-hl-change ((t (:background "#3a81c3"))))
-;;  '(diff-hl-delete ((t (:background "#ee6363"))))
-;;  '(diff-hl-insert ((t (:background "#7ccd7c"))))
-;;  '(ein:cell-input-area ((t (:background "black"))))
-;;  '(isearch ((t (:foreground "white" :background "DarkOrchid"))))
-;;  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
-;;  '(org-hide ((t (:foreground "#191919"))))
-;;  '(region ((t (:background "#4C516D"))))
-;;  '(show-paren-match ((t (:background "#5C888B" :weight bold))))
-
-;;  '(mode-line-inactive ((t
-;; 			(:background (face-background 'default)
-;; 			)))
-;;  ))
-
-(set-face-attribute 'mode-line-inactive nil
-		    :background (face-background 'default)
-		    :foreground (face-background 'default))
-
-(set-face-attribute 'mode-line nil
-                :box '(:line-width 2 :color "gray20"))
-
-(set-face-attribute 'mode-line-inactive nil
-		    :box '(:line-width 2 :color "gray20"))
+(defadvice tramp-completion-handle-file-name-all-completions
+  (around dotemacs-completion-docker activate)
+  "(tramp-completion-handle-file-name-all-completions \"\" \"/docker:\" returns
+    a list of active Docker container names, followed by colons."
+  (if (equal (ad-get-arg 1) "/docker:")
+      (let* ((dockernames-raw (shell-command-to-string "docker ps | perl -we 'use strict; $_ = <>; m/^(.*)NAMES/ or die; my $offset = length($1); while(<>) {substr($_, 0, $offset, q()); chomp; for(split m/\\W+/) {print qq($_:\n)} }'"))
+             (dockernames (cl-remove-if-not
+                           #'(lambda (dockerline) (string-match ":$" dockerline))
+                           (split-string dockernames-raw "\n"))))
+        (setq ad-return-value dockernames))
+    ad-do-it))
 
 
-(add-hook 'window-setup-hook (progn
-	    (set-face-attribute 'mode-line-inactive nil
-				:background (face-background 'default)
-				:foreground (face-background 'default))
+(defvar org-capture-templates
+       '(("t" "todo" entry (file org-default-notes-file)
+	  "* TODO %?\n%u\n%a\n" :clock-in t :clock-resume t)
+	 ("b" "Blank" entry (file org-default-notes-file)
+	  "* %?\n%u")
+	 ("m" "Meeting" entry (file org-default-notes-file)
+	  "* MEETING with %? :MEETING:\n%t" :clock-in t :clock-resume t)
+	 ("d" "Diary" entry (file+datetree "~/org/diary.org")
+	  "* %?\n%U\n" :clock-in t :clock-resume t)
+	 ("D" "Daily Log" entry (file "~/org/daily-log.org")
+	  "* %u %?\n*Summary*: \n\n*Problem*: \n\n*Insight*: \n\n*Tomorrow*: " :clock-in t :clock-resume t)
+	 ("i" "Idea" entry (file org-default-notes-file)
+	  "* %? :IDEA: \n%u" :clock-in t :clock-resume t)
+	 ("n" "Next Task" entry (file+headline org-default-notes-file "Tasks")
+	  "** NEXT %? \nDEADLINE: %t") ))
 
-	    (set-face-attribute 'mode-line nil
-			    :box '(:line-width 2 :color "gray20"))
+(setq org-agenda-block-separator " ")
+(setq org-agenda-custom-commands 
+      '(("d" "Daily agenda and NEXTs!"
+         ((tags "PRIORITY=\"A\""
+                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                 (org-agenda-overriding-header "High-priority tasks:")))
+	  ;; Today Agenda
+          (agenda "" ((org-agenda-ndays 1)
+		      (org-agenda-span 'day))
+		  (org-agenda-overriding-header "Today Agenda:")
+		  )
+	  ;; NEXT Nubank Tasks
+          (tags "+nubank+TODO=\"NEXT\""
+		(
+		 (tags-todo "nubank")
+		 (org-agenda-category-filter-preset (quote ("+Nubank")))
+                    (org-agenda-overriding-header "Next tasks at Nubank:")
 
-	    (set-face-attribute 'mode-line-inactive nil
-				:box '(:line-width 2 :color "gray20"))
-	    ))
+				 ;; (quote
+				 ;;  ("+Nubank")))
+				)
+		   )
+	  ;; Blocked Nubank
+	  (tags "+nubank+TODO=\"WAIT\""
+		((org-agenda-skip-function 'my-skip-unless-waiting)
+            (org-agenda-category-filter
+	(quote
+	 ("+Nubank")))
+	    (org-agenda-overriding-header "Blocked Nubank Tasks: "))
 
- ;; `(mode-line-buffer-id ((t (:weight bold))))
- ;; `(mode-line-emphasis ((t (:weight bold))))
- ;; `(mode-line-inactive ((t (:background ,atom-one-dark-gray))))
+		)
 
+	  ;; Next few days
+          (agenda "" ((org-agenda-ndays 2)
+		      (org-agenda-span 3)
+		      (org-agenda-start-day "+1d")
+		  (org-agenda-overriding-header "Next few days:"))
+		  )
+	  ;; All next tasks
+	  (tags "-nubank+TODO=\"NEXT\""
+		((org-agenda-category-filter "-Nubank")
+		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+						(air-org-skip-subtree-if-priority ?A)
+						(org-agenda-skip-if nil '(scheduled deadline))))
+	    (org-agenda-overriding-header "All other Next tasks:")
+	    
+	    ;; (quote
+	    ;;  ("+Nubank")))
+	    )
+	   )
+	  )
+         ((org-agenda-compact-blocks nil)))
+
+	("n" "Next Nubank tasks" todo "NEXT" 
+    ((org-agenda-skip-function 'my-skip-unless-waiting)
+            (org-agenda-category-filter-preset
+	(quote
+	 ("+Nubank")))
+	    (org-agenda-overriding-header "Nu Agenda: "))
+
+    )
+	
+	))
+
+(defadvice org-agenda (around split-vertically activate)
+  (let ((split-width-threshold 80))  ; or whatever width makes sense for you
+    ad-do-it))
+
+(add-hook 'after-init-hook (lambda () (org-agenda nil "d")))
+
+(defun lgm/next-nu ()
+  (interactive)
+  (org-agenda nil "n")
+  )
