@@ -301,7 +301,7 @@
 (use-package counsel-projectile
 	     :ensure t
 	     :init
-	     (counsel-projectile-on))
+	     (counsel-projectile-mode))
 ;; imenu-anywhere
 ;; Changes the C-c C-j behavior
 (use-package imenu-anywhere
@@ -406,10 +406,11 @@
     )
 
 ;; Column enforce
-;; (use-package column-enforce-mode
-;; 	     :ensure t
-;; 	     :config
-;; 	     (add-hook 'python-mode-hook 'column-enforce-mode))
+(use-package column-enforce-mode
+	     :ensure t
+	     :config
+	     ;;(add-hook 'python-mode-hook 'column-enforce-mode)
+	     )
 
 ;; Company-anaconda
 (use-package company-anaconda
@@ -579,7 +580,7 @@
  '(markdown-command "/usr/bin/pandoc")
  '(package-selected-packages
    (quote
-    (color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050" :foreground "#FFFFFF"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
@@ -1487,11 +1488,6 @@ want to use in the modeline *in lieu of* the original.")
    (sqlite . t)))
 
 
-;; (use-package org-bullets
-;;   :ensure t
-;;   :init (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
-;;   )
-
 ;Sunday, December 10, 2017
 ;============================
 ;==    Org beautifying     ==
@@ -1572,6 +1568,7 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
 (use-package org-journal
   :ensure t
   :init (setq org-journal-dir "~/Dropbox/Agenda/Journal"))
+
 
 ;; Build progress bars
 ;; #+BEGIN: block-dashboard
@@ -1654,8 +1651,10 @@ Whenever a journal entry is created the
       ;; switch to the outline, hide subtrees
       (org-journal-mode)
       (if (and org-journal-hide-entries-p (org-journal-time-entry-level))
-          (hide-sublevels (org-journal-time-entry-level))
-        (show-all))
+          (outline-hide-sublevels 
+	   (- (org-journal-time-entry-level) 1))
+	  (show-all)
+	  )
 
       ;; open the recent entry when the prefix is given
       (when should-add-entry-p
@@ -1663,9 +1662,9 @@ Whenever a journal entry is created the
 
       (set-buffer-modified-p unsaved)
 
-      ;; (delete-other-windows)
-
-      ;; (writeroom-mode)
+      ;; Isolate it and use the write mode
+      (delete-other-windows)
+      (writeroom-mode)
 
       )))
 
@@ -1678,32 +1677,24 @@ Whenever a journal entry is created the
   (interactive)
   (if (file-exists-p journal-file)
       ;; Check if there was a log written today. If this is not the case, then check if it's already tonight except the night.
-      (if (and (string< (journal-get-modification-date) (format-time-string "%Y-%m-%d")) (or (string< (format-time-string "%k") " 6") (string< "20" (format-time-string "%k"))))
+      (if (and (string< (journal-get-modification-date) (format-time-string "%Y-%m-%d")) (or (string< (format-time-string "%k") " 6") (string< "21" (format-time-string "%k"))))
           ;; Invoke Memento if the user wants to proceed. 
           (if (yes-or-no-p "Do you want to write your Journal?")
-              (progn (call-interactively 'lgm/org-journal-new-today-entry))))
+              (progn (call-interactively 'lgm/org-journal-new-today-entry)
+		     (keyboard-quit)
+		     )
+	      ))
     ;; If the Memento file doesn't exist yet, create a file and proceed with creating a log.
     (write-region "" nil journal-file)
     (progn (call-interactively 'lgm/org-journal-new-today-entry))))
 
-
-(add-hook 'kill-emacs-hook 'journal-check-when-quit)
+(add-to-list 'kill-emacs-hook 'journal-check-when-quit)
 
 ;; Dict.cc wrap
 (add-to-list 'load-path "~/.emacs.d/elisp/dict-cc" t)
 (require 'dict-cc)
 ;; PATH append
 (setenv "PATH" (concat "/home/lgmoneda/miniconda2/bin:" (getenv "PATH")))
-
-;; Python Experiment!
-;; (add-to-list 'load-path "~/.emacs.d/site-packages/python-experiment")
-;; (require 'python-experiment)
-
-;; (global-set-key (kbd "<f9>") 'python-experiment)
-;; (global-set-key (kbd "<f10>") 'python-experiment-lived-too-long)
-;; (global-set-key (kbd "<f11>") 'python-experiment-reload)
-;; (global-set-key (kbd "<f12>") 'python-experiment-buffer-to-file)
-
 
 ;; Functions to copy words at point, from:
 ;; https://www.emacswiki.org/emacs/CopyWithoutSelection
@@ -1780,25 +1771,6 @@ Whenever a journal entry is created the
 (global-set-key (kbd "C-ç") 'mark-a-word-or-thing)
 (global-set-key (kbd "C-=") 'er/expand-region)
 
-
-;; Fix it later
-;; (setq package-enable-at-startup nil)
-;; (package-initialize)
-
-;; ;; Enable arrow keys in some modes
-;; (defun arrow-keys-disable ()
-;; (mapc 'global-unset-key '([left] [right] [up] [down]))
-
-;; (let ((arrow-key-mode-maps '(help-mode-map org-agenda-mode-map Info-mode-map org-mode-map)))
-;;   (mapc
-;;    (lambda (map)
-;;      (define-key (symbol-value map) [left] 'left-char)
-;;      (define-key (symbol-value map) [right] 'right-char)
-;;      (define-key (symbol-value map) [up] 'previous-line)
-;;      (define-key (symbol-value map) [down] 'next-line))
-;;    arrow-key-mode-maps)))
-
-;; (add-hook 'after-init-hook 'arrow-keys-disable)
 
 ;; Creates a new line without breaking the current line
 (defun newline-without-break-of-line ()
@@ -1892,16 +1864,6 @@ Whenever a journal entry is created the
        nil "_"))))
 (setq python-shell-completion-native-enable nil)
 
-;; Slack
-(use-package slack
-  :commands (slack-start)
-  :init
-  (setq slack-buffer-emojify t) ;; if you want to enable emoji, default nil
-  (setq slack-prefer-current-team t)
-  )
-
-;; (load-file "~/.emacs.d/slack-credentials.el")
-
 (use-package alert
   :commands (alert)
   :init
@@ -1968,8 +1930,15 @@ Whenever a journal entry is created the
   :ensure t
   )
  
-;; Load Calendar
+;; Load gcalsync
 (load "~/Dropbox/Projetos/Emacs/.gcalsync.el")
+
+(use-package org-alert
+  :init
+  :ensure t
+  )
+
+(setq alert-default-style 'libnotify)
 
 ;; Start with my to-do
 ;; The org mode file is opened with
@@ -2103,21 +2072,28 @@ Whenever a journal entry is created the
 		 (tags-todo "nubank")
 		 (org-agenda-category-filter-preset (quote ("+Nubank")))
                     (org-agenda-overriding-header "Next tasks at Nubank:")
-
-				 ;; (quote
-				 ;;  ("+Nubank")))
 				)
-		   )
+		)
 	  ;; Blocked Nubank
 	  (tags "+nubank+TODO=\"WAIT\""
 		((org-agenda-skip-function 'my-skip-unless-waiting)
             (org-agenda-category-filter
+	     (quote
+	      ("+Nubank")))
+	    (org-agenda-overriding-header "Blocked Nubank Tasks: "))
+		
+		)
+	  
+	  ;; TODO Nubank
+	  (tags "+nubank+LEVEL=3+TODO=\"TODO\""
+		((org-agenda-skip-function 'my-skip-unless-waiting)
+            (org-agenda-category-filter
 	(quote
 	 ("+Nubank")))
-	    (org-agenda-overriding-header "Blocked Nubank Tasks: "))
+	    (org-agenda-overriding-header "Nubank Tasks: "))
 
 		)
-
+       
 	  ;; Next few days
           (agenda "" ((org-agenda-ndays 2)
 		      (org-agenda-span 3)
@@ -2131,9 +2107,6 @@ Whenever a journal entry is created the
 						(air-org-skip-subtree-if-priority ?A)
 						(org-agenda-skip-if nil '(scheduled deadline))))
 	    (org-agenda-overriding-header "All other Next tasks:")
-	    
-	    ;; (quote
-	    ;;  ("+Nubank")))
 	    )
 	   )
 	  )
@@ -2160,3 +2133,73 @@ Whenever a journal entry is created the
   (interactive)
   (org-agenda nil "n")
   )
+
+;; (let ((org-super-agenda-groups
+;;        '(;; Each group has an implicit boolean OR operator between its selectors.
+;;          (:name "Today"  ; Optionally specify section name
+;;                 :time-grid t  ; Items that appear on the time grid
+;;                 :todo "TODAY")  ; Items that have this TODO keyword
+;;          (:name "Important"
+;;                 ;; Single arguments given alone
+;;                 :tag "bills"
+;;                 :priority "A")
+;;          ;; Set order of multiple groups at once
+;;          (:order-multi (2 (:name "Shopping in town"
+;;                                  ;; Boolean AND group matches items that match all subgroups
+;;                                  :and (:tag "shopping" :tag "@town"))
+;;                           (:name "Food-related"
+;;                                  ;; Multiple args given in list with implicit OR
+;;                                  :tag ("food" "dinner"))
+;;                           (:name "Personal"
+;;                                  :habit t
+;;                                  :tag "personal")
+;;                           (:name "Space-related (non-moon-or-planet-related)"
+;;                                  ;; Regexps match case-insensitively on the entire entry
+;;                                  :and (:regexp ("space" "NASA")
+;;                                                ;; Boolean NOT also has implicit OR between selectors
+;;                                                :not (:regexp "moon" :tag "planet")))))
+;;          ;; Groups supply their own section names when none are given
+;;          (:todo "WAITING" :order 8)  ; Set order of this section
+;;          (:todo ("SOMEDAY" "TO-READ" "CHECK" "TO-WATCH" "WATCHING")
+;;                 ;; Show this group at the end of the agenda (since it has the
+;;                 ;; highest number). If you specified this group last, items
+;;                 ;; with these todo keywords that e.g. have priority A would be
+;;                 ;; displayed in that group instead, because items are grouped
+;;                 ;; out in the order the groups are listed.
+;;                 :order 9)
+;;          (:priority<= "B"
+;;                       ;; Show this section after "Today" and "Important", because
+;;                       ;; their order is unspecified, defaulting to 0. Sections
+;;                       ;; are displayed lowest-number-first.
+;;                       :order 1)
+;;          ;; After the last group, the agenda will display items that didn't
+;;          ;; match any of these groups, with the default order position of 99
+;;          )))
+;;   (org-agenda nil "a"))
+
+
+(use-package go-mode
+     :ensure t
+     :preface
+
+     (defun bk/set-go-compiler ()
+	(if (not (string-match "go" compile-command))
+	    (set (make-local-variable 'compile-command)
+		 "go build -v && go test -v && go run"))
+	(local-set-key (kbd "M-p") 'compile))
+
+     :init
+
+     (when (string-equal system-type "darwin")
+	(add-to-list 'exec-path "/usr/local/go/bin/go")
+	(setenv "GOPATH" "/usr/local/go/bin/go"))
+
+     (setq gofmt-command "goimports")
+     :bind (:map go-mode-map
+		  ("C-c C-r" . go-remove-unused-imports)
+		  ("C-c i" . go-goto-imports)
+		  ("M-." . godef-jump)
+		  ("M-*" . pop-tag-mark))
+     :config
+     (add-hook 'before-save-hook 'gofmt-before-save)
+     (add-hook 'go-mode-hook 'bk/set-go-compiler))
