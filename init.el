@@ -200,11 +200,6 @@
   (eval-after-load "simple" '(diminish 'overwrite-mode))
   (eval-after-load "autorevert" '(diminish 'auto-revert-mode)))
 
-;; Try
-;; (use-package column-enforce
-;;   :ensure t
-;;   :config (add-hook 'python-mode-hook 'column-enforce-mode))
-
 ;; Unique color identifier
 ;; (use-package color-identifiers-mode
 ;;   :ensure t
@@ -346,6 +341,8 @@
 ;Wednesday, August 23, 2017
 ;============================
 ;==         Scala          ==
+;============================
+
 (use-package scala-mode
   :interpreter
   ("scala" . scala-mode))
@@ -687,13 +684,10 @@
 
 ;; Fullscreen 
 ;;(toggle-frame-fullscreen)
-(defun fullscreen ()
-       (interactive)
-       (x-send-client-message nil 0 nil "_NET_WM_STATE" 32
-                 '(2 "_NET_WM_STATE_FULLSCREEN" 0)))
-
-;;(run-with-idle-timer 0.1 nil (lambda () (fullscreen)) )
-;;(toggle-frame-fullscreen)
+;; (defun fullscreen ()
+;;        (interactive)
+;;        (x-send-client-message nil 0 nil "_NET_WM_STATE" 32
+;; 			      '(2 "_NET_WM_STATE_FULLSCREEN" 0)))
 
 ;; Enable paren mode at start
 (show-paren-mode 1)
@@ -813,12 +807,6 @@
 ;; Use M-x markdown-preview-mode in a md buffer
 (use-package markdown-preview-mode
   :ensure t)
-
-
-;; Change selected text highlight color #102050
-
-
-;; Disable edebug key binds
 
 ;; avy
 (use-package avy
