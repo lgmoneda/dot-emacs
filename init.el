@@ -92,7 +92,7 @@
  '(diff-hl-delete ((t (:background "#ee6363"))))
  '(diff-hl-insert ((t (:background "#7ccd7c"))))
  '(ein:cell-input-area ((t (:background "black"))))
- '(isearch ((t (:foreground "white" :background "DarkOrchid"))))
+ ;; '(isearch ((t (:foreground "white" :background "DarkOrchid"))))
  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
  '(org-ellipsis ((t (:foreground "#969896" :underline nil))))
  '(org-hide ((t (:background "#282936" :foreground "#282936"))))
@@ -200,11 +200,6 @@
   (eval-after-load "simple" '(diminish 'overwrite-mode))
   (eval-after-load "autorevert" '(diminish 'auto-revert-mode)))
 
-;; Unique color identifier
-;; (use-package color-identifiers-mode
-;;   :ensure t
-;;   :config (add-hook 'after-init-hook 'global-color-identifiers-mode))
-
 ;; Rainbow delimiters in Elisp mode 
 (use-package rainbow-delimiters
   :ensure t
@@ -218,32 +213,6 @@
 (use-package anzu 
 	     :ensure t
 	     :config (global-anzu-mode))
-
-;; ;; Ido
-;; (use-package ido
-;;   :ensure t
-;;   :init (ido-mode)
-;;         (setq ido-enable-flex-matching t)
-;;         (ido-everywhere t)
-;; 	(setq ido-file-extensions-order '(".py" ".org" ".txt" ".emacs" ".xml" ".el" ".ini" ".cfg" ".cnf")))
-
-;; (setq ido-use-faces nil)
-
-;; ;; Ido-vertical
-;; (use-package ido-vertical-mode
-;;   :ensure t
-;;   :init (ido-vertical-mode))
-
-;; ;; Ido ubiquitous
-;; (use-package ido-completing-read+
-;;   :ensure t
-;;   :init (ido-ubiquitous-mode 1)
-;; )
-
-;; ;; Flx-ido (fuzzy for ido)
-;; (use-package flx-ido
-;;   :ensure t
-;;   :init (flx-ido-mode))
 
 ;Monday, September 18, 2017
 ;============================
@@ -564,6 +533,7 @@
 (setq display-time-format "%Hh%M ")
 (setq display-time-default-load-average nil)
 ;; Hide the "MAIL" from mode-line
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -669,25 +639,6 @@
 
 ;; Outside border to make it better in fullscreen mode
 (add-to-list 'default-frame-alist '(internal-border-width . 2))
-
-;; Apply fringe width
-;; (defun lgm/set-fringe(arg)
-;;   (interactive)
-
-;;   (print arg)
-;;   ;; (fringe-mode '(arg . arg))
-;;   )
-;; (lgm/set-fringe 100)
-;; (setq wel 100)
-;; (fringe-mode '('wel . 'wel))
-
-
-;; Fullscreen 
-;;(toggle-frame-fullscreen)
-;; (defun fullscreen ()
-;;        (interactive)
-;;        (x-send-client-message nil 0 nil "_NET_WM_STATE" 32
-;; 			      '(2 "_NET_WM_STATE_FULLSCREEN" 0)))
 
 ;; Enable paren mode at start
 (show-paren-mode 1)
