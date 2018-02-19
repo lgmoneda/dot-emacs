@@ -30,8 +30,8 @@
 (use-package base16-theme 
   :ensure t)
 
-(use-package dracula-theme
-  :ensure t)
+;; (use-package dracula-theme
+;;   :ensure t)
 
 ;; (load-file "~/.emacs.d/elpa/my-dracula-theme-20170412.845/my-dracula-theme.el")
 ;; (use-package color-theme-sanityinc-tomorrow
@@ -52,31 +52,14 @@
 (setq custom-safe-themes t)
 (add-hook 'emacs-startup-hook
 	  (lambda ()
-	    ;; (load-theme 'base16-dracula t)
+	    (load-theme 'base16-gruvbox-dark-medium t)
 	    ;; (load-theme 'my-dracula t)
 	    ))
 
-(add-to-list 'custom-theme-load-path "~/.emacs.d/elpa/my-dracula-theme-20170412.845")
+;; (add-to-list 'custom-theme-load-path "~/.emacs.d/elpa/my-dracula-theme-20170412.845")
 
 (use-package powerline
 	     :ensure t)
-
-;; ;;https://github.com/kuanyui/moe-theme.el
-;; (use-package moe-theme
-;;   :ensure t)
-
-;; ;; Show highlighted buffer-id as decoration. (Default: nil)
-;; (setq moe-theme-highlight-buffer-id t)
-
-;; ;; Resize titles (optional).
-;; (setq moe-theme-resize-markdown-title '(1.5 1.4 1.3 1.2 1.0 1.0))
-;; (setq moe-theme-resize-org-title '(1.5 1.4 1.3 1.2 1.1 1.0 1.0 1.0 1.0))
-;; (setq moe-theme-resize-rst-title '(1.5 1.4 1.3 1.2 1.1 1.0))
-
-;;   ;; Choose a color for mode-line.(Default: blue)
-;; (moe-theme-set-color 'cyan)
-;; ;;(powerline-moe-theme)
-;; (moe-dark)
 
 ;; Custom faces:
 ;; Make selected text background #012050
@@ -95,8 +78,12 @@
  ;; '(isearch ((t (:foreground "white" :background "DarkOrchid"))))
  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
  '(org-ellipsis ((t (:foreground "#969896" :underline nil))))
- '(org-hide ((t (:background "#282936" :foreground "#282936"))))
+ ;; '(org-hide ((t (:background "#282936" :foreground "#282936"))))
+ ;; Can't define it programmatically, so I need to manually get the background
+ ;; color with (face-attribute 'default :background)
+ '(org-hide ((t (:background "#282828" :foreground "#282936")))) 
  '(region ((t (:background "#4C516D" :foreground "#00ff00"))))
+
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
 
 ;Sunday, December 10, 2017
@@ -153,6 +140,14 @@
 (setq scroll-step 1)
 (setq scroll-conservatively 10000)
 (setq auto-window-vscroll nil)
+
+;; Save command history
+(savehist-mode)
+
+;; Better shell buffer behavior
+(use-package shell-pop
+ :ensure t
+ :init (defalias 'sp 'shell-pop))
 
 ;; Writeroom, a focus mode!
 (use-package writeroom-mode
@@ -996,11 +991,6 @@ if breakpoints are present in `python-mode' files"
 ;;============================
 (add-to-list 'load-path "~/.emacs.d/elisp/erc-extras" t)
 
-;; (require 'erc-hl-nicks)
-;;(require 'erc-nicklist)
-;; (require 'erc-notify)
-;; (require 'erc-match)
-
 ;; Trying to display nicely
 (erc-spelling-mode 1)
 (add-hook 'erc-mode-hook (lambda () (auto-fill-mode 0)))
@@ -1067,7 +1057,7 @@ if breakpoints are present in `python-mode' files"
           '((keyword . "### Keywords Log ###")
             (current-nick . "### Me Log ###")))
 
-;; (setq erc-keywords '("keras" "bayes" "bayesian" "causality" "reinforcement"))
+(setq erc-keywords '("keras" "bayes" "bayesian" "causality" "reinforcement"))
 
 ;; ;; Erc-tracking
 ;; (require 'erc-track)
@@ -1153,72 +1143,6 @@ if breakpoints are present in `python-mode' files"
                   (lambda ()
                     (message nil)))
 	      )))
-
-;; (defun notify-privmsg-mode-line (proc parsed)
-;;   (let ((nick (car (erc-parse-user (erc-response.sender parsed))))
-;;         (target (car (erc-response.command-args parsed)))
-;;         (msg (erc-response.contents parsed)))
-;;     (when (and (erc-current-nick-p target)
-;;                (not (erc-is-message-ctcp-and-not-action-p msg)))
-;;       (setq mode-line-end-spaces (format "[pvt:%s]" nick)
-;;                          msg
-;;                          nil)
-;;       ))
-;;   nil)
-
-
-;; ;; TODO
-;; ;; 
-;; (setq unread-pvt-msgs '())
-;; (defun notify-privmsg-mode-line (proc parsed)
-;;   (let ((nick (car (erc-parse-user (erc-response.sender parsed))))
-;;         (target (car (erc-response.command-args parsed)))
-;;         (msg (erc-response.contents parsed)))
-;;     (when (and (erc-current-nick-p target)
-;;                (not (erc-is-message-ctcp-and-not-action-p msg)))
-;;       ;; (setq mode-line-end-spaces (format "[last pvt:%s]" nick)
-;;       ;;                    msg
-;;       ;;                    nil)
-;;       (if (eq (cdr (assoc nick unread-pvt-msgs)) nil)
-;; 	  (add-to-list 'unread-pvt-msgs `(,nick . 1))
-;; 	(progn
-;; 	  (setq new-value  (+ (cdr (assoc nick unread-pvt-msgs)) 1)    )
-;; 	  (setf (cdr (assoc nick unread-pvt-msgs)) new-value)
-;; 	  )
-;; 	)
-;; 	(setq mode-line-end-spaces (format "[%s:%s (%d)]"
-;; 					   (format-time-string "%Hh%M" (date-to-time (current-time-string)))
-;; 					   nick
-;; 					   (cdr (assoc nick unread-pvt-msgs)) )
-;; 	      msg
-;; 	      nil)
-;; 	(display-unread-pvts)      
-;;       ;;(print unread-pvt-msgs)
-;;       ))
-;;   nil)
-
-;; (add-hook 'after-change-major-mode-hook 'read-erc-msgs)
-
-;; (defun display-unread-pvts ()
-;;   (interactive)
-;;   (setq pvt-status-string "[unread pvt:")
-;;   (mapcar (lambda (element)
-;; 	    (print element)
-;; 	   (setq pvt-status-string (concat pvt-status-string (format " %s(%d)," (car element) (cdr element))))	    
-;; 	    )
-;; 	  unread-pvt-msgs
-;; 	  )
-;;   (setq pvt-status-string (subseq pvt-status-string 0 (- (length pvt-status-string) 1)))
-
-;;   (setq pvt-status-string (concat  pvt-status-string "]"))
-;;   (message pvt-status-string)
-;;   )
-
-;; ;; Reference: https://www.emacswiki.org/emacs/SwitchToErc
-;; ;; Use erc-query-buffer-p
-;; (defun read-erc-msgs ())
-
-;; (add-hook 'erc-server-PRIVMSG-functions 'notify-privmsg-mode-line t)
 
 ;; E-mail config
 (setq user-mail-address "lg.moneda@gmail.com")
@@ -1928,26 +1852,6 @@ Whenever a journal entry is created the
 (global-set-key (kbd "C-M--") 'default-text-scale-decrease)
 
 
-;Wednesday, October 25, 2017
-;============================
-;==       mode-line        ==
-;============================
-
-;; (use-package powerline
-;; 	     :ensure t)
-
-;; (add-hook 'window-setup-hook (progn
-;; 	    (set-face-attribute 'mode-line-inactive nil
-;; 				:background (face-background 'default)
-;; 				:foreground (face-background 'default))
-
-;; 	    (set-face-attribute 'mode-line nil
-;; 			    :box '(:line-width 2 :color "gray20"))
-
-;; 	    (set-face-attribute 'mode-line-inactive nil
-;; 				:box '(:line-width 2 :color "gray20"))
-;; 	    ))
-
 (setq tramp-default-method "ssh")
 (setq tramp-auto-save-directory "~/tmp/tramp/")
 (setq tramp-chunksize 2000)
@@ -2142,3 +2046,4 @@ Whenever a journal entry is created the
      :config
      (add-hook 'before-save-hook 'gofmt-before-save)
      (add-hook 'go-mode-hook 'bk/set-go-compiler))
+
