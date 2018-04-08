@@ -53,6 +53,7 @@
 (add-hook 'emacs-startup-hook
 	  (lambda ()
 	    (load-theme 'base16-gruvbox-dark-medium t)
+	    (load-theme 'base16-atelier-estuary t)
 	    ;; (load-theme 'my-dracula t)
 	    ))
 
@@ -78,10 +79,11 @@
  ;; '(isearch ((t (:foreground "white" :background "DarkOrchid"))))
  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
  '(org-ellipsis ((t (:foreground "#969896" :underline nil))))
+ ;; Dracula background: #282936
  ;; '(org-hide ((t (:background "#282936" :foreground "#282936"))))
  ;; Can't define it programmatically, so I need to manually get the background
  ;; color with (face-attribute 'default :background)
- '(org-hide ((t (:background "#282828" :foreground "#282936")))) 
+ '(org-hide ((t (:background "#282828" :foreground "##22221b")))) 
  '(region ((t (:background "#4C516D" :foreground "#00ff00"))))
 
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
@@ -1057,7 +1059,7 @@ if breakpoints are present in `python-mode' files"
           '((keyword . "### Keywords Log ###")
             (current-nick . "### Me Log ###")))
 
-(setq erc-keywords '("keras" "bayes" "bayesian" "causality" "reinforcement"))
+;; (setq erc-keywords '("keras" "bayes" "bayesian" "causality" "reinforcement"))
 
 ;; ;; Erc-tracking
 ;; (require 'erc-track)
@@ -1810,6 +1812,8 @@ Whenever a journal entry is created the
 (setq org-agenda-window-setup 'other-window)
 ;; (org-agenda-list)
 
+(setq org-agenda-files (list "~/Dropbox/Agenda/todo.org" "~/Dropbox/Agenda/finances.org"))
+
 ;; Fix the bullets bug
 (add-hook 'after-init-hook (org-mode-restart))
 
@@ -1853,7 +1857,9 @@ Whenever a journal entry is created the
 
 
 (setq tramp-default-method "ssh")
-(setq tramp-auto-save-directory "~/tmp/tramp/")
+;;(setq tramp-auto-save-directory "~/tmp/tramp/")
+(add-to-list 'backup-directory-alist
+                  (cons tramp-file-name-regexp nil))
 (setq tramp-chunksize 2000)
 
 (setq max-mini-window-height 1)
@@ -1898,25 +1904,106 @@ Whenever a journal entry is created the
 	 ("n" "Next Task" entry (file+headline org-default-notes-file "Tasks")
 	  "** NEXT %? \nDEADLINE: %t") ))
 
+(setq org-lowest-priority ?D)
+(setq org-default-priority ?D)
+(setq org-agenda-skip-scheduled-if-deadline-is-shown t)
+;;sort tasks in order of when they are due and then by priority
+;; (setq org-agenda-sorting-strategy
+;;       (quote
+;;        ((agenda deadline-up priority-down)
+;; 	(todo priority-down category-keep)
+;; 	(tags priority-down category-keep)
+;; 	(search category-keep)))
+;;       )
+
+
 (setq org-agenda-block-separator " ")
 (setq org-agenda-custom-commands 
       '(("d" "Daily agenda and NEXTs!"
          ((tags "PRIORITY=\"A\""
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "High-priority tasks:")))
+
+	  ;; Next deadlines 
+	  (agenda "" 
+		  ((org-agenda-time-grid nil)
+		   (org-agenda-span 'day)
+		   (org-deadline-warning-days 14)       
+		   (org-agenda-entry-types '(:deadline))  
+		   (org-agenda-sorting-strategy '(deadline-up))
+		   (org-agenda-overriding-header "Deadlines in the next 14 days:")
+		   ))
+
 	  ;; Today Agenda
-          (agenda "" ((org-agenda-ndays 1)
-		      (org-agenda-span 'day))
-		  (org-agenda-overriding-header "Today Agenda:")
+          (agenda "" ((org-agenda-ndays 5)
+		      (org-agenda-span 'day)
+		      (org-agenda-time-grid nil)
+		      (org-deadline-warning-days 0)
+		      (org-agenda-skip-scheduled-delay-if-deadline t)
+		      (org-agenda-todo-ignore-scheduled t)
+		      (org-agenda-scheduled-leaders '("" ""))
+		      (org-agenda-tags-todo-honor-ignore-options t)
+		      (org-agenda-overriding-header "Today Agenda:")
+		      )
 		  )
+	  
 	  ;; NEXT Nubank Tasks
-          (tags "+nubank+TODO=\"NEXT\""
+          (tags-todo "+nubank+TODO=\"NEXT\""
+	  	(
+	  	 (org-agenda-category-filter-preset (quote ("+Nubank")))
+	  	 (org-agenda-overriding-header "Next tasks at Nubank:")
+	  	 ;; (org-agenda-skip-function '(org-agenda-skip-entry-if 'deadline 'scheduled))
+	  	 (org-agenda-overriding-columns-format "%20ITEM %SCHEDULED")
+	  	 (org-agenda-sorting-strategy '(category-keep))
+	  	 (org-agenda-view-columns-initially t)
+	  	 ;; (org-agenda-prefix-format " %i %s %?-16 (concat \"[ \"(org-format-outline-path (list (nth 1 (org-get-outline-path)))) \" ]\") ")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+	  	 ;; (org-agenda-prefix-format
+	  	 ;;      "%((concat (or (org-entry-get (point) \"scheduled\" t) \"\") \" \"
+	  	 ;; 		 (or (org-entry-get (point) \"CaseNum\" t) \"\") \" \"
+                 ;;                 (or (org-entry-get (point) \"FiscalYear\" t) \"\") \" \"))") 
+	  	 )
+
+	  	)
+
+	  ;; NEXT Master
+          (tags "+usp+TODO=\"NEXT\""
 		(
-		 (tags-todo "nubank")
-		 (org-agenda-category-filter-preset (quote ("+Nubank")))
-                    (org-agenda-overriding-header "Next tasks at Nubank:")
-				)
+		 (org-agenda-overriding-header "Next task in Master:")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 )
 		)
+	  
+	  ;; NEXT Work
+          (tags "+work+TODO=\"NEXT\"|udacity+TODO=\"NEXT\"" 
+		(
+		 (org-agenda-overriding-header "Next task in Work and Udacity:")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 )
+		)
+	  
+	  ;; NEXT Study
+          (tags "+study+TODO=\"NEXT\""
+		(
+		 (org-agenda-overriding-header "Next task in Study:")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 )
+		)
+
+	  ;; NEXT Kaggle
+          (tags "+kaggle+TODO=\"NEXT\""
+		((org-agenda-overriding-header "Next tasks in Kaggle:")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 )
+		)
+
+	  ;; NEXT Life
+          (tags "+life-goals2018+TODO=\"NEXT\""
+		((org-agenda-overriding-header "Next tasks in Life:")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 )
+		)
+	  
 	  ;; Blocked Nubank
 	  (tags "+nubank+TODO=\"WAIT\""
 		((org-agenda-skip-function 'my-skip-unless-waiting)
@@ -1936,35 +2023,96 @@ Whenever a journal entry is created the
 	    (org-agenda-overriding-header "Nubank Tasks: "))
 
 		)
+
+	  ;; Mid and low priority tasks
+	  ;; (tags "+PRIORITY={B}"
+          ;;       ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+          ;;        (org-agenda-overriding-header "Mid or low-priority tasks:")))
+
+	  ;; Deadlines
+	  ;; (tags "+DEADLINE>=\"<today>\"&DEADLINE<=\"<+2m>\""
+          ;;      ((org-agenda-overriding-columns-format
+          ;;        "%25ITEM %DEADLINE %TAGS")
+	  ;; 	(org-agenda-overriding-header "Approaching Deadlines!:")))
+
+	  ;; Long deadlines 
+	  (agenda "" 
+		  ((org-agenda-time-grid nil)
+		   (org-agenda-span 'day)
+		   (org-deadline-warning-days 90)       
+		   (org-agenda-entry-types '(:deadline))  
+		   (org-agenda-sorting-strategy '(deadline-up))
+		   (org-agenda-overriding-header "Deadlines in the next 90 days:")
+		   ))
        
-	  ;; Next few days
-          (agenda "" ((org-agenda-ndays 2)
-		      (org-agenda-span 3)
-		      (org-agenda-start-day "+1d")
-		  (org-agenda-overriding-header "Next few days:"))
-		  )
-	  ;; All next tasks
-	  (tags "-nubank+TODO=\"NEXT\""
+	  
+	  ;; Year Goals Milestones
+	  (tags "-nubank+goals2018+TODO=\"NEXT\""
 		((org-agenda-category-filter "-Nubank")
 		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
 						(air-org-skip-subtree-if-priority ?A)
 						(org-agenda-skip-if nil '(scheduled deadline))))
-	    (org-agenda-overriding-header "All other Next tasks:")
+	    (org-agenda-overriding-header "2018 Goals Milestones: ")
+	    )
+		)
+
+	  ;; Year Goals General
+	  (tags "+goals2018+LEVEL=3+TODO=\"TODO\"" 
+		((org-agenda-category-filter "-Nubank")
+		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+						(air-org-skip-subtree-if-priority ?A)
+						(org-agenda-skip-if nil '(scheduled deadline))))
+	    (org-agenda-overriding-header "2018 Goals: ")
+	    )
+		)
+
+	  ;; Next few days
+          (agenda "" ((org-agenda-ndays 2)
+		      (org-agenda-span 3)
+		      (org-agenda-start-day "+1d")
+		      (org-agenda-scheduled-leaders '("" ""))
+		  (org-agenda-overriding-header "Next few days:"))
+		  )
+
+	  ;; All next tasks
+	  (tags "-goals2018+TODO=\"NEXT\""
+		(
+		 (org-agenda-tags-todo-honor-ignore-options :scheduled)
+		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+						(air-org-skip-subtree-if-priority ?A)
+						(org-agenda-skip-if nil '(scheduled deadline))))
+	    (org-agenda-overriding-header "Next tasks NOT SCHEDULED:")
 	    )
 	   )
 	  )
          ((org-agenda-compact-blocks nil)))
 
-	("n" "Next Nubank tasks" todo "NEXT" 
-    ((org-agenda-skip-function 'my-skip-unless-waiting)
-            (org-agenda-category-filter-preset
-	(quote
-	 ("+Nubank")))
-	    (org-agenda-overriding-header "Nu Agenda: "))
+    ;; 	("n" "Next Nubank tasks" todo "NEXT" 
+    ;; ((org-agenda-skip-function 'my-skip-unless-waiting)
+    ;;         (org-agenda-category-filter-preset
+    ;; 	(quote
+    ;; 	 ("+Nubank")))
+    ;; 	    (org-agenda-overriding-header "Nu Agenda: "))
 
-    )
+    ;; )
 	
 	))
+
+(defun scheduled-or-not (resp)
+  (interactive)
+(if resp
+    '"OK"
+    '"Not Scheduled"
+    )
+)
+
+;; Only deadlines view
+(add-to-list 'org-agenda-custom-commands
+             '("z" "Deadlines"
+               tags "+DEADLINE>=\"<today>\"&DEADLINE<=\"<+2m>\""
+               ((org-agenda-overriding-columns-format
+                 "%25ITEM %DEADLINE %TAGS")))
+             )
 
 (defadvice org-agenda (around split-vertically activate)
   (let ((split-width-threshold 80))  ; or whatever width makes sense for you
@@ -1977,50 +2125,10 @@ Whenever a journal entry is created the
   (org-agenda nil "n")
   )
 
-;; (let ((org-super-agenda-groups
-;;        '(;; Each group has an implicit boolean OR operator between its selectors.
-;;          (:name "Today"  ; Optionally specify section name
-;;                 :time-grid t  ; Items that appear on the time grid
-;;                 :todo "TODAY")  ; Items that have this TODO keyword
-;;          (:name "Important"
-;;                 ;; Single arguments given alone
-;;                 :tag "bills"
-;;                 :priority "A")
-;;          ;; Set order of multiple groups at once
-;;          (:order-multi (2 (:name "Shopping in town"
-;;                                  ;; Boolean AND group matches items that match all subgroups
-;;                                  :and (:tag "shopping" :tag "@town"))
-;;                           (:name "Food-related"
-;;                                  ;; Multiple args given in list with implicit OR
-;;                                  :tag ("food" "dinner"))
-;;                           (:name "Personal"
-;;                                  :habit t
-;;                                  :tag "personal")
-;;                           (:name "Space-related (non-moon-or-planet-related)"
-;;                                  ;; Regexps match case-insensitively on the entire entry
-;;                                  :and (:regexp ("space" "NASA")
-;;                                                ;; Boolean NOT also has implicit OR between selectors
-;;                                                :not (:regexp "moon" :tag "planet")))))
-;;          ;; Groups supply their own section names when none are given
-;;          (:todo "WAITING" :order 8)  ; Set order of this section
-;;          (:todo ("SOMEDAY" "TO-READ" "CHECK" "TO-WATCH" "WATCHING")
-;;                 ;; Show this group at the end of the agenda (since it has the
-;;                 ;; highest number). If you specified this group last, items
-;;                 ;; with these todo keywords that e.g. have priority A would be
-;;                 ;; displayed in that group instead, because items are grouped
-;;                 ;; out in the order the groups are listed.
-;;                 :order 9)
-;;          (:priority<= "B"
-;;                       ;; Show this section after "Today" and "Important", because
-;;                       ;; their order is unspecified, defaulting to 0. Sections
-;;                       ;; are displayed lowest-number-first.
-;;                       :order 1)
-;;          ;; After the last group, the agenda will display items that didn't
-;;          ;; match any of these groups, with the default order position of 99
-;;          )))
-;;   (org-agenda nil "a"))
-
-
+;Sunday, April 8, 2018
+;============================
+;==           Go           ==
+;============================
 (use-package go-mode
      :ensure t
      :preface
@@ -2046,4 +2154,118 @@ Whenever a journal entry is created the
      :config
      (add-hook 'before-save-hook 'gofmt-before-save)
      (add-hook 'go-mode-hook 'bk/set-go-compiler))
+
+
+(defvar yt-iframe-format
+  ;; You may want to change your width and height.
+  (concat "<iframe width=\"440\""
+          " height=\"335\""
+          " src=\"https://www.youtube.com/embed/%s\""
+          " frameborder=\"0\""
+          " allowfullscreen>%s</iframe>"))
+
+(org-add-link-type
+ "yt"
+ (lambda (handle)
+   (browse-url
+    (concat "https://www.youtube.com/embed/"
+            handle)))
+ (lambda (path desc backend)
+   (cl-case backend
+     (html (format yt-iframe-format
+                   path (or desc "")))
+     (latex (format "\href{%s}{%s}"
+                    path (or desc "video"))))))
+
+
+
+
+;;; org-to-appt
+
+;; based on http://emacs-fu.blogspot.nl/2009/11/showing-pop-ups.html
+(defun talky-popup (title msg &optional icon sound)  
+  "Show a popup if we're on X, or echo it otherwise; TITLE is the title
+of the message, MSG is the context. Optionally, you can provide an ICON and
+a sound to be played"
+
+  (interactive)
+  ;;verbal warning
+
+
+
+  (shell-command
+   ;;  (concat "espeak -v mb-en1 -k5 -s125 " "'" title " " msg "'" " --stdout | paplay") ;; use local espeak
+   (concat "echo " "'" title "'" " " "'" msg "'" " |text-to-speech en-gb")  ;; use remote Google voices
+    ;; text-to-speech is from https://github.com/taylorchu/speech-to-text-text-to-speech
+   )
+  (if (eq window-system 'x)
+    (shell-command (concat "notify-send -u critical -t 1800000  " 
+
+                     (if icon (concat "-i " icon) "")
+                     " '" title "' '" msg "'"))
+    ;; text only version
+
+    (message (concat title ": " msg))))
+
+;; the appointment notification facility
+(setq
+  appt-message-warning-time 15 ;; warn 15 min in advance
+
+  appt-display-mode-line t     ;; show in the modeline
+  appt-display-format 'window) ;; use our func
+(appt-activate 1)              ;; active appt (appointment notification)
+(display-time)                 ;; time display is required for this...
+
+ ;; update appt each time agenda opened
+
+(add-hook 'org-finalize-agenda-hook 'org-agenda-to-appt)
+
+;; our little façade-function for talky-popup
+ (defun talky-appt-display (min-to-app new-time msg)
+    (talky-popup (format "In %s minute(s):" min-to-app) msg 
+  ;;    "/usr/share/icons/gnome/32x32/status/appointment-soon.png"   ;; optional icon
+
+  ;;    "/usr/share/sounds/ubuntu/stereo/phone-incoming-call.ogg"    ;; optional sound
+
+        ))
+  (setq appt-disp-window-function (function talky-appt-display))
+
+
+
+(defun org-alarm (txt)
+  (call-process "/usr/bin/dbus-send" nil nil nil
+                "--type=method_call"
+                "--dest=org.freedesktop.Notifications"
+                "/org/freedesktop/Notifications"
+                "org.freedesktop.Notifications.SystemNoteDialog"
+                (concat "string:" txt)
+                "uint32:0"
+                "string:Ok"
+                )
+  (sit-for 1)
+  (start-process "org-alarm" nil "play-sound" "/usr/share/sounds/call-ringtone01.wav")
+  )
+
+
+(defun appt-display-message (string mins)
+  "appointmentg reminder for maemo"
+  (org-alarm (format "%s \nin  %d min" string mins)))
+
+(add-hook 'org-agenda-mode-hook
+          '(lambda nil (org-agenda-to-appt 'refresh "!")))
+(appt-activate)
+
+
+;; This should work :(
+(add-hook 'org-finalize-agenda-hook
+    (lambda ()
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward "nu-agenda:" nil t) 
+          (add-text-properties (match-beginning 0) (point-at-eol)
+             '(face (:foreground "green"))))
+        (goto-char (point-min))
+        (while (re-search-forward "work:" nil t) 
+          (add-text-properties (match-beginning 0) (point-at-eol)
+             '(face (:foreground "purple")))))))
 
