@@ -2100,8 +2100,10 @@ Whenever a journal entry is created the
 
 (defun scheduled-or-not (resp)
   (interactive)
-(if resp
-    '"OK"
+  (if resp
+    ;;'"OK"
+    ;;(format-time-string "%Y-%m-%d" (org-time-string-to-time resp))
+    (concat "In " (number-to-string (org-time-stamp-to-now resp)) " day(s)")
     '"Not Scheduled"
     )
 )
