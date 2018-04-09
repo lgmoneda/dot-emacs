@@ -83,7 +83,7 @@
  ;; '(org-hide ((t (:background "#282936" :foreground "#282936"))))
  ;; Can't define it programmatically, so I need to manually get the background
  ;; color with (face-attribute 'default :background)
- '(org-hide ((t (:background "#282828" :foreground "##22221b")))) 
+ '(org-hide ((t (:background "#22221b" :foreground "#22221b")))) 
  '(region ((t (:background "#4C516D" :foreground "#00ff00"))))
 
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
@@ -97,6 +97,8 @@
 (global-set-key (kbd "<f6>") (lambda() (interactive)(find-file "~/.emacs.d/init.el")))
 ;; Open todo.org
 (global-set-key (kbd "<f10>") (lambda() (interactive)(find-file "~/Dropbox/Agenda/todo.org")))
+;; Open agenda
+(global-set-key (kbd "C-<f10>") (lambda() (interactive)(org-agenda nil "d")))
 
 ;; Save place
 ;; Start from the last place you were in a file the next time you visit it
@@ -1812,7 +1814,7 @@ Whenever a journal entry is created the
 (setq org-agenda-window-setup 'other-window)
 ;; (org-agenda-list)
 
-(setq org-agenda-files (list "~/Dropbox/Agenda/todo.org" "~/Dropbox/Agenda/finances.org"))
+(add-to-list 'org-agenda-files  "~/Dropbox/Agenda/todo.org" "~/Dropbox/Agenda/finances.org")
 
 ;; Fix the bullets bug
 (add-hook 'after-init-hook (org-mode-restart))
@@ -2271,3 +2273,6 @@ a sound to be played"
           (add-text-properties (match-beginning 0) (point-at-eol)
              '(face (:foreground "purple")))))))
 
+;; Recebter after scroll
+(global-set-key (kbd "C-v") (lambda () (interactive) (scroll-up) (recenter)))
+(global-set-key (kbd "M-v") (lambda () (interactive) (scroll-down) (recenter)))
