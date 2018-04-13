@@ -1909,14 +1909,6 @@ Whenever a journal entry is created the
 (setq org-lowest-priority ?D)
 (setq org-default-priority ?D)
 (setq org-agenda-skip-scheduled-if-deadline-is-shown t)
-;;sort tasks in order of when they are due and then by priority
-;; (setq org-agenda-sorting-strategy
-;;       (quote
-;;        ((agenda deadline-up priority-down)
-;; 	(todo priority-down category-keep)
-;; 	(tags priority-down category-keep)
-;; 	(search category-keep)))
-;;       )
 
 
 (setq org-agenda-block-separator " ")
