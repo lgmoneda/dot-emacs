@@ -2092,6 +2092,9 @@ Whenever a journal entry is created the
 	
 	))
 
+;; Enable the usage of two agenda views at the same time
+(org-toggle-sticky-agenda)
+
 (defun scheduled-or-not (resp)
   (interactive)
   (if resp
@@ -2187,6 +2190,8 @@ Whenever a journal entry is created the
           (add-text-properties (match-beginning 0) (point-at-eol)
              '(face (:foreground "purple")))))))
 
-;; Recebter after scroll
-(global-set-key (kbd "C-v") (lambda () (interactive) (scroll-up) (recenter)))
-(global-set-key (kbd "M-v") (lambda () (interactive) (scroll-down) (recenter)))
+;; Scroll while centering
+(global-set-key (kbd "C-v") (lambda () (interactive) (recenter) (scroll-up-command)))
+(global-set-key (kbd "M-v") (lambda () (interactive) (recenter) (scroll-down-command)))
+(setq scroll-error-top-bottom 'true)
+(setq scroll-preserve-screen-position t)
