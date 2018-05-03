@@ -1922,10 +1922,10 @@ Whenever a journal entry is created the
 	  (agenda "" 
 		  ((org-agenda-time-grid nil)
 		   (org-agenda-span 'day)
-		   (org-deadline-warning-days 14)       
+		   (org-deadline-warning-days 21)       
 		   (org-agenda-entry-types '(:deadline))  
 		   (org-agenda-sorting-strategy '(deadline-up))
-		   (org-agenda-overriding-header "Deadlines in the next 14 days:")
+		   (org-agenda-overriding-header "Deadlines in the next 21 days:")
 		   ))
 
 	  ;; Today Agenda
@@ -2191,7 +2191,26 @@ Whenever a journal entry is created the
              '(face (:foreground "purple")))))))
 
 ;; Scroll while centering
-(global-set-key (kbd "C-v") (lambda () (interactive) (recenter) (scroll-up-command)))
-(global-set-key (kbd "M-v") (lambda () (interactive) (recenter) (scroll-down-command)))
+(global-set-key (kbd "C-v") (lambda () (interactive) (scroll-up-command) (recenter) ))
+(global-set-key (kbd "M-v") (lambda () (interactive) (scroll-down-command) (recenter) ))
 (setq scroll-error-top-bottom 'true)
 (setq scroll-preserve-screen-position t)
+
+
+;Wednesday, May 2, 2018
+;============================
+;==        Clojure         ==
+;============================
+
+ (require 'clojure-mode)
+ (require 'clj-refactor)
+ (require 'cider)
+ ;; start cider and clj-refactor when clojure-mode is enabled (by default, on .clj files)
+ (add-hook 'clojure-mode-hook (lambda ()
+				(cider-mode 1)
+				(clj-refactor-mode 1)
+				(cljr-add-keybindings-with-prefix "C-c C-o")
+				(setq clojure-align-forms-automatically t)))
+ (add-hook 'clojure-mode-hook 'paredit-mode)
+ (add-hook 'cider-repl-mode-hook 'paredit-mode)
+
