@@ -76,16 +76,10 @@
  '(diff-hl-delete ((t (:background "#ee6363"))))
  '(diff-hl-insert ((t (:background "#7ccd7c"))))
  '(ein:cell-input-area ((t (:background "black"))))
- ;; '(isearch ((t (:foreground "white" :background "DarkOrchid"))))
  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
  '(org-ellipsis ((t (:foreground "#969896" :underline nil))))
- ;; Dracula background: #282936
- ;; '(org-hide ((t (:background "#282936" :foreground "#282936"))))
- ;; Can't define it programmatically, so I need to manually get the background
- ;; color with (face-attribute 'default :background)
- '(org-hide ((t (:background "#22221b" :foreground "#22221b")))) 
+ '(org-hide ((t (:background "#22221b" :foreground "#22221b"))))
  '(region ((t (:background "#4C516D" :foreground "#00ff00"))))
-
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
 
 ;Sunday, December 10, 2017
@@ -546,7 +540,7 @@
  '(markdown-command "/usr/bin/pandoc")
  '(package-selected-packages
    (quote
-    (go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (org-wild-notifier org-notify cider clj-refactor clojure-mode go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050" :foreground "#FFFFFF"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
@@ -2202,15 +2196,111 @@ Whenever a journal entry is created the
 ;==        Clojure         ==
 ;============================
 
- (require 'clojure-mode)
- (require 'clj-refactor)
- (require 'cider)
- ;; start cider and clj-refactor when clojure-mode is enabled (by default, on .clj files)
- (add-hook 'clojure-mode-hook (lambda ()
-				(cider-mode 1)
-				(clj-refactor-mode 1)
-				(cljr-add-keybindings-with-prefix "C-c C-o")
-				(setq clojure-align-forms-automatically t)))
- (add-hook 'clojure-mode-hook 'paredit-mode)
- (add-hook 'cider-repl-mode-hook 'paredit-mode)
+;; (use-package clojure-mode
+;;     :ensure t)
+;; (use-package clj-refactor
+;;     :ensure t)
+;; (use-package cider
+;;     :ensure t)
+
+;; ;; start cider and clj-refactor when clojure-mode is enabled (by default, on .clj files)
+;; (add-hook 'clojure-mode-hook (lambda ()
+;; 			(cider-mode 1)
+;; 			(clj-refactor-mode 1)
+;; 			(cljr-add-keybindings-with-prefix "C-c C-o")
+;; 			(setq clojure-align-forms-automatically t)))
+;; (add-hook 'clojure-mode-hook 'paredit-mode)
+;; (add-hook 'cider-repl-mode-hook 'paredit-mode)
+
+
+;; Add blan line at the end of a file
+(setq require-final-newline t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Terminal notifier 
+;; requires 'brew install terminal-notifier'
+;; stolen from erc-notifier
+
+;;(defvar terminal-notifier-command (executable-find "terminal-notifier") "The path to terminal-notifier.")
+(defvar terminal-notifier-command "terminal-notifier")
+
+(defun terminal-notifier-notify (title message)
+  "Show a message with terminal-notifier-command."
+  (start-process "terminal-notifier"
+                 "terminal-notifier"
+                 terminal-notifier-command
+                 "-title" title
+                 "-message" message
+		 "-sound" "default"
+                 "-sender" "org.gnu.Emacs"))
+
+;;(terminal-notifier-notify "Emacs notification" "Something amusing happened")
+;; (defun timed-notification (time msg)
+;;   (interactive "sNotification when (e.g: 2 minutes, 60 seconds, 3 days): \nsMessage: ")
+;;   (run-at-time time nil (lambda (msg) (terminal-notifier-notify "Emacs" msg)) msg))
+
+;; (setq org-show-notification-handler
+;;       (lambda (msg) (timed-notification nil msg)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package org-alert
+	     :ensure t)
+
+;; https://github.com/akhramov/org-wild-notifier.el
+(use-package org-wild-notifier
+	     :ensure t
+	     :init (org-wild-notifier-mode)
+	     (setq org-wild-notifier-keyword-whitelist '("TODO" "NEXT")))
+
+(setq org-wild-notifier-alert-time 5)
+
+
+(defun remind-me-daily (fn time msg wavfile box)
+  (when (and (boundp 'daily-reminder)
+             (timerp daily-reminder))
+    (cancel-timer daily-reminder))
+  (let ((daily (* 60 60 24)))
+    (setq daily-reminder
+          (run-at-time time daily 'funcall fn msg wavfile box))))
+
+(defun reminder-fn (msg wavfile box)  
+  (if wavfile
+      (start-process-shell-command "lolsound" nil (concat "mplayer ~/.emacs.d/sounds/" wavfile))
+      )
+  (if box
+      (terminal-notifier-notify "Emacs Notification" msg)
+      (message msg)))
+
+(remind-me-daily 'reminder-fn "8:00am" "Leave home!" "bike-horn.wav" t)
+(remind-me-daily 'reminder-fn "8:00pm" "Go home!" nil t)
+(remind-me-daily 'reminder-fn "3:00pm" "You're hungry!" nil t)
+(remind-me-daily 'reminder-fn "6:00pm" "You're hungry!" nil t)
+(remind-me-daily 'reminder-fn "8:30pm" "Dinner!" nil t)
+(remind-me-daily 'reminder-fn "11:40pm" "Bedtime!" nil t)
+
+(defun my-terminal-notifier-notify (info)
+  "Show a message with terminal-notifier-command."
+  (start-process "terminal-notifier"
+                 "terminal-notifier"
+                 terminal-notifier-command
+                 "-title" (plist-get info :title)
+                 "-message" (plist-get info :message)
+		 "-sound" "default"
+                 "-sender" "org.gnu.Emacs"))
+
+(alert-define-style 'style-name :title "My Style's title"
+                    :notifier
+		    'my-terminal-notifier-notify
+                    ;; Removers are optional.  Their job is to remove
+                    ;; the visual or auditory effect of the alert.
+                    :remover
+                    (lambda (info)
+                      ;; It is the same property list that was passed to
+                      ;; the notifier function.
+                      ))
+
+(setq alert-default-style 'style-name)
+
+
 
