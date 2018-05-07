@@ -2244,6 +2244,8 @@ Whenever a journal entry is created the
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Warns every N minutes about all the deadlines and scheduled tasks
+;; for the current day
 (use-package org-alert
 	     :ensure t)
 
@@ -2254,7 +2256,6 @@ Whenever a journal entry is created the
 	     (setq org-wild-notifier-keyword-whitelist '("TODO" "NEXT")))
 
 (setq org-wild-notifier-alert-time 5)
-
 
 (defun remind-me-daily (fn time msg wavfile box)
   (when (and (boundp 'daily-reminder)
