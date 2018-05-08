@@ -2222,10 +2222,8 @@ Whenever a journal entry is created the
 ;; requires 'brew install terminal-notifier'
 ;; stolen from erc-notifier
 
-;; Change duration: defaults write com.apple.notificationcenterui bannerTime 25
-(defvar terminal-notifier-command (executable-find "terminal-notifier") "The path to terminal-notifier.")
-;;(defvar terminal-notifier-command "terminal-notifier")
 
+;; Change duration: defaults write com.apple.notificationcenterui bannerTime 25
 (defun terminal-notifier-notify (title message)
   "Show a message with terminal-notifier-command."
   (start-process "terminal-notifier"
@@ -2235,14 +2233,6 @@ Whenever a journal entry is created the
                  "-message" message
 		 "-sound" "default"
                  "-sender" "org.gnu.Emacs"))
-
-;;(terminal-notifier-notify "Emacs notification" "Something amusing happened")
-;; (defun timed-notification (time msg)
-;;   (interactive "sNotification when (e.g: 2 minutes, 60 seconds, 3 days): \nsMessage: ")
-;;   (run-at-time time nil (lambda (msg) (terminal-notifier-notify "Emacs" msg)) msg))
-
-;; (setq org-show-notification-handler
-;;       (lambda (msg) (timed-notification nil msg)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -2281,12 +2271,6 @@ Whenever a journal entry is created the
 (remind-me-daily 'reminder-fn "8:00pm" "Go home!" "bike-horn.wav" t)
 (remind-me-daily 'reminder-fn "8:30pm" "Dinner!" nil t)
 (remind-me-daily 'reminder-fn "11:40pm" "Bedtime!" nil t)
-
-
-
-
-
-
 
 (defun my-terminal-notifier-notify (info)
   "Show a message with terminal-notifier-command."
