@@ -1728,7 +1728,8 @@ Whenever a journal entry is created the
 (use-package alert
   :commands (alert)
   :init
-  (setq alert-default-style 'notifier))
+  ;;(setq alert-default-style 'notifier)
+  )
 
 ;;Saturday, August 12, 2017
 ;;============================
@@ -1799,7 +1800,7 @@ Whenever a journal entry is created the
   :ensure t
   )
 
-(setq alert-default-style 'libnotify)
+;;(setq alert-default-style 'libnotify)
 
 ;; Start with my to-do
 ;; The org mode file is opened with
@@ -2213,7 +2214,7 @@ Whenever a journal entry is created the
 ;; (add-hook 'cider-repl-mode-hook 'paredit-mode)
 
 
-;; Add blan line at the end of a file
+;; Add blank line at the end of a file
 (setq require-final-newline t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2221,14 +2222,15 @@ Whenever a journal entry is created the
 ;; requires 'brew install terminal-notifier'
 ;; stolen from erc-notifier
 
-;;(defvar terminal-notifier-command (executable-find "terminal-notifier") "The path to terminal-notifier.")
-(defvar terminal-notifier-command "terminal-notifier")
+;; Change duration: defaults write com.apple.notificationcenterui bannerTime 25
+(defvar terminal-notifier-command (executable-find "terminal-notifier") "The path to terminal-notifier.")
+;;(defvar terminal-notifier-command "terminal-notifier")
 
 (defun terminal-notifier-notify (title message)
   "Show a message with terminal-notifier-command."
   (start-process "terminal-notifier"
                  "terminal-notifier"
-                 terminal-notifier-command
+                 "terminal-notifier"
                  "-title" title
                  "-message" message
 		 "-sound" "default"
@@ -2253,9 +2255,9 @@ Whenever a journal entry is created the
 (use-package org-wild-notifier
 	     :ensure t
 	     :init (org-wild-notifier-mode)
-	     (setq org-wild-notifier-keyword-whitelist '("TODO" "NEXT")))
-
-(setq org-wild-notifier-alert-time 5)
+	     (setq org-wild-notifier-keyword-whitelist '("TODO" "NEXT"))
+	     (setq org-wild-notifier-alert-time 5)
+	     )
 
 (defun remind-me-daily (fn time msg wavfile box)
   (when (and (boundp 'daily-reminder)
@@ -2274,17 +2276,23 @@ Whenever a journal entry is created the
       (message msg)))
 
 (remind-me-daily 'reminder-fn "8:00am" "Leave home!" "bike-horn.wav" t)
-(remind-me-daily 'reminder-fn "8:00pm" "Go home!" nil t)
 (remind-me-daily 'reminder-fn "3:00pm" "You're hungry!" nil t)
 (remind-me-daily 'reminder-fn "6:00pm" "You're hungry!" nil t)
+(remind-me-daily 'reminder-fn "8:00pm" "Go home!" "bike-horn.wav" t)
 (remind-me-daily 'reminder-fn "8:30pm" "Dinner!" nil t)
 (remind-me-daily 'reminder-fn "11:40pm" "Bedtime!" nil t)
+
+
+
+
+
+
 
 (defun my-terminal-notifier-notify (info)
   "Show a message with terminal-notifier-command."
   (start-process "terminal-notifier"
                  "terminal-notifier"
-                 terminal-notifier-command
+                 "terminal-notifier"
                  "-title" (plist-get info :title)
                  "-message" (plist-get info :message)
 		 "-sound" "default"
