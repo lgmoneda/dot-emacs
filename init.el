@@ -2371,3 +2371,8 @@ Whenever a journal entry is created the
     (setq exec-path (split-string path-from-shell path-separator))))
 
 (when window-system (set-exec-path-from-shell-PATH))
+
+(global-set-key (kbd "C-*")
+    (lambda ()
+      (interactive)
+      (isearch-forward-symbol-at-point)))
