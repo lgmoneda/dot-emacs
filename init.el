@@ -540,7 +540,7 @@
  '(markdown-command "/usr/bin/pandoc")
  '(package-selected-packages
    (quote
-    (org-wild-notifier org-notify cider clj-refactor clojure-mode go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (lsp-typescript sml-mode org-wild-notifier org-notify cider clj-refactor clojure-mode go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050" :foreground "#FFFFFF"))))
  '(show-paren-match ((t (:weight (quote extra-bold))))))
@@ -1329,6 +1329,9 @@ want to use in the modeline *in lieu of* the original.")
 ;; http://endlessparentheses.com/manually-choose-a-fallback-font-for-unicode.html
 (set-fontset-font "fontset-default" nil 
                   (font-spec :size 20 :name "Symbola"))
+
+;; Set font size
+(set-face-attribute 'default nil :height 110)
 
 ;; Setting English Font
 ;; (set-face-attribute
@@ -2238,7 +2241,7 @@ Whenever a journal entry is created the
 (remind-me-daily 'reminder-fn "8:01am" "Leave home!" nil t)
 (remind-me-daily 'reminder-fn "3:01pm" "You're hungry!" nil t)
 (remind-me-daily 'reminder-fn "6:01pm" "You're hungry!" nil t)
-(remind-me-daily 'reminder-fn "8:01pm" "Go home!" nil t)
+(remind-me-daily 'reminder-fn "10:01pm" "Go home!" nil t)
 (remind-me-daily 'reminder-fn "8:30pm" "Dinner!" nil t)
 (remind-me-daily 'reminder-fn "11:40pm" "Bedtime!" nil t)
 
@@ -2270,3 +2273,101 @@ Whenever a journal entry is created the
 ;; Node connection
 (load "~/Dropbox/Projetos/Emacs/.nu-node.el")
 
+
+;Wednesday, June 13, 2018
+;============================
+;==        Clojure         ==
+;============================
+
+
+;; Enable paredit for Clojure
+(add-hook 'clojure-mode-hook 'enable-paredit-mode)
+
+;; This is useful for working with camel-case tokens, like names of
+;; Java classes (e.g. JavaClassName)
+(add-hook 'clojure-mode-hook 'subword-mode)
+
+;; A little more syntax highlighting
+(use-package clojure-mode-extra-font-locking
+	     :ensure t)
+
+(use-package cider
+	     :ensure t)
+
+;; syntax hilighting for midje
+(add-hook 'clojure-mode-hook
+          (lambda ()
+            (setq inferior-lisp-program "lein repl")
+            (font-lock-add-keywords
+             nil
+             '(("(\\(facts?\\)"
+                (1 font-lock-keyword-face))
+               ("(\\(background?\\)"
+                (1 font-lock-keyword-face))))
+            (define-clojure-indent (fact 1))
+            (define-clojure-indent (facts 1))))
+
+;;;;
+;; Cider
+;;;;
+
+;; provides minibuffer documentation for the code you're typing into the repl
+;; (add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode)
+
+;; go right to the REPL buffer when it's finished connecting
+(setq cider-repl-pop-to-buffer-on-connect t)
+
+;; ;; When there's a cider error, show its buffer and switch to it
+;; (setq cider-show-error-buffer t)
+;; (setq cider-auto-select-error-buffer t)
+
+;; ;; Where to store the cider history.
+;; (setq cider-repl-history-file "~/.emacs.d/cider-history")
+
+;; ;; Wrap when navigating history.
+;; (setq cider-repl-wrap-history t)
+
+;; enable paredit in your REPL
+(add-hook 'cider-repl-mode-hook 'paredit-mode)
+
+;; ;; Use clojure mode for other extensions
+;; (add-to-list 'auto-mode-alist '("\\.edn$" . clojure-mode))
+;; (add-to-list 'auto-mode-alist '("\\.boot$" . clojure-mode))
+;; (add-to-list 'auto-mode-alist '("\\.cljs.*$" . clojure-mode))
+;; (add-to-list 'auto-mode-alist '("lein-env" . enh-ruby-mode))
+
+
+;; ;; key bindings
+;; ;; these help me out with the way I usually develop web apps
+;; (defun cider-start-http-server ()
+;;   (interactive)
+;;   (cider-load-current-buffer)
+;;   (let ((ns (cider-current-ns)))
+;;     (cider-repl-set-ns ns)
+;;     (cider-interactive-eval (format "(println '(def server (%s/start))) (println 'server)" ns))
+;;     (cider-interactive-eval (format "(def server (%s/start)) (println server)" ns))))
+
+
+;; (defun cider-refresh ()
+;;   (interactive)
+;;   (cider-interactive-eval (format "(user/reset)")))
+
+;; (defun cider-user-ns ()
+;;   (interactive)
+;;   (cider-repl-set-ns "user"))
+
+;; (eval-after-load 'cider
+;;   '(progn
+;;      (define-key clojure-mode-map (kbd "C-c C-v") 'cider-start-http-server)
+;;      (define-key clojure-mode-map (kbd "C-M-r") 'cider-refresh)
+;;      (define-key clojure-mode-map (kbd "C-c u") 'cider-user-ns)
+;;      (define-key cider-mode-map (kbd "C-c u") 'cider-user-ns)))
+
+
+;; fix the PATH variable
+(defun set-exec-path-from-shell-PATH ()
+  (let ((path-from-shell (shell-command-to-string "TERM=vt100 $SHELL -i -c 'echo $PATH'")))
+    (setenv "PATH" path-from-shell)
+    (setq exec-path (split-string path-from-shell path-separator))))
+
+(when window-system (set-exec-path-from-shell-PATH))
