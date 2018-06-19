@@ -153,7 +153,11 @@
 
 ;; Magit
 (use-package magit
-  :ensure t)
+  :ensure t
+  :init
+  ;; Auto revert buffers when change branches
+  (global-auto-revert-mode 1)
+  (setq auto-revert-check-vc-info t))
 
 ;; Git-timemachine
 (use-package git-timemachine
