@@ -1009,7 +1009,7 @@ if breakpoints are present in `python-mode' files"
 
 
 ;; (when (assoc "en0" (network-interface-list))
-;;   (erc :server "irc.freenode.net" :port 6667 :nick "lgmoneda"))
+;;   (erc :server "irc.freenodenet" :port 6667 :nick "lgmoneda"))
 
 
 ;; (progn
