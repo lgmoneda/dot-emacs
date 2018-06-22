@@ -52,15 +52,17 @@
 (setq custom-safe-themes t)
 (add-hook 'emacs-startup-hook
 	  (lambda ()
-	    (load-theme 'base16-gruvbox-dark-medium t)
-	    (load-theme 'base16-atelier-estuary t)
+	    ;; (load-theme 'base16-gruvbox-dark-medium t)
+	    ;; (load-theme 'base16-atelier-estuary t)
 	    ;; (load-theme 'my-dracula t)
+	    ;; (load-theme 'base16-spacemacs)
+	    (load-theme 'spacemacs-dark)
 	    ))
 
 ;; (add-to-list 'custom-theme-load-path "~/.emacs.d/elpa/my-dracula-theme-20170412.845")
 
 (use-package powerline
-	     :ensure t)
+  :ensure t)
 
 ;; Custom faces:
 ;; Make selected text background #012050
@@ -70,6 +72,10 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(avy-lead-face ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
+ '(avy-lead-face-0 ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
+ '(avy-lead-face-1 ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
+ '(avy-lead-face-2 ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
  '(company-tooltip-search ((t (:inherit highlight :background "steel blue"))))
  '(company-tooltip-search-selection ((t (:background "steel blue"))))
  '(diff-hl-change ((t (:background "#3a81c3"))))
@@ -78,7 +84,8 @@
  '(ein:cell-input-area ((t (:background "black"))))
  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
  '(org-ellipsis ((t (:foreground "#969896" :underline nil))))
- '(org-hide ((t (:background "#22221b" :foreground "#22221b"))))
+ ;; '(org-hide ((t (:background "#22221b" :foreground "#22221b"))))
+ '(org-hide ((t (:background "#292b2e" :foreground "#292b2e"))))
  '(region ((t (:background "#4C516D" :foreground "#00ff00"))))
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
 
@@ -93,6 +100,9 @@
 (global-set-key (kbd "<f10>") (lambda() (interactive)(find-file "~/Dropbox/Agenda/todo.org")))
 ;; Open agenda
 (global-set-key (kbd "C-<f10>") (lambda() (interactive)(org-agenda nil "d")))
+;; Open day
+(setq org-agenda-span 'day)
+(global-set-key (kbd "M-<f10>") (lambda() (interactive)(org-agenda 0 "a")))
 
 ;; Save place
 ;; Start from the last place you were in a file the next time you visit it
@@ -544,10 +554,12 @@
  '(markdown-command "/usr/bin/pandoc")
  '(package-selected-packages
    (quote
-    (lsp-typescript sml-mode org-wild-notifier org-notify cider clj-refactor clojure-mode go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (spacemacs-theme lsp-typescript sml-mode org-wild-notifier org-notify cider clj-refactor clojure-mode go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050" :foreground "#FFFFFF"))))
- '(show-paren-match ((t (:weight (quote extra-bold))))))
+ '(show-paren-match ((t (:weight (quote extra-bold)))))
+ '(spacemacs-theme-comment-bg nil)
+ '(spacemacs-theme-comment-italic t))
 ;;(display-time-mode 1)
 
 ;; Show time in mode-line when using Emacs in fullscreen,
@@ -718,7 +730,7 @@
         ;; base16-circus
   	;; (setq beacon-color "#dc657d")
         ;; (setq beacon-size 300)
-	;; (setq beacon-blink-delay 1.8)
+	;; (setq beacon-blink-delay 3)
 	)
 
 ;; Emacs Ipython Notebook
@@ -1882,7 +1894,6 @@ Whenever a journal entry is created the
 (setq org-default-priority ?D)
 (setq org-agenda-skip-scheduled-if-deadline-is-shown t)
 
-
 (setq org-agenda-block-separator " ")
 (setq org-agenda-custom-commands 
       '(("d" "Daily agenda and NEXTs!"
@@ -2066,6 +2077,11 @@ Whenever a journal entry is created the
 
 ;; Enable the usage of two agenda views at the same time
 (org-toggle-sticky-agenda)
+
+;; Shortcut to display day activity
+(defun org-agenda-show-agenda-and-todo (&optional arg)
+  (interactive "P")
+  (org-agenda arg "n"))
 
 (defun scheduled-or-not (resp)
   (interactive)
