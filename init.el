@@ -84,7 +84,6 @@
  '(ein:cell-input-area ((t (:background "black"))))
  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
  '(org-ellipsis ((t (:foreground "#969896" :underline nil))))
- ;; '(org-hide ((t (:background "#22221b" :foreground "#22221b"))))
  '(org-hide ((t (:background "#292b2e" :foreground "#292b2e"))))
  '(region ((t (:background "#4C516D" :foreground "#00ff00"))))
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
@@ -102,7 +101,8 @@
 (global-set-key (kbd "C-<f10>") (lambda() (interactive)(org-agenda nil "d")))
 ;; Open day
 (setq org-agenda-span 'day)
-(global-set-key (kbd "M-<f10>") (lambda() (interactive)(org-agenda 0 "a")))
+(global-set-key (kbd "C-c <f10>") (lambda() (interactive)(org-agenda 0 "a")))
+(global-set-key (kbd "M-<f10>") (lambda() (interactive)(org-agenda 0 "l")))
 
 ;; Save place
 ;; Start from the last place you were in a file the next time you visit it
@@ -554,7 +554,7 @@
  '(markdown-command "/usr/bin/pandoc")
  '(package-selected-packages
    (quote
-    (spacemacs-theme lsp-typescript sml-mode org-wild-notifier org-notify cider clj-refactor clojure-mode go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (calfw calfw-org spacemacs-theme lsp-typescript sml-mode org-wild-notifier org-notify cider clj-refactor clojure-mode go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050" :foreground "#FFFFFF"))))
  '(show-paren-match ((t (:weight (quote extra-bold)))))
@@ -1618,8 +1618,50 @@ Whenever a journal entry is created the
          (skip-syntax-backward "w_")
          (mark-thing 'word))))
 
-(global-set-key (kbd "C-ç") 'mark-a-word-or-thing)
+(global-set-key (kbd "C-+") 'mark-a-word-or-thing)
 (global-set-key (kbd "C-=") 'er/expand-region)
+
+(defun counsel-projectile-ag-word (word &optional options)
+  "Search the current project with ag.
+
+OPTIONS, if non-nil, is a string containing additional options to
+be passed to ag. It is read from the minibuffer if the function
+is called with a prefix argument."
+  (let* ((ignored (mapconcat (lambda (i)
+                               (concat "--ignore "
+                                       (shell-quote-argument i)
+                                       " "))
+                             (append (projectile-ignored-files-rel)
+                                     (projectile-ignored-directories-rel))
+                             ""))
+         (options
+          (if current-prefix-arg
+              (read-string (projectile-prepend-project-name "ag options: ")
+                           ignored
+                           'counsel-projectile-ag-options-history)
+            (concat ignored options))))
+    (counsel-ag word
+                (projectile-project-root)
+                options
+                (projectile-prepend-project-name "ag"))))
+
+(defun lgm/look-for-word-in-project ()
+  (interactive)
+  (progn
+   (er/mark-word)
+   (counsel-projectile-ag-word (buffer-substring (region-beginning) (region-end)))
+   )
+  )
+
+(defun lgm/look-for-selected-word-in-project ()
+  (interactive)
+  (progn
+   (counsel-projectile-ag-word (buffer-substring (region-beginning) (region-end)))
+   )
+  )
+
+(define-key projectile-command-map (kbd "s w") 'lgm/look-for-word-in-project)
+(global-set-key (kbd "C-M-*") 'lgm/look-for-selected-word-in-project)
 
 
 ;; Creates a new line without breaking the current line
@@ -2062,7 +2104,8 @@ Whenever a journal entry is created the
 	    )
 	   )
 	  )
-         ((org-agenda-compact-blocks nil)))
+         ((org-agenda-compact-blocks nil))
+	 )
 
     ;; 	("n" "Next Nubank tasks" todo "NEXT" 
     ;; ((org-agenda-skip-function 'my-skip-unless-waiting)
@@ -2095,11 +2138,32 @@ Whenever a journal entry is created the
 
 ;; Only deadlines view
 (add-to-list 'org-agenda-custom-commands
-             '("z" "Deadlines"
+             '("z" "Deadlines" 
                tags "+DEADLINE>=\"<today>\"&DEADLINE<=\"<+2m>\""
                ((org-agenda-overriding-columns-format
                  "%25ITEM %DEADLINE %TAGS")))
              )
+
+;; Compact only day view
+(add-to-list 'org-agenda-custom-commands
+             '("l" "Compact today"
+	       agenda "" ((org-agenda-ndays 5)
+			  (org-agenda-span 'day)
+			  (org-deadline-warning-days 0)
+			  (org-agenda-skip-scheduled-delay-if-deadline t)
+			  (org-agenda-todo-ignore-scheduled t)
+			  (org-agenda-scheduled-leaders '("" ""))
+			  (org-agenda-tags-todo-honor-ignore-options t)
+			  (org-agenda-overriding-header "Today Agenda:")
+			  )		 
+	       )
+	     )	     
+
+(use-package calfw
+  :ensure t)
+
+(use-package calfw-org
+  :ensure t)
 
 (defadvice org-agenda (around split-vertically activate)
   (let ((split-width-threshold 80))  ; or whatever width makes sense for you
