@@ -554,7 +554,7 @@
  '(markdown-command "/usr/bin/pandoc")
  '(package-selected-packages
    (quote
-    (calfw calfw-org spacemacs-theme lsp-typescript sml-mode org-wild-notifier org-notify cider clj-refactor clojure-mode go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (spacemacs-theme lsp-typescript sml-mode org-wild-notifier org-notify cider clj-refactor clojure-mode go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050" :foreground "#FFFFFF"))))
  '(show-paren-match ((t (:weight (quote extra-bold)))))
@@ -2159,11 +2159,11 @@ is called with a prefix argument."
 	       )
 	     )	     
 
-(use-package calfw
-  :ensure t)
+;; (use-package calfw
+;;   :ensure t)
 
-(use-package calfw-org
-  :ensure t)
+;; (use-package calfw-org
+;;   :ensure t)
 
 (defadvice org-agenda (around split-vertically activate)
   (let ((split-width-threshold 80))  ; or whatever width makes sense for you
@@ -2322,12 +2322,7 @@ is called with a prefix argument."
       (terminal-notifier-notify "Emacs Notification" msg)
       (message msg)))
 
-(remind-me-daily 'reminder-fn "8:01am" "Leave home!" nil t)
-(remind-me-daily 'reminder-fn "3:01pm" "You're hungry!" nil t)
-(remind-me-daily 'reminder-fn "6:01pm" "You're hungry!" nil t)
-(remind-me-daily 'reminder-fn "10:01pm" "Go home!" nil t)
-(remind-me-daily 'reminder-fn "8:30pm" "Dinner!" nil t)
-(remind-me-daily 'reminder-fn "11:40pm" "Bedtime!" nil t)
+(remind-me-daily 'reminder-fn "6:58pm" "Bedtime!" nil t)
 
 
 (defun my-terminal-notifier-notify (info)
