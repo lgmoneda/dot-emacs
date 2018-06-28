@@ -1591,10 +1591,11 @@ Whenever a journal entry is created the
   "Save current line into Kill-Ring without mark the line "
   (interactive "P")
   (copy-thing 'beginning-of-line 'end-of-line arg)
+  (message "You're awesome!")
   ;;(paste-to-mark arg)
   )
 
-(global-set-key (kbd "C-c l")         (quote copy-line))
+(global-set-key (kbd "C-c l") (quote copy-line))
 
 ;; Trying to start using marker
 ;; C-<space> C-<space> to leave mark
@@ -2322,7 +2323,7 @@ is called with a prefix argument."
       (terminal-notifier-notify "Emacs Notification" msg)
       (message msg)))
 
-(remind-me-daily 'reminder-fn "6:58pm" "Bedtime!" nil t)
+(remind-me-daily 'reminder-fn "11:40pm" "Bedtime!" nil t)
 
 
 (defun my-terminal-notifier-notify (info)
