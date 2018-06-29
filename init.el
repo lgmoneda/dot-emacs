@@ -166,8 +166,23 @@
   :ensure t
   :init
   ;; Auto revert buffers when change branches
-  (global-auto-revert-mode 1)
-  (setq auto-revert-check-vc-info t))
+  ;; Auto revert does not work with tramp,
+  ;; check the workaround later
+  ;; https://github.com/magit/magit/issues/1205
+  ;; (global-auto-revert-mode 1)
+  ;; (setq auto-revert-check-vc-info t)
+
+  ;; (setq auto-revert-check-vc-info t)
+
+    ;; (defun my-disable-auto-revert-vc-in-tramp ()
+    ;;   (when (and buffer-file-name (file-remote-p buffer-file-name))
+    ;;     (setq-local auto-revert-check-vc-info nil)))
+
+    ;; (add-hook 'find-file-hook #'my-disable-auto-revert-vc-in-tramp)
+
+  )
+
+
 
 ;; Git-timemachine
 (use-package git-timemachine
@@ -2456,3 +2471,5 @@ is called with a prefix argument."
     (lambda ()
       (interactive)
       (isearch-forward-symbol-at-point)))
+
+
