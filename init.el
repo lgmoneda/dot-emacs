@@ -1,4 +1,8 @@
-;; Package Management
+;Sunday, December 10, 2017
+;============================
+;==   Package Management   ==
+;============================
+
 (require 'package)
 (setq package-enable-at-startup nil)
 (add-to-list 'package-archives
@@ -6,11 +10,6 @@
 (add-to-list 'package-archives
      '("gnu" . "http://elpa.gnu.org/packages/"))
 (package-initialize)
-
-;Sunday, December 10, 2017
-;============================
-;==   Package Management   ==
-;============================
 
 ;; Bootstrap `use-package'
 (unless (package-installed-p 'use-package)
@@ -311,14 +310,19 @@
   )
 
 ;; Projectile
+
 (use-package projectile
   :ensure t
-  :init (projectile-global-mode)
+  :init
+  (projectile-global-mode)
+  ;; (setq projectile-keymap-prefix (kbd "C-c p"))
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   ;; Smart Mode Line already displays project name
   ;; :config (setq projectile-mode-line'(:eval (format " P[%s]" (projectile-project-name))))
   :config (setq projectile-mode-line'(:eval (format "" (projectile-project-name))))
   :bind (("C-c p s" . projectile-ag)
          ("C-c p g" . projectile-grep)))
+
 
 ;; Auto-complete
 (use-package auto-complete
@@ -384,14 +388,14 @@
 (setq ensime-eldoc-hints 'all)
 
 ;; Anaconda Anaconda+Eldoc
-(use-package anaconda-mode
-    :ensure t
-    :diminish anaconda-mode
-    :config
-    (add-hook 'python-mode-hook 'anaconda-mode)
-    (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
-    (add-hook 'python-mode-hook 'python--add-debug-highlight)
-    )
+;; (use-package anaconda-mode
+;;     :ensure t
+;;     :diminish anaconda-mode
+;;     :config
+;;     (add-hook 'python-mode-hook 'anaconda-mode)
+;;     (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
+;;     (add-hook 'python-mode-hook 'python--add-debug-highlight)
+;;     )
 
 ;; Column enforce
 (use-package column-enforce-mode
@@ -569,7 +573,7 @@
  '(markdown-command "/usr/bin/pandoc")
  '(package-selected-packages
    (quote
-    (spacemacs-theme lsp-typescript sml-mode org-wild-notifier org-notify cider clj-refactor clojure-mode go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-wild-notifier org-notify cider clj-refactor clojure-mode go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050" :foreground "#FFFFFF"))))
  '(show-paren-match ((t (:weight (quote extra-bold)))))
@@ -783,6 +787,10 @@
 (use-package markdown-preview-mode
   :ensure t)
 
+;; Use flymd-flyit
+(use-package flymd
+  :ensure t)
+
 ;; avy
 (use-package avy
   :ensure t)
@@ -827,7 +835,10 @@
 (use-package multi
   :ensure t)
 
-(load-file "~/repos/helm-spotify-plus/helm-spotify-plus.el")
+;; (load-file "~/repos/helm-spotify-plus/helm-spotify-plus.el")
+
+(use-package helm-spotify-plus
+   :ensure t)
 
 ;; Helm-spotify-plus key binds 
 (global-set-key (kbd "C-c C-s") 'helm-spotify-plus)
@@ -1835,8 +1846,9 @@ is called with a prefix argument."
 ;;============================
 
 (use-package org-gcal 
-  :init
   :ensure t
+  :init
+  (setq org-gcal-notify-p nil)
   )
  
 ;; Load gcalsync
@@ -1879,13 +1891,13 @@ is called with a prefix argument."
 				      (setq exec-path (append (parse-colon-path (getenv "PATH")) (list exec-directory)))
 
 				      ))
+	 (setq markdown-command "/usr/local/bin/pandoc")
 	 (setq ispell-program-name "/usr/local/bin/ispell/")
 	 (setenv "PATH" "/usr/local/bin:/Library/TeX/texbin/:$PATH" t)
 	 ;; Shell
 	 ;; There's a .emacs_bash with .~/bash_profile
 	 ;; Maybe i should use this:
 	 ;;https://github.com/purcell/exec-path-from-shell
-	  (setq markdown-command "/usr/local/bin/pandoc")
         )
     )
     )
@@ -2259,8 +2271,8 @@ is called with a prefix argument."
              '(face (:foreground "purple")))))))
 
 ;; Scroll while centering
-(global-set-key (kbd "C-v") (lambda () (interactive) (scroll-up-command) (recenter) ))
-(global-set-key (kbd "M-v") (lambda () (interactive) (scroll-down-command) (recenter) ))
+;; (global-set-key (kbd "C-v") (lambda () (interactive) (scroll-up-command) (recenter) ))
+;; (global-set-key (kbd "M-v") (lambda () (interactive) (scroll-down-command) (recenter) ))
 (setq scroll-error-top-bottom 'true)
 (setq scroll-preserve-screen-position t)
 
@@ -2374,7 +2386,6 @@ is called with a prefix argument."
 ;==        Clojure         ==
 ;============================
 
-
 ;; Enable paredit for Clojure
 (add-hook 'clojure-mode-hook 'enable-paredit-mode)
 
@@ -2402,34 +2413,59 @@ is called with a prefix argument."
             (define-clojure-indent (fact 1))
             (define-clojure-indent (facts 1))))
 
-;;;;
-;; Cider
-;;;;
+;Wednesday, July 25, 2018
+;============================
+;==         Cider          ==
+;============================
 
-;; provides minibuffer documentation for the code you're typing into the repl
-;; (add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode)
+(use-package cider
+  :ensure t
+  :after clojure
+  :mode (("\\.edn$\\'" . clojure-mode)
+	 ("\\.boot$\\'" . clojure-mode)
+	 ("\\.cljs.*$\\'" . clojure-mode)
+	 ("\\.lein-env\\'" . clojure-mode))
+  :init
+  (setq cider-repl-pop-to-buffer-on-connect t
+	cider-show-error-buffer t
+	cider-auto-select-error-buffer t
+	cider-repl-display-help-banner nil
+	cider-repl-history-file "~/.emacs.d/cider-history.log"
+	cider-repl-wrap-history t)
+  :config
+  (add-hook 'cider-repl-mode-hook 'paredit-mode))
 
-;; go right to the REPL buffer when it's finished connecting
-(setq cider-repl-pop-to-buffer-on-connect t)
+(defun cider-start-http-server ()
+  (interactive)
+  (cider-load-current-buffer)
+  (let ((ns (cider-current-ns)))
+    (cider-repl-set-ns ns)
+    (cider-interactive-eval (format "(println '(def server (%s/start))) (println 'server)" ns))
+    (cider-interactive-eval (format "(def server (%s/start)) (println server)" ns))))
 
-;; ;; When there's a cider error, show its buffer and switch to it
-;; (setq cider-show-error-buffer t)
-;; (setq cider-auto-select-error-buffer t)
+(defun cider-refresh ()
+  (interactive)
+  (cider-interactive-eval (format "(user/reset)")))
 
-;; ;; Where to store the cider history.
-;; (setq cider-repl-history-file "~/.emacs.d/cider-history")
+(defun cider-user-ns ()
+  (interactive)
+  (cider-repl-set-ns "user"))
 
-;; ;; Wrap when navigating history.
-;; (setq cider-repl-wrap-history t)
+(eval-after-load 'cider
+  '(progn
+     (define-key clojure-mode-map (kbd "C-c C-v") 'cider-start-http-server)
+     (define-key clojure-mode-map (kbd "C-M-r") 'cider-refresh)
+     (define-key clojure-mode-map (kbd "C-c u") 'cider-user-ns)
+     (define-key cider-mode-map (kbd "C-c u") 'cider-user-ns)))
 
-;; enable paredit in your REPL
-(add-hook 'cider-repl-mode-hook 'paredit-mode)
+;; Use clojure mode for other extensions
+(add-to-list 'auto-mode-alist '("\\.edn$" . clojure-mode))
+(add-to-list 'auto-mode-alist '("\\.boot$" . clojure-mode))
+(add-to-list 'auto-mode-alist '("\\.cljs.*$" . clojure-mode))
+(add-to-list 'auto-mode-alist '("lein-env" . enh-ruby-mode))
 
-;; ;; Use clojure mode for other extensions
-;; (add-to-list 'auto-mode-alist '("\\.edn$" . clojure-mode))
-;; (add-to-list 'auto-mode-alist '("\\.boot$" . clojure-mode))
-;; (add-to-list 'auto-mode-alist '("\\.cljs.*$" . clojure-mode))
-;; (add-to-list 'auto-mode-alist '("lein-env" . enh-ruby-mode))
+(use-package fortune-cookie
+ :ensure t)
 
 
 ;; ;; key bindings
@@ -2471,5 +2507,11 @@ is called with a prefix argument."
     (lambda ()
       (interactive)
       (isearch-forward-symbol-at-point)))
+
+;; Look for it later
+;; (use-package org-timeline
+;; 	     :ensure t)
+
+;; (add-hook 'org-agenda-finalize-hook 'org-timeline-insert-timeline :append)
 
 
