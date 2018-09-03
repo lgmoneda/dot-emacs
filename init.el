@@ -25,8 +25,8 @@
 ;== Themes and Aesthetics  ==
 ;============================
 
-;; Base16-theme, base16-dracula's home 
-(use-package base16-theme 
+;; Base16-theme, base16-dracula's home
+(use-package base16-theme
   :ensure t)
 
 ;; (use-package dracula-theme
@@ -109,7 +109,7 @@
 ;; (require 'saveplace)
 ;; (setq-default save-place t)
 ;; For emacs 25+
-(save-place-mode 1) 
+(save-place-mode 1)
 (setq save-place-file "~/.emacs.d/saveplace.log")
 
 ;; Fast jump to elisp function
@@ -124,7 +124,7 @@
 (defun lgm/jump-to-elisp-func-def ()
   (interactive)
   (find-function (function-called-at-point))
-  ) 
+  )
 
 (global-set-key (kbd "C-h C-j") 'lgm/jump-to-elisp-func-def)
 (global-set-key (kbd "C-h C-f") 'lgm/describe-func)
@@ -221,7 +221,7 @@
   (eval-after-load "simple" '(diminish 'overwrite-mode))
   (eval-after-load "autorevert" '(diminish 'auto-revert-mode)))
 
-;; Rainbow delimiters in Elisp mode 
+;; Rainbow delimiters in Elisp mode
 (use-package rainbow-delimiters
   :ensure t
   :config (add-hook 'emacs-lisp-mode-hook 'rainbow-delimiters-mode))
@@ -231,7 +231,7 @@
   :ensure t)
 
 ;; Anzu shows total matchs for searchs
-(use-package anzu 
+(use-package anzu
 	     :ensure t
 	     :config (global-anzu-mode))
 
@@ -242,7 +242,7 @@
 
 (use-package ivy
 	     :ensure t
-	     :init 
+	     :init
 	     (ivy-mode 1)
 	     (setq ivy-initial-inputs-alist nil)
 	     ;; (setq ivy-use-virtual-buffers t)
@@ -373,14 +373,14 @@
        )
       )
 
-(defun scala-run () 
-    (interactive)   
+(defun scala-run ()
+    (interactive)
    (ensime-sbt-action "run")
    (ensime-sbt-action "~compile")
 (let ((c (current-buffer)))
     (switch-to-buffer-other-window
    (get-buffer-create (ensime-sbt-build-buffer-name)))
- (switch-to-buffer-other-window c))) 
+ (switch-to-buffer-other-window c)))
  (setq exec-path
 (append exec-path (list ensime-exec-path))) ;;REPLACE THIS with the directory of your scalac executable!
 
@@ -396,6 +396,18 @@
 ;;     (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
 ;;     (add-hook 'python-mode-hook 'python--add-debug-highlight)
 ;;     )
+
+;Saturday, August 25, 2018
+;============================
+;==         Python         ==
+;============================
+
+(add-hook 'python-mode-hook
+	  (lambda ()
+	    (setq-default indent-tabs-mode t)
+	    (setq-default tab-width 4)
+	    (setq-default py-indent-tabs-mode t)
+	    (add-to-list 'write-file-functions 'delete-trailing-whitespace)))
 
 ;; Column enforce
 (use-package column-enforce-mode
@@ -418,7 +430,7 @@
 ;; Enable eldoc in your programming modes
 (use-package eldoc
   :ensure t
-  :diminish 
+  :diminish
   :commands eldoc-mode
   :init
   (setq eldoc-idle-delay 0.1
@@ -440,7 +452,7 @@
           (setq company-global-modes '(not python-mode cython-mode sage-mode ein:notebook-modes org-mode markdown-mode))
           )
   :config (progn
-            (setq company-tooltip-limit 12 
+            (setq company-tooltip-limit 12
                   company-idle-delay 1.0
                   company-echo-delay 0.5
                   company-begin-commands '(self-insert-command  self-insert-command org-self-insert-command orgtbl-self-insert-command c-scope-operator c-electric-colon c-electric-lt-gt c-electric-slash )
@@ -499,7 +511,7 @@
   (sp-pair "'" nil :actions :rem)
   (sp-pair "`" nil :actions :rem)
   :config
-  ;; Now i can express sadness in erc-mode 
+  ;; Now i can express sadness in erc-mode
   (sp-local-pair 'erc-mode "(" nil :actions nil))
 
 ;; Smartparens keyibinding management
@@ -628,9 +640,9 @@
 
 ;; Some initial confis
 ;; UTF-8 please
-(setq locale-coding-system 'utf-8) 
-(set-terminal-coding-system 'utf-8) 
-(set-keyboard-coding-system 'utf-8) 
+(setq locale-coding-system 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
 (set-selection-coding-system 'utf-8)
 (prefer-coding-system 'utf-8)
 
@@ -639,7 +651,7 @@
        initial-scratch-message ""
        fill-column 80)
 
-;; Highligh current line! 
+;; Highligh current line!
 (use-package highlight-current-line
   :ensure t
   :config (highlight-current-line-on t)
@@ -677,19 +689,19 @@
 (global-linum-mode 0)
 
 ;; Defining switch tabs commands
-(global-set-key [C-iso-lefttab] 
+(global-set-key [C-iso-lefttab]
     (lambda ()
       (interactive)
       (other-window -1)))
 
 ;; MacOS version
-(global-set-key (kbd "C-S-<tab>") 
+(global-set-key (kbd "C-S-<tab>")
     (lambda ()
       (interactive)
       (other-window -1)))
 
 ;; Defining switch tabs commands
-(global-set-key [C-tab] 
+(global-set-key [C-tab]
     (lambda ()
       (interactive)
       (other-window 1)))
@@ -730,7 +742,7 @@
 ;;Turn the system sound off
 (setq ring-bell-function 'ignore)
 
-; Set cursor color 
+; Set cursor color
 (set-cursor-color "##ea51b2")
 
 ;;Beacon minor mode
@@ -840,7 +852,7 @@
 (use-package helm-spotify-plus
    :ensure t)
 
-;; Helm-spotify-plus key binds 
+;; Helm-spotify-plus key binds
 (global-set-key (kbd "C-c C-s") 'helm-spotify-plus)
 (defhydra hydra-spotify (global-map "C-c s")
   "helm-spotify-plus"
@@ -898,7 +910,7 @@ if breakpoints are present in `python-mode' files"
 ;; Insert a execution time print
 (defun lgm/insert-timer()
   (interactive)
-  (save-excursion 
+  (save-excursion
    (back-to-indentation)
    (split-line)
    (insert "from time import time; start = time() ## Timing from here")
@@ -925,7 +937,7 @@ if breakpoints are present in `python-mode' files"
   (python-shell-send-buffer)
   ;; Pop new window only if shell isn't visible
   ;; in any frame.
-  (unless (get-buffer-window "*Python*" t) 
+  (unless (get-buffer-window "*Python*" t)
     (python-shell-switch-to-shell)
     )
  )
@@ -997,7 +1009,7 @@ if breakpoints are present in `python-mode' files"
 (define-key python-mode-map (kbd "TAB") 'my-smart-tab)
 (define-key python-mode-map (kbd "<backtab>") 'my-smart-backtab)
 
-;; Maybe it's a good idea to use it in all prog modes 
+;; Maybe it's a good idea to use it in all prog modes
 (define-key prog-mode-map (kbd "TAB") 'my-smart-tab)
 (define-key prog-mode-map (kbd "<backtab>") 'my-smart-backtab)
 
@@ -1035,7 +1047,7 @@ if breakpoints are present in `python-mode' files"
 ;; (erc-spelling-mode 1)
 ;; (add-hook 'erc-mode-hook (lambda () (auto-fill-mode 0)))
 ;; (make-variable-buffer-local 'erc-fill-column)
-;;  (add-hook 'window-configuration-change-hook 
+;;  (add-hook 'window-configuration-change-hook
 ;; 	   '(lambda ()
 ;; 	      (save-excursion
 ;; 	        (walk-windows
@@ -1102,7 +1114,7 @@ if breakpoints are present in `python-mode' files"
 
 ;; ;; Both defadvices to track pvts using channels mode-line face
 ;; (defadvice erc-track-find-face (around erc-track-find-face-promote-query activate)
-;;   (if (erc-query-buffer-p) 
+;;   (if (erc-query-buffer-p)
 ;;       (setq ad-return-value (intern "erc-current-nick-face"))
 ;;     ad-do-it))
 
@@ -1231,6 +1243,10 @@ want to use in the modeline *in lieu of* the original.")
 ;============================
 (require 'org)
 
+;; Properties I want subtrees to inherite
+(setq org-use-property-inheritance '("TIMELINE_FACE"))
+(setq org-use-property-inheritance t)
+
 ;; Indent tasks
 ;; Old star color: 626483
 (setq org-startup-indented t)
@@ -1343,8 +1359,19 @@ want to use in the modeline *in lieu of* the original.")
        "Switch entry to DONE when all subentries are done, to TODO otherwise."
        (let (org-log-done org-log-states)   ; turn off logging
          (org-todo (if (= n-not-done 0) "DONE" "TODO"))))
-     
+
 (add-hook 'org-after-todo-statistics-hook 'org-summary-todo)
+
+;; https://github.com/gregsexton/ob-ipython
+;; (use-package ob-ipython
+;;   :ensure t
+;;   :init
+;;   ;; (setq ob-ipython-resources-dir (no-littering-expand-var-file-name "obipy-resources"))
+;;   :config
+;;   (require 'ob-ipython))
+
+;; ;; to redefine images from evaluating code blocks
+;; (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
 
 ;; Org-babel
 (org-babel-do-load-languages
@@ -1355,6 +1382,7 @@ want to use in the modeline *in lieu of* the original.")
    (latex . t)
    (ledger . t)         ;this is the important one for this tutorial
    (python . t)
+   ;; (ipython . t)
    (sh . t)
    (dot . t)
    (sql . nil)
@@ -1369,7 +1397,7 @@ want to use in the modeline *in lieu of* the original.")
 ;; set the fall-back font
 ;; this is critical for displaying various unicode symbols, such as those used in my init-org.el settings
 ;; http://endlessparentheses.com/manually-choose-a-fallback-font-for-unicode.html
-(set-fontset-font "fontset-default" nil 
+(set-fontset-font "fontset-default" nil
                   (font-spec :size 20 :name "Symbola"))
 
 ;; Set font size
@@ -1412,7 +1440,7 @@ want to use in the modeline *in lieu of* the original.")
 (setq org-ellipsis " ▼")
 
 
-(set-display-table-slot standard-display-table 
+(set-display-table-slot standard-display-table
                         'selective-display (string-to-vector " ◦◦◦ ")) ; or whatever you like
 
 
@@ -1450,8 +1478,8 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
 ;; #+BEGIN: block-dashboard
 ;; #+END:
 ;; C-c C-c to build/update bars
-(use-package org-dashboard
-   :ensure t)
+;; (use-package org-dashboard
+;;    :ensure t)
 
 ;; I want imenu, not new journal entry!
 (global-set-key (kbd "C-c C-j") 'imenu-anywhere)
@@ -1464,8 +1492,8 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
 
 ;; Make Org Journal remember me about
 ;; writing my day thoughts like in Memento mode
-(defcustom journal-file "~/Dropbox/Agenda/Journal/my-journal.org" 
-  "Customizable variable to specify any file, which will be used for Memento." 
+(defcustom journal-file "~/Dropbox/Agenda/Journal/my-journal.org"
+  "Customizable variable to specify any file, which will be used for Memento."
   :type 'string
   :group 'journal)
 
@@ -1527,7 +1555,7 @@ Whenever a journal entry is created the
       ;; switch to the outline, hide subtrees
       (org-journal-mode)
       (if (and org-journal-hide-entries-p (org-journal-time-entry-level))
-          (outline-hide-sublevels 
+          (outline-hide-sublevels
 	   (- (org-journal-time-entry-level) 1))
 	  (show-all)
 	  )
@@ -1554,7 +1582,7 @@ Whenever a journal entry is created the
   (if (file-exists-p journal-file)
       ;; Check if there was a log written today. If this is not the case, then check if it's already tonight except the night.
       (if (and (string< (journal-get-modification-date) (format-time-string "%Y-%m-%d")) (or (string< (format-time-string "%k") " 6") (string< "21" (format-time-string "%k"))))
-          ;; Invoke Memento if the user wants to proceed. 
+          ;; Invoke Memento if the user wants to proceed.
           (if (yes-or-no-p "Do you want to write your Journal?")
               (progn (call-interactively 'lgm/org-journal-new-today-entry)
 		     (keyboard-quit)
@@ -1582,7 +1610,7 @@ Whenever a journal entry is created the
 
 (defun paste-to-mark(&optional arg)
   "Paste things to mark, or to the prompt in shell-mode"
-  (let ((pasteMe 
+  (let ((pasteMe
      	 (lambda()
      	   (if (string= "shell-mode" major-mode)
 	       (progn (comint-next-prompt 25535) (yank))
@@ -1629,12 +1657,12 @@ Whenever a journal entry is created the
 ;; C-<space> again to previous marks
 ;; C-<space> C-s "char" to selec region between mark and I-search
 ;; ^ or use ace-jump!
-;; C-x C-<space> global jump to last mark 
+;; C-x C-<space> global jump to last mark
 (setq set-mark-command-repeat-pop t)
 
 ;; Selection functions utilities
 ;; Stop using arrows for selection!
-;; It requires thing-cmds 
+;; It requires thing-cmds
 (defun mark-a-word-or-thing (arg)
    "..."
   (interactive "P")
@@ -1706,7 +1734,7 @@ is called with a prefix argument."
 ;; Changes the search face
 
 
-;; Schema 
+;; Schema
 (use-package quack
   :ensure t)
 
@@ -1730,7 +1758,7 @@ is called with a prefix argument."
 ;; Some functions from EmacsWiki
 (add-to-list 'load-path "~/.emacs.d/elisp/misc/" t)
 
-;; Jump to last change 
+;; Jump to last change
 (require 'goto-chg)
 (global-set-key [(control ?.)] 'goto-last-change)
 (global-set-key [(control ?,)] 'goto-last-change-reverse)
@@ -1742,7 +1770,7 @@ is called with a prefix argument."
 ;(setq TeX-PDF-mode t)
 
 ;; automatic formatting of a section: C-c C-q C-s;
-;; section preview: C-c C-p C-s; 
+;; section preview: C-c C-p C-s;
 
 (require 'flymake)
 
@@ -1845,12 +1873,12 @@ is called with a prefix argument."
 ;;==       G Calendar       ==
 ;;============================
 
-(use-package org-gcal 
+(use-package org-gcal
   :ensure t
   :init
   (setq org-gcal-notify-p nil)
   )
- 
+
 ;; Load gcalsync
 (load "~/Dropbox/Projetos/Emacs/.gcalsync.el")
 
@@ -1965,18 +1993,18 @@ is called with a prefix argument."
 (setq org-agenda-skip-scheduled-if-deadline-is-shown t)
 
 (setq org-agenda-block-separator " ")
-(setq org-agenda-custom-commands 
+(setq org-agenda-custom-commands
       '(("d" "Daily agenda and NEXTs!"
          ((tags "PRIORITY=\"A\""
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "High-priority tasks:")))
 
-	  ;; Next deadlines 
-	  (agenda "" 
+	  ;; Next deadlines
+	  (agenda ""
 		  ((org-agenda-time-grid nil)
 		   (org-agenda-span 'day)
-		   (org-deadline-warning-days 21)       
-		   (org-agenda-entry-types '(:deadline))  
+		   (org-deadline-warning-days 21)
+		   (org-agenda-entry-types '(:deadline))
 		   (org-agenda-sorting-strategy '(deadline-up))
 		   (org-agenda-overriding-header "Deadlines in the next 21 days:")
 		   ))
@@ -1993,7 +2021,7 @@ is called with a prefix argument."
 		      (org-agenda-overriding-header "Today Agenda:")
 		      )
 		  )
-	  
+
 	  ;; NEXT Nubank Tasks
           (tags-todo "+nubank+TODO=\"NEXT\""
 	  	(
@@ -2008,7 +2036,7 @@ is called with a prefix argument."
 	  	 ;; (org-agenda-prefix-format
 	  	 ;;      "%((concat (or (org-entry-get (point) \"scheduled\" t) \"\") \" \"
 	  	 ;; 		 (or (org-entry-get (point) \"CaseNum\" t) \"\") \" \"
-                 ;;                 (or (org-entry-get (point) \"FiscalYear\" t) \"\") \" \"))") 
+                 ;;                 (or (org-entry-get (point) \"FiscalYear\" t) \"\") \" \"))")
 	  	 )
 
 	  	)
@@ -2020,15 +2048,15 @@ is called with a prefix argument."
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
 		 )
 		)
-	  
+
 	  ;; NEXT Work
-          (tags "+work+TODO=\"NEXT\"|udacity+TODO=\"NEXT\"" 
+          (tags "+work+TODO=\"NEXT\"|udacity+TODO=\"NEXT\""
 		(
 		 (org-agenda-overriding-header "Next task in Work and Udacity:")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
 		 )
 		)
-	  
+
 	  ;; NEXT Study
           (tags "+study+TODO=\"NEXT\""
 		(
@@ -2050,7 +2078,7 @@ is called with a prefix argument."
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
 		 )
 		)
-	  
+
 	  ;; Blocked Nubank
 	  (tags "+nubank+TODO=\"WAIT\""
 		((org-agenda-skip-function 'my-skip-unless-waiting)
@@ -2058,9 +2086,9 @@ is called with a prefix argument."
 	     (quote
 	      ("+Nubank")))
 	    (org-agenda-overriding-header "Blocked Nubank Tasks: "))
-		
+
 		)
-	  
+
 	  ;; TODO Nubank
 	  (tags "+nubank+LEVEL=3+TODO=\"TODO\""
 		((org-agenda-skip-function 'my-skip-unless-waiting)
@@ -2082,17 +2110,17 @@ is called with a prefix argument."
           ;;        "%25ITEM %DEADLINE %TAGS")
 	  ;; 	(org-agenda-overriding-header "Approaching Deadlines!:")))
 
-	  ;; Long deadlines 
-	  (agenda "" 
+	  ;; Long deadlines
+	  (agenda ""
 		  ((org-agenda-time-grid nil)
 		   (org-agenda-span 'day)
-		   (org-deadline-warning-days 90)       
-		   (org-agenda-entry-types '(:deadline))  
+		   (org-deadline-warning-days 90)
+		   (org-agenda-entry-types '(:deadline))
 		   (org-agenda-sorting-strategy '(deadline-up))
 		   (org-agenda-overriding-header "Deadlines in the next 90 days:")
 		   ))
-       
-	  
+
+
 	  ;; Year Goals Milestones
 	  (tags "-nubank+goals2018+TODO=\"NEXT\""
 		((org-agenda-category-filter "-Nubank")
@@ -2104,7 +2132,7 @@ is called with a prefix argument."
 		)
 
 	  ;; Year Goals General
-	  (tags "+goals2018+LEVEL=3+TODO=\"TODO\"" 
+	  (tags "+goals2018+LEVEL=3+TODO=\"TODO\""
 		((org-agenda-category-filter "-Nubank")
 		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
 						(air-org-skip-subtree-if-priority ?A)
@@ -2135,7 +2163,7 @@ is called with a prefix argument."
          ((org-agenda-compact-blocks nil))
 	 )
 
-    ;; 	("n" "Next Nubank tasks" todo "NEXT" 
+    ;; 	("n" "Next Nubank tasks" todo "NEXT"
     ;; ((org-agenda-skip-function 'my-skip-unless-waiting)
     ;;         (org-agenda-category-filter-preset
     ;; 	(quote
@@ -2143,7 +2171,7 @@ is called with a prefix argument."
     ;; 	    (org-agenda-overriding-header "Nu Agenda: "))
 
     ;; )
-	
+
 	))
 
 ;; Enable the usage of two agenda views at the same time
@@ -2166,7 +2194,7 @@ is called with a prefix argument."
 
 ;; Only deadlines view
 (add-to-list 'org-agenda-custom-commands
-             '("z" "Deadlines" 
+             '("z" "Deadlines"
                tags "+DEADLINE>=\"<today>\"&DEADLINE<=\"<+2m>\""
                ((org-agenda-overriding-columns-format
                  "%25ITEM %DEADLINE %TAGS")))
@@ -2183,9 +2211,9 @@ is called with a prefix argument."
 			  (org-agenda-scheduled-leaders '("" ""))
 			  (org-agenda-tags-todo-honor-ignore-options t)
 			  (org-agenda-overriding-header "Today Agenda:")
-			  )		 
+			  )
 	       )
-	     )	     
+	     )
 
 ;; (use-package calfw
 ;;   :ensure t)
@@ -2262,11 +2290,11 @@ is called with a prefix argument."
     (lambda ()
       (save-excursion
         (goto-char (point-min))
-        (while (re-search-forward "nu-agenda:" nil t) 
+        (while (re-search-forward "nu-agenda:" nil t)
           (add-text-properties (match-beginning 0) (point-at-eol)
              '(face (:foreground "green"))))
         (goto-char (point-min))
-        (while (re-search-forward "work:" nil t) 
+        (while (re-search-forward "work:" nil t)
           (add-text-properties (match-beginning 0) (point-at-eol)
              '(face (:foreground "purple")))))))
 
@@ -2303,7 +2331,7 @@ is called with a prefix argument."
 (setq require-final-newline t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Terminal notifier 
+;; Terminal notifier
 ;; requires 'brew install terminal-notifier'
 ;; stolen from erc-notifier
 
@@ -2323,10 +2351,11 @@ is called with a prefix argument."
 
 ;; Warns every N minutes about all the deadlines and scheduled tasks
 ;; for the current day
-(use-package org-alert
-	     :ensure t)
+;; (use-package org-alert
+;; 	     :ensure t)
 
 ;; https://github.com/akhramov/org-wild-notifier.el
+
 (use-package org-wild-notifier
 	     :ensure t
 	     :init (org-wild-notifier-mode)
@@ -2342,7 +2371,7 @@ is called with a prefix argument."
     (setq daily-reminder
           (run-at-time time daily 'funcall fn msg wavfile box))))
 
-(defun reminder-fn (msg wavfile box)  
+(defun reminder-fn (msg wavfile box)
   (if wavfile
       (start-process-shell-command "lolsound" nil (concat "mplayer ~/.emacs.d/sounds/" wavfile))
       )
@@ -2467,34 +2496,6 @@ is called with a prefix argument."
 (use-package fortune-cookie
  :ensure t)
 
-
-;; ;; key bindings
-;; ;; these help me out with the way I usually develop web apps
-;; (defun cider-start-http-server ()
-;;   (interactive)
-;;   (cider-load-current-buffer)
-;;   (let ((ns (cider-current-ns)))
-;;     (cider-repl-set-ns ns)
-;;     (cider-interactive-eval (format "(println '(def server (%s/start))) (println 'server)" ns))
-;;     (cider-interactive-eval (format "(def server (%s/start)) (println server)" ns))))
-
-
-;; (defun cider-refresh ()
-;;   (interactive)
-;;   (cider-interactive-eval (format "(user/reset)")))
-
-;; (defun cider-user-ns ()
-;;   (interactive)
-;;   (cider-repl-set-ns "user"))
-
-;; (eval-after-load 'cider
-;;   '(progn
-;;      (define-key clojure-mode-map (kbd "C-c C-v") 'cider-start-http-server)
-;;      (define-key clojure-mode-map (kbd "C-M-r") 'cider-refresh)
-;;      (define-key clojure-mode-map (kbd "C-c u") 'cider-user-ns)
-;;      (define-key cider-mode-map (kbd "C-c u") 'cider-user-ns)))
-
-
 ;; fix the PATH variable
 (defun set-exec-path-from-shell-PATH ()
   (let ((path-from-shell (shell-command-to-string "TERM=vt100 $SHELL -i -c 'echo $PATH'")))
@@ -2512,6 +2513,30 @@ is called with a prefix argument."
 ;; (use-package org-timeline
 ;; 	     :ensure t)
 
-;; (add-hook 'org-agenda-finalize-hook 'org-timeline-insert-timeline :append)
+(load-file "~/.emacs.d/elpa/org-timeline/org-timeline.el")
+;;(add-hook 'org-agenda-finalize-hook 'org-timeline-insert-timeline :append)
 
+(defun lgm/show-timeline ()
+  (interactive)
+  (org-timeline-insert-timeline))
+
+(defun lgm/planner-mode ()
+  (interactive)
+  (add-hook 'org-agenda-finalize-hook 'org-timeline-insert-timeline :append))
+
+(defun lgm/copy-org-block ()
+  "Place the mark in a org head, reveal its content and use
+this command to copy it"
+  (interactive)
+  (next-line)
+  (org-beginning-of-line)
+  (set-mark-command nil)
+  (org-next-visible-heading 1)
+  (previous-line)
+  (org-end-of-line)
+  (kill-ring-save (mark) (point))
+  (org-previous-visible-heading 1)
+  (message "You're awesome!"))
+
+(global-set-key (kbd "C-c b") (quote lgm/copy-org-block))
 
