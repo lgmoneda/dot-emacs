@@ -158,7 +158,8 @@
 
 ;; Writeroom, a focus mode!
 (use-package writeroom-mode
-  :ensure t)
+ :ensure t
+ :init (setq buffer-face-mode-face '(:family "dejavu sans mono" :height 150)))
 
 ;; Magit
 (use-package magit
@@ -582,7 +583,7 @@
  '(display-time-mail-string "")
  '(ein:use-auto-complete t t)
  '(ein:use-auto-complete-superpack t t)
- '(markdown-command "/usr/bin/pandoc")
+ '(markdown-command "/usr/local/bin/pandoc")
  '(package-selected-packages
    (quote
     (org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-wild-notifier org-notify cider clj-refactor clojure-mode go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
@@ -1940,11 +1941,19 @@ is called with a prefix argument."
 (global-set-key (kbd "C-M--") 'default-text-scale-decrease)
 
 
-(setq tramp-default-method "ssh")
+;; (setq tramp-default-method "ssh")
 ;;(setq tramp-auto-save-directory "~/tmp/tramp/")
-(add-to-list 'backup-directory-alist
-                  (cons tramp-file-name-regexp nil))
-(setq tramp-chunksize 2000)
+;; (add-to-list 'backup-directory-alist
+;;                   (cons tramp-file-name-regexp nil))
+;; (setq tramp-chunksize 2000)
+
+(use-package tramp
+  :init
+  (setq tramp-default-method "ssh"
+        tramp-backup-directory-alist backup-directory-alist
+        tramp-auto-save-directory "~/tmp/tramp/"
+        tramp-chunksize 2000
+		tramp-use-ssh-controlmaster-options "ssh"))
 
 (setq max-mini-window-height 1)
 
@@ -1992,6 +2001,14 @@ is called with a prefix argument."
 (setq org-default-priority ?D)
 (setq org-agenda-skip-scheduled-if-deadline-is-shown t)
 
+;; From https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html
+(defun air-org-skip-subtree-if-habit ()
+  "Skip an agenda entry if it has a STYLE property equal to \"habit\"."
+  (let ((subtree-end (save-excursion (org-end-of-subtree t))))
+    (if (string= (org-entry-get nil "STYLE") "habit")
+        subtree-end
+      nil)))
+
 (setq org-agenda-block-separator " ")
 (setq org-agenda-custom-commands
       '(("d" "Daily agenda and NEXTs!"
@@ -2009,18 +2026,32 @@ is called with a prefix argument."
 		   (org-agenda-overriding-header "Deadlines in the next 21 days:")
 		   ))
 
+	  ;; Week tasks and deadlines
+	  (agenda ""
+	  	  ((org-agenda-time-grid nil)
+	  	   (org-agenda-span 'week)
+	  	   (org-deadline-warning-days 0)
+	  	   (org-deadline-past-days 0)
+		   (org-scheduled-past-days 0)
+	  	   (org-agenda-entry-types '(:deadline :scheduled))
+	  	   (org-agenda-sorting-strategy '(deadline-up))
+	  	   (org-agenda-overriding-header "Week tasks:")
+		   (org-agenda-skip-function '(air-org-skip-subtree-if-habit))
+	  	   ))
+	  
 	  ;; Today Agenda
-          (agenda "" ((org-agenda-ndays 5)
-		      (org-agenda-span 'day)
-		      (org-agenda-time-grid nil)
-		      (org-deadline-warning-days 0)
-		      (org-agenda-skip-scheduled-delay-if-deadline t)
-		      (org-agenda-todo-ignore-scheduled t)
-		      (org-agenda-scheduled-leaders '("" ""))
-		      (org-agenda-tags-todo-honor-ignore-options t)
-		      (org-agenda-overriding-header "Today Agenda:")
-		      )
-		  )
+          ;; (agenda ""
+	  ;; 	  ((org-agenda-ndays 5)
+	  ;; 	      (org-agenda-span 'day)
+	  ;; 	      (org-agenda-time-grid nil)
+	  ;; 	      (org-deadline-warning-days 0)
+	  ;; 	      (org-agenda-skip-scheduled-delay-if-deadline t)
+	  ;; 	      (org-agenda-todo-ignore-scheduled t)
+	  ;; 	      (org-agenda-scheduled-leaders '("" ""))
+	  ;; 	      (org-agenda-tags-todo-honor-ignore-options t)
+	  ;; 	      (org-agenda-overriding-header "Today Agenda:")
+	  ;; 	      )
+	  ;; 	  )
 
 	  ;; NEXT Nubank Tasks
           (tags-todo "+nubank+TODO=\"NEXT\""
@@ -2540,3 +2571,4 @@ this command to copy it"
 
 (global-set-key (kbd "C-c b") (quote lgm/copy-org-block))
 
+;; (add-hook 'org-wild-notifier-mode org-narrow-to-subtree)
