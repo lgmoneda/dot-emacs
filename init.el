@@ -916,7 +916,7 @@ if breakpoints are present in `python-mode' files"
    (split-line)
    (insert "from time import time; start = time() ## Timing from here")
    (next-line)
-   (insert "print('Execution time: {0}m{1}s'.format(int((time()-start)/60), int((time()-start)%60 )))"))
+   (insert "print(\"Execution time: {0}m{1}s\".format(int((time()-start)/60), int((time()-start)%60 )))"))
   )
 
 (define-key python-mode-map (kbd "<f4>") 'lgm/insert-timer)
@@ -2034,11 +2034,11 @@ is called with a prefix argument."
 	  	   (org-deadline-past-days 0)
 		   (org-scheduled-past-days 0)
 	  	   (org-agenda-entry-types '(:deadline :scheduled))
-	  	   (org-agenda-sorting-strategy '(deadline-up))
+	  	   ;; (org-agenda-sorting-strategy '(deadline-up))
 	  	   (org-agenda-overriding-header "Week tasks:")
 		   (org-agenda-skip-function '(air-org-skip-subtree-if-habit))
 	  	   ))
-	  
+
 	  ;; Today Agenda
           ;; (agenda ""
 	  ;; 	  ((org-agenda-ndays 5)
@@ -2245,6 +2245,18 @@ is called with a prefix argument."
 			  )
 	       )
 	     )
+
+;; Remember me to take a look at my agenda before quitting emacs,
+;; so I check what I've done properly.
+(defun agenda-check-when-quit ()
+  (interactive)
+  (if (yes-or-no-p "Would like to check your agenda before you go?")
+	  (progn (call-interactively '(lambda() (interactive)(org-agenda 0 "l")))
+		     (keyboard-quit)
+		     )
+	  ))
+
+(add-to-list 'kill-emacs-hook 'agenda-check-when-quit)
 
 ;; (use-package calfw
 ;;   :ensure t)
@@ -2571,4 +2583,12 @@ this command to copy it"
 
 (global-set-key (kbd "C-c b") (quote lgm/copy-org-block))
 
-;; (add-hook 'org-wild-notifier-mode org-narrow-to-subtree)
+;; Workaround to block wild notifier when using narrow
+;; because when it scan the org file it quits the narrow view
+(defadvice org-narrow-to-subtree (before block-wild activate)
+  (when (fboundp 'org-wild-notifier-mode)
+    (org-wild-notifier-mode -1)))
+
+(defadvice widen (before block-wild activate)
+  (when (fboundp 'org-wild-notifier-mode)
+    (org-wild-notifier-mode 1)))
