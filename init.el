@@ -388,6 +388,13 @@
 (setq ensime-startup-snapshot-notification nil)
 (setq ensime-eldoc-hints 'all)
 
+(defun scalafmt-file ()
+  (interactive)
+  (let ((str (concat "scalafmt -i -f " buffer-file-name)))
+    (message str)
+    (shell-command-to-string str))
+  (message "scalafmt done"))
+
 ;; Anaconda Anaconda+Eldoc
 ;; (use-package anaconda-mode
 ;;     :ensure t
@@ -2585,10 +2592,11 @@ this command to copy it"
 
 ;; Workaround to block wild notifier when using narrow
 ;; because when it scan the org file it quits the narrow view
-(defadvice org-narrow-to-subtree (before block-wild activate)
-  (when (fboundp 'org-wild-notifier-mode)
-    (org-wild-notifier-mode -1)))
+;; (defadvice org-narrow-to-subtree (before block-wild activate)
+;;   (when (fboundp 'org-wild-notifier-mode)
+;;     (org-wild-notifier-mode -1)))
 
-(defadvice widen (before block-wild activate)
-  (when (fboundp 'org-wild-notifier-mode)
-    (org-wild-notifier-mode 1)))
+;; (defadvice widen (before block-wild activate)
+;;   (when (fboundp 'org-wild-notifier-mode)
+;;     (org-wild-notifier-mode 1)))
+
