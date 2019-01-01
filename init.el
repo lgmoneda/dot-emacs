@@ -27,7 +27,11 @@
 
 ;; Base16-theme, base16-dracula's home
 (use-package base16-theme
-  :ensure t)
+	     :ensure t)
+
+(use-package cyberpunk-theme
+	     :ensure t)
+
 
 ;; (use-package dracula-theme
 ;;   :ensure t)
@@ -55,10 +59,14 @@
 	    ;; (load-theme 'base16-atelier-estuary t)
 	    ;; (load-theme 'my-dracula t)
 	    ;; (load-theme 'base16-spacemacs)
-	    (load-theme 'spacemacs-dark)
+	    ;; (load-theme 'spacemacs-dark)
+	    ;; (load-theme 'base16-material)
+	    (load-theme 'cyberpunk)
 	    ))
 
 ;; (add-to-list 'custom-theme-load-path "~/.emacs.d/elpa/my-dracula-theme-20170412.845")
+
+(setq theme-background-color (frame-parameter nil 'background-color))
 
 (use-package powerline
   :ensure t)
@@ -71,21 +79,31 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(default ((((class color) (min-colors 89)) (:foreground "#d3d3d3" :background "#000000"))))
  '(avy-lead-face ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
  '(avy-lead-face-0 ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
  '(avy-lead-face-1 ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
  '(avy-lead-face-2 ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
  '(company-tooltip-search ((t (:inherit highlight :background "steel blue"))))
  '(company-tooltip-search-selection ((t (:background "steel blue"))))
+ '(cursor ((t (:background "##ea51b2"))))
  '(diff-hl-change ((t (:background "#3a81c3"))))
  '(diff-hl-delete ((t (:background "#ee6363"))))
  '(diff-hl-insert ((t (:background "#7ccd7c"))))
  '(ein:cell-input-area ((t (:background "black"))))
+ '(fringe ((t (:background nil))))
  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
+ '(org-agenda-date-today ((t (:foreground "gray52" :underline t :slant italic :weight extra-bold))))
  '(org-ellipsis ((t (:foreground "#969896" :underline nil))))
- '(org-hide ((t (:background "#292b2e" :foreground "#292b2e"))))
+ '(org-hide ((t (:background "#000000" :foreground "#000000"))))
+ '(org-level-1 ((t (:foreground "#ff1493" :height 1.2))))
+ '(org-scheduled ((t (:foreground "chocolate1"))))
+ '(org-scheduled-today ((t (:foreground "chocolate1"))))
  '(region ((t (:background "#4C516D" :foreground "#00ff00"))))
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
+
+;; spacemacs-background color
+;; '(org-hide ((t (:background "#292b2e" :foreground "#292b2e"))))
 
 ;Sunday, December 10, 2017
 ;============================
@@ -288,11 +306,11 @@
 	     :ensure t
 	     :init
 	     (counsel-projectile-mode))
+
 ;; imenu-anywhere
 ;; Changes the C-c C-j behavior
 (use-package imenu-anywhere
-  :ensure t
-  :init (imenu-anywhere))
+  :ensure t)
 
 ;; Ag (search)
 (use-package ag
@@ -593,7 +611,7 @@
  '(markdown-command "/usr/local/bin/pandoc")
  '(package-selected-packages
    (quote
-    (org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-wild-notifier org-notify cider clj-refactor clojure-mode go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (cyberpunk-theme org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-wild-notifier org-notify cider clj-refactor clojure-mode go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050" :foreground "#FFFFFF"))))
  '(show-paren-match ((t (:weight (quote extra-bold)))))
@@ -627,7 +645,7 @@
   (if (string= (system-name) "rc530")
       (pythonic-activate "~/miniconda2/envs/ml")
       )
-  (if (string-match "lgmac" (system-name))
+  (if (string-match "lgmoneda-MacBook.local" (system-name))
       (pythonic-activate "~/miniconda2/envs/ml3")
       )
   )
@@ -663,7 +681,8 @@
 (use-package highlight-current-line
   :ensure t
   :config (highlight-current-line-on t)
-  (set-face-background 'highlight-current-line-face "black")
+  ;; (set-face-background 'highlight-current-line-face "black")
+    (set-face-background 'highlight-current-line-face "#292b2e")
   )
 
 ;; Replace highlighted text
@@ -1338,7 +1357,8 @@ want to use in the modeline *in lieu of* the original.")
       '((sequence "TODO(t)" "NEXT(n)" "WAIT(w)" "STARTED(s)" "|" "DONE(d)" "CANCELED(c)" "INACTIVE(i)" "FAIL(f)")))
 
 (setq org-todo-keyword-faces
-      '(("TODO" . org-warning)
+      '(
+	;; ("TODO" . org-warning)
 	("NEXT" . "pink")
 	("STARTED" . "yellow")
 	("WAIT" . "purple")
@@ -1390,6 +1410,7 @@ want to use in the modeline *in lieu of* the original.")
    (latex . t)
    (ledger . t)         ;this is the important one for this tutorial
    (python . t)
+   (scala . t)
    ;; (ipython . t)
    (sh . t)
    (dot . t)
@@ -1409,7 +1430,7 @@ want to use in the modeline *in lieu of* the original.")
                   (font-spec :size 20 :name "Symbola"))
 
 ;; Set font size
-(set-face-attribute 'default nil :height 110)
+(set-face-attribute 'default nil :height 120)
 
 ;; Setting English Font
 ;; (set-face-attribute
@@ -1497,6 +1518,16 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
 (setf org-journal-file-format "my-journal.org")
 (setf org-journal-date-prefix "* ")
 (setf org-journal-time-prefix "** ")
+
+;; Custom function to add today date - TIL
+(defun lgm/org-add-today-as-entry ()
+  (interactive)
+  ;; empty file? Add a date timestamp
+  (let* ((time (current-time)))
+  (insert "\n")
+  (insert org-journal-date-prefix
+	  (format-time-string org-journal-date-format time)))
+  )
 
 ;; Make Org Journal remember me about
 ;; writing my day thoughts like in Memento mode
@@ -1589,7 +1620,7 @@ Whenever a journal entry is created the
   (interactive)
   (if (file-exists-p journal-file)
       ;; Check if there was a log written today. If this is not the case, then check if it's already tonight except the night.
-      (if (and (string< (journal-get-modification-date) (format-time-string "%Y-%m-%d")) (or (string< (format-time-string "%k") " 6") (string< "21" (format-time-string "%k"))))
+      (if (and (string< (journal-get-modification-date) (format-time-string "%Y-%m-%d")) (or (string< (format-time-string "%k") " 6") (string< "20" (format-time-string "%k"))))
           ;; Invoke Memento if the user wants to proceed.
           (if (yes-or-no-p "Do you want to write your Journal?")
               (progn (call-interactively 'lgm/org-journal-new-today-entry)
@@ -2117,6 +2148,14 @@ is called with a prefix argument."
 		 )
 		)
 
+	  ;; NEXT Projects
+          (tags "+projects+TODO=\"NEXT\""
+		(
+		 (org-agenda-overriding-header "Next task in Projects:")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 )
+		)
+
 	  ;; Blocked Nubank
 	  (tags "+nubank+TODO=\"WAIT\""
 		((org-agenda-skip-function 'my-skip-unless-waiting)
@@ -2275,7 +2314,7 @@ is called with a prefix argument."
   (let ((split-width-threshold 80))  ; or whatever width makes sense for you
     ad-do-it))
 
-(add-hook 'after-init-hook (lambda () (org-agenda nil "d")))
+(add-hook 'after-init-hook (lambda () (org-agenda nil "d") (org-agenda-redo)))
 
 (defun lgm/next-nu ()
   (interactive)
@@ -2600,3 +2639,20 @@ this command to copy it"
 ;;   (when (fboundp 'org-wild-notifier-mode)
 ;;     (org-wild-notifier-mode 1)))
 
+;; The wild notifier keeps turning off withou any reason
+;; so it's a try to keep it on
+(run-at-time "7:00" 900 #'org-wild-notifier-mode 1)
+
+;; Always split stuff vertically
+(setq split-height-threshold nil)
+
+;; (add-hook 'org-mode-hook
+;;           (lambda ()
+;;             (visual-line-mode -1)
+;;             (toggle-truncate-lines 1)))
+
+;; Keeps the agenda view nice
+(add-hook 'org-agenda-mode-hook
+          (lambda ()
+            (visual-line-mode -1)
+            (toggle-truncate-lines 1)))
