@@ -93,7 +93,7 @@
  '(ein:cell-input-area ((t (:background "black"))))
  '(fringe ((t (:background nil))))
  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
- '(org-agenda-date-today ((t (:foreground "gray52" :underline t :slant italic :weight extra-bold))))
+ '(org-agenda-date-today ((t (:foreground "ffff00" :underline t :slant italic :weight extra-bold))))
  '(org-ellipsis ((t (:foreground "#969896" :underline nil))))
  '(org-hide ((t (:background "#000000" :foreground "#000000"))))
  '(org-level-1 ((t (:foreground "#ff1493" :height 1.2))))
@@ -611,7 +611,7 @@
  '(markdown-command "/usr/local/bin/pandoc")
  '(package-selected-packages
    (quote
-    (cyberpunk-theme org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-wild-notifier org-notify cider clj-refactor clojure-mode go-mode org-super-agenda org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp powerline 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale org-gcal ess slack ensime writeroom-mode writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard org-journal restclient pyimport electric-operator multi diff-hl avy markdown-preview-mode markdown-mode ein beacon which-key highlight-current-line multiple-cursors smartparens helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete projectile smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm magit base16-theme paradox use-package spinner monokai-theme hydra)))
+    (helm-org-rifle org-wild-notifier py-autopep8 cyberpunk-theme org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-notify cider clj-refactor clojure-mode go-mode org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale slack ensime writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard pyimport electric-operator multi diff-hl avy markdown-preview-mode ein beacon highlight-current-line helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm base16-theme spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050" :foreground "#FFFFFF"))))
  '(show-paren-match ((t (:weight (quote extra-bold)))))
@@ -1045,7 +1045,7 @@ if breakpoints are present in `python-mode' files"
 ;; Put white spaces between operators in Python
 (use-package electric-operator
   :ensure t
-  :config (add-hook 'python-mode-hook #'electric-operator-mode))
+  :config (add-hook 'python-mode-hook 'electric-operator-mode))
 
 ;; Warning about imports in python
 ;; Requires pyflakes
@@ -1055,7 +1055,7 @@ if breakpoints are present in `python-mode' files"
 (use-package pyimport
   :ensure t)
 
-(define-key python-mode-map (kbd "C-c C-i") #'pyimport-insert-missing)
+(define-key python-mode-map (kbd "C-c C-i") 'pyimport-insert-missing)
 
 ;; Test http rest webservices inside emacs
 ;; https://github.com/pashky/restclient.el
@@ -1273,6 +1273,11 @@ want to use in the modeline *in lieu of* the original.")
 ;; Properties I want subtrees to inherite
 (setq org-use-property-inheritance '("TIMELINE_FACE"))
 (setq org-use-property-inheritance t)
+
+;; Capture
+(setq org-directory "~/Dropbox/Agenda/")
+(setq org-default-notes-file (concat org-directory "capture.org"))
+(global-set-key (kbd "C-c c") 'org-capture)
 
 ;; Indent tasks
 ;; Old star color: 626483
@@ -2050,18 +2055,14 @@ is called with a prefix argument."
 (setq org-agenda-block-separator " ")
 (setq org-agenda-custom-commands
       '(("d" "Daily agenda and NEXTs!"
-         ((tags "PRIORITY=\"A\""
-                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-                 (org-agenda-overriding-header "High-priority tasks:")))
-
-	  ;; Next deadlines
+         (;; Next deadlines
 	  (agenda ""
 		  ((org-agenda-time-grid nil)
 		   (org-agenda-span 'day)
-		   (org-deadline-warning-days 21)
+		   (org-deadline-warning-days 60)
 		   (org-agenda-entry-types '(:deadline))
 		   (org-agenda-sorting-strategy '(deadline-up))
-		   (org-agenda-overriding-header "Deadlines in the next 21 days:")
+		   (org-agenda-overriding-header "Deadlines in the next 60 days:")
 		   ))
 
 	  ;; Week tasks and deadlines
@@ -2076,7 +2077,11 @@ is called with a prefix argument."
 	  	   (org-agenda-overriding-header "Week tasks:")
 		   (org-agenda-skip-function '(air-org-skip-subtree-if-habit))
 	  	   ))
-
+	  
+	  ;; High priority tasks
+	  (tags "PRIORITY=\"A\""
+                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                 (org-agenda-overriding-header "High-priority tasks:")))
 	  ;; Today Agenda
           ;; (agenda ""
 	  ;; 	  ((org-agenda-ndays 5)
@@ -2157,14 +2162,14 @@ is called with a prefix argument."
 		)
 
 	  ;; Blocked Nubank
-	  (tags "+nubank+TODO=\"WAIT\""
-		((org-agenda-skip-function 'my-skip-unless-waiting)
-            (org-agenda-category-filter
-	     (quote
-	      ("+Nubank")))
-	    (org-agenda-overriding-header "Blocked Nubank Tasks: "))
+	  ;; (tags "+nubank+TODO=\"WAIT\""
+	  ;; 	((org-agenda-skip-function 'my-skip-unless-waiting)
+          ;;   (org-agenda-category-filter
+	  ;;    (quote
+	  ;;     ("+Nubank")))
+	  ;;   (org-agenda-overriding-header "Blocked Nubank Tasks: "))
 
-		)
+	  ;; 	)
 
 	  ;; TODO Nubank
 	  (tags "+nubank+LEVEL=3+TODO=\"TODO\""
@@ -2219,12 +2224,12 @@ is called with a prefix argument."
 		)
 
 	  ;; Next few days
-          (agenda "" ((org-agenda-ndays 2)
-		      (org-agenda-span 3)
-		      (org-agenda-start-day "+1d")
-		      (org-agenda-scheduled-leaders '("" ""))
-		  (org-agenda-overriding-header "Next few days:"))
-		  )
+          ;; (agenda "" ((org-agenda-ndays 2)
+	  ;; 	      (org-agenda-span 3)
+	  ;; 	      (org-agenda-start-day "+1d")
+	  ;; 	      (org-agenda-scheduled-leaders '("" ""))
+	  ;; 	  (org-agenda-overriding-header "Next few days:"))
+	  ;; 	  )
 
 	  ;; All next tasks
 	  (tags "-goals2018+TODO=\"NEXT\""
@@ -2468,8 +2473,7 @@ is called with a prefix argument."
       (terminal-notifier-notify "Emacs Notification" msg)
       (message msg)))
 
-(remind-me-daily 'reminder-fn "11:40pm" "Bedtime!" nil t)
-
+(remind-me-daily 'reminder-fn "11:30pm" "Bedtime!" nil t)
 
 (defun my-terminal-notifier-notify (info)
   "Show a message with terminal-notifier-command."
@@ -2641,7 +2645,7 @@ this command to copy it"
 
 ;; The wild notifier keeps turning off withou any reason
 ;; so it's a try to keep it on
-(run-at-time "7:00" 900 #'org-wild-notifier-mode 1)
+;; (run-at-time "7:00" 900 #'org-wild-notifier-mode 1)
 
 ;; Always split stuff vertically
 (setq split-height-threshold nil)
@@ -2656,3 +2660,33 @@ this command to copy it"
           (lambda ()
             (visual-line-mode -1)
             (toggle-truncate-lines 1)))
+
+(defun lgm/write-til ()
+  (interactive)
+  (call-interactively '(lambda() (interactive)
+			      (find-file "~/Dropbox/Agenda/til-2019.org")
+			      (call-interactively 'lgm/org-add-today-as-entry)
+			      )
+		      )
+  )
+
+;; Ask me to write down my TIL if it's after 9 pm
+(defun write-your-til ()
+  (interactive)
+  (if (or (string< (format-time-string "%k") " 6") (string< "20" (format-time-string "%k")))
+	  (if (yes-or-no-p "Would like to write at your TIL?")
+	      (progn (lgm/write-til)
+		     (keyboard-quit)
+				 )
+		  )))
+
+(add-to-list 'kill-emacs-hook 'write-your-til)
+
+
+(use-package py-autopep8
+  :ensure t
+  :init (progn
+           (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save)
+           ))
+
+(setq py-autopep8-options '("--max-line-length=120"))
