@@ -30,38 +30,19 @@
 	     :ensure t)
 
 (use-package cyberpunk-theme
+			 :ensure t)
+
+(use-package rebecca-theme
 	     :ensure t)
-
-
-;; (use-package dracula-theme
-;;   :ensure t)
-
-;; (load-file "~/.emacs.d/elpa/my-dracula-theme-20170412.845/my-dracula-theme.el")
-;; (use-package color-theme-sanityinc-tomorrow
-;;   :ensure t)
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
 
 ;; Load Theme
-;; Themes to use: monokai, deeper-blue and hc-zenburn
-;; 'base16-dracula 'base16-gruvbox-dark-medium
-;; 'base16-circus
-;; 'base16-solarized-dark
-;; 'base16-tomorrow-night
-;; https://belak.github.io/base16-emacs/
-;; moe-dark
-;; sanityinc-tomorrow-night
-;; sanityinc-solarized-dark
 (setq custom-safe-themes t)
 (add-hook 'emacs-startup-hook
 	  (lambda ()
-	    ;; (load-theme 'base16-gruvbox-dark-medium t)
-	    ;; (load-theme 'base16-atelier-estuary t)
-	    ;; (load-theme 'my-dracula t)
-	    ;; (load-theme 'base16-spacemacs)
-	    ;; (load-theme 'spacemacs-dark)
-	    ;; (load-theme 'base16-material)
-	    (load-theme 'cyberpunk)
+	    ;; (load-theme 'cyberpunk)
+	    (load-theme 'rebecca)
 	    ))
 
 ;; (add-to-list 'custom-theme-load-path "~/.emacs.d/elpa/my-dracula-theme-20170412.845")
@@ -69,7 +50,7 @@
 (setq theme-background-color (frame-parameter nil 'background-color))
 
 (use-package powerline
-  :ensure t)
+	     :ensure t)
 
 ;; Custom faces:
 ;; Make selected text background #012050
@@ -95,11 +76,8 @@
  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
  '(org-agenda-date-today ((t (:foreground "ffff00" :underline t :slant italic :weight extra-bold))))
  '(org-ellipsis ((t (:foreground "#969896" :underline nil))))
- '(org-hide ((t (:background "#000000" :foreground "#000000"))))
- '(org-level-1 ((t (:foreground "#ff1493" :height 1.2))))
  '(org-scheduled ((t (:foreground "chocolate1"))))
  '(org-scheduled-today ((t (:foreground "chocolate1"))))
- '(region ((t (:background "#4C516D" :foreground "#00ff00"))))
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
 
 ;; spacemacs-background color
@@ -224,6 +202,7 @@
 
 ;; Smart Mode line
 (use-package smart-mode-line
+    :ensure t
     :config
   (setq sml/no-confirm-load-theme t)
   (setq sml/theme 'respectful)
@@ -234,6 +213,7 @@
 (setq uniquify-buffer-name-style 'forward)
 
 (use-package diminish
+    :ensure t
     :config
   (eval-after-load "hideshow" '(diminish 'hs-minor-mode))
   (eval-after-load "undo-tree" '(diminish 'undo-tree-mode))
@@ -246,8 +226,7 @@
   :config (add-hook 'emacs-lisp-mode-hook 'rainbow-delimiters-mode))
 
 ;; thing-cmd
-(use-package thing-cmds
-  :ensure t)
+;;(require 'thing-cmds)
 
 ;; Anzu shows total matchs for searchs
 (use-package anzu
@@ -611,7 +590,7 @@
  '(markdown-command "/usr/local/bin/pandoc")
  '(package-selected-packages
    (quote
-    (helm-org-rifle org-wild-notifier py-autopep8 cyberpunk-theme org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-notify cider clj-refactor clojure-mode go-mode org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale slack ensime writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard pyimport electric-operator multi diff-hl avy markdown-preview-mode ein beacon highlight-current-line helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm base16-theme spinner monokai-theme hydra)))
+	(kaolin-themes rebecca-theme cherry-blossom-theme doom-modeline doom-themes helm-org-rifle org-wild-notifier py-autopep8 cyberpunk-theme org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-notify cider clj-refactor clojure-mode go-mode org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale slack ensime writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard pyimport electric-operator multi diff-hl avy markdown-preview-mode ein beacon helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm base16-theme spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050" :foreground "#FFFFFF"))))
  '(show-paren-match ((t (:weight (quote extra-bold)))))
@@ -678,12 +657,8 @@
        fill-column 80)
 
 ;; Highligh current line!
-(use-package highlight-current-line
-  :ensure t
-  :config (highlight-current-line-on t)
-  ;; (set-face-background 'highlight-current-line-face "black")
-    (set-face-background 'highlight-current-line-face "#292b2e")
-  )
+(global-hl-line-mode +1)
+(set-face-background 'hl-line "#292b2e")
 
 ;; Replace highlighted text
 (delete-selection-mode 1)
@@ -1435,7 +1410,7 @@ want to use in the modeline *in lieu of* the original.")
                   (font-spec :size 20 :name "Symbola"))
 
 ;; Set font size
-(set-face-attribute 'default nil :height 120)
+(set-face-attribute 'default nil :height 110)
 
 ;; Setting English Font
 ;; (set-face-attribute
@@ -1964,7 +1939,8 @@ is called with a prefix argument."
 
 				      ))
 	 (setq markdown-command "/usr/local/bin/pandoc")
-	 (setq ispell-program-name "/usr/local/bin/ispell/")
+	 ;; (setq ispell-program-name "/usr/local/bin/ispell/")
+	 (setq ispell-program-name "/usr/local/bin/aspell")
 	 (setenv "PATH" "/usr/local/bin:/Library/TeX/texbin/:$PATH" t)
 	 ;; Shell
 	 ;; There's a .emacs_bash with .~/bash_profile
@@ -1974,8 +1950,11 @@ is called with a prefix argument."
     )
     )
 
-(when (memq window-system '(mac ns x))
-  (exec-path-from-shell-initialize))
+;; (use-package exec-path-from-shell-initialize
+;; 	     :ensure t)
+
+;; (when (memq window-system '(mac ns x))
+;;   (exec-path-from-shell-initialize))
 
 (use-package default-text-scale
 	     :ensure t)
@@ -2000,7 +1979,7 @@ is called with a prefix argument."
 
 (setq max-mini-window-height 1)
 
-(require 'docker-tramp-compat)
+;; (require 'docker-tramp-compat)
 ;; Open files in Docker containers like so: /docker:drunk_bardeen:/etc/passwd
 (push
  (cons
@@ -2077,7 +2056,7 @@ is called with a prefix argument."
 	  	   (org-agenda-overriding-header "Week tasks:")
 		   (org-agenda-skip-function '(air-org-skip-subtree-if-habit))
 	  	   ))
-	  
+
 	  ;; High priority tasks
 	  (tags "PRIORITY=\"A\""
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
@@ -2452,7 +2431,7 @@ is called with a prefix argument."
 
 (use-package org-wild-notifier
 	     :ensure t
-	     :init (org-wild-notifier-mode)
+	     :init ;; (org-wild-notifier-mode)
 	     (setq org-wild-notifier-keyword-whitelist '("TODO" "NEXT"))
 	     (setq org-wild-notifier-alert-time 5)
 	     )
@@ -2603,10 +2582,10 @@ is called with a prefix argument."
       (isearch-forward-symbol-at-point)))
 
 ;; Look for it later
-;; (use-package org-timeline
-;; 	     :ensure t)
+(use-package org-timeline
+	     :ensure t)
 
-(load-file "~/.emacs.d/elpa/org-timeline/org-timeline.el")
+;;(load-file "~/.emacs.d/elpa/org-timeline/org-timeline.el")
 ;;(add-hook 'org-agenda-finalize-hook 'org-timeline-insert-timeline :append)
 
 (defun lgm/show-timeline ()
