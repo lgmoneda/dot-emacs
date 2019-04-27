@@ -60,11 +60,10 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((((class color) (min-colors 89)) (:foreground "#d3d3d3" :background "#000000"))))
  '(avy-lead-face ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
  '(avy-lead-face-0 ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
- '(avy-lead-face-1 ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
- '(avy-lead-face-2 ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
+ '(avy-lead-face-1 ((t (:background "dark gray" :foreground "maroon4" :weight bold))))
+ '(avy-lead-face-2 ((t (:background "dark gray" :foreground "maroon5" :weight bold))))
  '(company-tooltip-search ((t (:inherit highlight :background "steel blue"))))
  '(company-tooltip-search-selection ((t (:background "steel blue"))))
  '(cursor ((t (:background "##ea51b2"))))
@@ -75,13 +74,21 @@
  '(fringe ((t (:background nil))))
  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
  '(org-agenda-date-today ((t (:foreground "ffff00" :underline t :slant italic :weight extra-bold))))
+ '(org-document-info ((t (:background "#292a44"))))
+ '(org-document-info-keyword ((t (:background "#292a44"))))
+ '(org-document-title ((t (:background "#292a44" :foreground "#6dfedf" :weight bold :height 1.44))))
  '(org-ellipsis ((t (:foreground "#969896" :underline nil))))
+ '(org-link ((t (:foreground "#ff79c6" :underline t))))
  '(org-scheduled ((t (:foreground "chocolate1"))))
  '(org-scheduled-today ((t (:foreground "chocolate1"))))
+ '(org-upcoming-deadline ((t (:foreground "chocolate1")))) 
+ '(org-tag ((t (:background "#292a44" :foreground "#ae81ff" :weight bold))))
+ '(org-todo ((t (:weight bold :box (:line-width 1 :color nil :style none) :foreground "#8eaee0"))))
+ '(org-done ((t (:weight bold :box (:line-width 1 :color nil :style none) :foreground "#6dfedf" :background "#383a62"))))
+ '(org-agenda-done ((t (:foreground "#6dfedf"))))
+ '(org-scheduled-previously ((t (:foreground "#8eaee0"))))
+ 
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
-
-;; spacemacs-background color
-;; '(org-hide ((t (:background "#292b2e" :foreground "#292b2e"))))
 
 ;Sunday, December 10, 2017
 ;============================
@@ -2669,3 +2676,11 @@ this command to copy it"
            ))
 
 (setq py-autopep8-options '("--max-line-length=120"))
+
+(require 'helm-eshell)
+
+(add-hook 'eshell-mode-hook
+          #'(lambda ()
+              (define-key eshell-mode-map (kbd "C-c C-l")  'helm-eshell-history)))
+;; for shell-mode
+(define-key shell-mode-map (kbd "C-c C-l") 'helm-comint-input-ring)
