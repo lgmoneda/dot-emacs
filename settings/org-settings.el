@@ -419,9 +419,6 @@ this command to copy it"
 
 (add-to-list 'org-agenda-files  "~/Dropbox/Agenda/todo.org" "~/Dropbox/Agenda/finances.org")
 
-;; Fix the bullets bug
-(add-hook 'after-init-hook (org-mode-restart))
-
 (defvar org-capture-templates
        '(("t" "todo" entry (file org-default-notes-file)
 	  "* TODO %?\n%u\n%a\n" :clock-in t :clock-resume t)
