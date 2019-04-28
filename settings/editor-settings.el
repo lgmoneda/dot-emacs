@@ -321,7 +321,7 @@
   :ensure t)
 
 (global-set-key (kbd "C-:") 'avy-goto-char-timer)
-(global-set-key (kbd "C-x C-a") 'avy-goto-char)
+(global-set-key (kbd "M-s") 'avy-goto-char)
 (global-set-key (kbd "C-x a") 'avy-goto-char-timer)
 (global-set-key (kbd "C-?") 'avy-goto-line)
 

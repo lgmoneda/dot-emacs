@@ -3,5 +3,5 @@
 ;; Node connection
 (load "~/Dropbox/Projetos/Emacs/.nu-node.el")
 
-(provide 'org-settings)
-;;; org-settings.el ends here
+(provide 'nu-settings)
+;;; nu-settings.el ends here

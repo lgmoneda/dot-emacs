@@ -251,10 +251,6 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
 ;; (use-package org-dashboard
 ;;    :ensure t)
 
-;; I want imenu, not new journal entry!
-(global-set-key (kbd "C-c C-j") 'imenu-anywhere)
-(define-key python-mode-map (kbd "C-c C-j") 'imenu-anywhere)
-
 (setf org-journal-dir "~/Dropbox/Agenda/Journal")
 (setf org-journal-file-format "my-journal.org")
 (setf org-journal-date-prefix "* ")

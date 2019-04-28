@@ -191,6 +191,8 @@ if breakpoints are present in `python-mode' files"
 
 (define-key markdown-mode-map (kbd "TAB") 'indent-or-complete)
 
+(define-key python-mode-map (kbd "C-c C-j") 'imenu-anywhere)
+
 ;; Put white spaces between operators in Python
 (use-package electric-operator
   :ensure t
