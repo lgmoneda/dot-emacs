@@ -401,6 +401,10 @@ this command to copy it"
 ;; Load gcalsync
 (load "~/Dropbox/Projetos/Emacs/.gcalsync.el")
 
+(use-package alert
+  :commands (alert)
+  )
+
 (use-package org-alert
   :init
   :ensure t

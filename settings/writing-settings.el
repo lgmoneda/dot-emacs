@@ -53,6 +53,11 @@
 (use-package flymd
   :ensure t)
 
+;; Dict.cc wrap
+(add-to-list 'load-path "~/.emacs.d/elisp/dict-cc" t)
+(require 'dict-cc)
+;; PATH append
+(setenv "PATH" (concat "/home/lgmoneda/miniconda2/bin:" (getenv "PATH")))
 
 (provide 'writing-settings)
 ;;; writing-settings.el ends here

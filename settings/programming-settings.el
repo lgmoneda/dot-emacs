@@ -73,5 +73,10 @@
      ;;(define-key company-mode-map (kbd "C-:") 'helm-company)
     (define-key company-active-map (kbd "C-:") 'helm-company))))
 
+;; Test http rest webservices inside emacs
+;; https://github.com/pashky/restclient.el
+(use-package restclient
+  :ensure t)
+
 (provide 'programming-settings)
 ;;; programming-settings.el ends here

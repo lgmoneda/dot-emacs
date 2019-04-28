@@ -332,5 +332,10 @@
 (global-set-key (kbd "C-M-=") 'default-text-scale-increase)
 (global-set-key (kbd "C-M--") 'default-text-scale-decrease)
 
+;; Disable auto-save
+(setq auto-save-default nil)
+;; Disable backup
+(setq backup-inhibited t)
+
 (provide 'editor-settings)
 ;;; editor-settings.el ends here
