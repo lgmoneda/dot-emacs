@@ -228,5 +228,21 @@ if breakpoints are present in `python-mode' files"
        nil "_"))))
 (setq python-shell-completion-native-enable nil)
 
+;; Emacs Ipython Notebook
+(use-package ein
+  :ensure t
+  :init ;; (setq ein:use-auto-complete t)
+;;  (setq ein:use-smartrep t)
+  (setq auto-complete-mode t)
+  (setq ein:output-type-prefer-pretty-text-over-html t)
+  ;; (setq ein:output-type-preference
+  ;; 	'(emacs-lisp image image/png svg image/svg image/png jpeg image/jpeg text html text/html latex text/latex javascript))
+  )
+
+;; (setq ein:use-auto-complete-superpack t)
+;;(setq ein:use-smartrep t)
+
+(setq ein:notebook-modes '(ein:notebook-multilang-mode ein:notebook-python-mode))
+
 (provide 'python-settings)
 ;;; python-settings.el ends here
