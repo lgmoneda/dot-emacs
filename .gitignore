@@ -19,3 +19,4 @@ slack-credentials.el
 org-clock-save.el
 request/curl-cookie-jar
 org-gcal/*
+games/*

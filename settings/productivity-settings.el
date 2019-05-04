@@ -130,8 +130,6 @@
 (use-package multi
   :ensure t)
 
-;; (load-file "~/repos/helm-spotify-plus/helm-spotify-plus.el")
-
 ;; Highlight matching tags
 (load-file "~/.emacs.d/others/hl-tags-mode/hl-tags-mode.el")
 (require 'hl-tags-mode)
