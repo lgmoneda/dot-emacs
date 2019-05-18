@@ -1,5 +1,24 @@
 ;;; python-settings.el --- Settings for the programming language Python
 
+(use-package conda
+  :ensure t)
+
+(custom-set-variables
+ '(conda-anaconda-home "~/miniconda2"))
+
+;; if you want interactive shell support, include:
+(conda-env-initialize-interactive-shells)
+;; if you want eshell support, include:
+(conda-env-initialize-eshell)
+;; if you want auto-activation (see below for details), include:
+(conda-env-autoactivate-mode t)
+
+(use-package pyvenv
+  :ensure t)
+
+(setenv "WORKON_HOME" "~/miniconda2/envs")
+(pyvenv-mode 1)
+
 (add-hook 'python-mode-hook
 	  (lambda ()
 	    (setq-default indent-tabs-mode t)
@@ -233,16 +252,19 @@ if breakpoints are present in `python-mode' files"
   :ensure t
   :init ;; (setq ein:use-auto-complete t)
 ;;  (setq ein:use-smartrep t)
-  (setq auto-complete-mode t)
-  (setq ein:output-type-prefer-pretty-text-over-html t)
+  ;; (setq auto-complete-mode t)
+  ;; (setq ein:output-type-prefer-pretty-text-over-html t)
   ;; (setq ein:output-type-preference
   ;; 	'(emacs-lisp image image/png svg image/svg image/png jpeg image/jpeg text html text/html latex text/latex javascript))
   )
 
+(require 'ein-notebook)
+(require 'ein-subpackages)
+
 ;; (setq ein:use-auto-complete-superpack t)
 ;;(setq ein:use-smartrep t)
 
-(setq ein:notebook-modes '(ein:notebook-multilang-mode ein:notebook-python-mode))
+;; (setq ein:notebook-modes '(ein:notebook-multilang-mode ein:notebook-python-mode))
 
 (provide 'python-settings)
 ;;; python-settings.el ends here

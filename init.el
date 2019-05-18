@@ -30,9 +30,9 @@
 
 (add-to-list 'load-path setting-dir)
 
+(require 'editor-settings)
 (require 'aesthetics-settings)
 (require 'elisp-settings)
-(require 'editor-settings)
 (require 'programming-settings)
 (require 'writing-settings)
 (require 'git-settings)
@@ -42,7 +42,7 @@
 (require 'email-settings)
 (require 'productivity-settings)
 (require 'media-settings)
+(require 'python-settings)
 
-(eval-after-load "python" '(require 'python-settings))
 (eval-after-load "scala" '(require 'scala-settings))
 (eval-after-load "clojure" '(require 'clojure-settings))

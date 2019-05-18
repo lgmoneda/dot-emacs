@@ -151,8 +151,6 @@
    (latex . t)
    (ledger . t)         ;this is the important one for this tutorial
    (python . t)
-   (scala . t)
-   ;; (ipython . t)
    (shell . t)
    (dot . t)
    (sql . nil)
@@ -199,7 +197,9 @@
 (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING))
 
 ;; use org-bullets-mode for utf8 symbols as org bullets
-(require 'org-bullets)
+(use-package org-bullets
+	:ensure t)
+;;(require 'org-bullets)
 ;; make available "org-bullet-face" such that I can control the font size individually
 (setq org-bullets-face-name (quote org-bullet-face))
 (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))

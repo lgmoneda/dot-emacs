@@ -92,7 +92,7 @@ want to use in the modeline *in lieu of* the original.")
 
 (defun clean-mode-line ()
   (interactive)
-  (loop for cleaner in mode-line-cleaner-alist
+  (cl-loop for cleaner in mode-line-cleaner-alist
         do (let* ((mode (car cleaner))
                  (mode-str (cdr cleaner))
                  (old-mode-str (cdr (assq mode minor-mode-alist))))
@@ -182,7 +182,7 @@ want to use in the modeline *in lieu of* the original.")
  '(org-tag ((t (:background "#292a44" :foreground "#ae81ff" :weight bold))))
  '(org-todo ((t (:weight bold :box (:line-width 1 :color nil :style none) :foreground "#8eaee0"))))
  '(org-upcoming-deadline ((t (:foreground "chocolate1"))))
- '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
+'(show-paren-match ((t (:background "#5C888B" :weight bold)))))
 
 (provide 'aesthetics-settings)
 ;;; aesthetics-settings.el ends here
