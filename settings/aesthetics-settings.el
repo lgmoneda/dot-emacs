@@ -137,13 +137,14 @@ want to use in the modeline *in lieu of* the original.")
  ;; If there is more than one, they won't work right.
  '(company-quickhelp-color-background "dark slate gray")
  '(company-quickhelp-color-foreground "wheat")
+ '(conda-anaconda-home "~/miniconda2")
  '(display-time-mail-string "")
  '(ein:use-auto-complete t t)
- '(ein:use-auto-complete-superpack t t)
+ '(ein:use-auto-complete-superpack t)
  '(markdown-command "/usr/local/bin/pandoc")
  '(package-selected-packages
    (quote
-    (kaolin-themes rebecca-theme cherry-blossom-theme doom-modeline doom-themes helm-org-rifle org-wild-notifier py-autopep8 cyberpunk-theme org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-notify cider clj-refactor clojure-mode go-mode org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale slack ensime writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard pyimport electric-operator multi diff-hl avy markdown-preview-mode ein beacon helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm base16-theme spinner monokai-theme hydra)))
+    (helm-ag helm-rg clojure-mode-extra-font-locking pyvenv conda which-key org-gcal org-journal git-timemachine magit flymd markdown-mode restclient company kaolin-themes rebecca-theme cherry-blossom-theme doom-modeline doom-themes helm-org-rifle org-wild-notifier py-autopep8 cyberpunk-theme org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-notify cider clj-refactor clojure-mode go-mode org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale slack ensime writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard pyimport electric-operator multi diff-hl avy markdown-preview-mode ein beacon helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm base16-theme spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(region ((t (:background "#102050" :foreground "#FFFFFF"))))
  '(show-paren-match ((t (:weight (quote extra-bold)))))
@@ -182,7 +183,7 @@ want to use in the modeline *in lieu of* the original.")
  '(org-tag ((t (:background "#292a44" :foreground "#ae81ff" :weight bold))))
  '(org-todo ((t (:weight bold :box (:line-width 1 :color nil :style none) :foreground "#8eaee0"))))
  '(org-upcoming-deadline ((t (:foreground "chocolate1"))))
-'(show-paren-match ((t (:background "#5C888B" :weight bold)))))
+ '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
 
 (provide 'aesthetics-settings)
 ;;; aesthetics-settings.el ends here

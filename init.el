@@ -43,6 +43,5 @@
 (require 'productivity-settings)
 (require 'media-settings)
 (require 'python-settings)
-
-(eval-after-load "scala" '(require 'scala-settings))
-(eval-after-load "clojure" '(require 'clojure-settings))
+(require 'clojure-settings)
+(require 'scala-settings)

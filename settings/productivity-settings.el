@@ -35,6 +35,7 @@
 
 	     (setq ivy-re-builders-alist
 		   '((ivy-switch-buffer . ivy--regex-plus)
+		     (counsel-ag . ivy--regex-plus)
 		     (t . ivy--regex-fuzzy)))
 
 	     (setq ivy-use-virtual-buffers t)
