@@ -39,7 +39,8 @@
 ;; Writeroom, a focus mode!
 (use-package writeroom-mode
  :ensure t
- :init (setq buffer-face-mode-face '(:family "dejavu sans mono" :height 150)))
+ :init (setq buffer-face-mode-face '(:family "dejavu sans mono" :height 150))
+       (setq writeroom-width 100))
 
 ;; Expand-region
 (use-package expand-region
