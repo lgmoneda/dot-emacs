@@ -188,5 +188,18 @@ is called with a prefix argument."
 ;; for shell-mode
 (define-key shell-mode-map (kbd "C-c C-l") 'helm-comint-input-ring)
 
+;; Easily copy file path
+(defun file-path-to-clipboard ()
+  "Put the current file name on the clipboard"
+  (interactive)
+  (let ((filename (if (equal major-mode 'dired-mode)
+                      default-directory
+                    (buffer-file-name))))
+    (when filename
+      (with-temp-buffer
+        (insert filename)
+        (clipboard-kill-region (point-min) (point-max)))
+      (message filename))))
+
 (provide 'productivity-settings)
 ;;; productivity-settings.el ends here
