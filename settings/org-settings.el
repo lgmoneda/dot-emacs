@@ -114,6 +114,7 @@
 (setq org-agenda-block-separator "-")
 
 (org-defkey org-mode-map (kbd "C-S-s /") 'helm-org-agenda-files-headings)
+;; (org-defkey org-mode-map (kbd "C-S-s /") 'counsel-org-agenda-headlines)
 
 (defun org-tell-me-first-header ()
   (interactive)
@@ -392,14 +393,14 @@ this command to copy it"
             (visual-line-mode -1)
             (toggle-truncate-lines 1)))
 
-(use-package org-gcal
-  :ensure t
-  :init
-  (setq org-gcal-notify-p nil)
-  )
+;; (use-package org-gcal
+;;   :ensure t
+;;   :init
+;;   (setq org-gcal-notify-p nil)
+;;   )
 
-;; Load gcalsync
-(load "~/Dropbox/Projetos/Emacs/.gcalsync.el")
+;; ;; Load gcalsync
+;; (load "~/Dropbox/Projetos/Emacs/.gcalsync.el")
 
 (use-package alert
   :commands (alert)
@@ -414,7 +415,6 @@ this command to copy it"
 ;; The org mode file is opened with
 (find-file "~/Dropbox/Agenda/todo.org")
 (switch-to-buffer "todo.org")
-(org-shifttab)
 (setq org-agenda-window-setup 'other-window)
 ;; (org-agenda-list)
 
@@ -493,36 +493,22 @@ this command to copy it"
 	  ;; 	  )
 
 	  ;; NEXT Nubank Tasks
-          (tags-todo "+nubank+TODO=\"NEXT\""
-	  	(
-	  	 (org-agenda-category-filter-preset (quote ("+Nubank")))
-	  	 (org-agenda-overriding-header "Next tasks at Nubank:")
-	  	 ;; (org-agenda-skip-function '(org-agenda-skip-entry-if 'deadline 'scheduled))
-	  	 (org-agenda-overriding-columns-format "%20ITEM %SCHEDULED")
-	  	 (org-agenda-sorting-strategy '(category-keep))
-	  	 (org-agenda-view-columns-initially t)
-	  	 ;; (org-agenda-prefix-format " %i %s %?-16 (concat \"[ \"(org-format-outline-path (list (nth 1 (org-get-outline-path)))) \" ]\") ")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-	  	 ;; (org-agenda-prefix-format
-	  	 ;;      "%((concat (or (org-entry-get (point) \"scheduled\" t) \"\") \" \"
-	  	 ;; 		 (or (org-entry-get (point) \"CaseNum\" t) \"\") \" \"
-                 ;;                 (or (org-entry-get (point) \"FiscalYear\" t) \"\") \" \"))")
-	  	 )
+        ;;   (tags-todo "+nubank+TODO=\"NEXT\""
+	  	;; (
+	  	;;  (org-agenda-category-filter-preset (quote ("+Nubank")))
+	  	;;  (org-agenda-overriding-header "Next tasks at Nubank:")
+	  	;;  (org-agenda-overriding-columns-format "%20ITEM %SCHEDULED")
+	  	;;  (org-agenda-sorting-strategy '(category-keep))
+	  	;;  (org-agenda-view-columns-initially t)
+		;;  (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+	  	;;  )
 
-	  	)
+	  	;; )
 
 	  ;; NEXT Master
           (tags "+usp+TODO=\"NEXT\""
 		(
 		 (org-agenda-overriding-header "Next task in Master:")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 )
-		)
-
-	  ;; NEXT Work
-          (tags "+work+TODO=\"NEXT\"|udacity+TODO=\"NEXT\""
-		(
-		 (org-agenda-overriding-header "Next task in Work and Udacity:")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
 		 )
 		)
@@ -535,6 +521,14 @@ this command to copy it"
 		 )
 		)
 
+	  ;; NEXT Work
+          (tags "+work+TODO=\"NEXT\"|udacity+TODO=\"NEXT\""
+		(
+		 (org-agenda-overriding-header "Next task in Work and Udacity:")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 )
+		)
+
 	  ;; NEXT Kaggle
           (tags "+kaggle+TODO=\"NEXT\""
 		((org-agenda-overriding-header "Next tasks in Kaggle:")
@@ -543,7 +537,7 @@ this command to copy it"
 		)
 
 	  ;; NEXT Life
-          (tags "+life-goals2018+TODO=\"NEXT\""
+          (tags "+life-goals2020+TODO=\"NEXT\""
 		((org-agenda-overriding-header "Next tasks in Life:")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
 		 )
@@ -568,14 +562,14 @@ this command to copy it"
 	  ;; 	)
 
 	  ;; TODO Nubank
-	  (tags "+nubank+LEVEL=3+TODO=\"TODO\""
-		((org-agenda-skip-function 'my-skip-unless-waiting)
-            (org-agenda-category-filter
-	(quote
-	 ("+Nubank")))
-	    (org-agenda-overriding-header "Nubank Tasks: "))
+	;;   (tags "+nubank+LEVEL=3+TODO=\"TODO\""
+	;; 	((org-agenda-skip-function 'my-skip-unless-waiting)
+    ;;         (org-agenda-category-filter
+	;; (quote
+	;;  ("+Nubank")))
+	;;     (org-agenda-overriding-header "Nubank Tasks: "))
 
-		)
+	;; 	)
 
 	  ;; Mid and low priority tasks
 	  ;; (tags "+PRIORITY={B}"
@@ -589,33 +583,33 @@ this command to copy it"
 	  ;; 	(org-agenda-overriding-header "Approaching Deadlines!:")))
 
 	  ;; Long deadlines
-	  (agenda ""
-		  ((org-agenda-time-grid nil)
-		   (org-agenda-span 'day)
-		   (org-deadline-warning-days 90)
-		   (org-agenda-entry-types '(:deadline))
-		   (org-agenda-sorting-strategy '(deadline-up))
-		   (org-agenda-overriding-header "Deadlines in the next 90 days:")
-		   ))
+	  ;; (agenda ""
+	  ;; 	  ((org-agenda-time-grid nil)
+	  ;; 	   (org-agenda-span 'day)
+	  ;; 	   (org-deadline-warning-days 90)
+	  ;; 	   (org-agenda-entry-types '(:deadline))
+	  ;; 	   (org-agenda-sorting-strategy '(deadline-up))
+	  ;; 	   (org-agenda-overriding-header "Deadlines in the next 90 days:")
+	  ;; 	   ))
 
 
 	  ;; Year Goals Milestones
-	  (tags "-nubank+goals2018+TODO=\"NEXT\""
+	  (tags "-nubank+goals2020+TODO=\"NEXT\""
 		((org-agenda-category-filter "-Nubank")
 		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
 						(air-org-skip-subtree-if-priority ?A)
 						(org-agenda-skip-if nil '(scheduled deadline))))
-	    (org-agenda-overriding-header "2018 Goals Milestones: ")
+	    (org-agenda-overriding-header "2020 Goals Milestones: ")
 	    )
 		)
 
 	  ;; Year Goals General
-	  (tags "+goals2018+LEVEL=3+TODO=\"TODO\""
+	  (tags "+goals2020+LEVEL=3+TODO=\"TODO\""
 		((org-agenda-category-filter "-Nubank")
 		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
 						(air-org-skip-subtree-if-priority ?A)
 						(org-agenda-skip-if nil '(scheduled deadline))))
-	    (org-agenda-overriding-header "2018 Goals: ")
+	    (org-agenda-overriding-header "2020 Goals: ")
 	    )
 		)
 
@@ -628,7 +622,7 @@ this command to copy it"
 	  ;; 	  )
 
 	  ;; All next tasks
-	  (tags "-goals2018+TODO=\"NEXT\""
+	  (tags "-goals2020+TODO=\"NEXT\""
 		(
 		 (org-agenda-tags-todo-honor-ignore-options :scheduled)
 		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
@@ -812,7 +806,7 @@ this command to copy it"
 		     )
 	  ))
 
-(add-to-list 'kill-emacs-hook 'agenda-check-when-quit)
+;; (add-to-list 'kill-emacs-hook 'agenda-check-when-quit)
 
 ;; (use-package calfw
 ;;   :ensure t)
@@ -852,7 +846,7 @@ this command to copy it"
 (defun lgm/write-til ()
   (interactive)
   (call-interactively '(lambda() (interactive)
-			      (find-file "~/Dropbox/Agenda/til-2019.org")
+			      (find-file "~/Dropbox/Agenda/til-2020.org")
 			      (call-interactively 'lgm/org-add-today-as-entry)
 			      )
 		      )
@@ -868,7 +862,7 @@ this command to copy it"
 				 )
 		  )))
 
-(add-to-list 'kill-emacs-hook 'write-your-til)
+;; (add-to-list 'kill-emacs-hook 'write-your-til)
 
 ;; Open todo.org
 (global-set-key (kbd "<f10>") (lambda() (interactive)(find-file "~/Dropbox/Agenda/todo.org")))
