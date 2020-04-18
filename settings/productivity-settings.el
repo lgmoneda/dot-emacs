@@ -201,5 +201,12 @@ is called with a prefix argument."
         (clipboard-kill-region (point-min) (point-max)))
       (message filename))))
 
+(use-package engine-mode
+  :ensure t
+  :init (engine-mode t)
+  (defengine google
+    "https://www.google.com/search?q=%s"
+    :keybinding "g"))
+
 (provide 'productivity-settings)
 ;;; productivity-settings.el ends here
