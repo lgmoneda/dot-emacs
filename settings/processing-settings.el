@@ -26,5 +26,14 @@
 (add-to-list 'ac-modes 'processing-mode)
 (add-hook 'processing-mode-hook 'processing-mode-init)
 
+(use-package rainbow-mode
+  :ensure t
+  :config
+  (add-to-list 'rainbow-html-colors-major-mode-list 'processing-mode)
+  (add-to-list 'rainbow-html-rgb-colors-font-lock-keywords
+			   '("color(\s*\\([0-9]\\{1,3\\}\\(?:\.[0-9]\\)?\\(?:\s*%\\)?\\)\s*,\s*\\([0-9]\\{1,3\\}\\(?:\\.[0-9]\\)?\\(?:\s*%\\)?\\)\s*,\s*\\([0-9]\\{1,3\\}\\(?:\\.[0-9]\\)?\\(?:\s*%\\)?\\)\s*)"
+				 (0 (rainbow-colorize-rgb))))
+  )
+
 (provide 'processing-settings)
 ;;; processing-settings.el ends here
