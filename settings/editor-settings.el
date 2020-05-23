@@ -40,7 +40,7 @@
 (use-package writeroom-mode
  :ensure t
  :init (setq buffer-face-mode-face '(:family "dejavu sans mono" :height 150))
-       (setq writeroom-width 100))
+       (setq writeroom-width 92))
 
 ;; Expand-region
 (use-package expand-region
@@ -232,10 +232,15 @@
       (other-window 1)))
 
 ;; Defining switch buffer command
-(global-set-key (kbd "C-1")
+(global-set-key (kbd "C-3")
     (lambda ()
       (interactive)
       (switch-to-prev-buffer)))
+
+(global-set-key (kbd "C-4")
+    (lambda ()
+      (interactive)
+      (switch-to-next-buffer)))
 
 ;; Defining switch buffer command
 (global-set-key (kbd "C-'")
