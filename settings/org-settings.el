@@ -594,14 +594,14 @@ this command to copy it"
 
 
 	  ;; Year Goals Milestones
-	  (tags "-nubank+goals2020+TODO=\"NEXT\""
-		((org-agenda-category-filter "-Nubank")
-		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-						(air-org-skip-subtree-if-priority ?A)
-						(org-agenda-skip-if nil '(scheduled deadline))))
-	    (org-agenda-overriding-header "2020 Goals Milestones: ")
-	    )
-		)
+	  ;; (tags "-nubank+goals2020+TODO=\"NEXT\""
+	  ;; 	((org-agenda-category-filter "-Nubank")
+	  ;; 	 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+	  ;; 					(air-org-skip-subtree-if-priority ?A)
+	  ;; 					(org-agenda-skip-if nil '(scheduled deadline))))
+	  ;;   (org-agenda-overriding-header "2020 Goals Milestones: ")
+	  ;;   )
+	  ;; 	)
 
 	  ;; Year Goals General
 	  (tags "+goals2020+LEVEL=3+TODO=\"TODO\""
@@ -736,7 +736,7 @@ this command to copy it"
       (terminal-notifier-notify "Emacs Notification" msg)
       (message msg)))
 
-(remind-me-daily 'reminder-fn "11:30pm" "Bedtime!" nil t)
+(remind-me-daily 'reminder-fn "10:30pm" "Bedtime!" nil t)
 
 (defun my-terminal-notifier-notify (info)
   "Show a message with terminal-notifier-command."
@@ -818,7 +818,7 @@ this command to copy it"
   (let ((split-width-threshold 80))  ; or whatever width makes sense for you
     ad-do-it))
 
-(add-hook 'after-init-hook (lambda () (org-agenda nil "d") (org-agenda-redo)))
+(add-hook 'after-init-hook (lambda () (org-agenda nil "d") (org-agenda-redo) (text-scale-decrease 1)))
 
 (defun lgm/next-nu ()
   (interactive)
@@ -867,11 +867,16 @@ this command to copy it"
 ;; Open todo.org
 (global-set-key (kbd "<f10>") (lambda() (interactive)(find-file "~/Dropbox/Agenda/todo.org")))
 ;; Open agenda
-(global-set-key (kbd "C-<f10>") (lambda() (interactive)(org-agenda nil "d")))
+(global-set-key (kbd "C-<f10>") (lambda() (interactive)(org-agenda nil "d")(org-agenda-redo) (text-scale-decrease 1)))
 ;; Open day
 (setq org-agenda-span 'day)
 (global-set-key (kbd "C-c <f10>") (lambda() (interactive)(org-agenda 0 "a")))
 (global-set-key (kbd "M-<f10>") (lambda() (interactive)(org-agenda 0 "l")))
+
+;; Change buffer functionality
+(org-defkey org-mode-map (kbd "C-<tab>") (lambda ()
+												 (interactive)
+												 (other-window -1)))
 
 (provide 'org-settings)
 ;;; org-settings.el ends here
