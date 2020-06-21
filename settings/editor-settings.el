@@ -186,7 +186,8 @@
   (search-forward symbol-at-point)
   )
 
-(global-set-key (kbd "C--") (lambda() (interactive)(lgm/select-until-next-occurence)))
+(define-key markdown-mode-map (kbd "C--") 'lgm/select-until-next-occurence)
+(define-key latex-mode-map (kbd "C--") 'lgm/select-until-next-occurence)
 
 ;; Creates a new line without breaking the current line
 (defun newline-without-break-of-line ()
