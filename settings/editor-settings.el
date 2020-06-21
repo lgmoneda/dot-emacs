@@ -175,6 +175,19 @@
 (global-set-key (kbd "C-+") 'mark-a-word-or-thing)
 (global-set-key (kbd "C-=") 'er/expand-region)
 
+(defun lgm/select-until-next-occurence ()
+  "Selects the region from a expanded symbol at point at its next occurence"
+  (interactive)
+  (er/expand-region 1)
+  (setq symbol-at-point (buffer-substring (mark) (point)))
+  (set-mark (point))
+  (message symbol-at-point)
+  (right-char)
+  (search-forward symbol-at-point)
+  )
+
+(global-set-key (kbd "C--") (lambda() (interactive)(lgm/select-until-next-occurence)))
+
 ;; Creates a new line without breaking the current line
 (defun newline-without-break-of-line ()
   "1. move to end of the line.
@@ -342,6 +355,11 @@
 (setq auto-save-default nil)
 ;; Disable backup
 (setq backup-inhibited t)
+
+;; Disable mouse
+(use-package disable-mouse
+  :ensure t
+  :init (global-disable-mouse-mode))
 
 (provide 'editor-settings)
 ;;; editor-settings.el ends here
