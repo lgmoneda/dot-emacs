@@ -1,13 +1,16 @@
 ;;; aesthetics-settings.el --- Settings for the theme, custom colors and faces
 
 (use-package rebecca-theme
-	     :ensure t)
+  :ensure t)
+
+(use-package dracula-theme
+  :ensure t)
 
 ;; Load Theme
 (setq custom-safe-themes t)
 (add-hook 'emacs-startup-hook
 	  (lambda ()
-	    (load-theme 'rebecca)
+	    (load-theme 'dracula)
 	    ))
 
 (setq theme-background-color (frame-parameter nil 'background-color))
@@ -77,6 +80,7 @@
     (color-identifiers-mode . "")
     (auto-revert-mode . "")
     (org-indent-mode . "")
+    (disable-mouse-global-mode . "")
     ;; Major modes
     (fundamental-mode . "Fund")
     (lisp-interaction-mode . "λ")
@@ -115,6 +119,7 @@ want to use in the modeline *in lieu of* the original.")
 (menu-bar-mode -99)
 (tool-bar-mode -99)
 (scroll-bar-mode -1)
+;; (setq default-frame-alist '((undecorated . t)))
 
 ;; More thinner window divisions
 (fringe-mode '(4 . 3))
@@ -139,14 +144,19 @@ want to use in the modeline *in lieu of* the original.")
  '(company-quickhelp-color-foreground "wheat")
  '(conda-anaconda-home "~/miniconda2")
  '(display-time-mail-string "")
+ '(ein:output-area-inlined-images t)
  '(ein:use-auto-complete t t)
  '(ein:use-auto-complete-superpack t)
+ '(elfeed-goodies/entry-pane-position (quote bottom))
+ '(elfeed-goodies/show-mode-padding 40)
  '(markdown-command "/usr/local/bin/pandoc")
+ '(org-roam-directory "~/Dropbox/agenda/roam")
  '(package-selected-packages
    (quote
-    (helm-ag helm-rg clojure-mode-extra-font-locking pyvenv conda which-key org-gcal org-journal git-timemachine magit flymd markdown-mode restclient company kaolin-themes rebecca-theme cherry-blossom-theme doom-modeline doom-themes helm-org-rifle org-wild-notifier py-autopep8 cyberpunk-theme org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-notify cider clj-refactor clojure-mode go-mode org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale slack ensime writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard pyimport electric-operator multi diff-hl avy markdown-preview-mode ein beacon helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm base16-theme spinner monokai-theme hydra)))
+    (google-translate org-roam-server org-roam emojify writegood-mode disable-mouse dracula-theme dap-mode lsp-treemacs lsp-ivy helm-lsp lsp-ui lsp-mode company-tabnine rainbow-mode engine-mode elfeed-goodies elfeed-org elfeed ess processing-mode elpy pdf-tools ivy-bibtex org-ref org-projectile-helm helm-org counsel-spotify helm-ag helm-rg clojure-mode-extra-font-locking pyvenv conda which-key org-gcal org-journal git-timemachine magit flymd markdown-mode restclient company kaolin-themes rebecca-theme cherry-blossom-theme doom-modeline doom-themes helm-org-rifle org-wild-notifier py-autopep8 cyberpunk-theme org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-notify cider clj-refactor clojure-mode go-mode org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale slack ensime writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard pyimport electric-operator multi diff-hl avy markdown-preview-mode beacon helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm base16-theme spinner monokai-theme hydra)))
  '(paradox-github-token t)
- '(region ((t (:background "#102050" :foreground "#FFFFFF"))))
+ '(pdf-tools-handle-upgrades nil)
+ '(region ((t (:background "#102050" :foreground "#000000"))))
  '(show-paren-match ((t (:weight (quote extra-bold)))))
  '(spacemacs-theme-comment-bg nil)
  '(spacemacs-theme-comment-italic t))
@@ -169,8 +179,10 @@ want to use in the modeline *in lieu of* the original.")
  '(fringe ((t (:background nil))))
  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
  '(mode-line ((t (:background "#663399" :foreground "#ae81ff" :inverse-video nil :box (:line-width 1 :color "#292b2e" :style released-button)))))
- '(org-agenda-date-today ((t (:foreground "ffff00" :underline t :slant italic :weight extra-bold))))
- '(org-agenda-done ((t (:foreground "#6dfedf"))))
+ '(org-agenda-date ((t (:foreground "#8be9fd" :underline nil :weight bold))))
+ '(org-agenda-date-today ((t (:foreground "#f1fa8c" :underline nil :weight extra-bold))))
+ '(org-agenda-done ((t (:foreground "#50fa7b"))))
+ '(org-agenda-structure ((t (:foreground "#bd93f9" :weight ultra-bold :height 1.2))))
  '(org-document-info ((t (:background "#292a44"))))
  '(org-document-info-keyword ((t (:background "#292a44"))))
  '(org-document-title ((t (:background "#292a44" :foreground "#6dfedf" :weight bold :height 1.44))))

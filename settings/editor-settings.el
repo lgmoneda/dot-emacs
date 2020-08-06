@@ -181,13 +181,9 @@
   (er/expand-region 1)
   (setq symbol-at-point (buffer-substring (mark) (point)))
   (set-mark (point))
-  (message symbol-at-point)
   (right-char)
   (search-forward symbol-at-point)
   )
-
-(define-key markdown-mode-map (kbd "C--") 'lgm/select-until-next-occurence)
-(define-key latex-mode-map (kbd "C--") 'lgm/select-until-next-occurence)
 
 ;; Creates a new line without breaking the current line
 (defun newline-without-break-of-line ()

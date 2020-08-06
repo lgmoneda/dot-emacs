@@ -34,6 +34,7 @@
 (require 'aesthetics-settings)
 (require 'elisp-settings)
 (require 'programming-settings)
+(require 'processing-settings)
 (require 'writing-settings)
 (require 'git-settings)
 (require 'org-settings)
@@ -45,3 +46,4 @@
 (require 'python-settings)
 (require 'clojure-settings)
 (require 'scala-settings)
+(require 'elfeed-settings)

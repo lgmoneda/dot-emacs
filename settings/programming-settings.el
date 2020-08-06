@@ -22,7 +22,7 @@
   :defer 4
   :init (progn
           (global-company-mode)
-          (setq company-global-modes '(not python-mode cython-mode sage-mode ein:notebook-modes org-mode markdown-mode))
+          (setq company-global-modes '(not python-mode cython-mode sage-mode ein:notebook-modes org-mode markdown-mode processing-mode))
           )
   :config (progn
             (setq company-tooltip-limit 12

@@ -51,6 +51,10 @@
          ("\\.markdown\\'" . markdown-mode))
   :init (setq markdown-command "multimarkdown"))
 
+;; Useful to copy Latex chunks
+(eval-after-load 'markdown-mode
+  '(define-key markdown-mode-map (kbd "C--") 'lgm/select-until-next-occurence))
+
 ;; Use M-x markdown-preview-mode in a md buffer
 (use-package markdown-preview-mode
   :ensure t)
@@ -108,13 +112,30 @@
 ;;  automatically insert  ‘\(...\)’ in LaTeX files by pressing $
 (add-hook 'LaTeX-mode-hook
           (lambda () (set (make-variable-buffer-local 'TeX-electric-math)
-                     (cons "\\(" "\\)"))))
+                     (cons "\\(" "\\)" ))))
 ;; The linebreaks will be inserted automatically if auto-fill-mode is enabled.
 ;; In this case the source is not only filled but also indented automatically
 ;; as you write it.
 
-(add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
+;; (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
 
+(add-hook 'LaTeX-mode-hook (lambda () (sp-pair "\\(" nil :actions nil)))
+
+;;  (defun my-smartparens-TeX-mode-hook ()
+;;     (local-set-key "\\(" 'self-insert-command)
+;;     (local-set-key "(" 'self-insert-command))
+;; (add-hook 'LaTeX-mode-hook 'my-smartparens-TeX-mode-hook)
+
+;; (put 'TeX-insert-dollar 'delete-selection nil)
+
+
+;; Useful to copy math chunks in latex
+(eval-after-load 'tex-mode
+  '(define-key latex-mode-map (kbd "C--") 'lgm/select-until-next-occurence))
+(eval-after-load 'tex-mode
+  '(define-key latex-mode-map (kbd "C-.") 'goto-last-change))
+
+  
 
 ;; use PDF-Tools
 (pdf-tools-install)
@@ -141,7 +162,8 @@
 
 ;; ivy-bibtex
 (require 'ivy-bibtex)
-(global-set-key (kbd "C-c C-r") 'ivy-bibtex)
+(global-set-key (kbd "C-c r") 'ivy-bibtex)
+(setq ivy-bibtex-default-action 'ivy-bibtex-insert-citation)
 
 ;; telling bibtex-completion where your bibliographies can be found
 (setq bibtex-completion-bibliography "referencias.bib")
@@ -233,6 +255,27 @@
 
 (use-package magic-latex-buffer
   :ensure t)
+
+;; Use flymd-flyit
+(use-package writegood-mode
+  :ensure t)
+
+;; Google translation to support writing in another language
+(use-package google-translate
+  :ensure t
+  :init
+  (setq google-translate-default-source-language "pt")
+  (setq google-translate-default-target-language "eng")
+  (setq google-translate-pop-up-buffer-set-focus t)
+  (setq google-translate-enable-ido-completion t)
+  (require 'google-translate-smooth-ui)
+  (global-set-key "\C-ct" 'google-translate-smooth-translate)
+  (global-set-key "\C-ce" 'google-translate-query-translate-reverse)
+  (global-set-key "\C-cT" 'google-translate-at-point)
+  (global-set-key "\C-cE" 'google-translate-at-point-reverse)    
+  (setq google-translate-translation-directions-alist
+      '(("pt" . "en") ("en" . "pt") ("pt" . "fr") ("fr" . "pt")))
+  )
 
 (provide 'writing-settings)
 ;;; writing-settings.el ends here

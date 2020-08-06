@@ -451,33 +451,63 @@ this command to copy it"
 (setq org-agenda-block-separator " ")
 (setq org-agenda-custom-commands
       '(("d" "Daily agenda and NEXTs!"
-         (;; Next deadlines
-	  (agenda ""
-		  ((org-agenda-time-grid nil)
-		   (org-agenda-span 'day)
-		   (org-deadline-warning-days 60)
-		   (org-agenda-entry-types '(:deadline))
-		   (org-agenda-sorting-strategy '(deadline-up))
-		   (org-agenda-overriding-header "Deadlines in the next 60 days:")
-		   ))
+         (
+	  ;; Deadlines
+	  (tags "+DEADLINE>=\"<-2m>\"&DEADLINE<=\"<+2m>\""
+               ((org-agenda-overriding-columns-format
+                 "%25ITEM %DEADLINE %TAGS")
+		(org-agenda-overriding-header "Deadlines in the next 60 days\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		(org-agenda-remove-tags t)
+		(org-agenda-entry-types '(:deadline :scheduled))
+		(org-agenda-sorting-strategy '(deadline-up))
+		(org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"DEADLINE\")) ")
+		))
+
+	  ;; Self-improvement top of mind
+	  (tags "+selfdevelopment+TODO=\"NEXT\""
+		(
+		 (org-agenda-overriding-header "Self-development hint\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-prefix-format " ")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-todo-keyword-format "")
+		 )
+		)
+
+	  ;; (agenda ""
+	  ;; 	  ((org-agenda-time-grid nil)
+	  ;; 	   (org-agenda-span 'day)
+	  ;; 	   (org-deadline-warning-days 60)
+	  ;; 	   (org-agenda-remove-tags t)
+	  ;; 	   (org-agenda-entry-types '(:deadline))
+	  ;; 	   (org-agenda-sorting-strategy '(deadline-up))
+	  ;; 	   (org-agenda-format-date "")
+	  ;; 	   (org-agenda-overriding-header "Deadlines in the next 60 days\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+	  ;; 	   ))
 
 	  ;; Week tasks and deadlines
 	  (agenda ""
 	  	  ((org-agenda-time-grid nil)
+		   (org-agenda-remove-tags t)
 	  	   (org-agenda-span 'week)
 	  	   (org-deadline-warning-days 0)
 	  	   (org-deadline-past-days 0)
 		   (org-scheduled-past-days 0)
 	  	   (org-agenda-entry-types '(:deadline :scheduled))
 	  	   ;; (org-agenda-sorting-strategy '(deadline-up))
-	  	   (org-agenda-overriding-header "Week tasks:")
+	  	   (org-agenda-overriding-header "Week tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		   (org-agenda-scheduled-leaders '("" ""))
+		   (org-agenda-prefix-format "    %i %-12:c")
 		   (org-agenda-skip-function '(air-org-skip-subtree-if-habit))
 	  	   ))
 
 	  ;; High priority tasks
 	  (tags "PRIORITY=\"A\""
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-                 (org-agenda-overriding-header "High-priority tasks:")))
+                 (org-agenda-overriding-header "High-priority Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-todo-keyword-format "")
+		 ))
 	  ;; Today Agenda
           ;; (agenda ""
 	  ;; 	  ((org-agenda-ndays 5)
@@ -508,46 +538,64 @@ this command to copy it"
 	  ;; NEXT Master
           (tags "+usp+TODO=\"NEXT\""
 		(
-		 (org-agenda-overriding-header "Next task in Master:")
+		 (org-agenda-overriding-header "Next tasks in Master\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-todo-keyword-format "")
 		 )
 		)
 
 	  ;; NEXT Study
           (tags "+study+TODO=\"NEXT\""
 		(
-		 (org-agenda-overriding-header "Next task in Study:")
+		 (org-agenda-overriding-header "Next tasks in Study\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 )
-		)
-
-	  ;; NEXT Work
-          (tags "+work+TODO=\"NEXT\"|udacity+TODO=\"NEXT\""
-		(
-		 (org-agenda-overriding-header "Next task in Work and Udacity:")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 )
-		)
-
-	  ;; NEXT Kaggle
-          (tags "+kaggle+TODO=\"NEXT\""
-		((org-agenda-overriding-header "Next tasks in Kaggle:")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 )
-		)
-
-	  ;; NEXT Life
-          (tags "+life-goals2020+TODO=\"NEXT\""
-		((org-agenda-overriding-header "Next tasks in Life:")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-todo-keyword-format "")
 		 )
 		)
 
 	  ;; NEXT Projects
           (tags "+projects+TODO=\"NEXT\""
 		(
-		 (org-agenda-overriding-header "Next task in Projects:")
+		 (org-agenda-overriding-header "Next task in Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-todo-keyword-format "")
+		 )
+		)
+
+	  ;; NEXT Work
+          (tags "+work+TODO=\"NEXT\"|udacity+TODO=\"NEXT\""
+		(
+		 (org-agenda-overriding-header "Next task in Work\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-todo-keyword-format "")
+		 )
+		)
+
+	  ;; NEXT Kaggle
+          (tags "+kaggle+TODO=\"NEXT\""
+		((org-agenda-overriding-header "Next tasks in Kaggle\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-todo-keyword-format "")
+		 )
+		)
+
+	  ;; NEXT Life
+          (tags "+life-goals2020+TODO=\"NEXT\""
+		((org-agenda-overriding-header "Next tasks in Life\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-todo-keyword-format "")
 		 )
 		)
 
@@ -576,11 +624,7 @@ this command to copy it"
           ;;       ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
           ;;        (org-agenda-overriding-header "Mid or low-priority tasks:")))
 
-	  ;; Deadlines
-	  ;; (tags "+DEADLINE>=\"<today>\"&DEADLINE<=\"<+2m>\""
-          ;;      ((org-agenda-overriding-columns-format
-          ;;        "%25ITEM %DEADLINE %TAGS")
-	  ;; 	(org-agenda-overriding-header "Approaching Deadlines!:")))
+
 
 	  ;; Long deadlines
 	  ;; (agenda ""
@@ -603,13 +647,24 @@ this command to copy it"
 	  ;;   )
 	  ;; 	)
 
+	  ;; Medium-low priority tasks
+	  (tags "PRIORITY=\"B\"|PRIORITY=\"C\""
+                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                 (org-agenda-overriding-header "Not priority Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-todo-keyword-format "")
+		 ))
+
 	  ;; Year Goals General
-	  (tags "+goals2020+LEVEL=3+TODO=\"TODO\""
+	  (tags "+goals2020+LEVEL=3+TODO=\"TODO\"|+goals2020+LEVEL=3+TODO=\"DONE\""
 		((org-agenda-category-filter "-Nubank")
+		 (org-agenda-prefix-format " ")
 		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
 						(air-org-skip-subtree-if-priority ?A)
 						(org-agenda-skip-if nil '(scheduled deadline))))
-	    (org-agenda-overriding-header "2020 Goals: ")
+		 (org-agenda-overriding-header "2020 Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-remove-tags t)
+
 	    )
 		)
 
@@ -622,15 +677,16 @@ this command to copy it"
 	  ;; 	  )
 
 	  ;; All next tasks
-	  (tags "-goals2020+TODO=\"NEXT\""
-		(
-		 (org-agenda-tags-todo-honor-ignore-options :scheduled)
-		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-						(air-org-skip-subtree-if-priority ?A)
-						(org-agenda-skip-if nil '(scheduled deadline))))
-	    (org-agenda-overriding-header "Next tasks NOT SCHEDULED:")
-	    )
-	   )
+	  ;; (tags "-goals2020+TODO=\"NEXT\""
+	  ;; 	(
+	  ;; 	 (org-agenda-tags-todo-honor-ignore-options :scheduled)
+	  ;; 	 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+	  ;; 					(air-org-skip-subtree-if-priority ?A)
+	  ;; 					(org-agenda-skip-if nil '(scheduled deadline))))
+	  ;; 	 (org-agenda-overriding-header "Next tasks NOT SCHEDULED:")
+	  ;; 	 (org-agenda-remove-tags t)
+	  ;;   )
+	  ;;  )
 	  )
          ((org-agenda-compact-blocks nil))
 	 )
@@ -686,6 +742,34 @@ this command to copy it"
 			  )
 	       )
 	     )
+
+;; Compact only day view
+(add-to-list 'org-agenda-custom-commands
+             '("o" "Compact today"
+((todo "TODO" (
+                      (org-agenda-overriding-header "\n⚡ Do Today:\n⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+                      (org-agenda-remove-tags t)
+                      (org-agenda-prefix-format " %-2i %-15b")
+                      (org-agenda-todo-keyword-format "")
+                       ))
+          (agenda "" (
+                      (org-agenda-start-day "+0d")
+                      (org-agenda-span 5)
+                      (org-agenda-overriding-header "⚡ Schedule:\n⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+                      (org-agenda-repeating-timestamp-show-all nil)
+                      (org-agenda-remove-tags t)
+                      (org-agenda-prefix-format   "  %-3i  %-15b %t%s")
+                      (org-agenda-todo-keyword-format " ☐ ")
+                      (org-agenda-current-time-string "⮜┈┈┈┈┈┈┈ now")
+                      (org-agenda-scheduled-leaders '("" ""))
+                      (org-agenda-time-grid (quote ((daily today remove-match)
+                                                    (0900 1200 1500 1800 2100)
+                                                    "      " "┈┈┈┈┈┈┈┈┈┈┈┈┈")))
+                       ))
+          )
+	       )
+	     )
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Terminal notifier
@@ -818,8 +902,6 @@ this command to copy it"
   (let ((split-width-threshold 80))  ; or whatever width makes sense for you
     ad-do-it))
 
-(add-hook 'after-init-hook (lambda () (org-agenda nil "d") (org-agenda-redo) (text-scale-decrease 1)))
-
 (defun lgm/next-nu ()
   (interactive)
   (org-agenda nil "n")
@@ -865,9 +947,12 @@ this command to copy it"
 ;; (add-to-list 'kill-emacs-hook 'write-your-til)
 
 ;; Open todo.org
-(global-set-key (kbd "<f10>") (lambda() (interactive)(find-file "~/Dropbox/Agenda/todo.org")))
+;;(global-set-key (kbd "<f10>") (lambda() (interactive)(find-file "~/Dropbox/Agenda/todo.org")))
 ;; Open agenda
 (global-set-key (kbd "C-<f10>") (lambda() (interactive)(org-agenda nil "d")(org-agenda-redo) (text-scale-decrease 1)))
+(global-set-key (kbd "<f10>") (lambda() (interactive)(org-agenda nil "d")(org-agenda-redo)))
+;; Initialize with agenda view
+(add-hook 'after-init-hook (lambda () (org-agenda nil "d") (org-agenda-redo)))
 ;; Open day
 (setq org-agenda-span 'day)
 (global-set-key (kbd "C-c <f10>") (lambda() (interactive)(org-agenda 0 "a")))
@@ -877,6 +962,51 @@ this command to copy it"
 (org-defkey org-mode-map (kbd "C-<tab>") (lambda ()
 												 (interactive)
 												 (other-window -1)))
+
+;; (customize-set-value
+;;     'org-agenda-category-icon-alist
+;;     `(
+;;       ("Work" "~/.emacs.d/icons/money-bag.svg" nil nil :ascent center)
+;;       ;; ("piano" ,(concat emoji-dir "1f3b9.png") nil nil :ascent center)
+;;       ))
+
+(use-package org-roam
+      :ensure t
+      :hook
+      (after-init . org-roam-mode)
+      :custom
+      (org-roam-directory "~/Dropbox/agenda/roam")
+      :bind (:map org-roam-mode-map
+              (("C-c n l" . org-roam)
+               ("C-c n f" . org-roam-find-file)
+               ("C-c n g" . org-roam-graph-show))
+              :map org-mode-map
+              (("C-c n i" . org-roam-insert))
+              (("C-c n I" . org-roam-insert-immediate)))
+	  :init
+	  (setq org-roam-capture-ref-templates
+			        '(("d" "ref" plain (function org-roam-capture--get-point)
+					   "%?"
+					   :file-name "${slug}"
+					   :head "#+setupfile:./hugo_setup.org
+#+roam_key: ${ref}
+#+roam_tags: website
+#+title: ${title}
+- source :: ${ref}"
+           :unnarrowed t))))
+
+(use-package org-roam-server
+  :ensure t
+  :config
+  (setq org-roam-server-host "127.0.0.1"
+        org-roam-server-port 8080
+        org-roam-server-export-inline-images t
+        org-roam-server-authenticate nil
+        org-roam-server-network-poll t
+        org-roam-server-network-arrows nil
+        org-roam-server-network-label-truncate t
+        org-roam-server-network-label-truncate-length 60
+        org-roam-server-network-label-wrap-length 20))
 
 (provide 'org-settings)
 ;;; org-settings.el ends here

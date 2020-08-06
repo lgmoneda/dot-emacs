@@ -258,8 +258,16 @@ if breakpoints are present in `python-mode' files"
   ;; 	'(emacs-lisp image image/png svg image/svg image/png jpeg image/jpeg text html text/html latex text/latex javascript))
   )
 
+(custom-set-variables
+ '(ein:output-area-inlined-images t)
+ )
+
+(add-hook 'ein:notebook-mode-hook (lambda () (progn
+											   (writeroom-mode)
+											   (writeroom-adjust-width 30))))
+
 (require 'ein-notebook)
-(require 'ein-subpackages)
+;;(require 'ein-subpackages)
 
 ;; (setq ein:use-auto-complete-superpack t)
 ;;(setq ein:use-smartrep t)
