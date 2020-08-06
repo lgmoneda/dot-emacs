@@ -984,16 +984,29 @@ this command to copy it"
               (("C-c n i" . org-roam-insert))
               (("C-c n I" . org-roam-insert-immediate)))
 	  :init
-	  (setq org-roam-capture-ref-templates
-			        '(("d" "ref" plain (function org-roam-capture--get-point)
-					   "%?"
-					   :file-name "${slug}"
-					   :head "#+setupfile:./hugo_setup.org
-#+roam_key: ${ref}
-#+roam_tags: website
-#+title: ${title}
-- source :: ${ref}"
-           :unnarrowed t))))
+	  (setq org-roam-capture-templates
+			'(("d" "default" plain (function org-roam--capture-get-point)
+			   "%?"
+			   :file-name "%(format-time-string \"%Y-%m-%d--%H-%M-%SZ--${slug}\" (current-time) t)"
+			   :head "#+title: ${title}\
+#+roam_tags: "
+			   :unnarrowed t)
+			  ("p" "paper" plain (function org-roam--capture-get-point)
+			   "%?"
+			   :file-name "%(format-time-string \"%Y-%m-%d--%H-%M-%SZ--${slug}\" (current-time) t)"
+			   :head "#+title: ${title}\
+#+roam_tags: paper
+#+author: "
+			   :unnarrowed t)
+
+			  ("b" "book" plain (function org-roam--capture-get-point)
+			   "%?"
+			   :file-name "%(format-time-string \"%Y-%m-%d--%H-%M-%SZ--${slug}\" (current-time) t)"
+			   :head "#+title: ${title}\
+#+roam_tags: book
+#+author: "
+			   :unnarrowed t)
+			  )))
 
 (use-package org-roam-server
   :ensure t
