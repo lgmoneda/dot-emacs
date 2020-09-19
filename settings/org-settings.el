@@ -456,15 +456,16 @@ this command to copy it"
 	  (tags "+DEADLINE>=\"<-2m>\"&DEADLINE<=\"<+2m>\""
                ((org-agenda-overriding-columns-format
                  "%25ITEM %DEADLINE %TAGS")
-		(org-agenda-overriding-header "Deadlines in the next 60 days\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		(org-agenda-remove-tags t)
-		(org-agenda-entry-types '(:deadline :scheduled))
-		(org-agenda-sorting-strategy '(deadline-up))
-		(org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"DEADLINE\")) ")
-		))
+				(org-agenda-overriding-header "Deadlines in the next 60 days\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+				(org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+				(org-agenda-remove-tags t)
+				(org-agenda-entry-types '(:deadline :scheduled))
+				(org-agenda-sorting-strategy '(deadline-up))
+				(org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"DEADLINE\")) ")
+				))
 
 	  ;; Self-improvement top of mind
-	  (tags "+selfdevelopment+TODO=\"NEXT\""
+	  (tags "+selfdevelopment+TODO=\"TODO\""
 		(
 		 (org-agenda-overriding-header "Self-development hint\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format " ")
@@ -979,32 +980,39 @@ this command to copy it"
       :bind (:map org-roam-mode-map
               (("C-c n l" . org-roam)
                ("C-c n f" . org-roam-find-file)
+               ("C-c n u" . org-roam-unlinked-references)
                ("C-c n g" . org-roam-graph-show))
               :map org-mode-map
               (("C-c n i" . org-roam-insert))
-              (("C-c n I" . org-roam-insert-immediate)))
+              (("C-c n I" . org-roam-insert-immediate))
+			  (("C-c n s" . lgm/screenshot-to-org-link)))
+
 	  :init
 	  (setq org-roam-capture-templates
 			'(("d" "default" plain (function org-roam--capture-get-point)
 			   "%?"
-			   :file-name "%(format-time-string \"%Y-%m-%d--%H-%M-%SZ--${slug}\" (current-time) t)"
-			   :head "#+title: ${title}\
+			   :file-name "%(format-time-string \"%Y%m%d%H%M%S-${slug}\" (current-time) t)"
+			   :head "#+title: ${title}
+#+STARTUP: inlineimages latexpreview
 #+roam_tags: "
 			   :unnarrowed t)
 			  ("p" "paper" plain (function org-roam--capture-get-point)
 			   "%?"
-			   :file-name "%(format-time-string \"%Y-%m-%d--%H-%M-%SZ--${slug}\" (current-time) t)"
-			   :head "#+title: ${title}\
+			   :file-name "%(format-time-string \"%Y%m%d%H%M%S-${slug}\" (current-time) t)"
+			   :head "#+title: ${title}
+#+STARTUP: inlineimages
 #+roam_tags: paper
-#+author: "
+Authors:
+Link: "
 			   :unnarrowed t)
 
 			  ("b" "book" plain (function org-roam--capture-get-point)
 			   "%?"
-			   :file-name "%(format-time-string \"%Y-%m-%d--%H-%M-%SZ--${slug}\" (current-time) t)"
-			   :head "#+title: ${title}\
+			   :file-name "%(format-time-string \"%Y%m%d%H%M%S-${slug}\" (current-time) t)"
+			   :head "#+title: ${title}
+#+STARTUP: inlineimages
 #+roam_tags: book
-#+author: "
+Authors: "
 			   :unnarrowed t)
 			  )))
 
@@ -1020,6 +1028,65 @@ this command to copy it"
         org-roam-server-network-label-truncate t
         org-roam-server-network-label-truncate-length 60
         org-roam-server-network-label-wrap-length 20))
+
+;; Function inspired by https://llazarek.com/2018/10/images-in-org-mode.html
+;; check org-download for a more complete solution of it
+(defun lgm/screenshot-to-org-link (&optional arg)
+  (interactive)
+  (unless (or arg
+              (file-directory-p (concat (file-name-directory buffer-file-name) "/resources")))
+    (make-directory (concat (file-name-directory buffer-file-name) "/resources")))
+  (let* ((default-dest
+           (format-time-string (concat (file-name-directory buffer-file-name) "/resources/screen_%Y%m%d_%H%M%S.jpg")))
+         (dest (if arg
+                   (helm-read-string "Save to: " default-dest)
+                 default-dest)))
+    (start-process "screencapture" nil "screencapture" "-i" dest)
+    (read-char "Taking screenshot... Press any key when done.")
+    (org-insert-link t (concat "file:" dest) "")
+    (org-remove-inline-images)
+    (org-display-inline-images)))
+
+;; Company backend for org-roam links. Helps me to link ideas when useful.
+;; (use-package company-org-roam
+;;   :ensure t
+;;   ;; You may want to pin in case the version from stable.melpa.org is not working
+;;   ; :pin melpa
+;;   :config
+;;   (push 'company-org-roam company-backends))
+
+;; (add-hook 'org-roam-mode-hook 'company-mode)
+
+;; Increase latex preview font
+(setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
+
+;; Olivetti
+;; Look & Feel for long-form writing
+
+(use-package olivetti
+  :ensure t)
+
+;; Set the body text width
+(setq olivetti-body-width 0.6)
+
+;; Enable Olivetti for text-related mode such as Org Mode
+(add-hook 'text-mode-hook 'olivetti-mode)
+
+(add-hook 'org-mode-hook
+	    (lambda ()
+	      (make-local-variable 'company-backends)
+	      (make-local-variable 'company-idle-delay)
+	      (make-local-variable 'company-minimum-prefix-length)
+	      (setq company-backends '(company-org-roam))
+	      (setq company-idle-delay 0
+		    company-minimum-prefix-length 3)))
+
+;; Xunxo to disable in my todo file
+(progn 
+  (switch-to-buffer "todo.org")
+  (company-mode -1)
+  )
+
 
 (provide 'org-settings)
 ;;; org-settings.el ends here
