@@ -37,9 +37,10 @@
 (use-package company-anaconda
   :ensure t
   :diminish
-  :config
-  (eval-after-load "company"
-     '(add-to-list 'company-backends '(company-anaconda company-capf))))
+  ;; :config
+  ;; (eval-after-load "company"
+  ;;   '(add-to-list 'company-backends '(company-anaconda company-capf)))
+  )
 
 (add-hook 'python-mode-hook 'company-mode)
 

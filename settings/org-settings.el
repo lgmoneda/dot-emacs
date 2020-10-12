@@ -141,7 +141,8 @@
 ;;   (require 'ob-ipython))
 
 ;; ;; to redefine images from evaluating code blocks
-;; (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
+;; After executing code, it displays the image
+(add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
 
 ;; Org-babel
 (org-babel-do-load-languages
@@ -157,6 +158,10 @@
    (sql . nil)
    (sqlite . t)))
 
+(require 'virtualenvwrapper)
+(venv-initialize-interactive-shells) ;; if you want interactive shell support
+(venv-initialize-eshell) ;; if you want eshell support
+(setq venv-location "~/miniconda2/envs/ml3")
 
 ;Sunday, December 10, 2017
 ;============================
@@ -648,10 +653,10 @@ this command to copy it"
 	  ;;   )
 	  ;; 	)
 
-	  ;; Medium-low priority tasks
-	  (tags "PRIORITY=\"B\"|PRIORITY=\"C\""
+	  ;; Backlog projects
+	  (tags "PRIORITY=\"B\""
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-                 (org-agenda-overriding-header "Not priority Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+                 (org-agenda-overriding-header "Backlog Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
 		 (org-agenda-todo-keyword-format "")
 		 ))
@@ -668,6 +673,14 @@ this command to copy it"
 
 	    )
 		)
+
+	  ;; Medium-low priority tasks
+	  (tags "PRIORITY=\"C\""
+                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                 (org-agenda-overriding-header "Not-priority projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-todo-keyword-format "")
+		 ))
 
 	  ;; Next few days
           ;; (agenda "" ((org-agenda-ndays 2)
@@ -970,6 +983,18 @@ this command to copy it"
 ;;       ("Work" "~/.emacs.d/icons/money-bag.svg" nil nil :ascent center)
 ;;       ;; ("piano" ,(concat emoji-dir "1f3b9.png") nil nil :ascent center)
 ;;       ))
+(defun lgm/python-org-code-block()
+  (interactive)
+  (open-line 2)
+  (insert "#+begin_src python")
+  (next-line)
+  (insert "#+end_src")
+  (previous-line)
+  (end-of-line)
+  (split-line)
+  (next-line)
+  (beginning-of-line)
+   )
 
 (use-package org-roam
       :ensure t
@@ -980,12 +1005,17 @@ this command to copy it"
       :bind (:map org-roam-mode-map
               (("C-c n l" . org-roam)
                ("C-c n f" . org-roam-find-file)
+			   ("C-c n b" . helm-bibtex)
                ("C-c n u" . org-roam-unlinked-references)
                ("C-c n g" . org-roam-graph-show))
               :map org-mode-map
               (("C-c n i" . org-roam-insert))
               (("C-c n I" . org-roam-insert-immediate))
-			  (("C-c n s" . lgm/screenshot-to-org-link)))
+			  (("C-c n s" . lgm/screenshot-to-org-link))
+			  (("C-c n r" . ivy-bibtex))
+			  (("C-c n c" . lgm/python-org-code-block))
+
+	      )
 
 	  :init
 	  (setq org-roam-capture-templates
@@ -996,24 +1026,24 @@ this command to copy it"
 #+STARTUP: inlineimages latexpreview
 #+roam_tags: "
 			   :unnarrowed t)
-			  ("p" "paper" plain (function org-roam--capture-get-point)
-			   "%?"
-			   :file-name "%(format-time-string \"%Y%m%d%H%M%S-${slug}\" (current-time) t)"
-			   :head "#+title: ${title}
-#+STARTUP: inlineimages
-#+roam_tags: paper
-Authors:
-Link: "
-			   :unnarrowed t)
+;; 			  ("p" "paper" plain (function org-roam--capture-get-point)
+;; 			   "%?"
+;; 			   :file-name "%(format-time-string \"%Y%m%d%H%M%S-${slug}\" (current-time) t)"
+;; 			   :head "#+title: ${title}
+;; #+STARTUP: inlineimages latexpreview
+;; #+roam_tags: paper
+;; Authors:
+;; Link: "
+;; 			   :unnarrowed t)
 
-			  ("b" "book" plain (function org-roam--capture-get-point)
-			   "%?"
-			   :file-name "%(format-time-string \"%Y%m%d%H%M%S-${slug}\" (current-time) t)"
-			   :head "#+title: ${title}
-#+STARTUP: inlineimages
-#+roam_tags: book
-Authors: "
-			   :unnarrowed t)
+;; 			  ("b" "book" plain (function org-roam--capture-get-point)
+;; 			   "%?"
+;; 			   :file-name "%(format-time-string \"%Y%m%d%H%M%S-${slug}\" (current-time) t)"
+;; 			   :head "#+title: ${title}
+;; #+STARTUP: inlineimages
+;; #+roam_tags: book
+;; Authors: "
+;; 			   :unnarrowed t)
 			  )))
 
 (use-package org-roam-server
@@ -1082,11 +1112,34 @@ Authors: "
 		    company-minimum-prefix-length 3)))
 
 ;; Xunxo to disable in my todo file
-(progn 
+(progn
   (switch-to-buffer "todo.org")
   (company-mode -1)
   )
 
+;; Change background color of code blocks in org mode
+(require 'color)
+(set-face-attribute 'org-block nil :background
+                    (color-darken-name
+                     (face-attribute 'default :background) 10))
+
+;; Avoid org asking if I want to run code
+(setq org-confirm-babel-evaluate nil)
+
+;; org-roam-bib
+(use-package org-roam-bibtex
+  :after org-roam
+  :hook (org-roam-mode . org-roam-bibtex-mode)
+  ;; :init (setq org-ref-notes-function 'orb-notes-fn)
+  ;; (setq bibtex-completion-find-note-functions 'orb-notes-fn)
+  :bind (:map org-mode-map
+         (("C-c n a" . orb-note-actions))))
+
+(setq orb-templates
+      '(("r" "ref" plain (function org-roam-capture--get-point) ""
+         :file-name "${citekey}"
+         :head "#+TITLE: ${title}, ${author-abbrev}\n#+ROAM_KEY: ${ref}\n#+Authors: ${author}\n#+STARTUP: inlineimages latexpreview\n#+roam_tags: bibliographical-notes " ; <--
+         :unnarrowed t)))
 
 (provide 'org-settings)
 ;;; org-settings.el ends here

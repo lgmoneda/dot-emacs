@@ -170,6 +170,14 @@ is called with a prefix argument."
    )
   )
 
+(defun lgm/look-for-def-in-project ()
+  (interactive)
+  (progn
+   (er/mark-word)
+   (counsel-projectile-ag-word " def ")
+   )
+  )
+
 (defun lgm/look-for-selected-word-in-project ()
   (interactive)
   (progn
@@ -178,6 +186,7 @@ is called with a prefix argument."
   )
 
 (define-key projectile-command-map (kbd "s w") 'lgm/look-for-word-in-project)
+(define-key projectile-command-map (kbd "s f") 'lgm/look-for-def-in-project)
 (global-set-key (kbd "C-M-*") 'lgm/look-for-selected-word-in-project)
 
 (require 'helm-eshell)

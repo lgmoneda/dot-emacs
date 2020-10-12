@@ -20,18 +20,19 @@
   :ensure t
   :diminish
   :defer 4
-  :init (progn
+  :init
+  (progn
+    ;; (setq company-global-modes '(not python-mode cython-mode sage-mode ein:notebook-modes markdown-mode processing-mode))
           (global-company-mode)
-          (setq company-global-modes '(not python-mode cython-mode sage-mode ein:notebook-modes org-mode markdown-mode processing-mode))
           )
   :config (progn
             (setq company-tooltip-limit 12
-                  company-idle-delay 1.0
+                  company-idle-delay 0
                   company-echo-delay 0.5
                   company-begin-commands '(self-insert-command  self-insert-command org-self-insert-command orgtbl-self-insert-command c-scope-operator c-electric-colon c-electric-lt-gt c-electric-slash )
                   company-transformers '(company-sort-by-occurrence)
                   company-selection-wrap-around t
-                  company-minimum-prefix-length 2
+                  company-minimum-prefix-length 3
                   company-dabbrev-downcase nil
 		  company-require-match nil
                   )

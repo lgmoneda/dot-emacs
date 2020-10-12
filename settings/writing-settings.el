@@ -92,12 +92,6 @@
              :ensure t)
 (use-package ivy-bibtex
              :ensure t)
-(use-package org-ref
-             :ensure t)
-;set variables
-
-(defvar my/bib-file-location "~/Documents/Research/library.bib"
-  "Where I keep my bib file.")
 
 ;;In order to get support for many of the LaTeX packages you will use in your documents,
 ;;you should enable document parsing as well, which can be achieved by putting
@@ -135,7 +129,7 @@
 (eval-after-load 'tex-mode
   '(define-key latex-mode-map (kbd "C-.") 'goto-last-change))
 
-  
+
 
 ;; use PDF-Tools
 (pdf-tools-install)
@@ -166,12 +160,18 @@
 (setq ivy-bibtex-default-action 'ivy-bibtex-insert-citation)
 
 ;; telling bibtex-completion where your bibliographies can be found
-(setq bibtex-completion-bibliography "referencias.bib")
+(setq bibtex-completion-bibliography "~/Dropbox/Research/library.bib")
+
+(use-package gscholar-bibtex
+  :ensure t)
+;; Where to add bibtex from google scholar
+(setq gscholar-bibtex-database-file "~/Dropbox/Research/library.bib")
+
 
 ;; specify the path of the note
-(setq bibtex-completion-notes-path "~/Documents/Research/ref.org")
+;; (setq bibtex-completion-notes-path "~/Documents/Research/ref.org")
 ;;If one file per publication is preferred, bibtex-completion-notes-path should point to the directory used for storing the notes files:
-;;(setq bibtex-completion-notes-path "/path/to/notes")
+(setq bibtex-completion-notes-path "~/Dropbox/Agenda/roam/bibliographical-notes/")
 
 ;; Customize layout of search results
 ;; first add journal and booktitle to the search fields
@@ -221,11 +221,12 @@
 
 
 ;; use org-ref
-(require 'org-ref)
+(use-package org-ref
+             :ensure t)
 
-(setq org-ref-bibliography-notes "~/Documents/Research/ref.org"
-      org-ref-default-bibliography '("~/Documents/Research/library.bib")
-      org-ref-pdf-directory "~/Documents/Literature/"
+(setq org-ref-bibliography-notes "~/Dropbox/Agenda/roam/bibliographical-notes/"
+      org-ref-default-bibliography '("~/Dropbox/Research/library.bib")
+      org-ref-pdf-directory "~/Dropbox/Research/Literature/"
       org-ref-completion-library 'org-ref-ivy-cite
       )
 (setq org-latex-pdf-process (list "latexmk -shell-escape -bibtex -f -pdf %f"))
@@ -247,9 +248,10 @@
 (setq org-ref-open-pdf-function 'my/org-ref-open-pdf-at-point)
 
 ;; This is a small utility for Web of Science/Knowledge (WOK) (http://apps.webofknowledge.com).
-(require 'org-ref-wos)
+;; (require 'org-ref-wos)
 
-(require 'doi-utils)
+;; (require 'doi-utils)
+
 
 (provide 'init-latex)
 
@@ -272,10 +274,13 @@
   (global-set-key "\C-ct" 'google-translate-smooth-translate)
   (global-set-key "\C-ce" 'google-translate-query-translate-reverse)
   (global-set-key "\C-cT" 'google-translate-at-point)
-  (global-set-key "\C-cE" 'google-translate-at-point-reverse)    
+  (global-set-key "\C-cE" 'google-translate-at-point-reverse)
   (setq google-translate-translation-directions-alist
       '(("pt" . "en") ("en" . "pt") ("pt" . "fr") ("fr" . "pt")))
   )
+
+;; Useful to activate while I write my cards
+  (global-set-key "\C-cf" 'flyspell-mode)
 
 (provide 'writing-settings)
 ;;; writing-settings.el ends here
