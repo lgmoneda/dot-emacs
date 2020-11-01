@@ -151,13 +151,13 @@ want to use in the modeline *in lieu of* the original.")
  '(elfeed-goodies/show-mode-padding 40)
  '(markdown-command "/usr/local/bin/pandoc")
  '(olivetti-body-width 100)
+ '(org-roam-db-location "/Users/lgmoneda/Dropbox/agenda/roam/org-roam.db")
  '(org-roam-directory "~/Dropbox/agenda/roam")
  '(package-selected-packages
    (quote
-	(scihub gscholar-bibtex bibtex-completion org-roam-bibtex virtualenvwrapper olivetti company-org-roam google-translate org-roam-server org-roam emojify writegood-mode disable-mouse dracula-theme dap-mode lsp-treemacs lsp-ivy helm-lsp lsp-ui lsp-mode company-tabnine rainbow-mode engine-mode elfeed-goodies elfeed-org elfeed ess processing-mode elpy pdf-tools ivy-bibtex org-ref org-projectile-helm helm-org counsel-spotify helm-ag helm-rg clojure-mode-extra-font-locking pyvenv conda which-key org-gcal org-journal git-timemachine magit flymd markdown-mode restclient company kaolin-themes rebecca-theme cherry-blossom-theme doom-modeline doom-themes helm-org-rifle org-wild-notifier py-autopep8 cyberpunk-theme org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-notify cider clj-refactor clojure-mode go-mode org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale slack ensime writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard pyimport electric-operator multi diff-hl avy markdown-preview-mode beacon helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm base16-theme spinner monokai-theme hydra)))
+    (ivy-posframe scihub gscholar-bibtex bibtex-completion org-roam-bibtex virtualenvwrapper olivetti company-org-roam google-translate org-roam-server org-roam emojify writegood-mode disable-mouse dracula-theme dap-mode lsp-treemacs lsp-ivy helm-lsp lsp-ui lsp-mode company-tabnine rainbow-mode engine-mode elfeed-goodies elfeed-org elfeed ess processing-mode elpy pdf-tools ivy-bibtex org-ref org-projectile-helm helm-org counsel-spotify helm-ag helm-rg clojure-mode-extra-font-locking pyvenv conda which-key org-gcal org-journal git-timemachine magit flymd markdown-mode restclient company kaolin-themes rebecca-theme cherry-blossom-theme doom-modeline doom-themes helm-org-rifle org-wild-notifier py-autopep8 cyberpunk-theme org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-notify cider clj-refactor clojure-mode go-mode org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale slack ensime writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard pyimport electric-operator multi diff-hl avy markdown-preview-mode beacon helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm base16-theme spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(pdf-tools-handle-upgrades nil)
- '(region ((t (:background "#102050" :foreground "#000000"))))
  '(show-paren-match ((t (:weight (quote extra-bold)))))
  '(spacemacs-theme-comment-bg nil)
  '(spacemacs-theme-comment-italic t))
@@ -184,19 +184,37 @@ want to use in the modeline *in lieu of* the original.")
  '(org-agenda-date-today ((t (:foreground "#f1fa8c" :underline nil :weight extra-bold))))
  '(org-agenda-done ((t (:foreground "#50fa7b"))))
  '(org-agenda-structure ((t (:foreground "#bd93f9" :weight ultra-bold :height 1.2))))
+ '(org-block ((t (:background "black" :foreground "gray100"))))
  '(org-document-info ((t (:background "#292a44"))))
  '(org-document-info-keyword ((t (:background "#292a44"))))
  '(org-document-title ((t (:background "#292a44" :foreground "#6dfedf" :weight bold :height 1.44))))
  '(org-done ((t (:weight bold :box (:line-width 1 :color nil :style none) :foreground "#6dfedf" :background "#383a62"))))
  '(org-ellipsis ((t (:foreground "#969896" :underline nil))))
  '(org-link ((t (:foreground "#ff79c6" :underline t))))
+ '(org-ref-cite-face ((t (:inherit org-link :foreground "#50fa7b"))))
  '(org-scheduled ((t (:foreground "chocolate1"))))
  '(org-scheduled-previously ((t (:foreground "#8eaee0"))))
  '(org-scheduled-today ((t (:foreground "chocolate1"))))
  '(org-tag ((t (:background "#292a44" :foreground "#ae81ff" :weight bold))))
  '(org-todo ((t (:weight bold :box (:line-width 1 :color nil :style none) :foreground "#8eaee0"))))
  '(org-upcoming-deadline ((t (:foreground "chocolate1"))))
+ '(region ((t (:background "#f1fa8c" :foreground "#000000"))))
  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
+
+;; Change M-x position
+(use-package ivy-posframe
+  :ensure t
+  :init
+  (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display)))
+  (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-center)))
+  (setq ivy-posframe-parameters
+      '((left-fringe . 8)
+        (right-fringe . 8)
+	))
+  (setq ivy-posframe-width 110
+	ivy-posframe-height 30)
+  (ivy-posframe-mode 1)
+  )
 
 (provide 'aesthetics-settings)
 ;;; aesthetics-settings.el ends here
