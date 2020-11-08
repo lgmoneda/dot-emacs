@@ -85,7 +85,7 @@
   (custom-set-variables
     '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
   (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo"))
-(pdf-tools-install)
+;; (pdf-tools-install)
 
 
 (use-package reftex
@@ -132,7 +132,7 @@
 
 
 ;; use PDF-Tools
-(pdf-tools-install)
+;;(pdf-tools-install)
 
 (setq TeX-view-program-selection '((output-pdf "pdf-tools"))
       TeX-view-program-list '(("pdf-tools" "TeX-pdf-tools-sync-view"))
@@ -280,7 +280,12 @@
   )
 
 ;; Useful to activate while I write my cards
-  (global-set-key "\C-cf" 'flyspell-mode)
+(global-set-key "\C-cf" 'flyspell-mode)
+
+(use-package langtool
+  :ensure t
+  :init
+  (setq langtool-language-tool-jar "~/Documents/LanguageTool-5.1/languagetool-commandline.jar"))
 
 (provide 'writing-settings)
 ;;; writing-settings.el ends here
