@@ -158,7 +158,8 @@
    (sql . nil)
    (sqlite . t)))
 
-(require 'virtualenvwrapper)
+(use-package virtualenvwrapper
+  :ensure t)
 (venv-initialize-interactive-shells) ;; if you want interactive shell support
 (venv-initialize-eshell) ;; if you want eshell support
 (setq venv-location "~/miniconda2/envs/ml3")
@@ -175,7 +176,7 @@
                   (font-spec :size 20 :name "Symbola"))
 
 ;; Set font size
-(set-face-attribute 'default nil :height 110)
+(set-face-attribute 'default nil :height 130)
 
 ;; Setting English Font
 ;; (set-face-attribute
@@ -245,11 +246,11 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
       nil)))
 
 ;; Org Journal
-(use-package org-journal
-  :ensure t
-  :init (setq org-journal-dir "~/Dropbox/Agenda/Journal"))
-
-
+;; (use-package org-journal
+;;    :ensure t
+;;    :init (setq org-journal-dir "~/Dropbox/Agenda/Journal"))
+;; (require 'org-journal)
+(load "~/.emacs.d/elisp/my-org-journal/org-journal.el")
 ;; Build progress bars
 ;; #+BEGIN: block-dashboard
 ;; #+END:
@@ -313,7 +314,6 @@ Whenever a journal entry is created the
       (insert "\n")
       (insert org-journal-date-prefix
               (format-time-string org-journal-date-format time))
-
       ;; add crypt tag if encryption is enabled and tag is not present
       (when org-journal-enable-encryption
         (goto-char (point-min))
@@ -441,9 +441,10 @@ this command to copy it"
 	 ("n" "Next Task" entry (file+headline org-default-notes-file "Tasks")
 	  "** NEXT %? \nDEADLINE: %t") ))
 
-(setq org-lowest-priority ?D)
-(setq org-default-priority ?D)
+(setq org-lowest-priority ?F)
+(setq org-default-priority ?F)
 (setq org-agenda-skip-scheduled-if-deadline-is-shown t)
+(setq org-tags-exclude-from-inheritance '("epic"))
 
 ;; From https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html
 (defun air-org-skip-subtree-if-habit ()
@@ -716,8 +717,216 @@ this command to copy it"
 
 	))
 
+(add-to-list 'org-agenda-custom-commands
+      '("nu" "Nubank Agenda"
+         (
+	  ;; Deadlines
+	  (tags "+DEADLINE>=\"<-2m>\"&DEADLINE<=\"<+2m>\""
+               ((org-agenda-overriding-columns-format
+                 "%25ITEM %DEADLINE %TAGS")
+				(org-agenda-overriding-header "Deadlines in the next 60 days\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+				(org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+				(org-agenda-remove-tags t)
+				(org-agenda-entry-types '(:deadline :scheduled))
+				(org-agenda-sorting-strategy '(deadline-up))
+				(org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"DEADLINE\")) ")
+				))
+
+	  ;; Self-improvement top of mind
+	  (tags "+selfdevelopment+TODO=\"TODO\""
+		(
+		 (org-agenda-overriding-header "Self-development hint\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-prefix-format " ")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-todo-keyword-format "")
+		 )
+		)
+
+	  ;; Week tasks and deadlines
+	  (agenda ""
+	  	  ((org-agenda-time-grid nil)
+		   (org-agenda-remove-tags t)
+	  	   (org-agenda-span 'week)
+	  	   (org-deadline-warning-days 0)
+	  	   (org-deadline-past-days 0)
+		   (org-scheduled-past-days 0)
+	  	   (org-agenda-entry-types '(:deadline :scheduled))
+	  	   ;; (org-agenda-sorting-strategy '(deadline-up))
+	  	   (org-agenda-overriding-header "Week tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		   (org-agenda-scheduled-leaders '("" ""))
+		   (org-agenda-prefix-format "    %i %-12:c")
+		   (org-agenda-skip-function '(air-org-skip-subtree-if-habit))
+	  	   ))
+
+	  ;; High priority projects
+	  (tags "+epic+PRIORITY=\"A\""
+                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                 (org-agenda-overriding-header "High-priority Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-todo-keyword-format "")
+		 ))
+
+	  ;; High priority tasks
+	  (tags "-epic+PRIORITY=\"A\""
+                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                 (org-agenda-overriding-header "High-priority Tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-todo-keyword-format "")
+		 ))
+	  
+	  ;; NEXT Projects
+          (tags "+projects+TODO=\"NEXT\""
+		(
+		 (org-agenda-overriding-header "Next tasks in Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-todo-keyword-format "")
+		 )
+		)
+
+	  ;; NEXT Direct Reports
+          (tags "+directreports+TODO=\"NEXT\""
+		((org-agenda-overriding-header "Next tasks about direct reports\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-todo-keyword-format "")
+		 )
+		)
+	  
+	  ;; NEXT Manager
+          (tags "+manager-directreports+TODO=\"NEXT\""
+		(
+		 (org-agenda-overriding-header "Next tasks in Management\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-category-filter "")		 
+		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-todo-keyword-format "")
+		 )
+		)
+	  
+	  ;; NEXT Education
+          (tags "+education+TODO=\"NEXT\""
+		(
+		 (org-agenda-overriding-header "Next tasks in Education\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-todo-keyword-format "")
+		 )
+		)
+
+	  ;; Blocked Nubank
+	  ;; (tags "+nubank+TODO=\"WAIT\""
+	  ;; 	((org-agenda-skip-function 'my-skip-unless-waiting)
+          ;;   (org-agenda-category-filter
+	  ;;    (quote
+	  ;;     ("+Nubank")))
+	  ;;   (org-agenda-overriding-header "Blocked Nubank Tasks: "))
+
+	  ;; 	)
+
+	  ;; Long deadlines
+	  ;; (agenda ""
+	  ;; 	  ((org-agenda-time-grid nil)
+	  ;; 	   (org-agenda-span 'day)
+	  ;; 	   (org-deadline-warning-days 90)
+	  ;; 	   (org-agenda-entry-types '(:deadline))
+	  ;; 	   (org-agenda-sorting-strategy '(deadline-up))
+	  ;; 	   (org-agenda-overriding-header "Deadlines in the next 90 days:")
+	  ;; 	   ))
+
+
+	  ;; Year Goals Milestones
+	  ;; (tags "-nubank+goals2020+TODO=\"NEXT\""
+	  ;; 	((org-agenda-category-filter "-Nubank")
+	  ;; 	 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+	  ;; 					(air-org-skip-subtree-if-priority ?A)
+	  ;; 					(org-agenda-skip-if nil '(scheduled deadline))))
+	  ;;   (org-agenda-overriding-header "2020 Goals Milestones: ")
+	  ;;   )
+	  ;; 	)
+
+
+	  ;; Perf Cycle goals
+	  (tags "+cyclegoals+LEVEL=3+TODO=\"TODO\"|+cyclegoals+LEVEL=3+TODO=\"DONE\""
+		(;; (org-agenda-category-filter "-Nubank")
+		 (org-agenda-prefix-format " ")
+		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+						(air-org-skip-subtree-if-priority ?A)
+						(org-agenda-skip-if nil '(scheduled deadline))))
+		 (org-agenda-overriding-header "Cycle Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-remove-tags t)
+
+	    )
+		)
+
+	  ;; ;; Backlog projects
+	  ;; (tags "PRIORITY=\"B\""
+          ;;       ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+          ;;        (org-agenda-overriding-header "Backlog Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+	  ;; 	 (org-agenda-remove-tags t)
+	  ;; 	 (org-agenda-todo-keyword-format "")
+	  ;; 	 ))
+
+	  ;; All not scheduled things
+	  (tags "-cyclegoals-selfdevelopment+TODO=\"TODO\"-PRIORITY=\"A\""
+	  	(
+	  	 ;; (org-agenda-tags-todo-honor-ignore-options :scheduled)
+	  	 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+	  					;; (air-org-skip-subtree-if-priority ?A)
+						(org-agenda-skip-if-scheduled-later)
+	  					;; (org-agenda-skip-if nil '(scheduled deadline))
+						))
+		 (org-agenda-overriding-header "Backlog\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+	  	 (org-agenda-remove-tags t)
+	    )
+	   )
+
+	  ;; ;; Medium-low priority tasks
+	  ;; (tags "PRIORITY=\"C\""
+          ;;       ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+          ;;        (org-agenda-overriding-header "Not-priority projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+	  ;; 	 (org-agenda-remove-tags t)
+	  ;; 	 (org-agenda-todo-keyword-format "")
+	  ;; 	 ))
+
+	  )
+         ((org-agenda-compact-blocks nil))
+	 )
+
+    ;; 	("n" "Next Nubank tasks" todo "NEXT"
+    ;; ((org-agenda-skip-function 'my-skip-unless-waiting)
+    ;;         (org-agenda-category-filter-preset
+    ;; 	(quote
+    ;; 	 ("+Nubank")))
+    ;; 	    (org-agenda-overriding-header "Nu Agenda: "))
+
+    ;; )
+
+		)
+
 ;; Enable the usage of two agenda views at the same time
 (org-toggle-sticky-agenda)
+
+;; Function to show scheduled only if missed
+(defun org-agenda-skip-if-scheduled-later ()
+"If this function returns nil, the current match should not be skipped.
+Otherwise, the function must return a position from where the search
+should be continued."
+  (ignore-errors
+    (let ((subtree-end (save-excursion (org-end-of-subtree t)))
+          (scheduled-seconds
+            (time-to-seconds
+              (org-time-string-to-time
+                (org-entry-get nil "SCHEDULED"))))
+          (now (time-to-seconds (current-time))))
+       (and scheduled-seconds
+            (>= scheduled-seconds now)
+            subtree-end))))
 
 ;; Shortcut to display day activity
 (defun org-agenda-show-agenda-and-todo (&optional arg)
@@ -965,6 +1174,8 @@ this command to copy it"
 ;; Open agenda
 (global-set-key (kbd "C-<f10>") (lambda() (interactive)(org-agenda nil "d")(org-agenda-redo) (text-scale-decrease 1)))
 (global-set-key (kbd "<f10>") (lambda() (interactive)(org-agenda nil "d")(org-agenda-redo)))
+;; Work agenda
+(global-set-key (kbd "<f7>") (lambda() (interactive)(org-agenda nil "nu")(org-agenda-redo)))
 ;; Initialize with agenda view
 (add-hook 'after-init-hook (lambda () (org-agenda nil "d") (org-agenda-redo)))
 ;; Open day
@@ -1000,8 +1211,14 @@ this command to copy it"
       :ensure t
       :hook
       (after-init . org-roam-mode)
+      :init
+      (setq org-roam-completion-everywhere t)
+      (add-hook 'org-mode-hook
+          (lambda ()
+            (set (make-local-variable 'company-backends) '(company-capf))))
       :custom
       (org-roam-directory "~/Dropbox/agenda/roam")
+      ;; (setq org-roam-db-location "~/Dropbox/agenda/roam")
       :bind (:map org-roam-mode-map
               (("C-c n l" . org-roam)
                ("C-c n f" . org-roam-find-file)
@@ -1085,8 +1302,6 @@ this command to copy it"
 ;;   :config
 ;;   (push 'company-org-roam company-backends))
 
-;; (add-hook 'org-roam-mode-hook 'company-mode)
-
 ;; Increase latex preview font
 (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
 
@@ -1097,7 +1312,7 @@ this command to copy it"
   :ensure t)
 
 ;; Set the body text width
-(setq olivetti-body-width 0.6)
+(setq olivetti-body-width 0.65)
 
 ;; Enable Olivetti for text-related mode such as Org Mode
 (add-hook 'text-mode-hook 'olivetti-mode)
@@ -1117,17 +1332,12 @@ this command to copy it"
   (company-mode -1)
   )
 
-;; Change background color of code blocks in org mode
-(require 'color)
-(set-face-attribute 'org-block nil :background
-                    (color-darken-name
-                     (face-attribute 'default :background) 10))
-
 ;; Avoid org asking if I want to run code
 (setq org-confirm-babel-evaluate nil)
 
 ;; org-roam-bib
 (use-package org-roam-bibtex
+  :ensure t
   :after org-roam
   :hook (org-roam-mode . org-roam-bibtex-mode)
   ;; :init (setq org-ref-notes-function 'orb-notes-fn)
@@ -1140,6 +1350,24 @@ this command to copy it"
          :file-name "${citekey}"
          :head "#+TITLE: ${title}, ${author-abbrev}\n#+ROAM_KEY: ${ref}\n#+Authors: ${author}\n#+STARTUP: inlineimages latexpreview\n#+roam_tags: bibliographical-notes " ; <--
          :unnarrowed t)))
+
+(use-package helm-org-rifle
+  :ensure t
+  )
+
+(use-package org-ql
+  :ensure t)
+
+;; https://www.orgroam.com/manual/Full_002dtext-search-interface-with-Deft.html
+(use-package deft
+  :after org
+  :bind
+  ("C-c n d" . deft)
+  :custom
+  (deft-recursive t)
+  (deft-use-filter-string-for-filename t)
+  (deft-default-extension "org")
+  (deft-directory "/path/to/org-roam-files/"))
 
 (provide 'org-settings)
 ;;; org-settings.el ends here
