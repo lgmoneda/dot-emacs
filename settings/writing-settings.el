@@ -4,7 +4,7 @@
 (setq TeX-auto-save t)
 (setq TeX-parse-self t)
 (setq TeX-save-query nil)
-;(setq TeX-PDF-mode t)
+;; (setq TeX-PDF-mode t)
 
 ;; automatic formatting of a section: C-c C-q C-s;
 ;; section preview: C-c C-p C-s;
@@ -88,10 +88,16 @@
 ;; (pdf-tools-install)
 
 
+;; Suggests good academic phrases
+;; Use m-x academic-phrases or academic-phrases-by-section
+(use-package academic-phrases
+  :ensure t)
+
 (use-package reftex
              :ensure t)
-(use-package ivy-bibtex
-             :ensure t)
+
+;; (use-package ivy-bibtex
+;;   :ensure t)
 
 ;;In order to get support for many of the LaTeX packages you will use in your documents,
 ;;you should enable document parsing as well, which can be achieved by putting
@@ -104,35 +110,26 @@
 ;;(setq-default TeX-master nil)
 
 ;;  automatically insert  ‘\(...\)’ in LaTeX files by pressing $
-(add-hook 'LaTeX-mode-hook
-          (lambda () (set (make-variable-buffer-local 'TeX-electric-math)
-                     (cons "\\(" "\\)" ))))
+;; (add-hook 'LaTeX-mode-hook
+;;           (lambda () (set (make-variable-buffer-local 'TeX-electric-math)
+;;                      (cons "\\(" "\\)" ))))
 ;; The linebreaks will be inserted automatically if auto-fill-mode is enabled.
 ;; In this case the source is not only filled but also indented automatically
 ;; as you write it.
 
-;; (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
+;; Avoid sp messing with $ for math, but loses it for ()
+;; (add-hook 'LaTeX-mode-hook (lambda () (sp-pair "(" nil :actions nil)))
 
-(add-hook 'LaTeX-mode-hook (lambda () (sp-pair "\\(" nil :actions nil)))
-
-;;  (defun my-smartparens-TeX-mode-hook ()
-;;     (local-set-key "\\(" 'self-insert-command)
-;;     (local-set-key "(" 'self-insert-command))
-;; (add-hook 'LaTeX-mode-hook 'my-smartparens-TeX-mode-hook)
-
-;; (put 'TeX-insert-dollar 'delete-selection nil)
-
-
+;; (add-hook 'LaTeX-mode-hook (lambda () (sp-pair ")" nil :actions nil)))
+(setq TeX-electric-math '("$" . "$"))
 ;; Useful to copy math chunks in latex
 (eval-after-load 'tex-mode
   '(define-key latex-mode-map (kbd "C--") 'lgm/select-until-next-occurence))
 (eval-after-load 'tex-mode
   '(define-key latex-mode-map (kbd "C-.") 'goto-last-change))
 
-
-
 ;; use PDF-Tools
-;;(pdf-tools-install)
+(pdf-tools-install)
 
 (setq TeX-view-program-selection '((output-pdf "pdf-tools"))
       TeX-view-program-list '(("pdf-tools" "TeX-pdf-tools-sync-view"))
@@ -155,7 +152,19 @@
 (setq reftex-plug-into-AUCTeX t)
 
 ;; ivy-bibtex
-(require 'ivy-bibtex)
+
+(use-package helm-bibtex
+  :ensure t)
+(use-package ivy-bibtex
+  :ensure t)
+(autoload 'ivy-bibtex "ivy-bibtex" "" t)
+;; ivy-bibtex requires ivy's `ivy--regex-ignore-order` regex builder, which
+;; ignores the order of regexp tokens when searching for matching candidates.
+;; Add something like this to your init file:
+(setq ivy-re-builders-alist
+      '((ivy-bibtex . ivy--regex-ignore-order)
+        (t . ivy--regex-plus)))
+
 (global-set-key (kbd "C-c r") 'ivy-bibtex)
 (setq ivy-bibtex-default-action 'ivy-bibtex-insert-citation)
 
@@ -171,7 +180,7 @@
 ;; specify the path of the note
 ;; (setq bibtex-completion-notes-path "~/Documents/Research/ref.org")
 ;;If one file per publication is preferred, bibtex-completion-notes-path should point to the directory used for storing the notes files:
-(setq bibtex-completion-notes-path "~/Dropbox/Agenda/roam/bibliographical-notes/")
+(setq bibtex-completion-notes-path "~/Dropbox/Agenda/roam/")
 
 ;; Customize layout of search results
 ;; first add journal and booktitle to the search fields
@@ -190,7 +199,7 @@
 ;; default is to open pdf - change that to insert citation
 (setq bibtex-completion-pdf-field "File")
 ;; the pdf should be renamed with the BibTeX key
-;;(setq bibtex-completion-library-path '("~/Documents/Literature/"))
+(setq bibtex-completion-library-path '("~/Documents/Research/Literature"))
 ;;(setq ivy-bibtex-default-action #'ivy-bibtex-insert-citation)
 
 ;; adds an action with Evince as an external viewer bound to P,
@@ -200,14 +209,16 @@
          (lambda (fpath) (start-process "zathura" "*helm-bibtex-zathura*" "/usr/bin/zathura" fpath))))
     (bibtex-completion-open-pdf keys fallback-action)))
 
+;;uncomment
 (ivy-bibtex-ivify-action bibtex-completion-insert-citation ivy-bibtex-insert-citation)
+
 ;; (ivy-add-actions
 ;;  'ivy-bibtex
 ;;  '(("P" ivy-bibtex-open-pdf-external "Open PDF file in external viewer (if present)")))
 
 ;; If you store files in various formats, then you can specify a list
 ;; Extensions in this list are then tried sequentially until a file is found.
-(setq bibtex-completion-pdf-extension '(".pdf" ".djvu"))
+(setq bibtex-completion-pdf-extension '(".pdf"))
 
 ;; format of ciations
 ;; For example, people who don’t use Ebib might prefer links to the PDFs
@@ -222,17 +233,18 @@
 
 ;; use org-ref
 (use-package org-ref
-             :ensure t)
+:ensure t)
 
-(setq org-ref-bibliography-notes "~/Dropbox/Agenda/roam/bibliographical-notes/"
+(setq org-ref-bibliography-notes "~/Dropbox/Agenda/roam"
       org-ref-default-bibliography '("~/Dropbox/Research/library.bib")
       org-ref-pdf-directory "~/Dropbox/Research/Literature/"
       org-ref-completion-library 'org-ref-ivy-cite
       )
+
 (setq org-latex-pdf-process (list "latexmk -shell-escape -bibtex -f -pdf %f"))
 
 ;; Sometimes it is necessary to tell bibtex what dialect you are using to support the different bibtex entries that are possible in biblatex. You can do it like this globally.
-(setq bibtex-dialect 'biblatex)
+(bibtex-set-dialect 'BibTeX)
 
 ;; open pdf
 (defun my/org-ref-open-pdf-at-point ()
@@ -266,6 +278,7 @@
 (use-package google-translate
   :ensure t
   :init
+  (setq google-translate-backend-method 'curl)
   (setq google-translate-default-source-language "pt")
   (setq google-translate-default-target-language "eng")
   (setq google-translate-pop-up-buffer-set-focus t)
@@ -278,6 +291,11 @@
   (setq google-translate-translation-directions-alist
       '(("pt" . "en") ("en" . "pt") ("pt" . "fr") ("fr" . "pt")))
   )
+
+;; Fixes the tkk error
+(defun google-translate--get-b-d1 ()
+    ;; TKK='427110.1469889687'
+  (list 427110 1469889687))
 
 ;; Useful to activate while I write my cards
 (global-set-key "\C-cf" 'flyspell-mode)

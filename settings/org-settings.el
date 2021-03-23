@@ -4,7 +4,8 @@
 ;============================
 ;==        Org-mode        ==
 ;============================
-(require 'org)
+;; (use-package org
+;;   :ensure t)
 
 ;; Properties I want subtrees to inherite
 (setq org-use-property-inheritance '("TIMELINE_FACE"))
@@ -113,7 +114,8 @@
 ;; (add-hook 'after-init-hook 'org-agenda-list)
 (setq org-agenda-block-separator "-")
 
-(org-defkey org-mode-map (kbd "C-S-s /") 'helm-org-agenda-files-headings)
+(org-defkey org-mode-map (kbd "C-S-s /") 'helm-org-rifle)
+;; (org-defkey org-mode-map (kbd "C-S-s /") 'helm-org-agenda-files-headings)
 ;; (org-defkey org-mode-map (kbd "C-S-s /") 'counsel-org-agenda-headlines)
 
 (defun org-tell-me-first-header ()
@@ -133,12 +135,13 @@
 (add-hook 'org-after-todo-statistics-hook 'org-summary-todo)
 
 ;; https://github.com/gregsexton/ob-ipython
-;; (use-package ob-ipython
-;;   :ensure t
-;;   :init
-;;   ;; (setq ob-ipython-resources-dir (no-littering-expand-var-file-name "obipy-resources"))
-;;   :config
-;;   (require 'ob-ipython))
+(use-package ob-ipython
+  :ensure t
+  :init
+  ;; (setq ob-ipython-resources-dir (no-littering-expand-var-file-name "obipy-resources"))
+  :config
+  (require 'ob-ipython))
+
 
 ;; ;; to redefine images from evaluating code blocks
 ;; After executing code, it displays the image
@@ -151,12 +154,28 @@
    (gnuplot . t)
    (haskell . nil)
    (latex . t)
-   (ledger . t)         ;this is the important one for this tutorial
+   (ledger . t)
    (python . t)
+   (ipython . t)
    (shell . t)
    (dot . t)
    (sql . nil)
    (sqlite . t)))
+
+;; Latex in org
+(setq exec-path (append exec-path '("~/Library/TeX/texbin/latex")))
+
+;; ;; Add Tikz
+(add-to-list 'org-latex-packages-alist
+             '("" "tikz" t))
+
+;; (add-to-list 'org-latex-packages-alist
+;;              '("" "tikz-graph" t))
+
+(eval-after-load "preview"
+  '(add-to-list 'preview-default-preamble "\\PreviewEnvironment{tikzpicture}" t))
+
+(setq org-latex-create-formula-image-program 'imagemagick)
 
 (use-package virtualenvwrapper
   :ensure t)
@@ -216,6 +235,37 @@
 ;; not supported in common font, but supported in Symbola (my fall-back font) ⬎, ⤷, ⤵
 (setq org-ellipsis " ▼")
 
+;; Prettify symbols
+(add-hook 'org-mode-hook (lambda ()
+			   (push '("#+TITLE: "        . "") prettify-symbols-alist)
+    (push '("#+title: "        . "") prettify-symbols-alist)
+    (push '("#+subtitle: "     . "") prettify-symbols-alist)
+    (push '("#+author: "       . "- ") prettify-symbols-alist)
+    (push '("#+AUTHOR: "       . "- ") prettify-symbols-alist)
+    (push '(":properties:"     . "↩") prettify-symbols-alist)
+    (push '(":PROPERTIES:"     . "↩") prettify-symbols-alist)
+    (push '("#+begin_src"      . "λ") prettify-symbols-alist)
+    (push '("#+roam_tags:"      . "#") prettify-symbols-alist)
+    (push '("#+end_src"        . "⋱") prettify-symbols-alist)
+    (push '("#+results:"       . "»") prettify-symbols-alist)
+    (push '("#+STARTUP:"       . "»") prettify-symbols-alist)
+    (push '(":end:"            . "⋱") prettify-symbols-alist)
+    (push '(":results:"        . "⋰") prettify-symbols-alist)
+    (push '("#+name:"          . "-") prettify-symbols-alist)
+    (push '("#+begin_example"  . "~") prettify-symbols-alist)
+    (push '("#+begin_example"  . "~") prettify-symbols-alist)
+    (push '("#+end_example"    . "~") prettify-symbols-alist)
+    (push '("#+end_example"    . "~") prettify-symbols-alist)
+    (push '("#+begin_verbatim" . "") prettify-symbols-alist)
+    (push '("#+end_verbatim"   . "") prettify-symbols-alist)
+    (push '("#+begin_verse"    . "") prettify-symbols-alist)
+    (push '("#+end_verse"      . "") prettify-symbols-alist)
+    (push '("#+begin_quote"    . "𐄚") prettify-symbols-alist)
+    (push '("#+end_quote"      . "𐄚") prettify-symbols-alist)
+    (push '("#+tblfm:"         . "∫") prettify-symbols-alist)
+    (push '("[X]"              . (?\[ (Br . Bl) ?✓ (Br . Bl) ?\])) prettify-symbols-alist)
+    (push '("\\\\"             . "↩") prettify-symbols-alist)
+    (prettify-symbols-mode t)))
 
 (set-display-table-slot standard-display-table
                         'selective-display (string-to-vector " ◦◦◦ ")) ; or whatever you like
@@ -441,6 +491,16 @@ this command to copy it"
 	 ("n" "Next Task" entry (file+headline org-default-notes-file "Tasks")
 	  "** NEXT %? \nDEADLINE: %t") ))
 
+(add-to-list 'org-capture-templates
+             '("w" "Work task"  entry
+               (file "~/Dropbox/Agenda/nu.org")
+               "* TODO %?" :empty-lines 1))
+
+(add-to-list 'org-capture-templates
+             '("d" "Personal task"  entry
+               (file "~/Dropbox/Agenda/todo.org")
+               "* TODO %?" :empty-lines 1))
+
 (setq org-lowest-priority ?F)
 (setq org-default-priority ?F)
 (setq org-agenda-skip-scheduled-if-deadline-is-shown t)
@@ -505,7 +565,7 @@ this command to copy it"
 	  	   (org-agenda-overriding-header "Week tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		   (org-agenda-scheduled-leaders '("" ""))
 		   (org-agenda-prefix-format "    %i %-12:c")
-		   (org-agenda-skip-function '(air-org-skip-subtree-if-habit))
+		   ;; (org-agenda-skip-function '(air-org-skip-subtree-if-habit))
 	  	   ))
 
 	  ;; High priority tasks
@@ -542,117 +602,107 @@ this command to copy it"
 
 	  	;; )
 
-	  ;; NEXT Master
-          (tags "+usp+TODO=\"NEXT\""
+	  ;; NEXT Tasks
+          (tags "+TODO=\"NEXT\""
 		(
-		 (org-agenda-overriding-header "Next tasks in Master\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 (org-agenda-remove-tags t)
+		 (org-agenda-overriding-header "Next unscheduled or late tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) :%-8:c")
 		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+				;; (air-org-skip-subtree-if-priority ?A)
+				(org-agenda-skip-if-scheduled-later)
+				;; (org-agenda-skip-if nil '(scheduled deadline))
+				))
+		 (org-agenda-remove-tags t)
 		 (org-agenda-todo-keyword-format "")
 		 )
 		)
 
-	  ;; NEXT Study
-          (tags "+study+TODO=\"NEXT\""
-		(
-		 (org-agenda-overriding-header "Next tasks in Study\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-sorting-strategy '(scheduled-up))
-		 (org-agenda-todo-keyword-format "")
-		 )
-		)
-
-	  ;; NEXT Projects
-          (tags "+projects+TODO=\"NEXT\""
-		(
-		 (org-agenda-overriding-header "Next task in Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-sorting-strategy '(scheduled-up))
-		 (org-agenda-todo-keyword-format "")
-		 )
-		)
-
-	  ;; NEXT Work
-          (tags "+work+TODO=\"NEXT\"|udacity+TODO=\"NEXT\""
-		(
-		 (org-agenda-overriding-header "Next task in Work\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-sorting-strategy '(scheduled-up))
-		 (org-agenda-todo-keyword-format "")
-		 )
-		)
-
-	  ;; NEXT Kaggle
-          (tags "+kaggle+TODO=\"NEXT\""
-		((org-agenda-overriding-header "Next tasks in Kaggle\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-sorting-strategy '(scheduled-up))
-		 (org-agenda-todo-keyword-format "")
-		 )
-		)
-
-	  ;; NEXT Life
-          (tags "+life-goals2020+TODO=\"NEXT\""
-		((org-agenda-overriding-header "Next tasks in Life\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-sorting-strategy '(scheduled-up))
-		 (org-agenda-todo-keyword-format "")
-		 )
-		)
-
-	  ;; Blocked Nubank
-	  ;; (tags "+nubank+TODO=\"WAIT\""
-	  ;; 	((org-agenda-skip-function 'my-skip-unless-waiting)
-          ;;   (org-agenda-category-filter
-	  ;;    (quote
-	  ;;     ("+Nubank")))
-	  ;;   (org-agenda-overriding-header "Blocked Nubank Tasks: "))
-
+	  ;; ;; NEXT Master
+      ;;     (tags "+usp+TODO=\"NEXT\""
+	  ;; 	(
+	  ;; 	 (org-agenda-overriding-header "Next tasks in Master\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+	  ;; 	 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+	  ;; 	 (org-agenda-remove-tags t)
+	  ;; 	 (org-agenda-sorting-strategy '(scheduled-up))
+	  ;; 	 (org-agenda-todo-keyword-format "")
+	  ;; 	 )
 	  ;; 	)
 
-	  ;; TODO Nubank
-	;;   (tags "+nubank+LEVEL=3+TODO=\"TODO\""
-	;; 	((org-agenda-skip-function 'my-skip-unless-waiting)
-    ;;         (org-agenda-category-filter
-	;; (quote
-	;;  ("+Nubank")))
-	;;     (org-agenda-overriding-header "Nubank Tasks: "))
-
-	;; 	)
-
-	  ;; Mid and low priority tasks
-	  ;; (tags "+PRIORITY={B}"
-          ;;       ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-          ;;        (org-agenda-overriding-header "Mid or low-priority tasks:")))
-
-
-
-	  ;; Long deadlines
-	  ;; (agenda ""
-	  ;; 	  ((org-agenda-time-grid nil)
-	  ;; 	   (org-agenda-span 'day)
-	  ;; 	   (org-deadline-warning-days 90)
-	  ;; 	   (org-agenda-entry-types '(:deadline))
-	  ;; 	   (org-agenda-sorting-strategy '(deadline-up))
-	  ;; 	   (org-agenda-overriding-header "Deadlines in the next 90 days:")
-	  ;; 	   ))
-
-
-	  ;; Year Goals Milestones
-	  ;; (tags "-nubank+goals2020+TODO=\"NEXT\""
-	  ;; 	((org-agenda-category-filter "-Nubank")
-	  ;; 	 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-	  ;; 					(air-org-skip-subtree-if-priority ?A)
-	  ;; 					(org-agenda-skip-if nil '(scheduled deadline))))
-	  ;;   (org-agenda-overriding-header "2020 Goals Milestones: ")
-	  ;;   )
+	  ;; ;; NEXT Study
+      ;;     (tags "+study+TODO=\"NEXT\""
+	  ;; 	(
+	  ;; 	 (org-agenda-overriding-header "Next tasks in Study\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+	  ;; 	 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+	  ;; 	 (org-agenda-remove-tags t)
+	  ;; 	 (org-agenda-sorting-strategy '(scheduled-up))
+	  ;; 	 (org-agenda-todo-keyword-format "")
+	  ;; 	 )
 	  ;; 	)
+
+	  ;; ;; NEXT Projects
+      ;;     (tags "+projects+TODO=\"NEXT\""
+	  ;; 	(
+	  ;; 	 (org-agenda-overriding-header "Next task in Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+	  ;; 	 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+	  ;; 	 (org-agenda-remove-tags t)
+	  ;; 	 (org-agenda-sorting-strategy '(scheduled-up))
+	  ;; 	 (org-agenda-todo-keyword-format "")
+	  ;; 	 )
+	  ;; 	)
+
+	  ;; ;; NEXT Work
+      ;;     (tags "+work+TODO=\"NEXT\"|udacity+TODO=\"NEXT\""
+	  ;; 	(
+	  ;; 	 (org-agenda-overriding-header "Next task in Work\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+	  ;; 	 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+	  ;; 	 (org-agenda-remove-tags t)
+	  ;; 	 (org-agenda-sorting-strategy '(scheduled-up))
+	  ;; 	 (org-agenda-todo-keyword-format "")
+	  ;; 	 )
+	  ;; 	)
+
+	  ;; ;; NEXT Kaggle
+      ;;     (tags "+kaggle+TODO=\"NEXT\""
+	  ;; 	((org-agenda-overriding-header "Next tasks in Kaggle\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+	  ;; 	 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+	  ;; 	 (org-agenda-remove-tags t)
+	  ;; 	 (org-agenda-sorting-strategy '(scheduled-up))
+	  ;; 	 (org-agenda-todo-keyword-format "")
+	  ;; 	 )
+	  ;; 	)
+
+	  ;; ;; NEXT Life
+      ;;     (tags "+life-goals2021+TODO=\"NEXT\""
+	  ;; 	((org-agenda-overriding-header "Next tasks in Life\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+	  ;; 	 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+	  ;; 	 (org-agenda-remove-tags t)
+	  ;; 	 (org-agenda-sorting-strategy '(scheduled-up))
+	  ;; 	 (org-agenda-todo-keyword-format "")
+	  ;; 	 )
+	  ;; 	)
+
+	  ;; All not scheduled things
+	  (tags "-goals2021-selfdevelopment+TODO=\"TODO\"-PRIORITY=\"A\"-PRIORITY=\"B\""
+	  	(
+	  	 ;; (org-agenda-tags-todo-honor-ignore-options :scheduled)
+	  	 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+	  					;; (air-org-skip-subtree-if-priority ?A)
+						(org-agenda-skip-if-scheduled-later)
+	  					;; (org-agenda-skip-if nil '(scheduled deadline))
+						))
+		 (org-agenda-overriding-header "Backlog\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+	  	 (org-agenda-remove-tags t)))
+
+	  ;; Year Goals General
+	  (tags "+goals2021+LEVEL=3+TODO=\"TODO\"|+goals2021+LEVEL=3+TODO=\"DONE\""
+		((org-agenda-category-filter "-Nubank")
+		 (org-agenda-prefix-format " ")
+		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+						(air-org-skip-subtree-if-priority ?A)
+						(org-agenda-skip-if nil '(scheduled deadline))))
+		 (org-agenda-overriding-header "2021 Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-remove-tags t)))
 
 	  ;; Backlog projects
 	  (tags "PRIORITY=\"B\""
@@ -662,66 +712,17 @@ this command to copy it"
 		 (org-agenda-todo-keyword-format "")
 		 ))
 
-	  ;; Year Goals General
-	  (tags "+goals2020+LEVEL=3+TODO=\"TODO\"|+goals2020+LEVEL=3+TODO=\"DONE\""
-		((org-agenda-category-filter "-Nubank")
-		 (org-agenda-prefix-format " ")
-		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-						(air-org-skip-subtree-if-priority ?A)
-						(org-agenda-skip-if nil '(scheduled deadline))))
-		 (org-agenda-overriding-header "2020 Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-remove-tags t)
 
-	    )
-		)
-
-	  ;; Medium-low priority tasks
-	  (tags "PRIORITY=\"C\""
-                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-                 (org-agenda-overriding-header "Not-priority projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-todo-keyword-format "")
-		 ))
-
-	  ;; Next few days
-          ;; (agenda "" ((org-agenda-ndays 2)
-	  ;; 	      (org-agenda-span 3)
-	  ;; 	      (org-agenda-start-day "+1d")
-	  ;; 	      (org-agenda-scheduled-leaders '("" ""))
-	  ;; 	  (org-agenda-overriding-header "Next few days:"))
-	  ;; 	  )
-
-	  ;; All next tasks
-	  ;; (tags "-goals2020+TODO=\"NEXT\""
-	  ;; 	(
-	  ;; 	 (org-agenda-tags-todo-honor-ignore-options :scheduled)
-	  ;; 	 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-	  ;; 					(air-org-skip-subtree-if-priority ?A)
-	  ;; 					(org-agenda-skip-if nil '(scheduled deadline))))
-	  ;; 	 (org-agenda-overriding-header "Next tasks NOT SCHEDULED:")
-	  ;; 	 (org-agenda-remove-tags t)
-	  ;;   )
-	  ;;  )
 	  )
          ((org-agenda-compact-blocks nil))
 	 )
-
-    ;; 	("n" "Next Nubank tasks" todo "NEXT"
-    ;; ((org-agenda-skip-function 'my-skip-unless-waiting)
-    ;;         (org-agenda-category-filter-preset
-    ;; 	(quote
-    ;; 	 ("+Nubank")))
-    ;; 	    (org-agenda-overriding-header "Nu Agenda: "))
-
-    ;; )
-
 	))
 
 (add-to-list 'org-agenda-custom-commands
       '("nu" "Nubank Agenda"
          (
 	  ;; Deadlines
-	  (tags "+DEADLINE>=\"<-2m>\"&DEADLINE<=\"<+2m>\""
+	  (tags "+DEADLINE>=\"<-2m>\"&DEADLINE<=\"<+2m>\"|+perfcycle"
                ((org-agenda-overriding-columns-format
                  "%25ITEM %DEADLINE %TAGS")
 				(org-agenda-overriding-header "Deadlines in the next 60 days\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
@@ -774,47 +775,54 @@ this command to copy it"
 		 (org-agenda-remove-tags t)
 		 (org-agenda-todo-keyword-format "")
 		 ))
-	  
+
 	  ;; NEXT Projects
-          (tags "+projects+TODO=\"NEXT\""
+          (tags "+projects+TODO=\"TODO\"-PRIORITY=\"A\"-epic"
 		(
-		 (org-agenda-overriding-header "Next tasks in Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-overriding-header "Tasks in Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
 		 (org-agenda-remove-tags t)
-		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-sorting-strategy '(priority-down))
+		 ;; (org-agenda-sorting-strategy '(scheduled-down))
 		 (org-agenda-todo-keyword-format "")
 		 )
 		)
 
 	  ;; NEXT Direct Reports
-          (tags "+directreports+TODO=\"NEXT\""
-		((org-agenda-overriding-header "Next tasks about direct reports\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+          (tags "+directreports+TODO=\"TODO\"-PRIORITY=\"A\"-epic"
+		((org-agenda-overriding-header "Tasks about direct reports\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
 		 (org-agenda-remove-tags t)
-		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-sorting-strategy '(priority-down))
+		 ;; (org-agenda-sorting-strategy '(scheduled-down))
 		 (org-agenda-todo-keyword-format "")
 		 )
 		)
-	  
+
 	  ;; NEXT Manager
-          (tags "+manager-directreports+TODO=\"NEXT\""
+          (tags "+manager-directreports+TODO=\"TODO\"-PRIORITY=\"A\"-epic-perfcycle-selfdevelopment"
 		(
-		 (org-agenda-overriding-header "Next tasks in Management\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-overriding-header "Tasks in Management\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
 		 (org-agenda-remove-tags t)
-		 (org-agenda-category-filter "")		 
-		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-category-filter "")
+		 (org-agenda-sorting-strategy '(priority-down))
+		 ;; (org-agenda-sorting-strategy '(scheduled-down))
+		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+						(org-agenda-skip-if-scheduled-later)
+	  					;; (org-agenda-skip-if nil '(scheduled deadline))
+						))
 		 (org-agenda-todo-keyword-format "")
 		 )
 		)
-	  
+
 	  ;; NEXT Education
-          (tags "+education+TODO=\"NEXT\""
+          (tags "+education+TODO=\"TODO\"-PRIORITY=\"A\"-epic"
 		(
-		 (org-agenda-overriding-header "Next tasks in Education\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-overriding-header "Tasks in Education\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
 		 (org-agenda-remove-tags t)
-		 (org-agenda-sorting-strategy '(scheduled-up))
+		 (org-agenda-sorting-strategy '(priority-down))
 		 (org-agenda-todo-keyword-format "")
 		 )
 		)
@@ -873,7 +881,7 @@ this command to copy it"
 	  ;; 	 ))
 
 	  ;; All not scheduled things
-	  (tags "-cyclegoals-selfdevelopment+TODO=\"TODO\"-PRIORITY=\"A\""
+	  (tags "-cyclegoals-selfdevelopment+TODO=\"TODO\"-PRIORITY=\"A\"-manager-projects-education"
 	  	(
 	  	 ;; (org-agenda-tags-todo-honor-ignore-options :scheduled)
 	  	 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
@@ -881,6 +889,7 @@ this command to copy it"
 						(org-agenda-skip-if-scheduled-later)
 	  					;; (org-agenda-skip-if nil '(scheduled deadline))
 						))
+		 (org-agenda-sorting-strategy '(priority-down))
 		 (org-agenda-overriding-header "Backlog\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 	  	 (org-agenda-remove-tags t)
 	    )
@@ -908,6 +917,22 @@ this command to copy it"
     ;; )
 
 		)
+
+;; Work settings
+(add-to-list 'org-capture-templates
+             '("e" "Work Epic"  entry
+               (file "~/Dropbox/Agenda/nu.org")
+               "* TODO %?                 :epic:
+:PROPERTIES:
+:SUMMARY:
+:AUDACITY: Low
+:SCOPE: Small
+:CUSTOMER:
+:GROWTH-COMMITMENTS:
+:EVIDENCE:
+:IMPACT-STATEMENT:
+:IMPACT:   Low
+:END:" :empty-lines 1))
 
 ;; Enable the usage of two agenda views at the same time
 (org-toggle-sticky-agenda)
@@ -1068,6 +1093,7 @@ should be continued."
 
 (setq alert-default-style 'style-name)
 
+
 (defvar yt-iframe-format
   ;; You may want to change your width and height.
   (concat "<iframe width=\"440\""
@@ -1205,7 +1231,13 @@ should be continued."
   (split-line)
   (next-line)
   (beginning-of-line)
-   )
+  )
+
+(defun lgm/double-dollar-sign()
+  (interactive)
+  (insert "$$$$")
+  (backward-char 2)
+  )
 
 (use-package org-roam
       :ensure t
@@ -1228,10 +1260,11 @@ should be continued."
               :map org-mode-map
               (("C-c n i" . org-roam-insert))
               (("C-c n I" . org-roam-insert-immediate))
-			  (("C-c n s" . lgm/screenshot-to-org-link))
-			  (("C-c n r" . ivy-bibtex))
-			  (("C-c n c" . lgm/python-org-code-block))
-
+	      (("C-c n s" . lgm/screenshot-to-org-link))
+	      (("C-c n r" . ivy-bibtex))
+	      (("C-c n c" . lgm/python-org-code-block))
+	      (("C-c n e" . lgm/double-dollar-sign))
+	      (("C-c k" . lgm/double-dollar-sign))
 	      )
 
 	  :init
@@ -1270,11 +1303,24 @@ should be continued."
         org-roam-server-port 8080
         org-roam-server-export-inline-images t
         org-roam-server-authenticate nil
-        org-roam-server-network-poll t
+        org-roam-server-network-poll nil
         org-roam-server-network-arrows nil
+	;; From here: https://visjs.github.io/vis-network/docs/network/
+		;; org-roam-server-network-vis-options "{\"physics\": {\"enabled\": false, \"stabilization\": {\"enabled\": false, \"iterations\": 100}}, \"edges\": {\"physics\": false, \"length\": 5, \"hidden\": false, \"smooth\": {\"enabled\": true, \"type\": \"continuous\"}}, \"nodes\": {\"mass\": 3, \"font\": {\"size\": 32}}}"
+		;; Highlight mode
+	;; org-roam-server-network-vis-options "{\"physics\": {\"enabled\": true, \"stabilization\": {\"enabled\": false, \"iterations\": 100}}, \"edges\": {\"physics\": false, \"length\": 5, \"hidden\": false, \"smooth\": {\"enabled\": true, \"type\": \"continuous\"}, \"color\": {\"border\": \"#2B7CE9\", \"background\": \"#97C2FC\", \"highlight\": \"#3f308e\", \"hover\": \"#3f308e\"}}, \"nodes\": {\"mass\": 3, \"font\": {\"size\": 32}, \"color\": {\"border\": \"#D6D5D3\", \"background\": \"#161616\", \"highlight\": \"#3f308e\", \"hover\": \"#3f308e\"}}}"
+	;;
+	org-roam-server-network-vis-options "{\"physics\": {\"enabled\": true, \"stabilization\": {\"enabled\": false, \"iterations\": 100}}, \"edges\": {\"physics\": false, \"length\": 5, \"hidden\": false, \"smooth\": {\"enabled\": true, \"type\": \"continuous\"}, \"color\": {\"inherit\": false}}, \"nodes\": {\"mass\": 3, \"font\": {\"size\": 32}, \"color\": {\"border\": \"#D6D5D3\", \"background\": \"#161616\", \"highlight\": \"#3f308e\", \"hover\": \"#3f308e\"}}}"
         org-roam-server-network-label-truncate t
         org-roam-server-network-label-truncate-length 60
         org-roam-server-network-label-wrap-length 20))
+
+(require 'f)
+(defvar org-roam-server-db-location)
+(setq org-roam-server-db-location
+ (concat (f-full org-roam-directory) "org-roam.db"))
+
+(require 'org-roam-protocol)
 
 ;; Function inspired by https://llazarek.com/2018/10/images-in-org-mode.html
 ;; check org-download for a more complete solution of it
@@ -1303,7 +1349,7 @@ should be continued."
 ;;   (push 'company-org-roam company-backends))
 
 ;; Increase latex preview font
-(setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
+(setq org-format-latex-options (plist-put org-format-latex-options :scale 2))
 
 ;; Olivetti
 ;; Look & Feel for long-form writing
@@ -1335,6 +1381,15 @@ should be continued."
 ;; Avoid org asking if I want to run code
 (setq org-confirm-babel-evaluate nil)
 
+;; Improve editing of code blocks inside org
+;; src block indentation / editing / syntax highlighting
+;; Source: https://github.com/syl20bnr/spacemacs/issues/13255
+(setq org-src-fontify-natively t
+      org-src-window-setup 'current-window ;; edit in current window
+      org-src-strip-leading-and-trailing-blank-lines t
+      org-src-preserve-indentation t ;; do not put two spaces on the left
+      org-src-tab-acts-natively t)
+
 ;; org-roam-bib
 (use-package org-roam-bibtex
   :ensure t
@@ -1358,6 +1413,9 @@ should be continued."
 (use-package org-ql
   :ensure t)
 
+;; (use-package helm-org-ql
+;;   :ensure t)
+
 ;; https://www.orgroam.com/manual/Full_002dtext-search-interface-with-Deft.html
 (use-package deft
   :after org
@@ -1367,7 +1425,15 @@ should be continued."
   (deft-recursive t)
   (deft-use-filter-string-for-filename t)
   (deft-default-extension "org")
-  (deft-directory "/path/to/org-roam-files/"))
+  (deft-directory "~/Dropbox/Agenda/roam"))
+
+;; Refile settings
+;; from https://blog.aaronbieber.com/2017/03/19/organizing-notes-with-refile.html
+;; If it's needed to define for different files: https://www.reddit.com/r/orgmode/comments/eonvo1/beginner_orgrefiletargets_for_each_file/
+;; (setq org-refile-targets '((org-agenda-files :maxlevel . 3)))
+(setq org-refile-targets '((nil :maxlevel . 4)))
+(setq org-refile-use-outline-path 'file)
+(setq org-outline-path-complete-in-steps nil)
 
 (provide 'org-settings)
 ;;; org-settings.el ends here

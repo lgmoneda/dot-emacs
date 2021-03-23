@@ -41,8 +41,8 @@
 (set-face-background 'hl-line "#292b2e")
 
 ;; Set cursor color
-;; older: #ea51b2
-(set-cursor-color "#edac2c")
+;; older: #ea51b2, #edac2c
+(set-cursor-color "#e16527")
 
 ;; Initialize in full screen
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
@@ -53,7 +53,7 @@
   :ensure t
   :diminish beacon-mode
   :init (beacon-mode 1)
-        (setq beacon-color "#edac2c")
+        (setq beacon-color "#e16527")
         (setq beacon-size 25)
 	(setq beacon-blink-delay 0.3)
 	)
@@ -150,12 +150,12 @@ want to use in the modeline *in lieu of* the original.")
  '(elfeed-goodies/entry-pane-position (quote bottom))
  '(elfeed-goodies/show-mode-padding 40)
  '(markdown-command "/usr/local/bin/pandoc")
- '(olivetti-body-width 100)
+ '(olivetti-body-width 105)
  '(org-roam-db-location "/Users/lgmoneda/Dropbox/agenda/roam/org-roam.db")
  '(org-roam-directory "~/Dropbox/agenda/roam")
  '(package-selected-packages
    (quote
-    (ivy-posframe scihub gscholar-bibtex bibtex-completion org-roam-bibtex virtualenvwrapper olivetti company-org-roam google-translate org-roam-server org-roam emojify writegood-mode disable-mouse dracula-theme dap-mode lsp-treemacs lsp-ivy helm-lsp lsp-ui lsp-mode company-tabnine rainbow-mode engine-mode elfeed-goodies elfeed-org elfeed ess processing-mode elpy pdf-tools ivy-bibtex org-ref org-projectile-helm helm-org counsel-spotify helm-ag helm-rg clojure-mode-extra-font-locking pyvenv conda which-key org-gcal org-journal git-timemachine magit flymd markdown-mode restclient company kaolin-themes rebecca-theme cherry-blossom-theme doom-modeline doom-themes helm-org-rifle org-wild-notifier py-autopep8 cyberpunk-theme org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-notify cider clj-refactor clojure-mode go-mode org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale slack ensime writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard pyimport electric-operator multi diff-hl avy markdown-preview-mode beacon helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm base16-theme spinner monokai-theme hydra)))
+    (sublime-themes zygospore academic-phrases ob-ipython ein all-the-icons restclient-test helm-bibtex interleave org-roam-protocol langtool flycheck-vale flyspell-vale helm-org-ql deft org-ql org-helm-rifle org idle-org-agenda ivy-posframe scihub gscholar-bibtex bibtex-completion org-roam-bibtex virtualenvwrapper olivetti company-org-roam google-translate org-roam-server org-roam emojify writegood-mode disable-mouse dracula-theme dap-mode lsp-treemacs lsp-ivy helm-lsp lsp-ui lsp-mode company-tabnine rainbow-mode engine-mode elfeed-goodies elfeed-org elfeed ess processing-mode elpy pdf-tools ivy-bibtex org-ref org-projectile-helm helm-org counsel-spotify helm-ag helm-rg clojure-mode-extra-font-locking pyvenv conda which-key org-gcal org-journal git-timemachine magit flymd markdown-mode restclient company kaolin-themes rebecca-theme cherry-blossom-theme doom-modeline doom-themes helm-org-rifle org-wild-notifier py-autopep8 cyberpunk-theme org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-notify cider clj-refactor clojure-mode go-mode org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp 0blayout counsel-projectile counsel ivy exec-path-from-shell auctex default-text-scale slack ensime writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard pyimport electric-operator multi diff-hl avy markdown-preview-mode beacon helm-company company-quickhelp company-flx company-anaconda anaconda-mode neotree auto-complete smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try helm base16-theme spinner monokai-theme hydra)))
  '(paradox-github-token t)
  '(pdf-tools-handle-upgrades nil)
  '(show-paren-match ((t (:weight (quote extra-bold)))))
@@ -172,11 +172,13 @@ want to use in the modeline *in lieu of* the original.")
  '(avy-lead-face-2 ((t (:background "dark gray" :foreground "maroon5" :weight bold))))
  '(company-tooltip-search ((t (:inherit highlight :background "steel blue"))))
  '(company-tooltip-search-selection ((t (:background "steel blue"))))
- '(cursor ((t (:background "#edac2c"))))
+ '(cursor ((t (:background "#e16527"))))
  '(diff-hl-change ((t (:background "#3a81c3"))))
  '(diff-hl-delete ((t (:background "#ee6363"))))
  '(diff-hl-insert ((t (:background "#7ccd7c"))))
  '(ein:cell-input-area ((t (:background "black"))))
+ '(font-latex-math-face ((t (:foreground "#f8834f"))))
+ '(font-latex-script-char-face ((t (:foreground "dark gray"))))
  '(fringe ((t (:background nil))))
  '(lazy-highlight ((t (:foreground "white" :background "SteelBlue"))))
  '(mode-line ((t (:background "#663399" :foreground "#ae81ff" :inverse-video nil :box (:line-width 1 :color "#292b2e" :style released-button)))))
@@ -208,11 +210,13 @@ want to use in the modeline *in lieu of* the original.")
   (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display)))
   (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-center)))
   (setq ivy-posframe-parameters
-      '((left-fringe . 8)
-        (right-fringe . 8)
+      '((left-fringe . 30)
+        (right-fringe . 30)
 	))
   (setq ivy-posframe-width 110
-	ivy-posframe-height 30)
+		ivy-posframe-height 30)
+  (setq ivy-posframe-border-width 4)
+
   (ivy-posframe-mode 1)
   )
 

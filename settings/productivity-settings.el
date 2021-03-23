@@ -69,11 +69,6 @@
 		    ("M-y" . ivy-next-line-and-call))
 	     )
 
-(use-package counsel-projectile
-	     :ensure t
-	     :init
-	     (counsel-projectile-mode))
-
 ;; imenu-anywhere
 ;; Changes the C-c C-j behavior
 (use-package imenu-anywhere
@@ -100,11 +95,10 @@
   )
 
 ;; Projectile
-
 (use-package projectile
   :ensure t
   :init
-  (projectile-global-mode)
+  (projectile-mode +1)
   ;; (setq projectile-keymap-prefix (kbd "C-c p"))
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   ;; Smart Mode Line already displays project name
@@ -113,11 +107,21 @@
   :bind (("C-c p s" . projectile-ag)
          ("C-c p g" . projectile-grep)))
 
+(use-package counsel-projectile
+	     :ensure t
+	     :init
+	     (counsel-projectile-mode)
+	     )
 
 ;; Which-key minor mode
 (use-package which-key
   :ensure t
-  :init (which-key-mode))
+  :init
+  (setq which-key-show-early-on-C-h t)
+  (setq whickh-key-idle-delay 10000)
+  (setq which-key-idle-secondary-delay 0.05)
+  ;; (which-key-mode)
+  )
 
 ;;Turn the system sound off
 (setq ring-bell-function 'ignore)
@@ -216,6 +220,11 @@ is called with a prefix argument."
   (defengine google
     "https://www.google.com/search?q=%s"
     :keybinding "g"))
+
+;;zygospore lets you revert C-x 1 (delete-other-window) by pressing C-x 1 again
+(use-package zygospore
+  :ensure t
+  :init (global-set-key (kbd "C-x 1") 'zygospore-toggle-delete-other-windows))
 
 (provide 'productivity-settings)
 ;;; productivity-settings.el ends here
