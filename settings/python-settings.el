@@ -4,7 +4,7 @@
   :ensure t)
 
 (custom-set-variables
- '(conda-anaconda-home "~/miniconda2"))
+ '(conda-anaconda-home "/Users/luis.moneda/opt/miniconda3"))
 
 ;; if you want interactive shell support, include:
 (conda-env-initialize-interactive-shells)
@@ -16,7 +16,7 @@
 (use-package pyvenv
   :ensure t)
 
-(setenv "WORKON_HOME" "~/miniconda2/envs")
+(setenv "WORKON_HOME" "/Users/luis.moneda/opt/miniconda3/envs")
 (pyvenv-mode 1)
 
 (add-hook 'python-mode-hook
@@ -47,17 +47,17 @@
 ;; To activate nupy environment
 (defun anupy ()
   (interactive)
-  (pythonic-activate "~/miniconda2/envs/nupy")
+  (pythonic-activate "/Users/luis.moneda/opt/miniconda3/envs/nu")
   )
 
 ;; Check if i'm at work and activate
 ;; the right environment
 (defun activate-work-env ()
   (if (string= (system-name) "rc530")
-      (pythonic-activate "~/miniconda2/envs/ml")
+      (pythonic-activate "/Users/luis.moneda/opt/miniconda3/envs/ml3")
       )
-  (if (string-match "lgmoneda-MacBook.local" (system-name))
-      (pythonic-activate "~/miniconda2/envs/ml3")
+  (if (string-match "luis.moneda" (system-name))
+      (pythonic-activate "/Users/luis.moneda/opt/miniconda3/envs/ml3")
       )
   )
 

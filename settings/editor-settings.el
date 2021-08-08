@@ -202,8 +202,8 @@
 
 ;; Jump to last change
 (require 'goto-chg)
-(global-set-key [(control ?.)] 'goto-last-change)
-(global-set-key [(control ?,)] 'goto-last-change-reverse)
+(global-set-key (kbd "M-[") 'goto-last-change)
+(global-set-key (kbd "M-]") 'goto-last-change-reverse)
 
 (global-set-key (kbd "C-*")
     (lambda ()
@@ -322,8 +322,8 @@
 ;; (define-key smartparens-mode-map (kbd "C-S-<backspace>") 'sp-splice-sexp-killing-around)
 
 
-(define-key smartparens-mode-map (kbd "C-]") 'sp-select-next-thing-exchange)
-(define-key smartparens-mode-map (kbd "C-<left_bracket>") 'sp-select-previous-thing)
+;; (define-key smartparens-mode-map (kbd "C-]") 'sp-select-next-thing-exchange)
+;; (define-key smartparens-mode-map (kbd "C-<left_bracket>") 'sp-select-previous-thing)
 (define-key smartparens-mode-map (kbd "C-M-]") 'sp-select-next-thing)
 
 (define-key smartparens-mode-map (kbd "M-F") 'sp-forward-symbol)

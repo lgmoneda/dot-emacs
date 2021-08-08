@@ -67,7 +67,7 @@
 (add-to-list 'load-path "~/.emacs.d/elisp/dict-cc" t)
 (require 'dict-cc)
 ;; PATH append
-(setenv "PATH" (concat "/home/lgmoneda/miniconda2/bin:" (getenv "PATH")))
+(setenv "PATH" (concat "/Users/luis.moneda/opt/miniconda3/bin:" (getenv "PATH")))
 
 ;;; LATEX
 
@@ -122,11 +122,28 @@
 
 ;; (add-hook 'LaTeX-mode-hook (lambda () (sp-pair ")" nil :actions nil)))
 (setq TeX-electric-math '("$" . "$"))
+(defun lgm/single-dollar-sign (&optional arg)
+  (interactive "p")
+  (insert "$ $")
+  (backward-char 2)
+  (insert (read-char ""))
+  (delete-forward-char 1)
+  )
+
+(defun lgm/jump-out-of-math()
+  (interactive)
+  (forward-char 1)
+  (insert (spaces-string 1))
+  )
+
+(eval-after-load 'tex-mode
+  '(define-key latex-mode-map (kbd "C-c k") 'lgm/single-dollar-sign))
+
+(global-set-key (kbd "C-c k") 'lgm/single-dollar-sign)
+(global-set-key (kbd "C-c j") 'lgm/jump-out-of-math)
 ;; Useful to copy math chunks in latex
 (eval-after-load 'tex-mode
   '(define-key latex-mode-map (kbd "C--") 'lgm/select-until-next-occurence))
-(eval-after-load 'tex-mode
-  '(define-key latex-mode-map (kbd "C-.") 'goto-last-change))
 
 ;; use PDF-Tools
 (pdf-tools-install)
@@ -304,6 +321,12 @@
   :ensure t
   :init
   (setq langtool-language-tool-jar "~/Documents/LanguageTool-5.1/languagetool-commandline.jar"))
+
+(use-package writegood-mode
+  :ensure t)
+
+(use-package  wwg
+  :ensure t)
 
 (provide 'writing-settings)
 ;;; writing-settings.el ends here
