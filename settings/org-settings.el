@@ -254,6 +254,7 @@
     (push '(":PROPERTIES:"     . "↩") prettify-symbols-alist)
     (push '("#+begin_src"      . "λ") prettify-symbols-alist)
     (push '("#+roam_tags:"      . "#") prettify-symbols-alist)
+    (push '("#+filetags:"      . "#") prettify-symbols-alist)
     (push '("#+end_src"        . "⋱") prettify-symbols-alist)
     (push '("#+results:"       . "»") prettify-symbols-alist)
     (push '("#+STARTUP:"       . "»") prettify-symbols-alist)
@@ -1333,88 +1334,134 @@ should be continued."
   (backward-char 2)
   )
 
-(use-package org-roam
-      :ensure t
-      :hook
-      (after-init . org-roam-mode)
-      :init
-      (setq org-roam-completion-everywhere t)
-      (add-hook 'org-mode-hook
-          (lambda ()
-            (set (make-local-variable 'company-backends) '(company-capf))))
-      :custom
-      (org-roam-directory "/Users/luis.moneda/Dropbox/agenda/roam/")
-      (org-roam-db-location "/Users/luis.moneda/Dropbox/agenda/roam/")
-      :bind (:map org-roam-mode-map
-              (("C-c n l" . org-roam)
-               ("C-c n f" . org-roam-find-file)
-			   ("C-c n b" . helm-bibtex)
-               ("C-c n u" . org-roam-unlinked-references)
-               ("C-c n g" . org-roam-graph-show))
-              :map org-mode-map
-              (("C-c n i" . org-roam-insert))
-              (("C-c n I" . org-roam-insert-immediate))
-	      (("C-c n s" . lgm/screenshot-to-org-link))
-	      (("C-c n r" . ivy-bibtex))
-	      (("C-c n c" . lgm/python-org-code-block))
-	      (("C-c n e" . lgm/double-dollar-sign))
-	      (("C-c k" . lgm/double-dollar-sign))
-	      )
+(use-package deadgrep
+  :ensure t)
 
-	  :init
-	  (setq org-roam-capture-templates
-			'(("d" "default" plain (function org-roam--capture-get-point)
-			   "%?"
-			   :file-name "%(format-time-string \"%Y%m%d%H%M%S-${slug}\" (current-time) t)"
-			   :head "#+title: ${title}
+(setq org-roam-v2-ack t)
+
+(use-package org-roam
+  :init
+  (setq org-roam-completion-everywhere t)
+  (setq completion-ignore-case t)
+  (add-hook 'org-mode-hook
+			(lambda ()
+			  (set (make-local-variable 'company-backends) '(company-capf))))
+  (add-to-list 'company-backends 'company-capf)
+  (setq org-roam-completion-ignore-case t)
+  (setq org-roam-capture-templates
+	'(("d" "default" plain
+         (file "/Users/luis.moneda/Dropbox/Agenda/templates/default_org_roam.org")
+         :target
+         (file+head "%(format-time-string \"%Y%m%d%H%M%S-${slug}.org\" (current-time) t)" "#+title: ${title}
 #+STARTUP: inlineimages latexpreview
-#+roam_tags: "
-			   :unnarrowed t)
-;; 			  ("p" "paper" plain (function org-roam--capture-get-point)
+#+filetags: ")
+         :unnarrowed t))
+			)
+  :custom
+  (org-roam-directory (file-truename "/Users/luis.moneda/Dropbox/Agenda/roam"))
+  :bind (("C-c n l" . org-roam-buffer-toggle)
+         ("C-c n f" . org-roam-node-find)
+		 ("C-c n i" . org-roam-node-insert)
+		 ("C-c n b" . helm-bibtex)
+		 ("C-c n s" . lgm/screenshot-to-org-link)
+		 ("C-c n c" . lgm/python-org-code-block)
+		 ("C-c n e" . lgm/double-dollar-sign)
+		 ("C-c k" . lgm/double-dollar-sign)
+		 ("C-c n n" . org-id-get-create)
+		 )
+  :config
+  (org-roam-setup))
+
+(use-package org-roam-ui
+    :after org-roam
+;;         normally we'd recommend hooking orui after org-roam, but since org-roam does not have
+;;         a hookable mode anymore, you're advised to pick something yourself
+;;         if you don't care about startup time, use
+;;  :hook (after-init . org-roam-ui-mode)
+    :config
+    (setq org-roam-ui-sync-theme t
+          org-roam-ui-follow t
+          org-roam-ui-update-on-save t
+          org-roam-ui-open-on-start t))
+
+;; (use-package org-roam
+;;       :ensure t
+;;       :hook
+;;       (after-init . org-roam-mode)
+;;       :init
+;;       (setq org-roam-completion-everywhere t)
+;;       (add-hook 'org-mode-hook
+;;           (lambda ()
+;;             (set (make-local-variable 'company-backends) '(company-capf))))
+;;       :custom
+;;       (org-roam-directory "/Users/luis.moneda/Dropbox/agenda/roam/")
+;;       (org-roam-db-location "/Users/luis.moneda/Dropbox/agenda/roam/")
+;;       :bind (:map org-roam-mode-map
+;;               (("C-c n l" . org-roam)
+;;                ("C-c n f" . org-roam-find-file)
+;; 			   ("C-c n b" . helm-bibtex)
+;;                ("C-c n u" . org-roam-unlinked-references)
+;;                ("C-c n g" . org-roam-graph-show))
+;;               :map org-mode-map
+;;               (("C-c n i" . org-roam-insert))
+;;               (("C-c n I" . org-roam-insert-immediate))
+;; 	      (("C-c n s" . lgm/screenshot-to-org-link))
+;; 	      (("C-c n r" . ivy-bibtex))
+;; 	      (("C-c n c" . lgm/python-org-code-block))
+;; 	      (("C-c n e" . lgm/double-dollar-sign))
+;; 	      (("C-c k" . lgm/double-dollar-sign))
+;; 	      )
+
+;; 	  :init
+;; 	  (setq org-roam-capture-templates
+;; 			'(("d" "default" plain (function org-roam--capture-get-point)
 ;; 			   "%?"
 ;; 			   :file-name "%(format-time-string \"%Y%m%d%H%M%S-${slug}\" (current-time) t)"
 ;; 			   :head "#+title: ${title}
 ;; #+STARTUP: inlineimages latexpreview
-;; #+roam_tags: paper
-;; Authors:
-;; Link: "
+;; #+roam_tags: "
 ;; 			   :unnarrowed t)
+;; ;; 			  ("p" "paper" plain (function org-roam--capture-get-point)
+;; ;; 			   "%?"
+;; ;; 			   :file-name "%(format-time-string \"%Y%m%d%H%M%S-${slug}\" (current-time) t)"
+;; ;; 			   :head "#+title: ${title}
+;; ;; #+STARTUP: inlineimages latexpreview
+;; ;; #+roam_tags: paper
+;; ;; Authors:
+;; ;; Link: "
+;; ;; 			   :unnarrowed t)
 
-;; 			  ("b" "book" plain (function org-roam--capture-get-point)
-;; 			   "%?"
-;; 			   :file-name "%(format-time-string \"%Y%m%d%H%M%S-${slug}\" (current-time) t)"
-;; 			   :head "#+title: ${title}
-;; #+STARTUP: inlineimages
-;; #+roam_tags: book
-;; Authors: "
-;; 			   :unnarrowed t)
-			  )))
+;; ;; 			  ("b" "book" plain (function org-roam--capture-get-point)
+;; ;; 			   "%?"
+;; ;; 			   :file-name "%(format-time-string \"%Y%m%d%H%M%S-${slug}\" (current-time) t)"
+;; ;; 			   :head "#+title: ${title}
+;; ;; #+STARTUP: inlineimages
+;; ;; #+roam_tags: book
+;; ;; Authors: "
+;; ;; 			   :unnarrowed t)
+;; 			  )))
 
-(use-package org-roam-server
-  :ensure t
-  :config
-  (setq org-roam-server-host "127.0.0.1"
-        org-roam-server-port 8080
-        org-roam-server-export-inline-images t
-        org-roam-server-authenticate nil
-        org-roam-server-network-poll nil
-        org-roam-server-network-arrows nil
-	;; From here: https://visjs.github.io/vis-network/docs/network/
-		;; org-roam-server-network-vis-options "{\"physics\": {\"enabled\": false, \"stabilization\": {\"enabled\": false, \"iterations\": 100}}, \"edges\": {\"physics\": false, \"length\": 5, \"hidden\": false, \"smooth\": {\"enabled\": true, \"type\": \"continuous\"}}, \"nodes\": {\"mass\": 3, \"font\": {\"size\": 32}}}"
-		;; Highlight mode
-	;; org-roam-server-network-vis-options "{\"physics\": {\"enabled\": true, \"stabilization\": {\"enabled\": false, \"iterations\": 100}}, \"edges\": {\"physics\": false, \"length\": 5, \"hidden\": false, \"smooth\": {\"enabled\": true, \"type\": \"continuous\"}, \"color\": {\"border\": \"#2B7CE9\", \"background\": \"#97C2FC\", \"highlight\": \"#3f308e\", \"hover\": \"#3f308e\"}}, \"nodes\": {\"mass\": 3, \"font\": {\"size\": 32}, \"color\": {\"border\": \"#D6D5D3\", \"background\": \"#161616\", \"highlight\": \"#3f308e\", \"hover\": \"#3f308e\"}}}"
-	;;
-	org-roam-server-network-vis-options "{\"physics\": {\"enabled\": true, \"stabilization\": {\"enabled\": false, \"iterations\": 100}}, \"edges\": {\"physics\": false, \"length\": 5, \"hidden\": false, \"smooth\": {\"enabled\": true, \"type\": \"continuous\"}, \"color\": {\"inherit\": false}}, \"nodes\": {\"mass\": 3, \"font\": {\"size\": 32}, \"color\": {\"border\": \"#D6D5D3\", \"background\": \"#161616\", \"highlight\": \"#3f308e\", \"hover\": \"#3f308e\"}}}"
-        org-roam-server-network-label-truncate t
-        org-roam-server-network-label-truncate-length 60
-        org-roam-server-network-label-wrap-length 20))
+;; (use-package org-roam-server
+;;   :ensure t
+;;   :config
+;;   (setq org-roam-server-host "127.0.0.1"
+;;         org-roam-server-port 8080
+;;         org-roam-server-export-inline-images t
+;;         org-roam-server-authenticate nil
+;;         org-roam-server-network-poll nil
+;;         org-roam-server-network-arrows nil
+;; 	;; From here: https://visjs.github.io/vis-network/docs/network/
+;; 	org-roam-server-network-vis-options "{\"physics\": {\"enabled\": true, \"stabilization\": {\"enabled\": false, \"iterations\": 100}}, \"edges\": {\"physics\": false, \"length\": 5, \"hidden\": false, \"smooth\": {\"enabled\": true, \"type\": \"continuous\"}, \"color\": {\"inherit\": false}}, \"nodes\": {\"mass\": 3, \"font\": {\"size\": 32}, \"color\": {\"border\": \"#D6D5D3\", \"background\": \"#161616\", \"highlight\": \"#3f308e\", \"hover\": \"#3f308e\"}}}"
+;;         org-roam-server-network-label-truncate t
+;;         org-roam-server-network-label-truncate-length 60
+;;         org-roam-server-network-label-wrap-length 20))
 
 (require 'f)
-(defvar org-roam-server-db-location)
-(setq org-roam-server-db-location
- (concat (f-full org-roam-directory) "org-roam.db"))
+;; (defvar org-roam-server-db-location)
+;; (setq org-roam-server-db-location
+;;  (concat (f-full org-roam-directory) "org-roam.db"))
 
-(require 'org-roam-protocol)
+;; (require 'org-roam-protocol)
 
 ;; Function inspired by https://llazarek.com/2018/10/images-in-org-mode.html
 ;; check org-download for a more complete solution of it
@@ -1511,15 +1558,15 @@ should be continued."
 ;;   :ensure t)
 
 ;; https://www.orgroam.com/manual/Full_002dtext-search-interface-with-Deft.html
-(use-package deft
-  :after org
-  :bind
-  ("C-c n d" . deft)
-  :custom
-  (deft-recursive t)
-  (deft-use-filter-string-for-filename t)
-  (deft-default-extension "org")
-  (deft-directory "~/Dropbox/Agenda/roam"))
+;; (use-package deft
+;;   :after org
+;;   :bind
+;;   ("C-c n d" . deft)
+;;   :custom
+;;   (deft-recursive t)
+;;   (deft-use-filter-string-for-filename t)
+;;   (deft-default-extension "org")
+;;   (deft-directory "~/Dropbox/Agenda/roam"))
 
 ;; Refile settings
 ;; from https://blog.aaronbieber.com/2017/03/19/organizing-notes-with-refile.html
