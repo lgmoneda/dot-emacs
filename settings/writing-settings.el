@@ -328,5 +328,26 @@
 (use-package  wwg
   :ensure t)
 
+(use-package lsp-grammarly
+  :ensure t
+  ;; or text-mode
+  :hook (latex-mode . (lambda ()
+                       (require 'lsp-grammarly)
+                       (lsp)))
+  )  ; or lsp-deferred
+
+(defun lgm/activate-lsp-grammarly ()
+  (interactive)
+    (require 'lsp-grammarly)
+    (lsp)
+    )
+
+;; annotate-mode
+;; c-c c-a to annotate
+;; c-c c-d to exclude
+;; c-c [ to jump to next note
+(use-package annotate
+  :ensure t)
+
 (provide 'writing-settings)
 ;;; writing-settings.el ends here

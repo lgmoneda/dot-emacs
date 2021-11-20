@@ -512,7 +512,7 @@ this command to copy it"
 (setq org-lowest-priority ?F)
 (setq org-default-priority ?F)
 (setq org-agenda-skip-scheduled-if-deadline-is-shown t)
-(setq org-tags-exclude-from-inheritance '("epic"))
+(setq org-tags-exclude-from-inheritance '("epic" "teamepic"))
 
 ;; From https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html
 (defun air-org-skip-subtree-if-habit ()
@@ -577,7 +577,7 @@ this command to copy it"
 	  	   ))
 
 	  ;; High priority tasks
-	  (tags "PRIORITY=\"A\"-cult"
+	  (tags "PRIORITY=\"A\"-cult+epic"
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "High-priority Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
@@ -716,7 +716,8 @@ this command to copy it"
 	  ;; 	)
 
 	  ;; All not scheduled things
-	  (tags "-goals2021-selfdevelopment+TODO=\"TODO\"-PRIORITY=\"A\"-PRIORITY=\"B\"-PRIORITY=\"C\""
+	  ;; "-goals2021-selfdevelopment+TODO=\"TODO\"-PRIORITY=\"A\"-PRIORITY=\"B\"-PRIORITY=\"C\""
+	  (tags "-goals2021-selfdevelopment+TODO=\"TODO\"-epic"
 	  	(
 	  	 ;; (org-agenda-tags-todo-honor-ignore-options :scheduled)
 	  	 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
@@ -739,7 +740,7 @@ this command to copy it"
 		 (org-agenda-remove-tags t)))
 
 	  ;; Backlog projects
-	  (tags "PRIORITY=\"B\"|PRIORITY=\"C\""
+	  (tags "-PRIORITY=\"A\"+epic"
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "Backlog Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
@@ -818,17 +819,18 @@ this command to copy it"
 
 	  ;; High priority tasks
 	  (tags "-epic-teamepic-educepic+PRIORITY=\"A\""
-                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                (
                  (org-agenda-overriding-header "High-priority Tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
 		 (org-agenda-todo-keyword-format "")
 		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-						(org-agenda-skip-if-scheduled-today-or-later)
+										(org-agenda-skip-if-scheduled-today-or-later)
+										(org-agenda-skip-entry-if 'todo 'done)
 						))
 		 ))
 
 	  ;; NEXT Projects
-          (tags "+projects+TODO=\"TODO\"-PRIORITY=\"A\"-epic"
+          (tags "+projects+TODO=\"TODO\"-PRIORITY=\"A\"-epic-teamepic"
 		(
 		 (org-agenda-overriding-header "Tasks in Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
@@ -876,7 +878,7 @@ this command to copy it"
 		)
 
 	  ;; NEXT Education
-          (tags "+education+TODO=\"TODO\"-PRIORITY=\"A\"-epic-cyclegoals"
+          (tags "+education+TODO=\"TODO\"-PRIORITY=\"A\"-epic-cyclegoals-educepic-teamepic"
 		(
 		 (org-agenda-overriding-header "Tasks in Education\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
@@ -956,7 +958,7 @@ this command to copy it"
 		)
 
 	  	  ;; Backlog projects
-	  (tags "+epic+PRIORITY=\"B\"|PRIORITY=\"C\""
+	  (tags "+epic+teamepic+educepic+PRIORITY=\"B\"|PRIORITY=\"C\""
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "Backlog Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
