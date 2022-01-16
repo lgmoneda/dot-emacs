@@ -250,6 +250,7 @@
     (push '("#+subtitle: "     . "") prettify-symbols-alist)
     (push '("#+author: "       . "- ") prettify-symbols-alist)
     (push '("#+AUTHOR: "       . "- ") prettify-symbols-alist)
+    (push '("#+Authors: "       . "- ") prettify-symbols-alist)
     (push '(":properties:"     . "↩") prettify-symbols-alist)
     (push '(":PROPERTIES:"     . "↩") prettify-symbols-alist)
     (push '("#+begin_src"      . "λ") prettify-symbols-alist)
@@ -327,10 +328,40 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
   (interactive)
   ;; empty file? Add a date timestamp
   (let* ((time (current-time)))
-  (insert "\n")
-  (insert org-journal-date-prefix
-	  (format-time-string org-journal-date-format time)))
+	(insert "\n")
+	(org-insert-heading-respect-content)
+	(insert
+	 (format-time-string org-journal-date-format time)))
   )
+
+(defun lgm/org-add-this-week-as-entry ()
+  (interactive)
+  (let* ((time (current-time)))
+	(insert "\n")
+	(org-insert-heading-respect-content)
+	(insert
+	 (format-time-string "Week %U" time)))
+  )
+
+(defun lgm/org-add-new-meeting-notes ()
+  (interactive)
+  (let* ((time (current-time)))
+	(insert "\n")
+	(org-insert-heading-respect-content)
+	(save-excursion (insert
+	 (format-time-string "[Meeting title], %R, %D" time))
+	(org-insert-subheading 2)
+	(insert "Pre-meeting")
+	(org-insert-heading-respect-content)
+	(insert "Notes")
+	(org-insert-heading-respect-content)
+	(insert "Action items")))
+  )
+
+(org-defkey org-mode-map (kbd "C-M-<return>") (lambda ()
+												 (interactive)
+												 (org-insert-subheading 2)))
+
 
 ;; Make Org Journal remember me about
 ;; writing my day thoughts like in Memento mode
@@ -513,7 +544,7 @@ this command to copy it"
 (setq org-lowest-priority ?F)
 (setq org-default-priority ?F)
 (setq org-agenda-skip-scheduled-if-deadline-is-shown t)
-(setq org-tags-exclude-from-inheritance '("epic" "teamepic"))
+(setq org-tags-exclude-from-inheritance '("epic"))
 
 ;; From https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html
 (defun air-org-skip-subtree-if-habit ()
@@ -783,7 +814,6 @@ this command to copy it"
 	  ;; Week tasks and deadlines
 	  (agenda ""
 	  	  ((org-agenda-time-grid nil)
-		   (org-agenda-remove-tags t)
 	  	   (org-agenda-span 'week)
 	  	   (org-deadline-warning-days 0)
 	  	   (org-deadline-past-days 0)
@@ -793,33 +823,49 @@ this command to copy it"
 	  	   (org-agenda-overriding-header "Week tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		   (org-agenda-scheduled-leaders '("" ""))
 		   (org-agenda-prefix-format "    %i %-12:c")
+		   (org-agenda-remove-tags t)
 		   (org-agenda-skip-function '(air-org-skip-subtree-if-habit))
 	  	   ))
 
 	  ;; High priority projects
-	  (tags "+epic+PRIORITY=\"A\""
+	  (tags "+epic-team-educ+PRIORITY=\"A\""
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "My Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
 		 (org-agenda-todo-keyword-format "")
 		 ))
 
-	  (tags "+teamepic+PRIORITY=\"A\""
+	  (tags "+team+epic+PRIORITY=\"A\""
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "Mx/Col Team Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
 		 (org-agenda-todo-keyword-format "")
 		 ))
 
-	  (tags "+educepic+PRIORITY=\"A\""
+	  (tags "+epic+educ+PRIORITY=\"A\""
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "Education Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
 		 (org-agenda-todo-keyword-format "")
 		 ))
 
+	  ;; NEXT Delegated
+      (tags "+team+directreports+TODO=\"TODO\"-epic"
+		((org-agenda-overriding-header "Tasks delegated to direct reports\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-remove-tags-when-in-prefix t)
+		 (org-agenda-sorting-strategy '(priority-down))
+		 ;; (org-agenda-sorting-strategy '(scheduled-down))
+		 (org-agenda-todo-keyword-format "")
+		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+						(org-agenda-skip-if-scheduled-today-or-later)
+						))
+		 )
+		)
+
 	  ;; High priority tasks
-	  (tags "-epic-teamepic-educepic+PRIORITY=\"A\""
+	  (tags "-epic+PRIORITY=\"A\""
                 (
                  (org-agenda-overriding-header "High-priority Tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
@@ -831,7 +877,7 @@ this command to copy it"
 		 ))
 
 	  ;; NEXT Projects
-          (tags "+projects+TODO=\"TODO\"-PRIORITY=\"A\"-epic-teamepic"
+          (tags "+projects+TODO=\"TODO\"-PRIORITY=\"A\"-epic"
 		(
 		 (org-agenda-overriding-header "Tasks in Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
@@ -846,7 +892,7 @@ this command to copy it"
 		)
 
 	  ;; NEXT Direct Reports
-          (tags "+directreports+TODO=\"TODO\"-PRIORITY=\"A\"-epic"
+          (tags "+directreports-team+TODO=\"TODO\"-PRIORITY=\"A\"-epic"
 		((org-agenda-overriding-header "Tasks about direct reports\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
 		 (org-agenda-remove-tags t)
@@ -879,7 +925,7 @@ this command to copy it"
 		)
 
 	  ;; NEXT Education
-          (tags "+education+TODO=\"TODO\"-PRIORITY=\"A\"-epic-cyclegoals-educepic-teamepic"
+          (tags "+education+TODO=\"TODO\"-PRIORITY=\"A\"-epic-cyclegoals"
 		(
 		 (org-agenda-overriding-header "Tasks in Education\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
@@ -943,7 +989,7 @@ this command to copy it"
 	  ;; 	 ))
 
 	  ;; All not scheduled things
-	  (tags "-cyclegoals-selfdevelopment+TODO=\"TODO\"-PRIORITY=\"A\"-manager-projects-education"
+	  (tags "-cyclegoals-selfdevelopment+TODO=\"TODO\"-PRIORITY=\"A\"-manager-projects-education-directreports"
 	  	(
 	  	 ;; (org-agenda-tags-todo-honor-ignore-options :scheduled)
 	  	 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
@@ -959,7 +1005,7 @@ this command to copy it"
 		)
 
 	  	  ;; Backlog projects
-	  (tags "+epic+teamepic+educepic+PRIORITY=\"B\"|PRIORITY=\"C\""
+	  (tags "+epic-PRIORITY=\"A\""
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "Backlog Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
@@ -1050,8 +1096,8 @@ should be continued."
   (if resp
     ;;'"OK"
     ;;(format-time-string "%Y-%m-%d" (org-time-string-to-time resp))
-    (concat "In " (number-to-string (org-time-stamp-to-now resp)) " day(s)")
-    '"Not Scheduled"
+    (concat "  In " (number-to-string (org-time-stamp-to-now resp)) " day(s)")
+    '"  Not Scheduled"
     )
 )
 
@@ -1335,7 +1381,10 @@ should be continued."
   )
 
 (use-package deadgrep
-  :ensure t)
+  :ensure t
+  :bind
+  ("C-c n d" . deadgrep)
+    )
 
 (setq org-roam-v2-ack t)
 
@@ -1355,22 +1404,30 @@ should be continued."
          (file+head "%(format-time-string \"%Y%m%d%H%M%S-${slug}.org\" (current-time) t)" "#+title: ${title}
 #+STARTUP: inlineimages latexpreview
 #+filetags: ")
-         :unnarrowed t))
+         :unnarrowed t)
+	  ("r" "bibliography reference" plain
+         (file "/Users/luis.moneda/Dropbox/Agenda/templates/bib_org_roam.org")
+         :target
+         (file+head "${citekey}.org" "#+TITLE: ${title}, ${author-abbrev}\n#+ROAM_KEY: ${ref}\n#+Authors: ${author}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n")
+	 :unnarrowed t)
+	  )
 			)
   :custom
   (org-roam-directory (file-truename "/Users/luis.moneda/Dropbox/Agenda/roam"))
   :bind (("C-c n l" . org-roam-buffer-toggle)
          ("C-c n f" . org-roam-node-find)
-		 ("C-c n i" . org-roam-node-insert)
-		 ("C-c n b" . helm-bibtex)
-		 ("C-c n s" . lgm/screenshot-to-org-link)
-		 ("C-c n c" . lgm/python-org-code-block)
-		 ("C-c n e" . lgm/double-dollar-sign)
-		 ("C-c k" . lgm/double-dollar-sign)
-		 ("C-c n n" . org-id-get-create)
-		 )
+	 ("C-c n i" . org-roam-node-insert)
+	 ("C-c n g" . org-roam-graph)
+	 ("C-c n b" . helm-bibtex)
+	 ("C-c n s" . lgm/screenshot-to-org-link)
+	 ("C-c n c" . lgm/python-org-code-block)
+	 ("C-c n e" . lgm/double-dollar-sign)
+	 ("C-c k" . lgm/double-dollar-sign)
+	 ("C-c n n" . org-id-get-create)
+	 )
   :config
-  (org-roam-setup))
+  (org-roam-setup)
+  (org-roam-db-autosync-mode))
 
 (use-package org-roam-ui
     :after org-roam
@@ -1459,16 +1516,35 @@ should be continued."
   :ensure t
   :after org-roam
   :hook (org-roam-mode . org-roam-bibtex-mode)
-  ;; :init (setq org-ref-notes-function 'orb-notes-fn)
-  ;; (setq bibtex-completion-find-note-functions 'orb-notes-fn)
-  :bind (:map org-mode-map
-         (("C-c n a" . orb-note-actions))))
+  :init
+  (setq orb-preformat-keywords
+      '("citekey" "title" "url" "author-or-editor" "keywords" "file" "author" "author-abbrev")
+      orb-process-file-keyword t
+      orb-file-field-extensions '("pdf"))
 
-(setq orb-templates
-      '(("r" "ref" plain (function org-roam-capture--get-point) ""
-         :file-name "${citekey}"
-         :head "#+TITLE: ${title}, ${author-abbrev}\n#+ROAM_KEY: ${ref}\n#+Authors: ${author}\n#+STARTUP: inlineimages latexpreview\n#+roam_tags: bibliographical-notes " ; <--
-         :unnarrowed t)))
+  (setq orb-preformat-templates t)
+  (setq orb-templates
+	'(
+	  ("r" "bibliography reference" plain
+         (file "/Users/luis.moneda/Dropbox/Agenda/templates/bib_org_roam.org")
+         :target
+         (file+head "${citekey}.org" "#+TITLE: ${title}, ${author-abbrev}\n#+ROAM_KEY: ${ref}\n#+Authors: ${author}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n")
+	 :unnarrowed t)
+	  )
+	)
+  :config
+  (require 'org-ref)
+  ;; :init (setq org-ref-notes-function 'orb-edit-note)
+  ;; (setq bibtex-completion-find-note-functions 'org-roam-node-find)
+  :bind (:map org-mode-map
+              (("C-c n a" . orb-note-actions))))
+
+(defun lgm/org-ref-notes-function (candidates)
+  (let ((key (helm-marked-candidates)))
+    (funcall 'orb-edit-note (car key))))
+
+(helm-delete-action-from-source "Edit notes" helm-source-bibtex)
+(helm-add-action-to-source "Edit notes" 'lgm/org-ref-notes-function helm-source-bibtex 7)
 
 (use-package helm-org-rifle
   :ensure t
@@ -1499,5 +1575,67 @@ should be continued."
 (setq org-refile-use-outline-path 'file)
 (setq org-outline-path-complete-in-steps nil)
 
+(defun list-roam-files-with-tags ()
+    "Return a list of files with associated tags
+     I use this to denote files with tasks for org-agenda" ;
+    (seq-uniq
+     (seq-map
+      #'car
+      (org-roam-db-query
+       [:select [nodes:file]
+        :from tags
+        :left-join nodes
+        :on (= tags:node-id nodes:id)
+        :where (in tag $v1)] '(["nu-todo"])))))
+
+(defun list-roam-files-with-tags-todo ()
+    "Return a list of files with associated tags
+     I use this to denote files with tasks for org-agenda" ;
+    (seq-uniq
+     (seq-map
+      #'car
+      (org-roam-db-query
+       [:select [nodes:file]
+        :from tags
+        :left-join nodes
+        :on (= tags:node-id nodes:id)
+        :where (in tag $v1)] '(["todo"])))))
+
+;; (setq nu-dynamic-roam-agenda-files (list-roam-files-with-tags))
+;; (setq personal-dynamic-roam-agenda-files (list-roam-files-with-tags "project" "people"))
+
+(setq old-nu-roam-agenda-files '("~/Dropbox/Agenda/nu.org"
+				 "~/Dropbox/Agenda/roam/20211123125642-nu_meeting_notes.org"))
+
+;; (setq personal-roam-agenda-files '("~/Dropbox/Agenda/todo.org"))
+(org-roam-version)
+(setq personal-dynamic-roam-agenda-files (list-roam-files-with-tags-todo))
+(setq personal-roam-agenda-files (append '("~/Dropbox/Agenda/todo.org")
+				   personal-dynamic-roam-agenda-files))
+
+;; In order to quickly change from Personal to Nu context
+;; I used to use the command C-c C-x < to set the agenda file
+;; But now I want to have multiple files
+(setq org-agenda-files personal-roam-agenda-files)
+(setq org-agenda-files-personal-mode t)
+(setq nu-dynamic-files-fetched nil)
+
+(defun lgm/toggle-agenda-files ()
+  (interactive)
+  (if org-agenda-files-personal-mode
+      (progn (when (not nu-dynamic-files-fetched)
+	       (org-roam-version)
+	       (setq nu-dynamic-roam-agenda-files (list-roam-files-with-tags))
+	       (setq nu-roam-agenda-files (append '("~/Dropbox/Agenda/nu.org")
+				   nu-dynamic-roam-agenda-files))
+	       )
+	     (setq org-agenda-files nu-roam-agenda-files)
+	     (setq org-agenda-files-personal-mode nil)
+	     (setq nu-dynamic-files-fetched t))
+
+    (progn (setq org-agenda-files personal-roam-agenda-files)
+	   (setq org-agenda-files-personal-mode t))
+    )
+  )
 (provide 'org-settings)
 ;;; org-settings.el ends here
