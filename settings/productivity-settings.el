@@ -60,6 +60,7 @@
 	     (global-set-key (kbd "<f1> l") 'counsel-find-library)
 	     (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
 	     (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+	     (global-set-key (kbd "C-c C-j") 'counsel-imenu)
 
 	     :bind
 	     ;; Use ivy to search the kill-ring, but
@@ -74,8 +75,6 @@
 (use-package imenu-anywhere
   :ensure t
   :init
-  ;; I want imenu, not new journal entry!
-  (global-set-key (kbd "C-c C-j") 'imenu-anywhere)
   )
 
 ;; Ag (search)
@@ -104,6 +103,11 @@
   ;; Smart Mode Line already displays project name
   ;; :config (setq projectile-mode-line'(:eval (format " P[%s]" (projectile-project-name))))
   :config (setq projectile-mode-line'(:eval (format "" (projectile-project-name))))
+  (setq projectile-sort-order 'recentf)
+  (setq projectile-enable-caching t)
+  (setq projectile-completion-system 'ivy)
+  (setq projectile-indexing-method 'alien)
+  ;; (add-to-list 'projectile-globally-ignored-directories ".cache")
   :bind (("C-c p s" . projectile-ag)
          ("C-c p g" . projectile-grep)))
 
