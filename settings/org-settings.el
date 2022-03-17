@@ -103,7 +103,7 @@
 	;; ("TODO" . org-warning)
 	("NEXT" . "pink")
 	("STARTED" . "yellow")
-	("WAIT" . "purple")
+	("WAIT" . "magenta")
 	("INACTIVE" . (:foreground "grey"))
         ("CANCELED" . (:foreground "blue" :weight bold))
         ("FAIL" . (:foreground "blue" :weight bold))))
@@ -325,28 +325,38 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
 
 ;; Custom function to add today date - TIL
 (defun lgm/org-add-today-as-entry ()
+  "Insert the current date as a org header"
   (interactive)
   ;; empty file? Add a date timestamp
   (let* ((time (current-time)))
-	(insert "\n")
+	(org-insert-heading-respect-content)
+	(insert
+	 (format-time-string org-journal-date-format time)))
+  )
+
+;; Custom function to add today date - TIL
+(defun lgm/org-add-date-as-entry ()
+  "Insert the selected date as a org header"
+  (interactive)
+  (let* ((time (org-read-date t t)))
 	(org-insert-heading-respect-content)
 	(insert
 	 (format-time-string org-journal-date-format time)))
   )
 
 (defun lgm/org-add-this-week-as-entry ()
+  "Insert the current week of the year as a org header"
   (interactive)
   (let* ((time (current-time)))
-	(insert "\n")
 	(org-insert-heading-respect-content)
 	(insert
 	 (format-time-string "Week %U" time)))
   )
 
 (defun lgm/org-add-new-meeting-notes ()
+  "Insert org headers for meeting notes"
   (interactive)
   (let* ((time (current-time)))
-	(insert "\n")
 	(org-insert-heading-respect-content)
 	(save-excursion (insert
 	 (format-time-string "[Meeting title], %R, %D" time))
@@ -828,14 +838,14 @@ this command to copy it"
 	  	   ))
 
 	  ;; High priority projects
-	  (tags "+epic-team-educ+PRIORITY=\"A\""
+	  (tags "+epic-team-educ+spinning"
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "My Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
 		 (org-agenda-todo-keyword-format "")
 		 ))
 
-	  (tags "+team+epic+PRIORITY=\"A\""
+	  (tags "+team+epic+spinning"
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "Mx/Col Team Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
@@ -850,7 +860,7 @@ this command to copy it"
 		 ))
 
 	  ;; NEXT Delegated
-      (tags "+team+directreports+TODO=\"TODO\"-epic"
+      (tags "+team+directreports+TODO=\"TODO\"-epic|delegated+TODO=\"TODO\"-epic"
 		((org-agenda-overriding-header "Tasks delegated to direct reports\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
 		 (org-agenda-remove-tags t)
@@ -930,6 +940,9 @@ this command to copy it"
 		 (org-agenda-overriding-header "Tasks in Education\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
 		 (org-agenda-remove-tags t)
+		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+						(org-agenda-skip-if-scheduled-today-or-later)
+						))
 		 (org-agenda-sorting-strategy '(priority-down))
 		 (org-agenda-todo-keyword-format "")
 		 )
@@ -989,7 +1002,7 @@ this command to copy it"
 	  ;; 	 ))
 
 	  ;; All not scheduled things
-	  (tags "-cyclegoals-selfdevelopment+TODO=\"TODO\"-PRIORITY=\"A\"-manager-projects-education-directreports"
+	  (tags "-cyclegoals-selfdevelopment+TODO=\"TODO\"-PRIORITY=\"A\"-manager-projects-education-directreports-spinning"
 	  	(
 	  	 ;; (org-agenda-tags-todo-honor-ignore-options :scheduled)
 	  	 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
@@ -1005,7 +1018,7 @@ this command to copy it"
 		)
 
 	  	  ;; Backlog projects
-	  (tags "+epic-PRIORITY=\"A\""
+	  (tags "+epic-spinning"
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "Backlog Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
@@ -1039,7 +1052,7 @@ this command to copy it"
 (add-to-list 'org-capture-templates
              '("e" "Work Epic"  entry
                (file "~/Dropbox/Agenda/nu.org")
-               "* TODO %?                 :epic:
+               "* TODO %?                 :epic:spinning:
 :PROPERTIES:
 :SUMMARY:
 :AUDACITY: Low
@@ -1414,6 +1427,13 @@ should be continued."
 			)
   :custom
   (org-roam-directory (file-truename "/Users/luis.moneda/Dropbox/Agenda/roam"))
+
+  (add-to-list 'display-buffer-alist
+             '("\\*org-roam\\*"
+               (display-buffer-in-direction)
+               (direction . right)
+               (window-width . 0.33)
+               (window-height . fit-window-to-buffer)))
   :bind (("C-c n l" . org-roam-buffer-toggle)
          ("C-c n f" . org-roam-node-find)
 	 ("C-c n i" . org-roam-node-insert)
@@ -1427,7 +1447,10 @@ should be continued."
 	 )
   :config
   (org-roam-setup)
-  (org-roam-db-autosync-mode))
+  (org-roam-db-autosync-mode)
+  (setq org-roam-node-display-template
+	(concat "${title:105} "
+		(propertize "${tags:40}" 'face 'org-tag))))
 
 (use-package org-roam-ui
     :after org-roam
@@ -1571,7 +1594,7 @@ should be continued."
 ;; from https://blog.aaronbieber.com/2017/03/19/organizing-notes-with-refile.html
 ;; If it's needed to define for different files: https://www.reddit.com/r/orgmode/comments/eonvo1/beginner_orgrefiletargets_for_each_file/
 ;; (setq org-refile-targets '((org-agenda-files :maxlevel . 3)))
-(setq org-refile-targets '((nil :maxlevel . 4)))
+(setq org-refile-targets '((nil :maxlevel . 3)))
 (setq org-refile-use-outline-path 'file)
 (setq org-outline-path-complete-in-steps nil)
 
@@ -1621,6 +1644,7 @@ should be continued."
 (setq nu-dynamic-files-fetched nil)
 
 (defun lgm/toggle-agenda-files ()
+  "Toggles between Nu and personal files to build agenda"
   (interactive)
   (if org-agenda-files-personal-mode
       (progn (when (not nu-dynamic-files-fetched)
@@ -1637,5 +1661,31 @@ should be continued."
 	   (setq org-agenda-files-personal-mode t))
     )
   )
+
+;; Take notes in text files with a highlight mark
+(add-to-list 'load-path "~/repos/org-remark")
+(require 'org-remark-global-tracking)
+(org-remark-global-tracking-mode +1)
+
+(autoload #'org-remark-mark "org-remark" nil t)
+(autoload #'org-remark-mode "org-remark" nil t)
+(define-key global-map (kbd "C-c n m") #'org-remark-mark)
+(define-key global-map (kbd "C-c n k") #'org-remark-change)
+
+;; The rest of keybidings are done only on loading `org-remark'
+(with-eval-after-load 'org-remark
+  (define-key org-remark-mode-map (kbd "C-c n o") #'org-remark-open)
+  (define-key org-remark-mode-map (kbd "C-c n ]") #'org-remark-view-next)
+  (define-key org-remark-mode-map (kbd "C-c n [") #'org-remark-view-prev)
+  (define-key org-remark-mode-map (kbd "C-c n r") #'org-remark-remove))
+
+(org-remark-mode)
+(org-remark-create "red-line"
+                   '(:underline (:color "magenta" :style wave))
+                   '(CATEGORY "review" help-echo "Review this"))
+(org-remark-create "yellow"
+                   '(:underline "gold")
+                   '(CATEGORY "important"))
+
 (provide 'org-settings)
 ;;; org-settings.el ends here
