@@ -155,7 +155,7 @@
    (gnuplot . t)
    (haskell . nil)
    (latex . t)
-   (ledger . t)
+   ;; (ledger . t)
    (python . t)
    (emacs-lisp . t)
    ;; Problems with orb capture
@@ -260,7 +260,7 @@
     (push '("#+results:"       . "»") prettify-symbols-alist)
     (push '("#+STARTUP:"       . "»") prettify-symbols-alist)
     (push '(":end:"            . "⋱") prettify-symbols-alist)
-    (push '(":results:"        . "⋰") prettify-symbols-alist)
+    (push '(":results:"        . "»»»") prettify-symbols-alist)
     (push '("#+name:"          . "-") prettify-symbols-alist)
     (push '("#+begin_example"  . "~") prettify-symbols-alist)
     (push '("#+begin_example"  . "~") prettify-symbols-alist)
@@ -334,7 +334,7 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
 	 (format-time-string org-journal-date-format time)))
   )
 
-;; Custom function to add today date - TIL
+
 (defun lgm/org-add-date-as-entry ()
   "Insert the selected date as a org header"
   (interactive)
@@ -523,7 +523,7 @@ this command to copy it"
 (setq org-agenda-window-setup 'other-window)
 ;; (org-agenda-list)
 
-(add-to-list 'org-agenda-files  "~/Dropbox/Agenda/todo.org" "~/Dropbox/Agenda/finances.org")
+(add-to-list 'org-agenda-files  "~/Dropbox/Agenda/todo.org")
 
 (defvar org-capture-templates
        '(("t" "todo" entry (file org-default-notes-file)
@@ -550,6 +550,26 @@ this command to copy it"
              '("d" "Personal task"  entry
                (file "~/Dropbox/Agenda/todo.org")
                "* TODO %?" :empty-lines 1))
+
+(add-to-list 'org-capture-templates
+             '("a" "Org Roam daily" plain
+               "%?"
+               (function org-roam-dailies-capture-date)))
+
+(add-to-list 'org-capture-templates
+             '("m" "Fleeting memory" entry
+	       (file "~/Dropbox/Agenda/roam/20220619110953-fleeting_memories.org")
+               "* %t \n** %?"))
+
+(add-to-list 'org-capture-templates
+             '("n" "Fleeting notes" entry
+	       (file "~/Dropbox/Agenda/roam/20200809213233-fleeting_notes.org")
+               "* %? \n%t "))
+
+(add-to-list 'org-capture-templates
+             '("j" "Journal" entry
+	       (file "~/Dropbox/Agenda/roam/20220619113235-my_journal.org")
+               "* %<%A, %D> \n** %?"))
 
 (setq org-lowest-priority ?F)
 (setq org-default-priority ?F)
@@ -619,7 +639,7 @@ this command to copy it"
 	  	   ))
 
 	  ;; High priority tasks
-	  (tags "PRIORITY=\"A\"-cult+epic"
+	  (tags "PRIORITY=\"A\"-cult+epic-delegated"
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "High-priority Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
@@ -627,7 +647,7 @@ this command to copy it"
 		 ))
 
 	  	  ;; High priority tasks
-	  (tags "PRIORITY=\"A\"+cult"
+	  (tags "PRIORITY=\"A\"+cult+epic"
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "Cult Journeys\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
@@ -778,7 +798,7 @@ this command to copy it"
 		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
 						(air-org-skip-subtree-if-priority ?A)
 						(org-agenda-skip-if nil '(scheduled deadline))))
-		 (org-agenda-overriding-header "2021 Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-overriding-header "2022 Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)))
 
 	  ;; Backlog projects
@@ -869,13 +889,12 @@ this command to copy it"
 		 ;; (org-agenda-sorting-strategy '(scheduled-down))
 		 (org-agenda-todo-keyword-format "")
 		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-						(org-agenda-skip-if-scheduled-today-or-later)
 						))
 		 )
 		)
 
 	  ;; High priority tasks
-	  (tags "-epic+PRIORITY=\"A\""
+	  (tags "-epic+PRIORITY=\"A\"-delegated"
                 (
                  (org-agenda-overriding-header "High-priority Tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-remove-tags t)
@@ -885,6 +904,20 @@ this command to copy it"
 										(org-agenda-skip-entry-if 'todo 'done)
 						))
 		 ))
+
+	  ;; Blocked tasks
+          (tags "-team+TODO=\"WAIT\"-PRIORITY=\"A\"-epic"
+		((org-agenda-overriding-header "Blocked & delayed tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+		 (org-agenda-remove-tags t)
+		 (org-agenda-sorting-strategy '(priority-down))
+		 ;; (org-agenda-sorting-strategy '(scheduled-down))
+		 (org-agenda-todo-keyword-format "")
+		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+						(org-agenda-skip-if-scheduled-today-or-later)
+						))
+		 )
+		)
 
 	  ;; NEXT Projects
           (tags "+projects+TODO=\"TODO\"-PRIORITY=\"A\"-epic"
@@ -916,7 +949,7 @@ this command to copy it"
 		)
 
 	  ;; NEXT Manager
-          (tags "+manager-directreports+TODO=\"TODO\"-PRIORITY=\"A\"-epic-perfcycle-selfdevelopment-cyclegoals"
+          (tags "+manager-directreports+TODO=\"TODO\"-PRIORITY=\"A\"-epic-perfcycle-selfdevelopment-cyclegoals-delegated"
 		(
 		 (org-agenda-overriding-header "Tasks in Management\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
@@ -1437,13 +1470,16 @@ should be continued."
   :bind (("C-c n l" . org-roam-buffer-toggle)
          ("C-c n f" . org-roam-node-find)
 	 ("C-c n i" . org-roam-node-insert)
-	 ("C-c n g" . org-roam-graph)
+	 ;; ("C-c n g" . org-roam-graph)
+	 ("C-c n g" . counsel-org-goto)
 	 ("C-c n b" . helm-bibtex)
 	 ("C-c n s" . lgm/screenshot-to-org-link)
 	 ("C-c n c" . lgm/python-org-code-block)
 	 ("C-c n e" . lgm/double-dollar-sign)
 	 ("C-c k" . lgm/double-dollar-sign)
 	 ("C-c n n" . org-id-get-create)
+	 ("C-c n w" . my/drawio-create)
+	 ("C-c n o" . my/drawio-edit)
 	 )
   :config
   (org-roam-setup)
@@ -1639,6 +1675,7 @@ should be continued."
 ;; In order to quickly change from Personal to Nu context
 ;; I used to use the command C-c C-x < to set the agenda file
 ;; But now I want to have multiple files
+;; Check in the future: https://d12frosted.io/posts/2021-01-16-task-management-with-roam-vol5.html
 (setq org-agenda-files personal-roam-agenda-files)
 (setq org-agenda-files-personal-mode t)
 (setq nu-dynamic-files-fetched nil)
@@ -1686,6 +1723,160 @@ should be continued."
 (org-remark-create "yellow"
                    '(:underline "gold")
                    '(CATEGORY "important"))
+
+(defun lgm/is-link (text)
+  (let ((url-in-text (cl-search "https://" text)))
+    (if url-in-text
+	(= 0 url-in-text)
+      nil)
+    )
+  )
+
+;; Copy Slack behavior of automatically creating link
+;; when pasting url with text selected
+(defun lgm/org-yank-link ()
+  (interactive)
+  (let ((yank-text (string-trim-left (car kill-ring))))
+  (if (lgm/is-link yank-text)
+      (progn
+	(org-insert-link "https://" yank-text (buffer-substring-no-properties (mark) (point))))
+	  (message (concat "Not a link: " yank-text))))
+  )
+
+;; The property is need to keep the delete-selection-mode
+;; (put 'lgm/org-yank-link 'delete-selection 'yank)
+
+;; Define key without anonymous function to not lose the property
+(define-key org-mode-map (kbd "s-v") 'lgm/org-yank-link)
+
+;; Priority inheritance
+;; source:
+(defun my/org-inherited-priority (s)
+  (cond
+
+   ;; Priority cookie in this heading
+   ((string-match org-priority-regexp s)
+    (* 1000 (- org-priority-lowest
+               (org-priority-to-value (match-string 2 s)))))
+
+   ;; No priority cookie, but already at highest level
+   ((not (org-up-heading-safe))
+    (* 1000 (- org-priority-lowest org-priority-default)))
+
+   ;; Look for the parent's priority
+   (t
+    (my/org-inherited-priority (org-get-heading)))))
+
+(setq org-priority-get-priority-function #'my/org-inherited-priority)
+
+(defun lgm/get-parent-priority ()
+  (interactive)
+  (save-excursion
+    (org-up-heading-safe)
+    (message "Heading in get parent f: %s"  (org-get-heading))
+    (org-get-priority (org-get-heading))
+    )
+  )
+
+(defun org-priority-integer-to-char (integer)
+  "Convert priority INTEGER to a character priority."
+  (- org-lowest-priority (/ integer 1000)))
+
+(defun lgm/inherit-parent-priority-if-no-explicit ()
+  (interactive)
+  (when (lgm/is-heading-no-priority)
+    (lgm/inherit-parent-priority)
+    )
+  )
+
+;; When using org-get-priority in a entry without priority, org will jump to the parent
+;; and return its priority. That's why I had to use regex
+(defun lgm/is-heading-no-priority ()
+  (interactive)
+  (if (string-match org-priority-regexp (org-get-heading))
+      nil
+    t)
+  )
+
+(defun lgm/inherit-parent-priority ()
+  "Set the priority to a specific org heading the cursor is over"
+  (interactive)
+    (org-priority (org-priority-integer-to-char (lgm/get-parent-priority))
+    )
+  )
+
+(define-key org-mode-map (kbd "C-c m") 'lgm/inherit-parent-priority)
+
+;; Automatically gets parent priority when using org-capture + org-refile
+(add-hook 'org-after-refile-insert-hook #'lgm/inherit-parent-priority-if-no-explicit)
+
+;; Xournalpp integration
+;; (use-package org-xournalpp
+;;   :config
+;;   (add-hook 'org-mode-hook 'org-xournalpp-mode))
+
+;; (add-to-list 'load-path "~/.emacs.d/elpa/org-xournalpp/org-xournalpp.el" t)
+
+(use-package org-download
+  :ensure t
+  :init
+  (setq org-download-image-dir "~/Dropbox/Agenda/roam/resources")
+  )
+
+;; The width to display images
+(setq org-image-actual-width 650)
+
+;;By H4kman
+(defun my/drawio-create (&optional use-default-filename)
+  (interactive "P")
+  (require 'org-download)
+  (let*((basename (if (not use-default-filename) (read-string (format "Filename [%s]: " "figure.svg") nil nil "figure.svg") nil))
+        (dir (org-download--dir))
+        (filepath (concat dir "/" (org-download-file-format-default basename)))
+        (org-download-image-org-width 400))
+      (make-directory dir t)
+      (when (not (file-exists-p filepath)) (copy-file "~/.emacs.d/drawio_template.svg" filepath)) ; create empty svg file
+      (start-process-shell-command "drawio" nil (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io %s" filepath)) ; open svg file
+      (org-download-insert-link basename filepath)
+      )
+  (org-toggle-inline-images)
+  (org-toggle-inline-images)
+
+  )
+
+(defun my/drawio-edit ()
+  (interactive)
+  (let ((context (org-element-context)))
+    (if (not (eq (car-safe context) 'link))
+        (user-error "Not on a link")
+      (start-process-shell-command
+       "drawio"
+       "drawio"
+       (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io %s"
+               (shell-quote-wildcard-pattern
+                (url-unhex-string (plist-get (cadr context) :path)))))))
+  )
+
+;; Some svg images are not displayed nicely on Emacs, converting to png solves it
+(defun my/drawio-convert-to-png ()
+  (interactive)
+  (let*((context (org-element-context))
+		(filepath (shell-quote-wildcard-pattern
+                   (url-unhex-string (plist-get (cadr context) :path))))
+		(pngfilepath (string-replace ".svg" ".png" filepath)))
+    (if (not (eq (car-safe context) 'link))
+        (user-error "Not on a link")
+      (start-process-shell-command
+       "drawio"
+       "drawio"
+	   (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io -x -f png -o %s %s" pngfilepath filepath))
+	  (org-insert-link pngfilepath pngfilepath nil)
+	  (org-toggle-inline-images)
+	  (org-toggle-inline-images)
+       )))
+
+
+
 
 (provide 'org-settings)
 ;;; org-settings.el ends here
