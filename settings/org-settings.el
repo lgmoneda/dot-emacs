@@ -544,12 +544,20 @@ this command to copy it"
 (add-to-list 'org-capture-templates
              '("w" "Work task"  entry
                (file "~/Dropbox/Agenda/nu.org")
-               "* TODO %?" :empty-lines 1))
+               "* TODO %?
+:PROPERTIES:
+:Effort: 0:05
+:END:"
+	       :empty-lines 1))
 
 (add-to-list 'org-capture-templates
              '("d" "Personal task"  entry
                (file "~/Dropbox/Agenda/todo.org")
-               "* TODO %?" :empty-lines 1))
+               "* TODO %?
+:PROPERTIES:
+:Effort: 0:05
+:END:"
+	       :empty-lines 1))
 
 (add-to-list 'org-capture-templates
              '("a" "Org Roam daily" plain
@@ -698,14 +706,14 @@ this command to copy it"
 	  ;; 	)
 
 	  ;; Late tasks
-	  (tags "+TODO=\"TODO\"+SCHEDULED<\"<today>\""
+	  (tags "+TODO=\"TODO\"+SCHEDULED<\"<today>\"-epic-goals2021-selfdevelopment"
 		(
 		 (org-agenda-overriding-header "Late tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) :%-8:c")
 		 (org-agenda-sorting-strategy '(scheduled-up))
 		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
 				;; (air-org-skip-subtree-if-priority ?A)
-				;; (org-agenda-skip-if-scheduled-later)
+				(org-agenda-skip-if-scheduled-today-or-later)
 				;; (org-agenda-skip-if nil '(scheduled deadline))
 				))
 		 (org-agenda-remove-tags t)
@@ -1824,9 +1832,9 @@ should be continued."
   )
 
 ;; The width to display images
-(setq org-image-actual-width 650)
+(setq org-image-actual-width 750)
 
-;;By H4kman
+;;Inspired or copied from H4kman
 (defun my/drawio-create (&optional use-default-filename)
   (interactive "P")
   (require 'org-download)
@@ -1853,16 +1861,16 @@ should be continued."
        "drawio"
        "drawio"
        (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io %s"
-               (shell-quote-wildcard-pattern
-                (url-unhex-string (plist-get (cadr context) :path)))))))
+               (string-replace ".png" ".svg" (shell-quote-wildcard-pattern
+                (url-unhex-string (plist-get (cadr context) :path))))))))
   )
 
 ;; Some svg images are not displayed nicely on Emacs, converting to png solves it
-(defun my/drawio-convert-to-png ()
+(defun lgm/drawio-convert-to-png ()
   (interactive)
   (let*((context (org-element-context))
-		(filepath (shell-quote-wildcard-pattern
-                   (url-unhex-string (plist-get (cadr context) :path))))
+		(filepath (string-replace ".png" ".svg" (shell-quote-wildcard-pattern
+                   (url-unhex-string (plist-get (cadr context) :path)))))
 		(pngfilepath (string-replace ".svg" ".png" filepath)))
     (if (not (eq (car-safe context) 'link))
         (user-error "Not on a link")
@@ -1870,12 +1878,47 @@ should be continued."
        "drawio"
        "drawio"
 	   (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io -x -f png -o %s %s" pngfilepath filepath))
-	  (org-insert-link pngfilepath pngfilepath nil)
+	  (kill-whole-line)
+	  (org-insert-link nil (concat "file:" pngfilepath) nil)
 	  (org-toggle-inline-images)
 	  (org-toggle-inline-images)
        )))
 
 
+;;try org-cliplink
+
+;; Add total effort for the tasks in a day to enable a reality check
+(require 'cl-lib)
+
+(defun my/org-agenda-calculate-efforts (limit)
+  "Sum the efforts of scheduled entries up to LIMIT in the
+agenda buffer."
+  (let (total)
+    (save-excursion
+     (while (< (point) limit)
+       (when (member (org-get-at-bol 'type) '("scheduled" "past-scheduled"))
+         (push (org-entry-get (org-get-at-bol 'org-hd-marker) "Effort") total))
+       (forward-line)))
+    (org-duration-from-minutes
+     (cl-reduce #'+
+                (mapcar #'org-duration-to-minutes
+                        (cl-remove-if-not 'identity total))))))
+
+(defun my/org-agenda-insert-efforts ()
+  "Insert the efforts for each day inside the agenda buffer."
+  (save-excursion
+   (let (pos)
+     (while (setq pos (text-property-any
+                       (point) (point-max) 'org-agenda-date-header t))
+       (goto-char pos)
+       (end-of-line)
+       (insert-and-inherit (concat " ("
+                                   (my/org-agenda-calculate-efforts
+                                    (next-single-property-change (point) 'day))
+                                   ")"))
+       (forward-line)))))
+
+(add-hook 'org-agenda-finalize-hook 'my/org-agenda-insert-efforts)
 
 
 (provide 'org-settings)
