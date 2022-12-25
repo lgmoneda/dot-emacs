@@ -160,30 +160,7 @@
 ;; C-x C-<space> global jump to last mark
 (setq set-mark-command-repeat-pop t)
 
-;; Selection functions utilities
-;; Stop using arrows for selection!
-(defun mark-a-word-or-thing (arg)
-   "..."
-  (interactive "P")
-  (cond ((or arg mark-active)
-         (when (consp arg) (setq current-prefix-arg nil))
-         (call-interactively 'mark-thing))
-        (t
-         (skip-syntax-backward "w_")
-         (mark-thing 'word))))
-
-(global-set-key (kbd "C-+") 'mark-a-word-or-thing)
 (global-set-key (kbd "C-=") 'er/expand-region)
-
-(defun lgm/select-until-next-occurence ()
-  "Selects the region from a expanded symbol at point at its next occurence"
-  (interactive)
-  (er/expand-region 1)
-  (setq symbol-at-point (buffer-substring (mark) (point)))
-  (set-mark (point))
-  (right-char)
-  (search-forward symbol-at-point)
-  )
 
 ;; Creates a new line without breaking the current line
 (defun newline-without-break-of-line ()
@@ -242,27 +219,21 @@
       (other-window 1)))
 
 ;; Defining switch buffer command
-(global-set-key (kbd "C-3")
+(global-set-key (kbd "C-8")
     (lambda ()
       (interactive)
       (switch-to-prev-buffer)))
 
-(global-set-key (kbd "C-4")
+(global-set-key (kbd "C-9")
     (lambda ()
       (interactive)
       (switch-to-next-buffer)))
 
 ;; Defining switch buffer command
-(global-set-key (kbd "C-'")
+(global-set-key (kbd "C-7")
     (lambda ()
       (interactive)
       (bury-buffer)))
-
-;; Defining switch frames command
-(global-set-key (kbd "C-2")
-    (lambda ()
-      (interactive)
-      (other-frame 1)))
 
 ;; Tryng to save my hand
 (global-set-key (kbd "C-0")
@@ -289,45 +260,21 @@
 
 ;; Enter the next at beginning ()
 (define-key smartparens-mode-map (kbd "C-M-d") 'sp-down-sexp)
+
 ;; Enter the last sexp at end
 (define-key smartparens-mode-map (kbd "C-M-a") 'sp-backward-down-sexp)
+
 ;; Goes to the begining of the current sexp you're in
 (define-key smartparens-mode-map (kbd "C-S-d") 'sp-beginning-of-sexp)
-;; (define-key smartparens-mode-map (kbd "C-S-a") 'sp-end-of-sexp)
-
 (define-key smartparens-mode-map (kbd "C-M-e") 'sp-up-sexp)
 (define-key smartparens-mode-map (kbd "C-M-u") 'sp-backward-up-sexp)
+
 ;; Changes position under cursor element with the next
-(define-key smartparens-mode-map (kbd "C-M-t") 'sp-transpose-sexp)
-
-
 (define-key smartparens-mode-map (kbd "C-M-n") 'sp-next-sexp)
 (define-key smartparens-mode-map (kbd "C-M-p") 'sp-previous-sexp)
-
 (define-key smartparens-mode-map (kbd "C-M-k") 'sp-kill-sexp)
 (define-key smartparens-mode-map (kbd "C-M-w") 'sp-copy-sexp)
-
-
-;; (define-key smartparens-mode-map (kbd "M-<delete>") 'sp-unwrap-sexp)
-;; (define-key smartparens-mode-map (kbd "M-<backspace>") 'sp-backward-unwrap-sexp)
-
-;; (define-key smartparens-mode-map (kbd "C-<right>") 'sp-forward-slurp-sexp)
-;; (define-key smartparens-mode-map (kbd "C-<left>") 'sp-forward-barf-sexp)
-;; (define-key smartparens-mode-map (kbd "C-M-<left>") 'sp-backward-slurp-sexp)
-;; (define-key smartparens-mode-map (kbd "C-M-<right>") 'sp-backward-barf-sexp)
-
-;; (define-key smartparens-mode-map (kbd "M-D") 'sp-splice-sexp)
-;; (define-key smartparens-mode-map (kbd "C-M-<delete>") 'sp-splice-sexp-killing-forward)
-;; (define-key smartparens-mode-map (kbd "C-M-<backspace>") 'sp-splice-sexp-killing-backward)
-;; (define-key smartparens-mode-map (kbd "C-S-<backspace>") 'sp-splice-sexp-killing-around)
-
-
-;; (define-key smartparens-mode-map (kbd "C-]") 'sp-select-next-thing-exchange)
-;; (define-key smartparens-mode-map (kbd "C-<left_bracket>") 'sp-select-previous-thing)
 (define-key smartparens-mode-map (kbd "C-M-]") 'sp-select-next-thing)
-
-(define-key smartparens-mode-map (kbd "M-F") 'sp-forward-symbol)
-(define-key smartparens-mode-map (kbd "M-B") 'sp-backward-symbol)
 
 ;; Replace highlighted text
 (delete-selection-mode 1)
@@ -358,5 +305,10 @@
   :ensure t
   :init (global-disable-mouse-mode))
 
+;; Saves clipboard to the kill ring in case
+;; you kill something before you paste into Emacs
+(setq save-interprogram-paste-before-kill t)
+
 (provide 'editor-settings)
 ;;; editor-settings.el ends here
+
