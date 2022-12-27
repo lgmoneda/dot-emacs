@@ -20,6 +20,13 @@
   ;; (setq sml/theme 'dark)
   (sml/setup))
 
+;; Motivated by org-roam-find-node
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+
 ;Monday, September 18, 2017
 ;============================
 ;==          Ivy           ==
@@ -46,14 +53,18 @@
 	     ;; behaviour.
 	     (define-key ivy-minibuffer-map (kbd "C-j") #'ivy-immediate-done)
 	     (define-key ivy-minibuffer-map (kbd "RET") #'ivy-alt-done)
+
+	     ;; Case insensitive
+	     (setq ivy-case-fold-search-default t)
+	     ;; Use ordeless
+	     (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder)))
+	     (add-to-list 'ivy-highlight-functions-alist '(orderless-ivy-re-builder . orderless-ivy-highlight))
 	     )
 
 (use-package counsel
 	     :ensure t
 	     :init (counsel-mode)
 	     (global-set-key (kbd "M-X") 'counsel-M-x)
-	     ;; (global-set-key (kbd "C-s") 'swiper)
-	     (global-set-key (kbd "M-x") 'counsel-M-x)
 	     (global-set-key (kbd "C-x C-f") 'counsel-find-file)
 	     (global-set-key (kbd "<f1> f") 'counsel-describe-function)
 	     (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
@@ -80,18 +91,6 @@
 ;; Ag (search)
 (use-package ag
   :ensure t)
-
-;; Smex
-(use-package smex
-  :ensure t
-  :init (smex-initialize)
-  :config
-  ;; Using counsel now
-  ;;(global-set-key (kbd "M-X") 'smex)
-  ;;(global-set-key (kbd "M-X") 'smex-major-mode-commands)
-  ;; This is your old M-x.
-  ;;(global-set-key (kbd "M-x") 'execute-extended-command)
-  )
 
 ;; Projectile
 (use-package projectile
@@ -122,9 +121,9 @@
   :ensure t
   :init
   (setq which-key-show-early-on-C-h t)
-  (setq whickh-key-idle-delay 10000)
-  (setq which-key-idle-secondary-delay 0.05)
-  ;; (which-key-mode)
+  (setq whickh-key-idle-delay 20000)
+  (setq which-key-idle-secondary-delay 0.15)
+  (which-key-mode)
   )
 
 ;;Turn the system sound off
@@ -229,6 +228,25 @@ is called with a prefix argument."
 (use-package zygospore
   :ensure t
   :init (global-set-key (kbd "C-x 1") 'zygospore-toggle-delete-other-windows))
+
+(unless (package-installed-p 'quelpa)
+  (with-temp-buffer
+    (url-insert-file-contents "https://raw.githubusercontent.com/quelpa/quelpa/master/quelpa.el")
+    (eval-buffer)
+    (quelpa-self-upgrade)))
+
+(use-package quelpa-use-package
+  :ensure t)
+
+(use-package chatgpt
+  :quelpa ((chatgpt :fetcher git :url "https://github.com/joshcho/ChatGPT.el.git") :upgrade t)
+  :init
+  (require 'python)
+  (pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+  (setq chatgpt-repo-path (expand-file-name "chatgpt/" quelpa-build-dir))
+  :bind ("C-c q" . chatgpt-query))
+
+
 
 (provide 'productivity-settings)
 ;;; productivity-settings.el ends here
