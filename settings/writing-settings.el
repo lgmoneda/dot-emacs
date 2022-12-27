@@ -51,10 +51,6 @@
          ("\\.markdown\\'" . markdown-mode))
   :init (setq markdown-command "multimarkdown"))
 
-;; Useful to copy Latex chunks
-(eval-after-load 'markdown-mode
-  '(define-key markdown-mode-map (kbd "C--") 'lgm/select-until-next-occurence))
-
 ;; Use M-x markdown-preview-mode in a md buffer
 (use-package markdown-preview-mode
   :ensure t)
@@ -63,9 +59,6 @@
 (use-package flymd
   :ensure t)
 
-;; Dict.cc wrap
-(add-to-list 'load-path "~/.emacs.d/elisp/dict-cc" t)
-(require 'dict-cc)
 ;; PATH append
 (setenv "PATH" (concat "/Users/luis.moneda/opt/miniconda3/bin:" (getenv "PATH")))
 
@@ -87,40 +80,14 @@
   (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo"))
 ;; (pdf-tools-install)
 
-
-;; Suggests good academic phrases
-;; Use m-x academic-phrases or academic-phrases-by-section
-(use-package academic-phrases
-  :ensure t)
-
 (use-package reftex
              :ensure t)
-
-;; (use-package ivy-bibtex
-;;   :ensure t)
 
 ;;In order to get support for many of the LaTeX packages you will use in your documents,
 ;;you should enable document parsing as well, which can be achieved by putting
 (setq TeX-parse-self t) ; Enable parse on load.
 (setq TeX-auto-save t) ; Enable parse on save.
 
-;;if you often use \include or \input, you should make AUCTeX aware of
-;;the multi-file document structure. You can do this by inserting
-
-;;(setq-default TeX-master nil)
-
-;;  automatically insert  ‘\(...\)’ in LaTeX files by pressing $
-;; (add-hook 'LaTeX-mode-hook
-;;           (lambda () (set (make-variable-buffer-local 'TeX-electric-math)
-;;                      (cons "\\(" "\\)" ))))
-;; The linebreaks will be inserted automatically if auto-fill-mode is enabled.
-;; In this case the source is not only filled but also indented automatically
-;; as you write it.
-
-;; Avoid sp messing with $ for math, but loses it for ()
-;; (add-hook 'LaTeX-mode-hook (lambda () (sp-pair "(" nil :actions nil)))
-
-;; (add-hook 'LaTeX-mode-hook (lambda () (sp-pair ")" nil :actions nil)))
 (setq TeX-electric-math '("$" . "$"))
 (defun lgm/single-dollar-sign (&optional arg)
   (interactive "p")
@@ -132,8 +99,8 @@
 
 (defun lgm/jump-out-of-math()
   (interactive)
-  (forward-char 1)
-  (insert (spaces-string 1))
+  (forward-char 2)
+  (insert (make-string 1 ? ))
   )
 
 (eval-after-load 'tex-mode
@@ -141,12 +108,6 @@
 
 (global-set-key (kbd "C-c k") 'lgm/single-dollar-sign)
 (global-set-key (kbd "C-c j") 'lgm/jump-out-of-math)
-;; Useful to copy math chunks in latex
-(eval-after-load 'tex-mode
-  '(define-key latex-mode-map (kbd "C--") 'lgm/select-until-next-occurence))
-
-;; use PDF-Tools
-(pdf-tools-install)
 
 (setq TeX-view-program-selection '((output-pdf "pdf-tools"))
       TeX-view-program-list '(("pdf-tools" "TeX-pdf-tools-sync-view"))
@@ -169,9 +130,9 @@
 (setq reftex-plug-into-AUCTeX t)
 
 ;; ivy-bibtex
-
 (use-package helm-bibtex
   :ensure t)
+
 (use-package ivy-bibtex
   :ensure t)
 (autoload 'ivy-bibtex "ivy-bibtex" "" t)
@@ -182,7 +143,7 @@
       '((ivy-bibtex . ivy--regex-ignore-order)
         (t . ivy--regex-plus)))
 
-(global-set-key (kbd "C-c r") 'ivy-bibtex)
+(global-set-key (kbd "C-c r") 'org-ref-insert-cite-link)
 (setq ivy-bibtex-default-action 'ivy-bibtex-insert-citation)
 
 ;; telling bibtex-completion where your bibliographies can be found
@@ -193,9 +154,6 @@
 ;; Where to add bibtex from google scholar
 (setq gscholar-bibtex-database-file "~/Dropbox/Research/library.bib")
 
-
-;; specify the path of the note
-;; (setq bibtex-completion-notes-path "~/Documents/Research/ref.org")
 ;;If one file per publication is preferred, bibtex-completion-notes-path should point to the directory used for storing the notes files:
 (setq bibtex-completion-notes-path "~/Dropbox/Agenda/roam/")
 
@@ -216,8 +174,7 @@
 ;; default is to open pdf - change that to insert citation
 (setq bibtex-completion-pdf-field "File")
 ;; the pdf should be renamed with the BibTeX key
-(setq bibtex-completion-library-path '("~/Documents/Research/Literature"))
-;;(setq ivy-bibtex-default-action #'ivy-bibtex-insert-citation)
+(setq bibtex-completion-library-path '("~/Dropbox/Research/Literature"))
 
 ;; adds an action with Evince as an external viewer bound to P,
 ;; in addition to the regular Emacs viewer with p
@@ -228,10 +185,6 @@
 
 ;;uncomment
 (ivy-bibtex-ivify-action bibtex-completion-insert-citation ivy-bibtex-insert-citation)
-
-;; (ivy-add-actions
-;;  'ivy-bibtex
-;;  '(("P" ivy-bibtex-open-pdf-external "Open PDF file in external viewer (if present)")))
 
 ;; If you store files in various formats, then you can specify a list
 ;; Extensions in this list are then tried sequentially until a file is found.
@@ -247,10 +200,9 @@
         (markdown-mode . bibtex-completion-format-citation-pandoc-citeproc)
         (default       . bibtex-completion-format-citation-default)))
 
-
 ;; use org-ref
 (use-package org-ref
-:ensure t)
+  :ensure t)
 
 (setq org-ref-bibliography-notes "~/Dropbox/Agenda/roam"
       org-ref-default-bibliography '("~/Dropbox/Research/library.bib")
@@ -276,20 +228,7 @@
 
 (setq org-ref-open-pdf-function 'my/org-ref-open-pdf-at-point)
 
-;; This is a small utility for Web of Science/Knowledge (WOK) (http://apps.webofknowledge.com).
-;; (require 'org-ref-wos)
-
-;; (require 'doi-utils)
-
-
 (provide 'init-latex)
-
-(use-package magic-latex-buffer
-  :ensure t)
-
-;; Use flymd-flyit
-(use-package writegood-mode
-  :ensure t)
 
 ;; Google translation to support writing in another language
 (use-package google-translate
@@ -297,14 +236,14 @@
   :init
   (setq google-translate-backend-method 'curl)
   (setq google-translate-default-source-language "pt")
-  (setq google-translate-default-target-language "eng")
+  (setq google-translate-default-target-language "en")
   (setq google-translate-pop-up-buffer-set-focus t)
   (setq google-translate-enable-ido-completion t)
   (require 'google-translate-smooth-ui)
-  (global-set-key "\C-ct" 'google-translate-smooth-translate)
-  (global-set-key "\C-ce" 'google-translate-query-translate-reverse)
-  (global-set-key "\C-cT" 'google-translate-at-point)
-  (global-set-key "\C-cE" 'google-translate-at-point-reverse)
+  (global-set-key "\C-ce" 'google-translate-smooth-translate)
+  (global-set-key "\C-ct" 'google-translate-query-translate-reverse)
+  (global-set-key "\C-cE" 'google-translate-at-point)
+  (global-set-key "\C-cT" 'google-translate-at-point-reverse)
   (setq google-translate-translation-directions-alist
       '(("pt" . "en") ("en" . "pt") ("pt" . "fr") ("fr" . "pt")))
   )
@@ -317,17 +256,6 @@
 ;; Useful to activate while I write my cards
 (global-set-key "\C-cf" 'flyspell-mode)
 
-(use-package langtool
-  :ensure t
-  :init
-  (setq langtool-language-tool-jar "~/Documents/LanguageTool-5.1/languagetool-commandline.jar"))
-
-(use-package writegood-mode
-  :ensure t)
-
-(use-package  wwg
-  :ensure t)
-
 (use-package lsp-grammarly
   :ensure t
   ;; or text-mode
@@ -336,6 +264,8 @@
                        (lsp)))
   )  ; or lsp-deferred
 
+;; Make sure lsp-auto-guess-root is not set to t.
+;; run M-x lsp-workspace-blacklist-remove, if you get an error
 (defun lgm/activate-lsp-grammarly ()
   (interactive)
     (require 'lsp-grammarly)
