@@ -4,8 +4,6 @@
 ;============================
 ;==        Org-mode        ==
 ;============================
-;; (use-package org
-;;   :ensure t)
 
 ;; Properties I want subtrees to inherite
 (setq org-use-property-inheritance '("TIMELINE_FACE"))
@@ -17,7 +15,6 @@
 (global-set-key (kbd "C-c c") 'org-capture)
 
 ;; Indent tasks
-;; Old star color: 626483
 (setq org-startup-indented t)
 
 ;; Init hiding everything
@@ -32,10 +29,10 @@
 ;; No blank lines between headers
 (setq org-cycle-separator-lines 0)
 
-;; Show deadlines 30 days before
+;; Show deadlines 60 days before
 (setq org-deadline-warning-days 60)
 
-;; Consider everything under the tree to todo statistics
+;; Consider everything under the tree for todo statistics
 (setq org-hierarchical-todo-statistics nil)
 
 ;; Add close time when changing to DONE
@@ -88,7 +85,6 @@
         ("\\.pdf.xoj" . "xournal %s")))
       )
 
-;;(add-hook 'org-trigger-hook 'lgm/clock-in-when-started)
 ;; From cashestocashes.com
 ;; Once you've included this, activate org-columns with C-c C-x C-c while on a top-level heading, which will allow you to view the time you've spent at the different levels (you can exit the view by pressing q)
 ;; Set default column view headings: Task Total-Time Time-Stamp
@@ -96,35 +92,16 @@
 
 ;; New states to to-do
 (setq org-todo-keywords
-      '((sequence "TODO(t)" "NEXT(n)" "WAIT(w)" "STARTED(s)" "|" "DONE(d)" "CANCELED(c)" "INACTIVE(i)" "FAIL(f)")))
+      '((sequence "TODO(t)" "WAIT(w)" "STARTED(s)" "|" "DONE(d)" "CANCELED(c)" "INACTIVE(i)" "FAIL(f)")))
 
 (setq org-todo-keyword-faces
       '(
-	;; ("TODO" . org-warning)
-	("NEXT" . "pink")
-	("STARTED" . "yellow")
-	("WAIT" . "magenta")
-	("INACTIVE" . (:foreground "grey"))
+		("NEXT" . "pink")
+		("STARTED" . "yellow")
+		("WAIT" . "magenta")
+		("INACTIVE" . (:foreground "grey"))
         ("CANCELED" . (:foreground "blue" :weight bold))
         ("FAIL" . (:foreground "blue" :weight bold))))
-
-;; No line number in org mode, please
-;;(add-hook 'org-mode-hook (linum-mode 0))
-;; Open org-agenda
-;; (add-hook 'after-init-hook 'org-agenda-list)
-(setq org-agenda-block-separator "-")
-
-(org-defkey org-mode-map (kbd "C-S-s /") 'helm-org-rifle)
-;; (org-defkey org-mode-map (kbd "C-S-s /") 'helm-org-agenda-files-headings)
-;; (org-defkey org-mode-map (kbd "C-S-s /") 'counsel-org-agenda-headlines)
-
-(defun org-tell-me-first-header ()
-  (interactive)
-  (save-excursion
-    (outline-up-heading 3)
-    (print (substring-no-properties (org-get-heading t t)))
-  )
- )
 
 ;; TODO entry automatically change to done when all children are done (from orgmode.org)
 (defun org-summary-todo (n-done n-not-done)
@@ -155,7 +132,6 @@
    (gnuplot . t)
    (haskell . nil)
    (latex . t)
-   ;; (ledger . t)
    (python . t)
    (emacs-lisp . t)
    ;; Problems with orb capture
@@ -167,13 +143,11 @@
 
 ;; Latex in org
 (setq exec-path (append exec-path '("/Library/TeX/texbin/latex")))
+(setq exec-path (append exec-path '("/usr/local/Cellar/imagemagick/7.1.0-55/bin/magick")))
 
 ;; ;; Add Tikz
 (add-to-list 'org-latex-packages-alist
              '("" "tikz" t))
-
-;; (add-to-list 'org-latex-packages-alist
-;;              '("" "tikz-graph" t))
 
 (eval-after-load "preview"
   '(add-to-list 'preview-default-preamble "\\PreviewEnvironment{tikzpicture}" t))
@@ -184,11 +158,9 @@
   :ensure t)
 
 (setq python-shell-interpreter "python3")
-;; '(python-shell-exec-path (quote ("/Users/luis.moneda/opt/miniconda3/envs/ml3/bin")))
-;; '(python-shell-interpreter "/Users/luis.moneda/opt/miniconda3/envs/ml3/bin/python")
 (venv-initialize-interactive-shells) ;; if you want interactive shell support
 (venv-initialize-eshell) ;; if you want eshell support
-(setq venv-location "/Users/luis.moneda/opt/miniconda3/envs/ml3")
+(setq venv-location "/Users/luis.moneda/opt/miniconda3/envs/edge")
 
 
 ;Sunday, December 10, 2017
@@ -204,10 +176,6 @@
 
 ;; Set font size
 (set-face-attribute 'default nil :height 130)
-
-;; Setting English Font
-;; (set-face-attribute
-;;   'default nil :stipple nil :height 130 :width 'normal :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant 'normal :weight 'normal :foundry "outline" :family "DejaVu Sans Mono for Powerline")
 
 ;; disable CJK coding/encoding (Chinese/Japanese/Korean characters)
 (setq utf-translate-cjk-mode nil)
@@ -233,7 +201,7 @@
 ;; use org-bullets-mode for utf8 symbols as org bullets
 (use-package org-bullets
 	:ensure t)
-;;(require 'org-bullets)
+
 ;; make available "org-bullet-face" such that I can control the font size individually
 (setq org-bullets-face-name (quote org-bullet-face))
 (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
@@ -245,37 +213,37 @@
 
 ;; Prettify symbols
 (add-hook 'org-mode-hook (lambda ()
-			   (push '("#+TITLE: "        . "") prettify-symbols-alist)
-    (push '("#+title: "        . "") prettify-symbols-alist)
-    (push '("#+subtitle: "     . "") prettify-symbols-alist)
-    (push '("#+author: "       . "- ") prettify-symbols-alist)
-    (push '("#+AUTHOR: "       . "- ") prettify-symbols-alist)
-    (push '("#+Authors: "       . "- ") prettify-symbols-alist)
-    (push '(":properties:"     . "↩") prettify-symbols-alist)
-    (push '(":PROPERTIES:"     . "↩") prettify-symbols-alist)
-    (push '("#+begin_src"      . "λ") prettify-symbols-alist)
-    (push '("#+roam_tags:"      . "#") prettify-symbols-alist)
-    (push '("#+filetags:"      . "#") prettify-symbols-alist)
-    (push '("#+end_src"        . "⋱") prettify-symbols-alist)
-    (push '("#+results:"       . "»") prettify-symbols-alist)
-    (push '("#+STARTUP:"       . "»") prettify-symbols-alist)
-    (push '(":end:"            . "⋱") prettify-symbols-alist)
-    (push '(":results:"        . "»»»") prettify-symbols-alist)
-    (push '("#+name:"          . "-") prettify-symbols-alist)
-    (push '("#+begin_example"  . "~") prettify-symbols-alist)
-    (push '("#+begin_example"  . "~") prettify-symbols-alist)
-    (push '("#+end_example"    . "~") prettify-symbols-alist)
-    (push '("#+end_example"    . "~") prettify-symbols-alist)
-    (push '("#+begin_verbatim" . "") prettify-symbols-alist)
-    (push '("#+end_verbatim"   . "") prettify-symbols-alist)
-    (push '("#+begin_verse"    . "") prettify-symbols-alist)
-    (push '("#+end_verse"      . "") prettify-symbols-alist)
-    (push '("#+begin_quote"    . "𐄚") prettify-symbols-alist)
-    (push '("#+end_quote"      . "𐄚") prettify-symbols-alist)
-    (push '("#+tblfm:"         . "∫") prettify-symbols-alist)
-    (push '("[X]"              . (?\[ (Br . Bl) ?✓ (Br . Bl) ?\])) prettify-symbols-alist)
-    (push '("\\\\"             . "↩") prettify-symbols-alist)
-    (prettify-symbols-mode t)))
+						   (push '("#+TITLE: "        . "") prettify-symbols-alist)
+						   (push '("#+title: "        . "") prettify-symbols-alist)
+						   (push '("#+subtitle: "     . "") prettify-symbols-alist)
+						   (push '("#+author: "       . "- ") prettify-symbols-alist)
+						   (push '("#+AUTHOR: "       . "- ") prettify-symbols-alist)
+						   (push '("#+Authors: "       . "- ") prettify-symbols-alist)
+						   (push '(":properties:"     . "↩") prettify-symbols-alist)
+						   (push '(":PROPERTIES:"     . "↩") prettify-symbols-alist)
+						   (push '("#+begin_src"      . "λ") prettify-symbols-alist)
+						   (push '("#+roam_tags:"      . "#") prettify-symbols-alist)
+						   (push '("#+filetags:"      . "#") prettify-symbols-alist)
+						   (push '("#+end_src"        . "src") prettify-symbols-alist)
+						   (push '("#+results:"       . "»") prettify-symbols-alist)
+						   (push '("#+STARTUP:"       . "»") prettify-symbols-alist)
+						   (push '(":end:"            . "⋱") prettify-symbols-alist)
+						   (push '(":results:"        . "»»»") prettify-symbols-alist)
+						   (push '("#+name:"          . "-") prettify-symbols-alist)
+						   (push '("#+begin_example"  . "~") prettify-symbols-alist)
+						   (push '("#+begin_example"  . "~") prettify-symbols-alist)
+						   (push '("#+end_example"    . "~") prettify-symbols-alist)
+						   (push '("#+end_example"    . "~") prettify-symbols-alist)
+						   (push '("#+begin_verbatim" . "") prettify-symbols-alist)
+						   (push '("#+end_verbatim"   . "") prettify-symbols-alist)
+						   (push '("#+begin_verse"    . "") prettify-symbols-alist)
+						   (push '("#+end_verse"      . "") prettify-symbols-alist)
+						   (push '("#+begin_quote"    . "𐄚") prettify-symbols-alist)
+						   (push '("#+end_quote"      . "𐄚") prettify-symbols-alist)
+						   (push '("#+tblfm:"         . "∫") prettify-symbols-alist)
+						   (push '("[X]"              . (?\[ (Br . Bl) ?✓ (Br . Bl) ?\])) prettify-symbols-alist)
+						   (push '("\\\\"             . "↩") prettify-symbols-alist)
+						   (prettify-symbols-mode t)))
 
 (set-display-table-slot standard-display-table
                         'selective-display (string-to-vector " ◦◦◦ ")) ; or whatever you like
@@ -305,19 +273,8 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
         subtree-end
       nil)))
 
-;; Org Journal
-;; (use-package org-journal
-;;    :ensure t
-;;    :init (setq org-journal-dir "~/Dropbox/Agenda/Journal"))
-;; (require 'org-journal)
+;; Journaling
 (load "~/.emacs.d/elisp/my-org-journal/org-journal.el")
-;; Build progress bars
-;; #+BEGIN: block-dashboard
-;; #+END:
-;; C-c C-c to build/update bars
-;; (use-package org-dashboard
-;;    :ensure t)
-
 (setf org-journal-dir "~/Dropbox/Agenda/Journal")
 (setf org-journal-file-format "my-journal.org")
 (setf org-journal-date-prefix "* ")
@@ -369,8 +326,8 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
   )
 
 (org-defkey org-mode-map (kbd "C-M-<return>") (lambda ()
-												 (interactive)
-												 (org-insert-subheading 2)))
+						(interactive)
+						(org-insert-subheading 2)))
 
 
 ;; Make Org Journal remember me about
@@ -507,57 +464,56 @@ this command to copy it"
 ;; ;; Load gcalsync
 ;; (load "~/Dropbox/Projetos/Emacs/.gcalsync.el")
 
-(use-package alert
-  :commands (alert)
-  )
-
-(use-package org-alert
-  :init
-  :ensure t
-  )
-
 ;; Start with my to-do
 ;; The org mode file is opened with
 (find-file "~/Dropbox/Agenda/todo.org")
 (switch-to-buffer "todo.org")
 (setq org-agenda-window-setup 'other-window)
-;; (org-agenda-list)
 
 (add-to-list 'org-agenda-files  "~/Dropbox/Agenda/todo.org")
 
 (defvar org-capture-templates
-       '(("t" "todo" entry (file org-default-notes-file)
-	  "* TODO %?\n%u\n%a\n" :clock-in t :clock-resume t)
-	 ("b" "Blank" entry (file org-default-notes-file)
-	  "* %?\n%u")
-	 ("m" "Meeting" entry (file org-default-notes-file)
-	  "* MEETING with %? :MEETING:\n%t" :clock-in t :clock-resume t)
-	 ("d" "Diary" entry (file+datetree "~/org/diary.org")
-	  "* %?\n%U\n" :clock-in t :clock-resume t)
-	 ("D" "Daily Log" entry (file "~/org/daily-log.org")
-	  "* %u %?\n*Summary*: \n\n*Problem*: \n\n*Insight*: \n\n*Tomorrow*: " :clock-in t :clock-resume t)
-	 ("i" "Idea" entry (file org-default-notes-file)
-	  "* %? :IDEA: \n%u" :clock-in t :clock-resume t)
-	 ("n" "Next Task" entry (file+headline org-default-notes-file "Tasks")
-	  "** NEXT %? \nDEADLINE: %t") ))
+  '(("t" "todo" entry (file org-default-notes-file)
+	 "* TODO %?\n%u\n%a\n" :clock-in t :clock-resume t)
+	("b" "Blank" entry (file org-default-notes-file)
+	 "* %?\n%u")
+	("m" "Meeting" entry (file org-default-notes-file)
+	 "* MEETING with %? :MEETING:\n%t" :clock-in t :clock-resume t)
+	("d" "Diary" entry (file+datetree "~/org/diary.org")
+	 "* %?\n%U\n" :clock-in t :clock-resume t)
+	("D" "Daily Log" entry (file "~/org/daily-log.org")
+	 "* %u %?\n*Summary*: \n\n*Problem*: \n\n*Insight*: \n\n*Tomorrow*: " :clock-in t :clock-resume t)
+	("i" "Idea" entry (file org-default-notes-file)
+	 "* %? :IDEA: \n%u" :clock-in t :clock-resume t)
+	("n" "Next Task" entry (file+headline org-default-notes-file "Tasks")
+	 "** NEXT %? \nDEADLINE: %t") ))
 
 (add-to-list 'org-capture-templates
              '("w" "Work task"  entry
                (file "~/Dropbox/Agenda/nu.org")
-               "* TODO %?
+               "* TODO %?"
+			   :empty-lines 1))
+
+(add-to-list 'org-capture-templates
+             '("e" "Work Epic"  entry
+               (file "~/Dropbox/Agenda/nu.org")
+               "* TODO %?                 :epic:spinning:
 :PROPERTIES:
-:Effort: 0:05
-:END:"
-	       :empty-lines 1))
+:SUMMARY:
+:AUDACITY: Low
+:SCOPE: Small
+:CUSTOMER:
+:GROWTH-COMMITMENTS:
+:EVIDENCE:
+:IMPACT-STATEMENT:
+:IMPACT:   Low
+:END:" :empty-lines 1))
 
 (add-to-list 'org-capture-templates
              '("d" "Personal task"  entry
                (file "~/Dropbox/Agenda/todo.org")
-               "* TODO %?
-:PROPERTIES:
-:Effort: 0:05
-:END:"
-	       :empty-lines 1))
+               "* TODO %?"
+			   :empty-lines 1))
 
 (add-to-list 'org-capture-templates
              '("a" "Org Roam daily" plain
@@ -566,17 +522,17 @@ this command to copy it"
 
 (add-to-list 'org-capture-templates
              '("m" "Fleeting memory" entry
-	       (file "~/Dropbox/Agenda/roam/20220619110953-fleeting_memories.org")
+			   (file "~/Dropbox/Agenda/roam/20220619110953-fleeting_memories.org")
                "* %t \n** %?"))
 
 (add-to-list 'org-capture-templates
              '("n" "Fleeting notes" entry
-	       (file "~/Dropbox/Agenda/roam/20200809213233-fleeting_notes.org")
+			   (file "~/Dropbox/Agenda/roam/20200809213233-fleeting_notes.org")
                "* %? \n%t "))
 
 (add-to-list 'org-capture-templates
              '("j" "Journal" entry
-	       (file "~/Dropbox/Agenda/roam/20220619113235-my_journal.org")
+			   (file "~/Dropbox/Agenda/roam/20220619113235-my_journal.org")
                "* %<%A, %D> \n** %?"))
 
 (setq org-lowest-priority ?F)
@@ -596,498 +552,275 @@ this command to copy it"
 (setq org-agenda-custom-commands
       '(("d" "Daily agenda and NEXTs!"
          (
-	  ;; Deadlines
-	  (tags "+DEADLINE>=\"<-2m>\"&DEADLINE<=\"<+2m>\""
-               ((org-agenda-overriding-columns-format
-                 "%25ITEM %DEADLINE %TAGS")
-				(org-agenda-overriding-header "Deadlines in the next 60 days\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-				(org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-				(org-agenda-remove-tags t)
-				(org-agenda-entry-types '(:deadline :scheduled))
-				(org-agenda-sorting-strategy '(deadline-up))
-				(org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"DEADLINE\")) ")
-				))
+		  ;; Deadlines
+		  (tags-todo "+DEADLINE>=\"<-60d>\""
+					 ((org-agenda-overriding-columns-format
+					   "%25ITEM %DEADLINE %TAGS")
+					  (org-agenda-overriding-header "Deadlines in the next 60 days\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+					  (org-agenda-remove-tags t)
+					  (org-agenda-sorting-strategy '(deadline-up))
+					  (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"DEADLINE\")) ")
+					  ))
 
-	  ;; Self-improvement top of mind
-	  ;; (tags "+selfdevelopment+TODO=\"TODO\""
-	  ;; 	(
-	  ;; 	 (org-agenda-overriding-header "Self-development hint\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-	  ;; 	 (org-agenda-prefix-format " ")
-	  ;; 	 (org-agenda-remove-tags t)
-	  ;; 	 (org-agenda-sorting-strategy '(scheduled-up))
-	  ;; 	 (org-agenda-todo-keyword-format "")
-	  ;; 	 )
-	  ;; 	)
+		  ;; Week tasks and deadlines
+		  (agenda ""
+	  			  ((org-agenda-time-grid nil)
+				   (org-agenda-remove-tags t)
+	  			   (org-agenda-span 'week)
+	  			   (org-deadline-warning-days 0)
+	  			   (org-deadline-past-days 0)
+				   (org-scheduled-past-days 0)
+	  			   (org-agenda-entry-types '(:deadline :scheduled))
+	  			   (org-agenda-overriding-header "Week tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+				   (org-agenda-scheduled-leaders '("" ""))
+				   (org-agenda-prefix-format "    %i %-12:c")
+	  			   ))
 
-	  ;; (agenda ""
-	  ;; 	  ((org-agenda-time-grid nil)
-	  ;; 	   (org-agenda-span 'day)
-	  ;; 	   (org-deadline-warning-days 60)
-	  ;; 	   (org-agenda-remove-tags t)
-	  ;; 	   (org-agenda-entry-types '(:deadline))
-	  ;; 	   (org-agenda-sorting-strategy '(deadline-up))
-	  ;; 	   (org-agenda-format-date "")
-	  ;; 	   (org-agenda-overriding-header "Deadlines in the next 60 days\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-	  ;; 	   ))
-
-	  ;; Week tasks and deadlines
-	  (agenda ""
-	  	  ((org-agenda-time-grid nil)
-		   (org-agenda-remove-tags t)
-	  	   (org-agenda-span 'week)
-	  	   (org-deadline-warning-days 0)
-	  	   (org-deadline-past-days 0)
-		   (org-scheduled-past-days 0)
-	  	   (org-agenda-entry-types '(:deadline :scheduled))
-	  	   ;; (org-agenda-sorting-strategy '(deadline-up))
-	  	   (org-agenda-overriding-header "Week tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		   (org-agenda-scheduled-leaders '("" ""))
-		   (org-agenda-prefix-format "    %i %-12:c")
-		   ;; (org-agenda-skip-function '(air-org-skip-subtree-if-habit))
-	  	   ))
-
-	  ;; High priority tasks
-	  (tags "PRIORITY=\"A\"-cult+epic-delegated"
+		  ;; High priority tasks
+		  (tags "PRIORITY=\"A\"-cult+epic-delegated"
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "High-priority Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-todo-keyword-format "")
-		 ))
+				 (org-agenda-remove-tags t)
+				 (org-agenda-todo-keyword-format "")
+				 ))
 
 	  	  ;; High priority tasks
-	  (tags "PRIORITY=\"A\"+cult+epic"
+		  (tags "PRIORITY=\"A\"+cult+epic"
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "Cult Journeys\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-todo-keyword-format "")
-		 ))
+				 (org-agenda-remove-tags t)
+				 (org-agenda-todo-keyword-format "")
+				 ))
 
-	  ;; Today Agenda
-          ;; (agenda ""
-	  ;; 	  ((org-agenda-ndays 5)
-	  ;; 	      (org-agenda-span 'day)
-	  ;; 	      (org-agenda-time-grid nil)
-	  ;; 	      (org-deadline-warning-days 0)
-	  ;; 	      (org-agenda-skip-scheduled-delay-if-deadline t)
-	  ;; 	      (org-agenda-todo-ignore-scheduled t)
-	  ;; 	      (org-agenda-scheduled-leaders '("" ""))
-	  ;; 	      (org-agenda-tags-todo-honor-ignore-options t)
-	  ;; 	      (org-agenda-overriding-header "Today Agenda:")
-	  ;; 	      )
-	  ;; 	  )
+		  ;; Late tasks
+		  (tags "+TODO=\"TODO\"+SCHEDULED<\"<today>\"-epic-goals-selfdevelopment"
+				(
+				 (org-agenda-overriding-header "Late tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+				 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) :%-8:c")
+				 (org-agenda-sorting-strategy '(scheduled-up))
+				 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+												(org-agenda-skip-if-scheduled-today-or-later)
+												(org-agenda-skip-entry-if 'notscheduled)
+												))
+				 (org-agenda-remove-tags t)
+				 (org-agenda-todo-keyword-format "")
+				 )
+				)
 
-	  ;; NEXT Nubank Tasks
-        ;;   (tags-todo "+nubank+TODO=\"NEXT\""
-	  	;; (
-	  	;;  (org-agenda-category-filter-preset (quote ("+Nubank")))
-	  	;;  (org-agenda-overriding-header "Next tasks at Nubank:")
-	  	;;  (org-agenda-overriding-columns-format "%20ITEM %SCHEDULED")
-	  	;;  (org-agenda-sorting-strategy '(category-keep))
-	  	;;  (org-agenda-view-columns-initially t)
-		;;  (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-	  	;;  )
+		  ;; All not scheduled things
+		  (tags "-goals-selfdevelopment+TODO=\"TODO\"-epic"
+	  			(
+	  			 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+												(org-agenda-skip-if-scheduled-today-or-later)
+												))
+				 (org-agenda-overriding-header "Backlog\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+	  			 (org-agenda-remove-tags t)))
 
-	  	;; )
+		  ;; Year Goals General
+		  (tags "+goals+LEVEL=3+TODO=\"TODO\"|+goals+LEVEL=3+TODO=\"DONE\""
+				((org-agenda-category-filter "-Nubank")
+				 (org-agenda-prefix-format " ")
+				 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+												(air-org-skip-subtree-if-priority ?A)
+												(org-agenda-skip-if nil '(scheduled deadline))))
+				 (org-agenda-overriding-header "2022 Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+				 (org-agenda-remove-tags t)))
 
-	  ;; NEXT Tasks
-          ;; (tags "+TODO=\"NEXT\""
-	  ;; 	(
-	  ;; 	 (org-agenda-overriding-header "Next unscheduled or late tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-	  ;; 	 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) :%-8:c")
-	  ;; 	 (org-agenda-sorting-strategy '(scheduled-up))
-	  ;; 	 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-	  ;; 			;; (air-org-skip-subtree-if-priority ?A)
-	  ;; 			(org-agenda-skip-if-scheduled-later)
-	  ;; 			;; (org-agenda-skip-if nil '(scheduled deadline))
-	  ;; 			))
-	  ;; 	 (org-agenda-remove-tags t)
-	  ;; 	 (org-agenda-todo-keyword-format "")
-	  ;; 	 )
-	  ;; 	)
-
-	  ;; Late tasks
-	  (tags "+TODO=\"TODO\"+SCHEDULED<\"<today>\"-epic-goals2021-selfdevelopment"
-		(
-		 (org-agenda-overriding-header "Late tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) :%-8:c")
-		 (org-agenda-sorting-strategy '(scheduled-up))
-		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-				;; (air-org-skip-subtree-if-priority ?A)
-				(org-agenda-skip-if-scheduled-today-or-later)
-				;; (org-agenda-skip-if nil '(scheduled deadline))
-				))
-		 (org-agenda-remove-tags t)
-		 (org-agenda-todo-keyword-format "")
-		 )
-		)
-
-	  ;; ;; NEXT Master
-      ;;     (tags "+usp+TODO=\"NEXT\""
-	  ;; 	(
-	  ;; 	 (org-agenda-overriding-header "Next tasks in Master\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-	  ;; 	 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-	  ;; 	 (org-agenda-remove-tags t)
-	  ;; 	 (org-agenda-sorting-strategy '(scheduled-up))
-	  ;; 	 (org-agenda-todo-keyword-format "")
-	  ;; 	 )
-	  ;; 	)
-
-	  ;; ;; NEXT Study
-      ;;     (tags "+study+TODO=\"NEXT\""
-	  ;; 	(
-	  ;; 	 (org-agenda-overriding-header "Next tasks in Study\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-	  ;; 	 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-	  ;; 	 (org-agenda-remove-tags t)
-	  ;; 	 (org-agenda-sorting-strategy '(scheduled-up))
-	  ;; 	 (org-agenda-todo-keyword-format "")
-	  ;; 	 )
-	  ;; 	)
-
-	  ;; ;; NEXT Projects
-      ;;     (tags "+projects+TODO=\"NEXT\""
-	  ;; 	(
-	  ;; 	 (org-agenda-overriding-header "Next task in Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-	  ;; 	 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-	  ;; 	 (org-agenda-remove-tags t)
-	  ;; 	 (org-agenda-sorting-strategy '(scheduled-up))
-	  ;; 	 (org-agenda-todo-keyword-format "")
-	  ;; 	 )
-	  ;; 	)
-
-	  ;; ;; NEXT Work
-      ;;     (tags "+work+TODO=\"NEXT\"|udacity+TODO=\"NEXT\""
-	  ;; 	(
-	  ;; 	 (org-agenda-overriding-header "Next task in Work\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-	  ;; 	 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-	  ;; 	 (org-agenda-remove-tags t)
-	  ;; 	 (org-agenda-sorting-strategy '(scheduled-up))
-	  ;; 	 (org-agenda-todo-keyword-format "")
-	  ;; 	 )
-	  ;; 	)
-
-	  ;; ;; NEXT Kaggle
-      ;;     (tags "+kaggle+TODO=\"NEXT\""
-	  ;; 	((org-agenda-overriding-header "Next tasks in Kaggle\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-	  ;; 	 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-	  ;; 	 (org-agenda-remove-tags t)
-	  ;; 	 (org-agenda-sorting-strategy '(scheduled-up))
-	  ;; 	 (org-agenda-todo-keyword-format "")
-	  ;; 	 )
-	  ;; 	)
-
-	  ;; ;; NEXT Life
-      ;;     (tags "+life-goals2021+TODO=\"NEXT\""
-	  ;; 	((org-agenda-overriding-header "Next tasks in Life\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-	  ;; 	 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-	  ;; 	 (org-agenda-remove-tags t)
-	  ;; 	 (org-agenda-sorting-strategy '(scheduled-up))
-	  ;; 	 (org-agenda-todo-keyword-format "")
-	  ;; 	 )
-	  ;; 	)
-
-	  ;; All not scheduled things
-	  ;; "-goals2021-selfdevelopment+TODO=\"TODO\"-PRIORITY=\"A\"-PRIORITY=\"B\"-PRIORITY=\"C\""
-	  (tags "-goals2021-selfdevelopment+TODO=\"TODO\"-epic"
-	  	(
-	  	 ;; (org-agenda-tags-todo-honor-ignore-options :scheduled)
-	  	 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-	  					;; (air-org-skip-subtree-if-priority ?A)
-						;; (org-agenda-skip-if-scheduled-later)
-						(org-agenda-skip-if-scheduled-today-or-later)
-	  					;; (org-agenda-skip-if nil '(scheduled deadline))
-						))
-		 (org-agenda-overriding-header "Backlog\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-	  	 (org-agenda-remove-tags t)))
-
-	  ;; Year Goals General
-	  (tags "+goals2021+LEVEL=3+TODO=\"TODO\"|+goals2021+LEVEL=3+TODO=\"DONE\""
-		((org-agenda-category-filter "-Nubank")
-		 (org-agenda-prefix-format " ")
-		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-						(air-org-skip-subtree-if-priority ?A)
-						(org-agenda-skip-if nil '(scheduled deadline))))
-		 (org-agenda-overriding-header "2022 Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-remove-tags t)))
-
-	  ;; Backlog projects
-	  (tags "-PRIORITY=\"A\"+epic"
+		  ;; Backlog projects
+		  (tags "-PRIORITY=\"A\"+epic"
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "Backlog Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-todo-keyword-format "")
-		 ))
-
-
-	  )
+				 (org-agenda-remove-tags t)
+				 (org-agenda-todo-keyword-format "")
+				 ))
+		  )
          ((org-agenda-compact-blocks nil))
-	 )
-	))
+		 )
+		))
 
 (add-to-list 'org-agenda-custom-commands
-      '("nu" "Nubank Agenda"
-         (
-	  ;; Deadlines
-	  (tags "+DEADLINE>=\"<-2m>\"&DEADLINE<=\"<+2m>\"|+perfcycle"
-               ((org-agenda-overriding-columns-format
-                 "%25ITEM %DEADLINE %TAGS")
-				(org-agenda-overriding-header "Deadlines in the next 60 days\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-				(org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-				(org-agenda-remove-tags t)
-				(org-agenda-entry-types '(:deadline :scheduled))
-				(org-agenda-sorting-strategy '(deadline-up))
-				(org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"DEADLINE\")) ")
-				))
+			 '("nu" "Nubank Agenda"
+			   (
+				;; Deadlines
+				(tags-todo "+DEADLINE>=\"<-60d>\"|+perfcycle"
+						   ((org-agenda-overriding-columns-format
+							 "%25ITEM %DEADLINE %TAGS")
+							(org-agenda-overriding-header "📅 Deadlines in the next 60 days\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+							(org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+							(org-agenda-remove-tags t)
+							(org-agenda-entry-types '(:deadline :scheduled))
+							(org-agenda-sorting-strategy '(deadline-up))
+							(org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"DEADLINE\")) ")
+							))
 
-	  ;; Self-improvement top of mind
-	  ;; (tags "+selfdevelopment+TODO=\"TODO\""
-	  ;; 	(
-	  ;; 	 (org-agenda-overriding-header "Self-development hint\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-	  ;; 	 (org-agenda-prefix-format " ")
-	  ;; 	 (org-agenda-remove-tags t)
-	  ;; 	 (org-agenda-sorting-strategy '(scheduled-up))
-	  ;; 	 (org-agenda-todo-keyword-format "")
-	  ;; 	 )
-	  ;; 	)
+				;; Week tasks and deadlines
+				(agenda ""
+	  					((org-agenda-time-grid nil)
+	  					 (org-agenda-span 'week)
+	  					 (org-deadline-warning-days 0)
+	  					 (org-deadline-past-days 0)
+						 (org-scheduled-past-days 0)
+	  					 (org-agenda-entry-types '(:deadline :scheduled))
+	  					 (org-agenda-overriding-header "⏳ Week tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+						 (org-agenda-scheduled-leaders '("" ""))
+						 (org-agenda-prefix-format "    %i %-4e  %-12:c")
+						 (org-agenda-remove-tags t)
+						 (org-agenda-skip-function '(air-org-skip-subtree-if-habit))
+						 ;; (org-agenda-skip-function #'add-clock-emoji-to-agenda)
+	  					 ))
 
-	  ;; Week tasks and deadlines
-	  (agenda ""
-	  	  ((org-agenda-time-grid nil)
-	  	   (org-agenda-span 'week)
-	  	   (org-deadline-warning-days 0)
-	  	   (org-deadline-past-days 0)
-		   (org-scheduled-past-days 0)
-	  	   (org-agenda-entry-types '(:deadline :scheduled))
-	  	   ;; (org-agenda-sorting-strategy '(deadline-up))
-	  	   (org-agenda-overriding-header "Week tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		   (org-agenda-scheduled-leaders '("" ""))
-		   (org-agenda-prefix-format "    %i %-12:c")
-		   (org-agenda-remove-tags t)
-		   (org-agenda-skip-function '(air-org-skip-subtree-if-habit))
-	  	   ))
+				;; High priority projects
+				(tags "+epic-team-educ+spinning"
+					  ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+					   (org-agenda-overriding-header "🌋 My Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+					   (org-agenda-remove-tags t)
+					   (org-agenda-todo-keyword-format "")
+					   ))
 
-	  ;; High priority projects
-	  (tags "+epic-team-educ+spinning"
-                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-                 (org-agenda-overriding-header "My Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-todo-keyword-format "")
-		 ))
+				(tags "+team+epic+spinning"
+					  ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+					   (org-agenda-overriding-header "📊 Team Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+					   (org-agenda-remove-tags t)
+					   (org-agenda-todo-keyword-format "")
+					   ))
 
-	  (tags "+team+epic+spinning"
-                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-                 (org-agenda-overriding-header "Mx/Col Team Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-todo-keyword-format "")
-		 ))
+				(tags "+epic+educ+PRIORITY=\"A\""
+					  ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+					   (org-agenda-overriding-header "🧠 Education Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+					   (org-agenda-remove-tags t)
+					   (org-agenda-todo-keyword-format "")
+					   ))
 
-	  (tags "+epic+educ+PRIORITY=\"A\""
-                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-                 (org-agenda-overriding-header "Education Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-todo-keyword-format "")
-		 ))
+				;; Delegated Tasks
+				(tags "+team+directreports+TODO=\"TODO\"-epic|delegated+TODO=\"TODO\"-epic"
+					  ((org-agenda-overriding-header "🤝 Delegated tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+					   (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+					   (org-agenda-remove-tags t)
+					   (org-agenda-remove-tags-when-in-prefix t)
+					   (org-agenda-sorting-strategy '(priority-down))
+					   (org-agenda-todo-keyword-format "")
+					   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+													  ))
+					   )
+					  )
 
-	  ;; NEXT Delegated
-      (tags "+team+directreports+TODO=\"TODO\"-epic|delegated+TODO=\"TODO\"-epic"
-		((org-agenda-overriding-header "Tasks delegated to direct reports\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-remove-tags-when-in-prefix t)
-		 (org-agenda-sorting-strategy '(priority-down))
-		 ;; (org-agenda-sorting-strategy '(scheduled-down))
-		 (org-agenda-todo-keyword-format "")
-		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-						))
-		 )
-		)
+				;; High priority tasks
+				(tags "-epic+PRIORITY=\"A\"-delegated"
+					  (
+					   (org-agenda-overriding-header "⚡ High-priority Tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+					   (org-agenda-remove-tags t)
+					   (org-agenda-todo-keyword-format "")
+					   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+													  (org-agenda-skip-if-scheduled-today-or-later)
+													  (org-agenda-skip-entry-if 'todo 'done)
+													  ))
+					   ))
 
-	  ;; High priority tasks
-	  (tags "-epic+PRIORITY=\"A\"-delegated"
-                (
-                 (org-agenda-overriding-header "High-priority Tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-todo-keyword-format "")
-		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-										(org-agenda-skip-if-scheduled-today-or-later)
-										(org-agenda-skip-entry-if 'todo 'done)
-						))
-		 ))
+				;; Blocked tasks
+				(tags "-team+TODO=\"WAIT\"-PRIORITY=\"A\"-epic"
+					  ((org-agenda-overriding-header "💀 Blocked & delayed tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+					   (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+					   (org-agenda-remove-tags t)
+					   (org-agenda-sorting-strategy '(priority-down))
+					   (org-agenda-todo-keyword-format "")
+					   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+													  (org-agenda-skip-if-scheduled-today-or-later)
+													  ))
+					   )
+					  )
 
-	  ;; Blocked tasks
-          (tags "-team+TODO=\"WAIT\"-PRIORITY=\"A\"-epic"
-		((org-agenda-overriding-header "Blocked & delayed tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-sorting-strategy '(priority-down))
-		 ;; (org-agenda-sorting-strategy '(scheduled-down))
-		 (org-agenda-todo-keyword-format "")
-		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-						(org-agenda-skip-if-scheduled-today-or-later)
-						))
-		 )
-		)
+				;; Tasks in Projects
+				(tags "+projects+TODO=\"TODO\"-PRIORITY=\"A\"-epic"
+					  (
+					   (org-agenda-overriding-header "🚢 Tasks in Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+					   (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+					   (org-agenda-remove-tags t)
+					   (org-agenda-sorting-strategy '(priority-down))
+					   (org-agenda-todo-keyword-format "")
+					   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+													  (org-agenda-skip-if-scheduled-today-or-later)
+													  ))
+					   )
+					  )
 
-	  ;; NEXT Projects
-          (tags "+projects+TODO=\"TODO\"-PRIORITY=\"A\"-epic"
-		(
-		 (org-agenda-overriding-header "Tasks in Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-sorting-strategy '(priority-down))
-		 ;; (org-agenda-sorting-strategy '(scheduled-down))
-		 (org-agenda-todo-keyword-format "")
-		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-						(org-agenda-skip-if-scheduled-today-or-later)
-						))
-		 )
-		)
+				;; Tasks about Direct Reports
+				(tags "+directreports-team+TODO=\"TODO\"-PRIORITY=\"A\"-epic"
+					  ((org-agenda-overriding-header "👨‍👦‍👦 Tasks about direct reports\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+					   (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+					   (org-agenda-remove-tags t)
+					   (org-agenda-sorting-strategy '(priority-down))
+					   (org-agenda-todo-keyword-format "")
+					   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+													  (org-agenda-skip-if-scheduled-today-or-later)
+													  ))
+					   )
+					  )
 
-	  ;; NEXT Direct Reports
-          (tags "+directreports-team+TODO=\"TODO\"-PRIORITY=\"A\"-epic"
-		((org-agenda-overriding-header "Tasks about direct reports\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-sorting-strategy '(priority-down))
-		 ;; (org-agenda-sorting-strategy '(scheduled-down))
-		 (org-agenda-todo-keyword-format "")
-		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-						(org-agenda-skip-if-scheduled-today-or-later)
-						))
-		 )
-		)
+				;; NEXT Manager
+				(tags "+manager-directreports+TODO=\"TODO\"-PRIORITY=\"A\"-epic-perfcycle-selfdevelopment-cyclegoals-delegated"
+					  (
+					   (org-agenda-overriding-header "💼 Management\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+					   (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+					   (org-agenda-remove-tags t)
+					   (org-agenda-category-filter "")
+					   (org-agenda-sorting-strategy '(priority-down))
+					   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+													  (org-agenda-skip-if-scheduled-today-or-later)
+													  ))
+					   (org-agenda-todo-keyword-format "")
+					   )
+					  )
 
-	  ;; NEXT Manager
-          (tags "+manager-directreports+TODO=\"TODO\"-PRIORITY=\"A\"-epic-perfcycle-selfdevelopment-cyclegoals-delegated"
-		(
-		 (org-agenda-overriding-header "Tasks in Management\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-category-filter "")
-		 (org-agenda-sorting-strategy '(priority-down))
-		 ;; (org-agenda-sorting-strategy '(scheduled-down))
-		 ;; (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-		 ;; 				(org-agenda-skip-if-scheduled-later)
-		 ;; 				))
-		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-						(org-agenda-skip-if-scheduled-today-or-later)
-						))
-		 (org-agenda-todo-keyword-format "")
-		 )
-		)
+				;; NEXT Education
+				(tags "+education+TODO=\"TODO\"-PRIORITY=\"A\"-epic-cyclegoals"
+					  (
+					   (org-agenda-overriding-header "📚 Education\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+					   (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
+					   (org-agenda-remove-tags t)
+					   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+													  (org-agenda-skip-if-scheduled-today-or-later)
+													  ))
+					   (org-agenda-sorting-strategy '(priority-down))
+					   (org-agenda-todo-keyword-format "")
+					   )
+					  )
 
-	  ;; NEXT Education
-          (tags "+education+TODO=\"TODO\"-PRIORITY=\"A\"-epic-cyclegoals"
-		(
-		 (org-agenda-overriding-header "Tasks in Education\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-						(org-agenda-skip-if-scheduled-today-or-later)
-						))
-		 (org-agenda-sorting-strategy '(priority-down))
-		 (org-agenda-todo-keyword-format "")
-		 )
-		)
+				;; Perf Cycle goals
+				(tags "+cyclegoals+LEVEL=3+TODO=\"TODO\"|+cyclegoals+LEVEL=3+TODO=\"DONE\""
+					  (;; (org-agenda-category-filter "-Nubank")
+					   (org-agenda-prefix-format " ")
+					   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+													  (air-org-skip-subtree-if-priority ?A)
+													  (org-agenda-skip-if nil '(scheduled deadline))))
+					   (org-agenda-overriding-header "🎯 Cycle Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+					   (org-agenda-remove-tags t)
 
-	  ;; Blocked Nubank
-	  ;; (tags "+nubank+TODO=\"WAIT\""
-	  ;; 	((org-agenda-skip-function 'my-skip-unless-waiting)
-          ;;   (org-agenda-category-filter
-	  ;;    (quote
-	  ;;     ("+Nubank")))
-	  ;;   (org-agenda-overriding-header "Blocked Nubank Tasks: "))
+					   )
+					  )
 
-	  ;; 	)
+				;; All not scheduled things
+				(tags "-cyclegoals-selfdevelopment+TODO=\"TODO\"-PRIORITY=\"A\"-manager-projects-education-directreports-spinning"
+	  				  (
+	  				   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+													  (org-agenda-skip-if-scheduled-today-or-later)
+													  ))
+					   (org-agenda-sorting-strategy '(priority-down))
+					   (org-agenda-overriding-header "❄️ Backlog tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+	  				   (org-agenda-remove-tags t)
+					   )
+					  )
 
-	  ;; Long deadlines
-	  ;; (agenda ""
-	  ;; 	  ((org-agenda-time-grid nil)
-	  ;; 	   (org-agenda-span 'day)
-	  ;; 	   (org-deadline-warning-days 90)
-	  ;; 	   (org-agenda-entry-types '(:deadline))
-	  ;; 	   (org-agenda-sorting-strategy '(deadline-up))
-	  ;; 	   (org-agenda-overriding-header "Deadlines in the next 90 days:")
-	  ;; 	   ))
-
-
-	  ;; Year Goals Milestones
-	  ;; (tags "-nubank+goals2020+TODO=\"NEXT\""
-	  ;; 	((org-agenda-category-filter "-Nubank")
-	  ;; 	 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-	  ;; 					(air-org-skip-subtree-if-priority ?A)
-	  ;; 					(org-agenda-skip-if nil '(scheduled deadline))))
-	  ;;   (org-agenda-overriding-header "2020 Goals Milestones: ")
-	  ;;   )
-	  ;; 	)
-
-
-	  ;; Perf Cycle goals
-	  (tags "+cyclegoals+LEVEL=3+TODO=\"TODO\"|+cyclegoals+LEVEL=3+TODO=\"DONE\""
-		(;; (org-agenda-category-filter "-Nubank")
-		 (org-agenda-prefix-format " ")
-		 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-						(air-org-skip-subtree-if-priority ?A)
-						(org-agenda-skip-if nil '(scheduled deadline))))
-		 (org-agenda-overriding-header "Cycle Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-remove-tags t)
-
-	    )
-		)
-
-	  ;; ;; Backlog projects
-	  ;; (tags "PRIORITY=\"B\""
-          ;;       ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-          ;;        (org-agenda-overriding-header "Backlog Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-	  ;; 	 (org-agenda-remove-tags t)
-	  ;; 	 (org-agenda-todo-keyword-format "")
-	  ;; 	 ))
-
-	  ;; All not scheduled things
-	  (tags "-cyclegoals-selfdevelopment+TODO=\"TODO\"-PRIORITY=\"A\"-manager-projects-education-directreports-spinning"
-	  	(
-	  	 ;; (org-agenda-tags-todo-honor-ignore-options :scheduled)
-	  	 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-	  					;; (air-org-skip-subtree-if-priority ?A)
-										;; (org-agenda-skip-if-scheduled-later)
-										(org-agenda-skip-if-scheduled-today-or-later)
-	  					;; (org-agenda-skip-if nil '(scheduled deadline))
-						))
-		 (org-agenda-sorting-strategy '(priority-down))
-		 (org-agenda-overriding-header "Backlog tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-	  	 (org-agenda-remove-tags t)
-	    )
-		)
-
-	  	  ;; Backlog projects
-	  (tags "+epic-spinning"
-                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-                 (org-agenda-overriding-header "Backlog Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-		 (org-agenda-remove-tags t)
-		 (org-agenda-todo-keyword-format "")
-		 ))
-
-	  ;; ;; Medium-low priority tasks
-	  ;; (tags "PRIORITY=\"C\""
-          ;;       ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-          ;;        (org-agenda-overriding-header "Not-priority projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-	  ;; 	 (org-agenda-remove-tags t)
-	  ;; 	 (org-agenda-todo-keyword-format "")
-	  ;; 	 ))
-
-	  )
-         ((org-agenda-compact-blocks nil))
-	 )
-
-    ;; 	("n" "Next Nubank tasks" todo "NEXT"
-    ;; ((org-agenda-skip-function 'my-skip-unless-waiting)
-    ;;         (org-agenda-category-filter-preset
-    ;; 	(quote
-    ;; 	 ("+Nubank")))
-    ;; 	    (org-agenda-overriding-header "Nu Agenda: "))
-
-    ;; )
-
-		)
+	  			;; Backlog projects
+				(tags "+epic-spinning"
+					  ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+					   (org-agenda-overriding-header "📁 Backlog Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+					   (org-agenda-remove-tags t)
+					   (org-agenda-todo-keyword-format "")
+					   ))
+				)
+			   ((org-agenda-compact-blocks nil))
+			   )
+			 )
 
 ;; Work settings
 (add-to-list 'org-capture-templates
@@ -1107,22 +840,6 @@ this command to copy it"
 
 ;; Enable the usage of two agenda views at the same time
 (org-toggle-sticky-agenda)
-
-;; Function to show scheduled only if missed
-(defun org-agenda-skip-if-scheduled-later ()
-"If this function returns nil, the current match should not be skipped.
-Otherwise, the function must return a position from where the search
-should be continued."
-  (ignore-errors
-    (let ((subtree-end (save-excursion (org-end-of-subtree t)))
-          (scheduled-seconds
-            (time-to-seconds
-              (org-time-string-to-time
-                (org-entry-get nil "SCHEDULED"))))
-          (now (time-to-seconds (current-time))))
-       (and scheduled-seconds
-            (>= scheduled-seconds now)
-            subtree-end))))
 
 ;; Function to show scheduled only if missed
 (defun org-agenda-skip-if-scheduled-today-or-later ()
@@ -1149,7 +866,6 @@ should be continued."
   (interactive)
   (if resp
     ;;'"OK"
-    ;;(format-time-string "%Y-%m-%d" (org-time-string-to-time resp))
     (concat "  In " (number-to-string (org-time-stamp-to-now resp)) " day(s)")
     '"  Not Scheduled"
     )
@@ -1181,105 +897,26 @@ should be continued."
 ;; Compact only day view
 (add-to-list 'org-agenda-custom-commands
              '("o" "Compact today"
-((todo "TODO" (
-                      (org-agenda-overriding-header "\n⚡ Do Today:\n⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-                      (org-agenda-remove-tags t)
-                      (org-agenda-prefix-format " %-2i %-15b")
-                      (org-agenda-todo-keyword-format "")
-                       ))
-          (agenda "" (
-                      (org-agenda-start-day "+0d")
-                      (org-agenda-span 5)
-                      (org-agenda-overriding-header "⚡ Schedule:\n⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-                      (org-agenda-repeating-timestamp-show-all nil)
-                      (org-agenda-remove-tags t)
-                      (org-agenda-prefix-format   "  %-3i  %-15b %t%s")
-                      (org-agenda-todo-keyword-format " ☐ ")
-                      (org-agenda-current-time-string "⮜┈┈┈┈┈┈┈ now")
-                      (org-agenda-scheduled-leaders '("" ""))
-                      (org-agenda-time-grid (quote ((daily today remove-match)
-                                                    (0900 1200 1500 1800 2100)
-                                                    "      " "┈┈┈┈┈┈┈┈┈┈┈┈┈")))
-                       ))
-          )
-	       )
-	     )
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Terminal notifier
-;; requires 'brew install terminal-notifier'
-;; stolen from erc-notifier
-
-
-;; Change duration: defaults write com.apple.notificationcenterui bannerTime 25
-(defun terminal-notifier-notify (title message)
-  "Show a message with terminal-notifier-command."
-  (start-process "terminal-notifier"
-                 "terminal-notifier"
-                 "terminal-notifier"
-                 "-title" title
-                 "-message" message
-		 "-sound" "default"
-                 "-sender" "org.gnu.Emacs"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Warns every N minutes about all the deadlines and scheduled tasks
-;; for the current day
-;; (use-package org-alert
-;; 	     :ensure t)
-
-;; https://github.com/akhramov/org-wild-notifier.el
-
-(use-package org-wild-notifier
-	     :ensure t
-	     :init ;; (org-wild-notifier-mode)
-	     (setq org-wild-notifier-keyword-whitelist '("TODO" "NEXT"))
-	     (setq org-wild-notifier-alert-time 5)
-	     )
-
-(defun remind-me-daily (fn time msg wavfile box)
-  (when (and (boundp 'daily-reminder)
-             (timerp daily-reminder))
-    (cancel-timer daily-reminder))
-  (let ((daily (* 60 60 24)))
-    (setq daily-reminder
-          (run-at-time time daily 'funcall fn msg wavfile box))))
-
-(defun reminder-fn (msg wavfile box)
-  (if wavfile
-      (start-process-shell-command "lolsound" nil (concat "mplayer ~/.emacs.d/sounds/" wavfile))
-      )
-  (if box
-      (terminal-notifier-notify "Emacs Notification" msg)
-      (message msg)))
-
-(remind-me-daily 'reminder-fn "10:30pm" "Bedtime!" nil t)
-
-(defun my-terminal-notifier-notify (info)
-  "Show a message with terminal-notifier-command."
-  (start-process "terminal-notifier"
-                 "terminal-notifier"
-                 "terminal-notifier"
-                 "-title" (plist-get info :title)
-                 "-message" (plist-get info :message)
-		 "-sound" "default"
-                 "-sender" "org.gnu.Emacs"))
-
-(alert-define-style 'style-name :title "My Style's title"
-                    :notifier
-		    'my-terminal-notifier-notify
-                    ;; Removers are optional.  Their job is to remove
-                    ;; the visual or auditory effect of the alert.
-                    :remover
-                    (lambda (info)
-                      ;; It is the same property list that was passed to
-                      ;; the notifier function.
-                      ))
-
-(setq alert-default-style 'style-name)
-
+			   ((todo "TODO" (
+							  (org-agenda-overriding-header "\n⚡ Do Today:\n⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+							  (org-agenda-remove-tags t)
+							  (org-agenda-prefix-format " %-2i %-15b")
+							  (org-agenda-todo-keyword-format "")
+							  ))
+				(agenda "" (
+							(org-agenda-start-day "+0d")
+							(org-agenda-span 5)
+							(org-agenda-overriding-header "⚡ Schedule:\n⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+							(org-agenda-repeating-timestamp-show-all nil)
+							(org-agenda-remove-tags t)
+							(org-agenda-prefix-format   "  %-3i  %-15b %t%s")
+							(org-agenda-todo-keyword-format " ☐ ")
+							(org-agenda-current-time-string "⮜┈┈┈┈┈┈┈ now")
+							(org-agenda-scheduled-leaders '("" ""))
+							(org-agenda-time-grid (quote ((daily today remove-match)
+														  (0900 1200 1500 1800 2100)
+														  "      " "┈┈┈┈┈┈┈┈┈┈┈┈┈")))
+							)))))
 
 (defvar yt-iframe-format
   ;; You may want to change your width and height.
@@ -1302,90 +939,16 @@ should be continued."
      (latex (format "\href{%s}{%s}"
                     path (or desc "video"))))))
 
-
-;; This should work :(
-(add-hook 'org-finalize-agenda-hook
-    (lambda ()
-      (save-excursion
-        (goto-char (point-min))
-        (while (re-search-forward "nu-agenda:" nil t)
-          (add-text-properties (match-beginning 0) (point-at-eol)
-             '(face (:foreground "green"))))
-        (goto-char (point-min))
-        (while (re-search-forward "work:" nil t)
-          (add-text-properties (match-beginning 0) (point-at-eol)
-			       '(face (:foreground "purple")))))))
-
-;; Remember me to take a look at my agenda before quitting emacs,
-;; so I check what I've done properly.
-(defun agenda-check-when-quit ()
-  (interactive)
-  (if (yes-or-no-p "Would like to check your agenda before you go?")
-	  (progn (call-interactively '(lambda() (interactive)(org-agenda 0 "l")))
-		     (keyboard-quit)
-		     )
-	  ))
-
-;; (add-to-list 'kill-emacs-hook 'agenda-check-when-quit)
-
-;; (use-package calfw
-;;   :ensure t)
-
-;; (use-package calfw-org
-;;   :ensure t)
-
 (defadvice org-agenda (around split-vertically activate)
   (let ((split-width-threshold 80))  ; or whatever width makes sense for you
     ad-do-it))
 
-(defun lgm/next-nu ()
-  (interactive)
-  (org-agenda nil "n")
-  )
-
-;; Look for it later
-(use-package org-timeline
-	     :ensure t)
-
-;;(load-file "~/.emacs.d/elpa/org-timeline/org-timeline.el")
-;;(add-hook 'org-agenda-finalize-hook 'org-timeline-insert-timeline :append)
-
-(defun lgm/show-timeline ()
-  (interactive)
-  (org-timeline-insert-timeline))
-
-(defun lgm/planner-mode ()
-  (interactive)
-  (add-hook 'org-agenda-finalize-hook 'org-timeline-insert-timeline :append))
-
 ;; Always split stuff vertically
 (setq split-height-threshold nil)
-
-(defun lgm/write-til ()
-  (interactive)
-  (call-interactively '(lambda() (interactive)
-			      (find-file "~/Dropbox/Agenda/til-2020.org")
-			      (call-interactively 'lgm/org-add-today-as-entry)
-			      )
-		      )
-  )
-
-;; Ask me to write down my TIL if it's after 9 pm
-(defun write-your-til ()
-  (interactive)
-  (if (or (string< (format-time-string "%k") " 6") (string< "20" (format-time-string "%k")))
-	  (if (yes-or-no-p "Would like to write at your TIL?")
-	      (progn (lgm/write-til)
-		     (keyboard-quit)
-				 )
-		  )))
-
-;; (add-to-list 'kill-emacs-hook 'write-your-til)
 
 ;; Open todo.org
 ;;(global-set-key (kbd "<f10>") (lambda() (interactive)(find-file "~/Dropbox/Agenda/todo.org")))
 ;; Open agenda
-(global-set-key (kbd "C-<f10>") (lambda() (interactive)(org-agenda nil "d")(org-agenda-redo) (text-scale-decrease 1)))
 (global-set-key (kbd "<f10>") (lambda() (interactive)(org-agenda nil "d")(org-agenda-redo)))
 ;; Work agenda
 (global-set-key (kbd "<f7>") (lambda() (interactive)(org-agenda nil "nu")(org-agenda-redo)))
@@ -1398,22 +961,15 @@ should be continued."
 
 ;; Change buffer functionality
 (org-defkey org-mode-map (kbd "C-<tab>") (lambda ()
-												 (interactive)
-												 (other-window -1)))
+					   (interactive)
+					   (other-window -1)))
 
-;; (customize-set-value
-;;     'org-agenda-category-icon-alist
-;;     `(
-;;       ("Work" "~/.emacs.d/icons/money-bag.svg" nil nil :ascent center)
-;;       ;; ("piano" ,(concat emoji-dir "1f3b9.png") nil nil :ascent center)
-;;       ))
 (setq org-code-block-header "python")
 (defun lgm/set-org-code-block-header()
   (interactive)
   (setq org-code-block-header
 		(read-string "New header: "))
   )
-
 
 (defun lgm/python-org-code-block()
   (interactive)
@@ -1447,34 +1003,34 @@ should be continued."
   (setq org-roam-completion-everywhere t)
   (setq completion-ignore-case t)
   (add-hook 'org-mode-hook
-			(lambda ()
-			  (set (make-local-variable 'company-backends) '(company-capf))))
+	    (lambda ()
+	      (set (make-local-variable 'company-backends) '(company-capf))))
   (add-to-list 'company-backends 'company-capf)
   (setq org-roam-completion-ignore-case t)
   (setq org-roam-capture-templates
 	'(("d" "default" plain
-         (file "/Users/luis.moneda/Dropbox/Agenda/templates/default_org_roam.org")
-         :target
-         (file+head "%(format-time-string \"%Y%m%d%H%M%S-${slug}.org\" (current-time) t)" "#+title: ${title}
+           (file "/Users/luis.moneda/Dropbox/Agenda/templates/default_org_roam.org")
+           :target
+           (file+head "%(format-time-string \"%Y%m%d%H%M%S-${slug}.org\" (current-time) t)" "#+title: ${title}
 #+STARTUP: inlineimages latexpreview
 #+filetags: ")
-         :unnarrowed t)
+           :unnarrowed t)
 	  ("r" "bibliography reference" plain
-         (file "/Users/luis.moneda/Dropbox/Agenda/templates/bib_org_roam.org")
-         :target
-         (file+head "${citekey}.org" "#+TITLE: ${title}, ${author-abbrev}\n#+ROAM_KEY: ${ref}\n#+Authors: ${author}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n")
-	 :unnarrowed t)
+           (file "/Users/luis.moneda/Dropbox/Agenda/templates/bib_org_roam.org")
+           :target
+           (file+head "${citekey}.org" "#+TITLE: ${title}, ${author-abbrev}\n#+ROAM_KEY: ${ref}\n#+Authors: ${author}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n")
+	   :unnarrowed t)
 	  )
-			)
+	)
   :custom
   (org-roam-directory (file-truename "/Users/luis.moneda/Dropbox/Agenda/roam"))
 
   (add-to-list 'display-buffer-alist
-             '("\\*org-roam\\*"
-               (display-buffer-in-direction)
-               (direction . right)
-               (window-width . 0.33)
-               (window-height . fit-window-to-buffer)))
+               '("\\*org-roam\\*"
+		 (display-buffer-in-direction)
+		 (direction . right)
+		 (window-width . 0.33)
+		 (window-height . fit-window-to-buffer)))
   :bind (("C-c n l" . org-roam-buffer-toggle)
          ("C-c n f" . org-roam-node-find)
 	 ("C-c n i" . org-roam-node-insert)
@@ -1482,6 +1038,8 @@ should be continued."
 	 ("C-c n g" . counsel-org-goto)
 	 ("C-c n b" . helm-bibtex)
 	 ("C-c n s" . lgm/screenshot-to-org-link)
+	 ("C-c n a" . org-roam-ai-semantic-search)
+	 ("C-c n p" . lgm/gpt-prompt)
 	 ("C-c n c" . lgm/python-org-code-block)
 	 ("C-c n e" . lgm/double-dollar-sign)
 	 ("C-c k" . lgm/double-dollar-sign)
@@ -1528,20 +1086,11 @@ should be continued."
     (org-remove-inline-images)
     (org-display-inline-images)))
 
-;; Company backend for org-roam links. Helps me to link ideas when useful.
-;; (use-package company-org-roam
-;;   :ensure t
-;;   ;; You may want to pin in case the version from stable.melpa.org is not working
-;;   ; :pin melpa
-;;   :config
-;;   (push 'company-org-roam company-backends))
-
 ;; Increase latex preview font
 (setq org-format-latex-options (plist-put org-format-latex-options :scale 2))
 
 ;; Olivetti
 ;; Look & Feel for long-form writing
-
 (use-package olivetti
   :ensure t)
 
@@ -1601,10 +1150,7 @@ should be continued."
 	)
   :config
   (require 'org-ref)
-  ;; :init (setq org-ref-notes-function 'orb-edit-note)
-  ;; (setq bibtex-completion-find-note-functions 'org-roam-node-find)
-  :bind (:map org-mode-map
-              (("C-c n a" . orb-note-actions))))
+  )
 
 (defun lgm/org-ref-notes-function (candidates)
   (let ((key (helm-marked-candidates)))
@@ -1613,26 +1159,8 @@ should be continued."
 (helm-delete-action-from-source "Edit notes" helm-source-bibtex)
 (helm-add-action-to-source "Edit notes" 'lgm/org-ref-notes-function helm-source-bibtex 7)
 
-(use-package helm-org-rifle
-  :ensure t
-  )
-
 (use-package org-ql
   :ensure t)
-
-;; (use-package helm-org-ql
-;;   :ensure t)
-
-;; https://www.orgroam.com/manual/Full_002dtext-search-interface-with-Deft.html
-;; (use-package deft
-;;   :after org
-;;   :bind
-;;   ("C-c n d" . deft)
-;;   :custom
-;;   (deft-recursive t)
-;;   (deft-use-filter-string-for-filename t)
-;;   (deft-default-extension "org")
-;;   (deft-directory "~/Dropbox/Agenda/roam"))
 
 ;; Refile settings
 ;; from https://blog.aaronbieber.com/2017/03/19/organizing-notes-with-refile.html
@@ -1668,13 +1196,10 @@ should be continued."
         :on (= tags:node-id nodes:id)
         :where (in tag $v1)] '(["todo"])))))
 
-;; (setq nu-dynamic-roam-agenda-files (list-roam-files-with-tags))
-;; (setq personal-dynamic-roam-agenda-files (list-roam-files-with-tags "project" "people"))
-
 (setq old-nu-roam-agenda-files '("~/Dropbox/Agenda/nu.org"
 				 "~/Dropbox/Agenda/roam/20211123125642-nu_meeting_notes.org"))
 
-;; (setq personal-roam-agenda-files '("~/Dropbox/Agenda/todo.org"))
+;; I need to call it to bring org-roam mode
 (org-roam-version)
 (setq personal-dynamic-roam-agenda-files (list-roam-files-with-tags-todo))
 (setq personal-roam-agenda-files (append '("~/Dropbox/Agenda/todo.org")
@@ -1696,7 +1221,7 @@ should be continued."
 	       (org-roam-version)
 	       (setq nu-dynamic-roam-agenda-files (list-roam-files-with-tags))
 	       (setq nu-roam-agenda-files (append '("~/Dropbox/Agenda/nu.org")
-				   nu-dynamic-roam-agenda-files))
+						  nu-dynamic-roam-agenda-files))
 	       )
 	     (setq org-agenda-files nu-roam-agenda-files)
 	     (setq org-agenda-files-personal-mode nil)
@@ -1732,31 +1257,6 @@ should be continued."
                    '(:underline "gold")
                    '(CATEGORY "important"))
 
-(defun lgm/is-link (text)
-  (let ((url-in-text (cl-search "https://" text)))
-    (if url-in-text
-	(= 0 url-in-text)
-      nil)
-    )
-  )
-
-;; Copy Slack behavior of automatically creating link
-;; when pasting url with text selected
-(defun lgm/org-yank-link ()
-  (interactive)
-  (let ((yank-text (string-trim-left (car kill-ring))))
-  (if (lgm/is-link yank-text)
-      (progn
-	(org-insert-link "https://" yank-text (buffer-substring-no-properties (mark) (point))))
-	  (message (concat "Not a link: " yank-text))))
-  )
-
-;; The property is need to keep the delete-selection-mode
-;; (put 'lgm/org-yank-link 'delete-selection 'yank)
-
-;; Define key without anonymous function to not lose the property
-(define-key org-mode-map (kbd "s-v") 'lgm/org-yank-link)
-
 ;; Priority inheritance
 ;; source:
 (defun my/org-inherited-priority (s)
@@ -1790,13 +1290,6 @@ should be continued."
   "Convert priority INTEGER to a character priority."
   (- org-lowest-priority (/ integer 1000)))
 
-(defun lgm/inherit-parent-priority-if-no-explicit ()
-  (interactive)
-  (when (lgm/is-heading-no-priority)
-    (lgm/inherit-parent-priority)
-    )
-  )
-
 ;; When using org-get-priority in a entry without priority, org will jump to the parent
 ;; and return its priority. That's why I had to use regex
 (defun lgm/is-heading-no-priority ()
@@ -1804,6 +1297,13 @@ should be continued."
   (if (string-match org-priority-regexp (org-get-heading))
       nil
     t)
+  )
+
+(defun lgm/inherit-parent-priority-if-no-explicit ()
+  (interactive)
+  (when (lgm/is-heading-no-priority)
+    (lgm/inherit-parent-priority)
+    )
   )
 
 (defun lgm/inherit-parent-priority ()
@@ -1817,13 +1317,6 @@ should be continued."
 
 ;; Automatically gets parent priority when using org-capture + org-refile
 (add-hook 'org-after-refile-insert-hook #'lgm/inherit-parent-priority-if-no-explicit)
-
-;; Xournalpp integration
-;; (use-package org-xournalpp
-;;   :config
-;;   (add-hook 'org-mode-hook 'org-xournalpp-mode))
-
-;; (add-to-list 'load-path "~/.emacs.d/elpa/org-xournalpp/org-xournalpp.el" t)
 
 (use-package org-download
   :ensure t
@@ -1842,14 +1335,13 @@ should be continued."
         (dir (org-download--dir))
         (filepath (concat dir "/" (org-download-file-format-default basename)))
         (org-download-image-org-width 400))
-      (make-directory dir t)
-      (when (not (file-exists-p filepath)) (copy-file "~/.emacs.d/drawio_template.svg" filepath)) ; create empty svg file
-      (start-process-shell-command "drawio" nil (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io %s" filepath)) ; open svg file
-      (org-download-insert-link basename filepath)
-      )
+    (make-directory dir t)
+    (when (not (file-exists-p filepath)) (copy-file "~/.emacs.d/drawio_template.svg" filepath)) ; create empty svg file
+    (start-process-shell-command "drawio" nil (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io %s" filepath)) ; open svg file
+    (org-download-insert-link basename filepath)
+    )
   (org-toggle-inline-images)
   (org-toggle-inline-images)
-
   )
 
 (defun my/drawio-edit ()
@@ -1862,31 +1354,29 @@ should be continued."
        "drawio"
        (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io %s"
                (string-replace ".png" ".svg" (shell-quote-wildcard-pattern
-                (url-unhex-string (plist-get (cadr context) :path))))))))
+					      (url-unhex-string (plist-get (cadr context) :path))))))))
   )
 
 ;; Some svg images are not displayed nicely on Emacs, converting to png solves it
 (defun lgm/drawio-convert-to-png ()
   (interactive)
   (let*((context (org-element-context))
-		(filepath (string-replace ".png" ".svg" (shell-quote-wildcard-pattern
-                   (url-unhex-string (plist-get (cadr context) :path)))))
-		(pngfilepath (string-replace ".svg" ".png" filepath)))
+	(filepath (string-replace ".png" ".svg" (shell-quote-wildcard-pattern
+						 (url-unhex-string (plist-get (cadr context) :path)))))
+	(pngfilepath (string-replace ".svg" ".png" filepath)))
     (if (not (eq (car-safe context) 'link))
         (user-error "Not on a link")
       (start-process-shell-command
        "drawio"
        "drawio"
-	   (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io -x -f png -o %s %s" pngfilepath filepath))
-	  (kill-whole-line)
-	  (org-insert-link nil (concat "file:" pngfilepath) nil)
-	  (org-toggle-inline-images)
-	  (org-toggle-inline-images)
-       )))
+       (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io -x -f png -o %s %s" pngfilepath filepath))
+      (kill-whole-line)
+      (org-insert-link nil (concat "file:" pngfilepath) nil)
+      (org-toggle-inline-images)
+      (org-toggle-inline-images)
+      )))
 
-
-;;try org-cliplink
-
+;; Functions related to effort in the tasks
 ;; Add total effort for the tasks in a day to enable a reality check
 (require 'cl-lib)
 
@@ -1920,6 +1410,288 @@ agenda buffer."
 
 (add-hook 'org-agenda-finalize-hook 'my/org-agenda-insert-efforts)
 
+(defun lgm/prompt-for-effort-at-date (date)
+  "Go through every TODO item scheduled for the specified DATE and prompt the user for the :effort: property if it is not defined.
+
+If no date is specified, use today's date as the default."
+  (interactive "P")
+  (let ((input (org-read-date)))
+    (if input
+        (setq date (format-time-string "%Y-%m-%d" (date-to-time input)))
+      (setq date (format-time-string "%Y-%m-%d" (current-time)))))
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "^\\*+ TODO" nil t)
+      (let ((scheduled-time (org-get-scheduled-time (point)))
+            (effort (org-entry-get (point) "EFFORT")))
+        (when (and scheduled-time
+                   (equal date (format-time-string "%Y-%m-%d" scheduled-time))
+                   (not effort))
+	    (org-fold-reveal)
+	    (recenter-top-bottom)
+          (setq effort (read-string "Effort: "))
+          (org-set-property "EFFORT" effort))))))
+
+(defun lgm/prompt-for-effort-for-all-items ()
+  "Go through every TODO item without the effort property and prompt for it"
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "^\\*+ TODO" nil t)
+      (let ((scheduled-time (org-get-scheduled-time (point)))
+            (effort (org-entry-get (point) "EFFORT"))
+	    (tags (org-get-tags))
+	    )
+        (when (and (not (or (member "epic" tags) (member "goals" tags) (member "delegated" tags)))
+                   (not effort))
+	    (org-fold-reveal)
+	    (recenter-top-bottom)
+	    (org-narrow-to-subtree)
+          (setq effort (read-string "Effort: "))
+          (org-set-property "EFFORT" effort)
+	  (widen)
+	  )))))
+
+(defun minutes-to-hhmm (minutes)
+  "Convert MINUTES to a string in the hh:mm format."
+  (format "%02d:%02d" (/ minutes 60) (mod minutes 60)))
+
+(defun get-scheduled-effort (date)
+  "Get the sum of the effort of all scheduled TODO items for DATE in minutes."
+  (let* ((scheduled-effort 0)
+	(date-str (format-time-string "%Y-%m-%d" date)))
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward org-complex-heading-regexp nil t)
+        (let* ((item-effort (org-entry-get (point) "Effort"))
+               (item-effort (when item-effort (org-duration-to-minutes item-effort)))
+               (scheduledp (org-get-scheduled-time (point))))
+          (when (and scheduledp
+		     (equal date-str (format-time-string "%Y-%m-%d" scheduledp))
+		     )
+            (setq scheduled-effort (+ scheduled-effort item-effort))))))
+    scheduled-effort))
+
+(defun lgm/schedule-todos ()
+  "Schedule all possible unscheduled TODO items from the current org file
+   such that their combined effort is below FOCUS-TIME and they are scheduled
+   on DATE. Prioritize TODO items using org priority."
+  (interactive)
+  (let* ((focus-time (read-string "Focus time (hh:mm): "))
+  	 (focus-time (org-duration-to-minutes focus-time))
+  	 (date (org-read-date nil t))
+         (scheduled-items 0)
+         (scheduled-effort (get-scheduled-effort date))
+	 )
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward org-complex-heading-regexp nil t)
+        (let* ((item-effort (org-entry-get (point) "Effort"))
+               (item-effort (when item-effort (org-duration-to-minutes item-effort)))
+               (item-priority (org-entry-get (point) "PRIORITY"))
+               (item-priority (when item-priority (string-to-char item-priority)))
+               (scheduledp (org-entry-get (point) "SCHEDULED")))
+          (when (and (not scheduledp) item-effort (<= (+ scheduled-effort item-effort) focus-time))
+            (org-schedule nil date)
+            (setq scheduled-items (1+ scheduled-items))
+            (setq scheduled-effort (+ scheduled-effort item-effort))))))
+    (message "Scheduled %d TODO items with a total effort of %s on %s"
+           scheduled-items (minutes-to-hhmm scheduled-effort)  (format-time-string "%d-%m-%Y" date))
+    )
+  )
+
+(defun my-org-make-link ()
+  "Turn selected text into an Org mode link by replacing the selected
+text with a link that uses the selected text as the link description
+and the clipboard contents as the link URL."
+  (interactive)
+  (let ((link-description (if (use-region-p)
+                              (buffer-substring-no-properties (region-beginning) (region-end))
+                            (read-string "Link description: ")))
+        (clipboard-contents (current-kill 0)))
+    (delete-region (region-beginning) (region-end))
+    (insert (concat "[[" clipboard-contents "][" link-description "]]"))))
+
+(define-key org-mode-map (kbd "s-v") 'my-org-make-link)
+
+(defun my-exclude-org-roam-link (input-string)
+  "Return a new string with org-roam links in the given INPUT-STRING transformed into plain text using the link description."
+  (replace-regexp-in-string
+   "\\[\\[id:\\([^][]+\\)\\]\\[\\([^][]+\\)\\]\\]"
+   (lambda (match)
+     (let ((link-path (match-string 1 match))
+           (link-title (match-string 2 match)))
+       (format "%s" link-title)))
+   input-string))
+
+(defun lgm/gpt-prompt ()
+  "Summarize the selected text using the OpenAI API and display the
+summary in a new temporary buffer."
+  (interactive)
+  (pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+  (let* ((selected-text (if (use-region-p)
+                            (buffer-substring-no-properties (region-beginning) (region-end))
+						  ""
+                          ))
+	 (filtered-text (my-exclude-org-roam-link selected-text))
+	 (input-string (read-string "Enter a prompt: "))
+		 (script-output (my-call-python-script "~/Dropbox/Projetos/Emacs/org-roam-ai/api_call.py" filtered-text input-string))
+        )
+	(with-output-to-temp-buffer "*OpenAI Output*"
+	  (with-current-buffer "*OpenAI Output*"
+        (insert script-output)))
+	))
+
+(setq open-ai-summary-prompt "\n\nTl;dr")
+
+(defun my-openai-summarize ()
+  "Summarize the selected text using the OpenAI API and display the
+summary in a new temporary buffer."
+  (interactive)
+  (pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+  (let* ((selected-text (if (use-region-p)
+                           (buffer-substring-no-properties (region-beginning) (region-end))
+                         (read-string "Enter text to summarize: ")))
+		 (filtered-text (my-exclude-org-roam-link selected-text))
+		 (script-output (my-call-python-script "~/Dropbox/Projetos/Emacs/org-roam-ai/api_call.py" filtered-text open-ai-summary-prompt))
+        )
+	(with-output-to-temp-buffer "*OpenAI Summary*"
+	  (with-current-buffer "*OpenAI Summary*"
+            (insert script-output)))
+	))
+
+(defun my-openai-model-function ()
+  (interactive)
+  "Prompt the user to select an OpenAI model from a list of available models and set the `openai-model` variable to the selected model."
+  (let ((available-models '("text-davinci-002" "text-curie-001" "text-ada-001")))
+    (setq openai-model (completing-read "Select an OpenAI model: " available-models))))
+
+
+(defun my-openai-summarize-text (text)
+  "Call the OpenAI API and provide it with the given TEXT as input.
+API-KEY is the OpenAI API key to use for the request."
+  (pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+  (my-call-python-script "~/Dropbox/Projetos/Emacs/org-roam-ai/api_call.py" text open-ai-summary-prompt)
+)
+
+(defun my-call-python-script (script-name text prompt)
+  "Call the given Python SCRIPT-NAME with the given TEXT as input and
+display the output in a new temporary buffer."
+  (let ((script-output (shell-command-to-string
+                        (format "python %s \"%s\" \"%s\"" script-name text prompt))))
+    script-output)
+  )
+
+(defun display-org-roam-nodes (node-ids)
+  "Display the org-roam nodes with the given IDS in a temporary buffer.
+   The buffer will show the node's title, the first 5 lines of content,
+   and a link to visit the node."
+  (let ((buf (get-buffer-create "*org-roam-node-display*")))
+    (with-current-buffer buf
+      (erase-buffer)
+      (let ((nodes (org-roam-db-query
+                    [:select [node-id]
+                     :from nodes
+                     :where (in node-id $node-ids)])))
+        (dolist (node nodes)
+          (let* ((node-id (plist-get node :node-id))
+                 (title (org-roam-format-link (plist-get node :title)))
+                 (first-lines (cl-subseq (split-string (plist-get node :content) "\n") 0 5))
+                 (link (format "[[org-roam:node-id:%s][Visit node]]" node-id)))
+            (insert (format "%s\n\n%s\n\n%s\n\n" title (mapconcat #'identity first-lines "\n") link)))))
+      (display-buffer buf))))
+
+
+;; org-roam-ai
+(defun display-org-roam-nodes (node-ids)
+  "Display the org-roam nodes with the given IDS in a temporary buffer.
+   The buffer will show the node's title, the first 5 lines of content,
+   and a link to visit the node."
+  (let ((buf (get-buffer-create "*semantic-search-results*")))
+    (with-current-buffer buf
+      (erase-buffer)
+	  (org-mode)
+      (dolist (node-id node-ids)
+        (let* ((node (org-roam-node-from-id node-id))
+               (title (org-roam-node-title node))
+			   (first-lines "")
+               ;; (first-lines (cl-subseq (split-string (cdr node) "\n") 0 5))
+               (link (format "[[id:%s][%s]]" node-id title)))
+          (insert (format "- %s\n" link))))
+      (insert "\n [[file:/Users/luis.moneda/Dropbox/Agenda/org-roam-ai/output.jpg]]")
+	  (org-display-inline-images nil t)
+      )
+    (display-buffer buf)
+    )
+  )
+
+;; Avoid error when node is nil (database fails)
+(defun display-org-roam-nodes (node-ids)
+  "Display the org-roam nodes with the given IDS in a temporary buffer.
+   The buffer will show the node's title, the first 5 lines of content,
+   and a link to visit the node."
+  (let ((buf (get-buffer-create "*semantic-search-results*")))
+    (with-current-buffer buf
+      (erase-buffer)
+	  (org-mode)
+      (dolist (node-id node-ids)
+        (let* ((node (org-roam-node-from-id node-id)))
+          (when node
+            (let* ((title (org-roam-node-title node))
+                   (first-lines "")
+                   (link (format "[[id:%s][%s]]" node-id title)))
+              (insert (format "- %s\n" link))))))
+      (insert "\n [[file:/Users/luis.moneda/Dropbox/Agenda/org-roam-ai/output.jpg]]")
+	  (org-display-inline-images nil t)
+      )
+    (display-buffer buf)
+    )
+  )
+
+(defun replace-quotes (string)
+  "Replace quote characters in STRING with controlled version."
+  (replace-regexp-in-string "\"" "\\\\\"" string))
+
+(defun org-roam-ai-semantic-search ()
+  "Call the given Python SCRIPT-NAME with the given TEXT as input and
+display the output in a new temporary buffer."
+    (interactive)
+	(pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+	(let* ((text (if (use-region-p)
+                           (buffer-substring-no-properties (region-beginning) (region-end))
+                         (read-string "Enter search: ")))
+		   (script-name "/Users/luis.moneda/Dropbox/Agenda/org-roam-ai/semantic_search.py")
+		   (script-output (shell-command-to-string
+				   (format "python -W ignore %s \"%s\"" script-name (replace-quotes text)))))
+	  ;; (message script-output)
+	  (display-org-roam-nodes (read script-output))
+	  )
+	)
+
+(use-package consult-org-roam
+   :ensure t
+   :after org-roam
+   :init
+   (require 'consult-org-roam)
+   ;; Activate the minor mode
+   (consult-org-roam-mode 1)
+   :custom
+   ;; Use `ripgrep' for searching with `consult-org-roam-search'
+   (consult-org-roam-grep-func #'consult-ripgrep)
+   ;; Configure a custom narrow key for `consult-buffer'
+   (consult-org-roam-buffer-narrow-key ?r)
+   ;; Display org-roam buffers right after non-org-roam buffers
+   ;; in consult-buffer (and not down at the bottom)
+   (consult-org-roam-buffer-after-buffers t)
+   :config
+   ;; Eventually suppress previewing for certain functions
+   (consult-customize
+    consult-org-roam-forward-links
+    :preview-key (kbd "C-."))
+   :bind
+   ;; Define some convenient keybindings as an addition
+   ("C-c n h" . consult-org-roam-backlinks)
+   ("C-c n j" . consult-org-roam-forward-links))
 
 (provide 'org-settings)
 ;;; org-settings.el ends here
