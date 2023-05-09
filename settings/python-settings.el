@@ -249,25 +249,26 @@ if breakpoints are present in `python-mode' files"
 (setq python-shell-completion-native-enable nil)
 
 ;; Emacs Ipython Notebook
-(use-package ein
-  :ensure t
-  :init ;; (setq ein:use-auto-complete t)
-;;  (setq ein:use-smartrep t)
+;; (use-package ein
+;;   :ensure t
+;;   :init
+  ;; (setq ein:use-auto-complete t)
+  ;;  (setq ein:use-smartrep t)
   ;; (setq auto-complete-mode t)
   ;; (setq ein:output-type-prefer-pretty-text-over-html t)
   ;; (setq ein:output-type-preference
   ;; 	'(emacs-lisp image image/png svg image/svg image/png jpeg image/jpeg text html text/html latex text/latex javascript))
-  )
+  ;; )
 
-(custom-set-variables
- '(ein:output-area-inlined-images t)
- )
+;; (custom-set-variables
+;;  '(ein:output-area-inlined-images t)
+;;  )
 
-(add-hook 'ein:notebook-mode-hook (lambda () (progn
-											   (writeroom-mode)
-											   (writeroom-adjust-width 30))))
+;; (add-hook 'ein:notebook-mode-hook (lambda () (progn
+;; 					       (writeroom-mode)
+;; 					       (writeroom-adjust-width 30))))
 
-(require 'ein-notebook)
+;; (require 'ein-notebook)
 ;;(require 'ein-subpackages)
 
 ;; (setq ein:use-auto-complete-superpack t)

@@ -74,6 +74,19 @@
 (setq org-clock-into-drawer t)
 (setq org-log-into-drawer t)
 
+;; Add clocked-in task to the menubar
+(defun my-clock-string ()
+  (let ((clock-string (substring-no-properties (org-clock-get-clock-string))))
+    (if (string-equal clock-string "")
+        "Clock is not running"
+      clock-string)))
+
+;; It is needed to start the server
+(server-start)
+
+;; Call it using xbar, with a org-clock.ls.sh on xbar's folder
+;; emacsclient --eval "(my-clock-string)" | sed 's/["()]//g'
+
 ;; Change viewer apps C-c C-o
 ;; When not in MAC
 (unless (string-equal system-type "darwin")
@@ -92,16 +105,16 @@
 
 ;; New states to to-do
 (setq org-todo-keywords
-      '((sequence "TODO(t)" "WAIT(w)" "STARTED(s)" "|" "DONE(d)" "CANCELED(c)" "INACTIVE(i)" "FAIL(f)")))
+      '((sequence "TODO(t)" "WAIT(w)" "DELEGATED(e)" "STARTED(s)" "|" "DONE(d)" "CANCELED(c)" "INACTIVE(i)" "FAIL(f)")))
 
-(setq org-todo-keyword-faces
-      '(
-		("NEXT" . "pink")
-		("STARTED" . "yellow")
-		("WAIT" . "magenta")
-		("INACTIVE" . (:foreground "grey"))
-        ("CANCELED" . (:foreground "blue" :weight bold))
-        ("FAIL" . (:foreground "blue" :weight bold))))
+;; (setq org-todo-keyword-faces
+;;       '(
+;; 	("NEXT" . "pink")
+;; 	("STARTED" . "yellow")
+;; 	("WAIT" . "magenta")
+;; 	("INACTIVE" . (:foreground "grey"))
+;;         ("CANCELED" . (:foreground "blue" :weight bold))
+;;         ("FAIL" . (:foreground "blue" :weight bold))))
 
 ;; TODO entry automatically change to done when all children are done (from orgmode.org)
 (defun org-summary-todo (n-done n-not-done)
@@ -111,15 +124,23 @@
 
 (add-hook 'org-after-todo-statistics-hook 'org-summary-todo)
 
-;; https://github.com/gregsexton/ob-ipython
-;; (use-package ob-ipython
-;;   :ensure t
-;;   :init
-;;   ;; (setq ob-ipython-resources-dir (no-littering-expand-var-file-name "obipy-resources"))
-;;   (setq ob-ipython-command "/opt/miniconda3/bin/jupyter")
-;;   :config
-;;   (require 'ob-ipython))
+;; org-async to execute code blocks async
+(use-package ob-async
+  :ensure t
+  :config
+  (require 'ob-async)
+  (setq ob-async-no-async-languages-alist '("jupyter-python" "jupyter"))
+  )
 
+(use-package jupyter
+  :demand t
+  :after (:all org python))
+
+(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/jupyter-20230214.215")
+(load "jupyter")
+(autoload 'jupyter "jupyter" "" t)
+
+(pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
 
 ;; ;; to redefine images from evaluating code blocks
 ;; After executing code, it displays the image
@@ -133,13 +154,72 @@
    (haskell . nil)
    (latex . t)
    (python . t)
+   (jupyter . t)
    (emacs-lisp . t)
    ;; Problems with orb capture
-   (ipython . t)
    (shell . t)
    (dot . t)
    (sql . nil)
    (sqlite . t)))
+
+;; (setq org-babel-default-header-args:jupyter-python '((:async . "yes")
+;; 													 (:result . "both")
+;; 													 (:pandoc . "t")
+;;                                                      (:session . "py-edge")
+;;                                                      (:kernel . "edge")))
+
+;; Copied from scimax https://github.com/jkitchin/scimax
+(setq org-babel-default-header-args:jupyter-python
+      '((:async . "yes")
+		(:results . "both")
+		(:session . "py-edge")
+		(:kernel . "edge")
+		(:pandoc . "t")
+		(:exports . "both")
+		(:cache .   "no")
+		(:noweb . "no")
+		(:hlines . "no")
+		(:tangle . "no")
+		(:eval . "never-export")))
+
+;; * Handling ansi codes
+
+(defun scimax-jupyter-ansi ()
+  "Replaces ansi-codes in exceptions with colored text.
+I thought emacs-jupyter did this automatically, but it may only
+happen in the REPL. Without this, the tracebacks are very long
+and basically unreadable.
+We also add some font properties to click on goto-error.
+This should only apply to jupyter-lang blocks."
+  (when (string-match "^jupyter" (car (or (org-babel-get-src-block-info t) '(""))))
+    (let* ((r (org-babel-where-is-src-block-result))
+	   (result (when r
+		     (save-excursion
+		       (goto-char r)
+		       (org-element-context)))))
+      (when result
+	(ansi-color-apply-on-region (org-element-property :begin result)
+				    (org-element-property :end result))
+
+	;; Let's fontify "# [goto error]" to it is clickable
+	(save-excursion
+	  (goto-char r)
+	  (when (search-forward "# [goto error]" (org-element-property :end result) t)
+	    (add-text-properties
+	     (match-beginning 0) (match-end 0)
+	     (list 'help-echo "Click to jump to error."
+		   'mouse-face 'highlight
+		   'local-map (let ((map (copy-keymap help-mode-map)))
+				(define-key map [mouse-1] (lambda ()
+							    (interactive)
+							    (search-backward "#+BEGIN_SRC")
+							    (scimax-jupyter-jump-to-error)))
+				map))))))
+
+      t)))
+
+
+(add-to-list 'org-babel-after-execute-hook 'scimax-jupyter-ansi t)
 
 ;; Latex in org
 (setq exec-path (append exec-path '("/Library/TeX/texbin/latex")))
@@ -153,6 +233,8 @@
   '(add-to-list 'preview-default-preamble "\\PreviewEnvironment{tikzpicture}" t))
 
 (setq org-latex-create-formula-image-program 'imagemagick)
+;; (add-to-list ' org-preview-latex-process-alist
+;;              'imagemagick)
 
 (use-package virtualenvwrapper
   :ensure t)
@@ -332,7 +414,7 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
 
 ;; Make Org Journal remember me about
 ;; writing my day thoughts like in Memento mode
-(defcustom journal-file "~/Dropbox/Agenda/Journal/my-journal.org"
+(defcustom journal-file "~/Dropbox/Agenda/roam/20220619113235-my_journal.org"
   "Customizable variable to specify any file, which will be used for Memento."
   :type 'string
   :group 'journal)
@@ -463,14 +545,6 @@ this command to copy it"
 
 ;; ;; Load gcalsync
 ;; (load "~/Dropbox/Projetos/Emacs/.gcalsync.el")
-
-;; Start with my to-do
-;; The org mode file is opened with
-(find-file "~/Dropbox/Agenda/todo.org")
-(switch-to-buffer "todo.org")
-(setq org-agenda-window-setup 'other-window)
-
-(add-to-list 'org-agenda-files  "~/Dropbox/Agenda/todo.org")
 
 (defvar org-capture-templates
   '(("t" "todo" entry (file org-default-notes-file)
@@ -623,7 +697,7 @@ this command to copy it"
 				 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
 												(air-org-skip-subtree-if-priority ?A)
 												(org-agenda-skip-if nil '(scheduled deadline))))
-				 (org-agenda-overriding-header "2022 Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+				 (org-agenda-overriding-header "2023 Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 				 (org-agenda-remove-tags t)))
 
 		  ;; Backlog projects
@@ -670,7 +744,7 @@ this command to copy it"
 	  					 ))
 
 				;; High priority projects
-				(tags "+epic-team-educ+spinning"
+				(tags "+epic-team+spinning"
 					  ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
 					   (org-agenda-overriding-header "🌋 My Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 					   (org-agenda-remove-tags t)
@@ -684,12 +758,12 @@ this command to copy it"
 					   (org-agenda-todo-keyword-format "")
 					   ))
 
-				(tags "+epic+educ+PRIORITY=\"A\""
-					  ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-					   (org-agenda-overriding-header "🧠 Education Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-					   (org-agenda-remove-tags t)
-					   (org-agenda-todo-keyword-format "")
-					   ))
+				;; (tags "+epic+educ+PRIORITY=\"A\""
+				;; 	  ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+				;; 	   (org-agenda-overriding-header "🧠 Education Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+				;; 	   (org-agenda-remove-tags t)
+				;; 	   (org-agenda-todo-keyword-format "")
+				;; 	   ))
 
 				;; Delegated Tasks
 				(tags "+team+directreports+TODO=\"TODO\"-epic|delegated+TODO=\"TODO\"-epic"
@@ -946,8 +1020,17 @@ should be continued."
 ;; Always split stuff vertically
 (setq split-height-threshold nil)
 
-;; Open todo.org
-;;(global-set-key (kbd "<f10>") (lambda() (interactive)(find-file "~/Dropbox/Agenda/todo.org")))
+;; Avoid the todo selection to disrupt the buffers
+(setq org-use-fast-todo-selection 'expert)
+
+;; Start with my to-do
+;; The org mode file is opened with
+;; Make org agenda open in the right
+(setq org-agenda-window-setup 'other-window)
+(find-file "~/Dropbox/Agenda/todo.org")
+(switch-to-buffer "todo.org")
+(add-to-list 'org-agenda-files  "~/Dropbox/Agenda/todo.org")
+
 ;; Open agenda
 (global-set-key (kbd "<f10>") (lambda() (interactive)(org-agenda nil "d")(org-agenda-redo)))
 ;; Work agenda
@@ -959,12 +1042,15 @@ should be continued."
 (global-set-key (kbd "C-c <f10>") (lambda() (interactive)(org-agenda 0 "a")))
 (global-set-key (kbd "M-<f10>") (lambda() (interactive)(org-agenda 0 "l")))
 
+;; Place the tags in a way I can user a larger font size
+(setq org-tags-column -50)
+
 ;; Change buffer functionality
 (org-defkey org-mode-map (kbd "C-<tab>") (lambda ()
 					   (interactive)
 					   (other-window -1)))
 
-(setq org-code-block-header "python")
+(setq org-code-block-header "jupyter-python")
 (defun lgm/set-org-code-block-header()
   (interactive)
   (setq org-code-block-header
@@ -973,7 +1059,7 @@ should be continued."
 
 (defun lgm/python-org-code-block()
   (interactive)
-  (open-line 2)
+  (org-open-line 2)
   (insert (concat "#+begin_src " org-code-block-header))
   (next-line)
   (insert "#+end_src")
@@ -982,6 +1068,8 @@ should be continued."
   (split-line)
   (next-line)
   (beginning-of-line)
+  (delete-line)
+  (org-open-line 1)
   )
 
 (defun lgm/double-dollar-sign()
@@ -997,7 +1085,8 @@ should be continued."
     )
 
 (setq org-roam-v2-ack t)
-
+;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/org-roam-20230307.1721")
+;; (load "org-roam")
 (use-package org-roam
   :init
   (setq org-roam-completion-everywhere t)
@@ -1033,19 +1122,21 @@ should be continued."
 		 (window-height . fit-window-to-buffer)))
   :bind (("C-c n l" . org-roam-buffer-toggle)
          ("C-c n f" . org-roam-node-find)
-	 ("C-c n i" . org-roam-node-insert)
-	 ;; ("C-c n g" . org-roam-graph)
-	 ("C-c n g" . counsel-org-goto)
-	 ("C-c n b" . helm-bibtex)
-	 ("C-c n s" . lgm/screenshot-to-org-link)
-	 ("C-c n a" . org-roam-ai-semantic-search)
-	 ("C-c n p" . lgm/gpt-prompt)
-	 ("C-c n c" . lgm/python-org-code-block)
-	 ("C-c n e" . lgm/double-dollar-sign)
-	 ("C-c k" . lgm/double-dollar-sign)
-	 ("C-c n n" . org-id-get-create)
-	 ("C-c n w" . my/drawio-create)
-	 ("C-c n o" . my/drawio-edit)
+		 ("C-c n i" . org-roam-node-insert)
+		 ;; ("C-c n g" . org-roam-graph)
+		 ("C-c n g" . counsel-org-goto)
+		 ("C-c n b" . helm-bibtex)
+		 ("C-c n s" . lgm/screenshot-to-org-link)
+		 ;; ("C-c n a" . org-roam-ai-semantic-search)
+		 ;; ("C-c n a" . org-roam-ai-semantic-search-api)
+		 ("C-c n a" . org-roam-semantic-search-api)
+		 ("C-c n p" . lgm/gpt-prompt)
+		 ("C-c n c" . lgm/python-org-code-block)
+		 ("C-c n e" . lgm/double-dollar-sign)
+		 ("C-c k" . lgm/double-dollar-sign)
+		 ("C-c n n" . org-id-get-create)
+		 ("C-c n w" . my/drawio-create)
+		 ("C-c n o" . my/drawio-edit)
 	 )
   :config
   (org-roam-setup)
@@ -1105,9 +1196,11 @@ should be continued."
 	      (make-local-variable 'company-backends)
 	      (make-local-variable 'company-idle-delay)
 	      (make-local-variable 'company-minimum-prefix-length)
-	      (setq company-backends '(company-org-roam))
-	      (setq company-idle-delay 0
-		    company-minimum-prefix-length 3)))
+	      (setq company-backends '(company-capf))
+	      ;; (setq company-idle-delay 0.5
+	      ;; 	    company-minimum-prefix-length 3)
+	      )
+	    )
 
 ;; Xunxo to disable in my todo file
 (progn
@@ -1325,7 +1418,13 @@ should be continued."
   )
 
 ;; The width to display images
+;; If I want to set per image, this value needs to be nil
 (setq org-image-actual-width 750)
+
+(defun lgm/set-org-image-actual-width ()
+  (interactive)
+  (let ((width (read-from-minibuffer "Enter the width for images in org-mode: ")))
+    (setq org-image-actual-width (string-to-number width))))
 
 ;;Inspired or copied from H4kman
 (defun my/drawio-create (&optional use-default-filename)
@@ -1336,7 +1435,8 @@ should be continued."
         (filepath (concat dir "/" (org-download-file-format-default basename)))
         (org-download-image-org-width 400))
     (make-directory dir t)
-    (when (not (file-exists-p filepath)) (copy-file "~/.emacs.d/drawio_template.svg" filepath)) ; create empty svg file
+    ;; (when (not (file-exists-p filepath)) (copy-file "~/.emacs.d/drawio_template.svg" filepath)) ; create empty svg file
+	(when (not (file-exists-p filepath)) (copy-file "~/.emacs.d/drawio_transparent_template.svg" filepath)) ; create empty svg file
     (start-process-shell-command "drawio" nil (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io %s" filepath)) ; open svg file
     (org-download-insert-link basename filepath)
     )
@@ -1369,7 +1469,8 @@ should be continued."
       (start-process-shell-command
        "drawio"
        "drawio"
-       (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io -x -f png -o %s %s" pngfilepath filepath))
+	   ;; -t, --transparent for transparent png
+       (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io -x -f png --transparent -o %s %s" pngfilepath filepath))
       (kill-whole-line)
       (org-insert-link nil (concat "file:" pngfilepath) nil)
       (org-toggle-inline-images)
@@ -1379,6 +1480,9 @@ should be continued."
 ;; Functions related to effort in the tasks
 ;; Add total effort for the tasks in a day to enable a reality check
 (require 'cl-lib)
+(setq org-global-properties
+      '(("Effort_ALL" .
+         "0:05 0:10 0:15 0:30 0:45 1:00 1:30 2:00 2:30")))
 
 (defun my/org-agenda-calculate-efforts (limit)
   "Sum the efforts of scheduled entries up to LIMIT in the
@@ -1578,7 +1682,7 @@ API-KEY is the OpenAI API key to use for the request."
   "Call the given Python SCRIPT-NAME with the given TEXT as input and
 display the output in a new temporary buffer."
   (let ((script-output (shell-command-to-string
-                        (format "python %s \"%s\" \"%s\"" script-name text prompt))))
+                        (format "python -W ignore %s \"%s\" \"%s\"" script-name text prompt))))
     script-output)
   )
 
@@ -1642,7 +1746,8 @@ display the output in a new temporary buffer."
                    (link (format "[[id:%s][%s]]" node-id title)))
               (insert (format "- %s\n" link))))))
       (insert "\n [[file:/Users/luis.moneda/Dropbox/Agenda/org-roam-ai/output.jpg]]")
-	  (org-display-inline-images nil t)
+      (org-display-inline-images nil t)
+      (beginning-of-buffer)
       )
     (display-buffer buf)
     )
@@ -1692,6 +1797,275 @@ display the output in a new temporary buffer."
    ;; Define some convenient keybindings as an addition
    ("C-c n h" . consult-org-roam-backlinks)
    ("C-c n j" . consult-org-roam-forward-links))
+
+;; Org-similarity
+(add-to-list 'load-path "~/repos/org-similarity")
+(require 'org-similarity)
+
+(use-package org-similarity
+  :load-path  "~/repos/org-similarity")
+
+;; Directory to scan for possibly similar documents.
+;; org-roam users might want to change it to `org-roam-directory'.
+(setq org-similarity-directory org-roam-directory)
+
+;; The language passed to the Snowball stemmer in the `nltk' package.  The
+;; following languages are supported: Arabic, Danish, Dutch, English, Finnish,
+;; French, German, Hungarian, Italian, Norwegian, Portuguese, Romanian, Russian,
+;; Spanish and Swedish.
+(setq org-similarity-language "english")
+
+;; How many similar entries to list at the end of the buffer.
+(setq org-similarity-number-of-documents 10)
+
+;; Whether to prepend the list entries with similarity scores.
+(setq org-similarity-show-scores nil)
+
+;; Whether the resulting list of similar documents will point to ID property or
+;; filename. Default it nil.
+;; However, I recommend setting it to `t' if you use `org-roam' v2.
+(setq org-similarity-use-id-links t)
+
+;; Scan for files inside `org-similarity-directory' recursively.
+(setq org-similarity-recursive-search nil)
+
+;; Effort functions for work
+(defun my/org-agenda-calculate-total-efforts (limit)
+  "Sum the efforts of scheduled entries up to LIMIT in the agenda buffer."
+  (let (total)
+    (save-excursion
+      (while (< (point) limit)
+	(when (member (org-get-at-bol 'type) '("scheduled" "past-scheduled"))
+          (push (org-entry-get (org-get-at-bol 'org-hd-marker) "Effort") total))
+	(forward-line)))
+    (org-duration-from-minutes
+     (cl-reduce #'+
+                (mapcar #'org-duration-to-minutes
+                        (cl-remove-if-not 'identity total))))))
+
+(defun my/org-agenda-calculate-remaining-efforts (limit)
+  "Sum the efforts of TODO entries up to LIMIT in the agenda buffer."
+  (let (total)
+    (save-excursion
+      (while (< (point) limit)
+	(when (and (member (org-get-at-bol 'type) '("scheduled" "past-scheduled"))
+		   (string= (org-get-at-bol 'todo-state) "TODO"))
+	  (push (org-entry-get (org-get-at-bol 'org-hd-marker) "Effort") total))
+	(forward-line)))
+    (org-duration-from-minutes
+     (cl-reduce #'+
+		(mapcar #'org-duration-to-minutes
+			(cl-remove-if-not 'identity total))))))
+
+(defun my/org-agenda-calculate-state-efforts (limit state)
+  "Sum the efforts of TODO entries up to LIMIT in the agenda buffer."
+  (let (total)
+    (save-excursion
+      (while (< (point) limit)
+	(when (and (member (org-get-at-bol 'type) '("scheduled" "past-scheduled"))
+		   (string= (org-get-at-bol 'todo-state) state))
+	  (push (org-entry-get (org-get-at-bol 'org-hd-marker) "Effort") total))
+	(forward-line)))
+    (org-duration-from-minutes
+     (cl-reduce #'+
+		(mapcar #'org-duration-to-minutes
+			(cl-remove-if-not 'identity total))))))
+
+(defun my/org-agenda-calculate-remaining-high-priority (limit)
+  "Sum the efforts of scheduled TODO entries with priority A up to LIMIT in the agenda buffer."
+  (let (total)
+    (save-excursion
+      (while (< (point) limit)
+	(when (and (member (org-get-at-bol 'type) '("scheduled" "past-scheduled"))
+		   (string= (org-get-at-bol 'todo-state) "TODO")
+		   (string= (org-get-at-bol 'priority) "A"))
+	  (push (org-entry-get (org-get-at-bol 'org-hd-marker) "Effort") total))
+	(forward-line)))
+    (org-duration-from-minutes
+     (cl-reduce #'+
+		(mapcar #'org-duration-to-minutes
+			(cl-remove-if-not 'identity total))))))
+
+(defun my/org-agenda-insert-efforts ()
+  "Insert the efforts for each day inside the agenda buffer."
+  (save-excursion
+    (let (pos total-efforts remaining-efforts percentage)
+      (while (setq pos (text-property-any
+			(point) (point-max) 'org-agenda-date-header t))
+	(goto-char pos)
+	(end-of-line)
+	(setq total-efforts (my/org-agenda-calculate-total-efforts (next-single-property-change (point) 'day)))
+	(setq remaining-efforts (my/org-agenda-calculate-state-efforts (next-single-property-change (point) 'day) "TODO"))
+	(setq blocked-efforts (my/org-agenda-calculate-state-efforts (next-single-property-change (point) 'day) "WAIT"))
+	(setq blocked-percentage (/ (org-duration-to-minutes blocked-efforts) (org-duration-to-minutes total-efforts)))
+	(setq percentage (- 1 (/ (org-duration-to-minutes remaining-efforts) (org-duration-to-minutes total-efforts))))
+	(setq accomplished-percentage (- percentage blocked-percentage))
+	(insert-and-inherit (concat " (" (number-to-string (floor (* accomplished-percentage 100))) "% done, " (number-to-string (floor (* blocked-percentage 100))) "% blocked, " total-efforts " total, " remaining-efforts " remaining)"))
+	(forward-line)))))
+
+(add-hook 'org-agenda-finalize-hook 'my/org-agenda-insert-efforts)
+
+;; This is an Emacs package that creates graphviz directed graphs from
+;; the headings of an org file
+(use-package org-mind-map
+  :init
+  (require 'ox-org)
+  :ensure t
+  ;; Uncomment the below if 'ensure-system-packages` is installed
+  ;;:ensure-system-package (gvgen . graphviz)
+  :config
+  (setq org-mind-map-engine "dot")       ; Default. Directed Graph
+  ;; (setq org-mind-map-engine "neato")  ; Undirected Spring Graph
+  ;; (setq org-mind-map-engine "twopi")  ; Radial Layout
+  ;; (setq org-mind-map-engine "fdp")    ; Undirected Spring Force-Directed
+  ;; (setq org-mind-map-engine "sfdp")   ; Multiscale version of fdp for the layout of large graphs
+  ;; (setq org-mind-map-engine "twopi")  ; Radial layouts
+  ;; (setq org-mind-map-engine "circo")  ; Circular Layout
+  )
+
+;; Imagemagick opening .eps
+(setq imagemagick-enabled-types t)
+(imagemagick-register-types)
+
+;;org-transclude
+;; Great to create new documents with different references to share with people
+(use-package org-transclusion
+  :ensure t)
+
+;;Inline .eps
+(add-to-list 'image-file-name-extensions "eps")
+
+;; ChatGPT
+
+(defun lgm/chatgpt-prompt ()
+  "Calls the ChatGPT API"
+  (interactive)
+  (pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+  (let* ((selected-text (if (use-region-p)
+                            (buffer-substring-no-properties (region-beginning) (region-end))
+						  ""
+                          ))
+	 (filtered-text (my-exclude-org-roam-link selected-text))
+	 (input-string (read-string "Enter a prompt: "))
+		 (script-output (my-call-python-script "~/Dropbox/Agenda/org-roam-ai/chatgpt_api.py" filtered-text input-string))
+        )
+	(with-output-to-temp-buffer "*OpenAI Output*"
+	  (with-current-buffer "*OpenAI Output*"
+        (insert script-output)))
+	))
+
+(defun lgm/chatgpt-assistant-prompt ()
+  "Calls the ChatGPT API"
+  (pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+  (let* ((selected-text (if (use-region-p)
+                            (buffer-substring-no-properties (region-beginning) (region-end))
+						  ""
+                          ))
+	 (filtered-text (my-exclude-org-roam-link selected-text))
+	 (input-string (read-string "Enter a prompt: "))
+		 (script-output (my-call-python-script "~/Dropbox/Agenda/org-roam-ai/chatgpt_api.py" filtered-text input-string))
+        )
+	(with-output-to-temp-buffer "*OpenAI Output*"
+	  (with-current-buffer "*OpenAI Output*"
+        (insert script-output)))
+	))
+
+
+(use-package org-tree-slide
+  :ensure t
+  :init
+  ;; To start the presentation from the header the cursor is in
+  (setq org-tree-slide-cursor-init nil)
+  (add-hook 'org-tree-slide-mode-hook 'lgm/org-presentation-mode)
+  )
+
+(defun toggle-header-line-format ()
+  "Toggle the value of `header-line-format' between nil and \" \""
+  (interactive)
+  (if header-line-format
+      (setq header-line-format nil)
+    (setq header-line-format " ")))
+
+(defvar face-remapping-alist-config-1
+  '((default (:height 1.5) variable-pitch)
+    (header-line (:height 4.0) variable-pitch)
+    (org-document-title (:height 1.75) org-document-title)
+    (org-code (:height 1.55) org-code)
+    (org-verbatim (:height 1.55) org-verbatim)
+    (org-block (:height 1.25) org-block)
+    (org-block-begin-line (:height 0.7) org-block)
+    (org-level-1 (:height 2.0) org-block)
+    (org-level-2 (:height 1.5) org-block)
+    (org-level-3 (:height 1.0) org-block)
+    (org-level-4 (:height 1.0) org-block)    
+	))
+
+(defvar face-remapping-alist-config-2
+  '((default variable-pitch default)))
+
+(defun toggle-face-remapping ()
+  (interactive)
+  (if (equal face-remapping-alist face-remapping-alist-config-1)
+      (setq-local face-remapping-alist face-remapping-alist-config-2)
+    (setq-local face-remapping-alist face-remapping-alist-config-1)))
+
+(defun lgm/org-presentation-mode ()
+  (toggle-header-line-format)
+  (toggle-face-remapping))
+
+;; org-present
+;; Inspired by https://systemcrafters.net/emacs-tips/presentations-with-org-present/
+;; Install org-present if needed
+(unless (package-installed-p 'org-present)
+  (package-install 'org-present))
+
+(use-package org-present
+  :ensure t
+  )
+
+(defun my/org-present-prepare-slide (buffer-name heading)
+  ;; Show only top-level headlines
+  (org-overview)
+
+  ;; Unfold the current entry
+  (org-show-entry)
+
+  ;; Show only direct subheadings of the slide but don't expand them
+  (org-show-children))
+
+(defun my/org-present-start ()
+  ;; Tweak font sizes
+  (setq-local face-remapping-alist '((default (:height 1.5) variable-pitch)
+                                     (header-line (:height 4.0) variable-pitch)
+                                     (org-document-title (:height 1.75) org-document-title)
+                                     (org-code (:height 1.55) org-code)
+                                     (org-verbatim (:height 1.55) org-verbatim)
+                                     (org-block (:height 1.25) org-block)
+                                     (org-block-begin-line (:height 0.7) org-block)
+									 (org-level-1 (:height 2.0) org-block)
+									 ))
+
+  ;; Set a blank header line string to create blank space at the top
+  (setq header-line-format " ")
+
+  ;; Display inline images automatically
+  (org-display-inline-images))
+
+(defun my/org-present-end ()
+  ;; Reset font customizations
+  (setq-local face-remapping-alist '((default variable-pitch default)))
+
+  ;; Clear the header line string so that it isn't displayed
+  (setq header-line-format nil))
+
+;; Register hooks with org-present
+(add-hook 'org-present-mode-hook 'my/org-present-start)
+(add-hook 'org-present-mode-quit-hook 'my/org-present-end)
+(add-hook 'org-present-after-navigate-functions 'my/org-present-prepare-slide)
+;; -- org present --
+
+;; Hide markupt elements, like the * for bold
+(setq org-hide-emphasis-markers t)
 
 (provide 'org-settings)
 ;;; org-settings.el ends here

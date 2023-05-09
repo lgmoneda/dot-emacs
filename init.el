@@ -8,7 +8,9 @@
 (add-to-list 'package-archives
      '("melpa" . "https://melpa.org/packages/"))
 (add-to-list 'package-archives
-     '("gnu" . "http://elpa.gnu.org/packages/"))
+	     '("gnu" . "http://elpa.gnu.org/packages/"))
+(add-to-list 'package-archives
+     '("melpa-stable" . "https://stable.melpa.org/packages/"))
 (package-initialize)
 
 ;; Bootstrap `use-package'
@@ -17,8 +19,8 @@
    (package-install 'use-package))
 
 ;; Paradox (package-list)
-(use-package paradox
-    :ensure t)
+;; (use-package paradox
+;;     :ensure t)
 
 ;; Fast init.el open
 (global-set-key (kbd "<f6>") (lambda() (interactive)(find-file "~/.emacs.d/init.el")))
@@ -31,19 +33,20 @@
 (add-to-list 'load-path setting-dir)
 
 (require 'editor-settings)
+(require 'productivity-settings)
 (require 'aesthetics-settings)
 (require 'elisp-settings)
 (require 'programming-settings)
-(require 'processing-settings)
 (require 'writing-settings)
 (require 'git-settings)
-(require 'org-settings)
-(require 'nu-settings)
 (require 'os-settings)
-(require 'email-settings)
-(require 'productivity-settings)
-(require 'media-settings)
+(require 'org-settings)
 (require 'python-settings)
-(require 'clojure-settings)
-(require 'scala-settings)
-(require 'elfeed-settings)
+(require 'gpt-settings)
+;; (require 'processing-settings)
+;; (require 'nu-settings)
+;; (require 'email-settings)
+;; (require 'media-settings)
+;; (require 'clojure-settings)
+;; (require 'scala-settings)
+;; (require 'elfeed-settings)

@@ -51,6 +51,10 @@
          ("\\.markdown\\'" . markdown-mode))
   :init (setq markdown-command "multimarkdown"))
 
+(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/markdown-preview-mode-20221006.1601")
+(load "markdown-preview-mode")
+;; (autoload 'markdown-preview-mode "markdown-preview-mode" "" t)
+
 ;; Use M-x markdown-preview-mode in a md buffer
 (use-package markdown-preview-mode
   :ensure t)
@@ -129,12 +133,18 @@
 (add-hook 'LaTeX-mode-hook 'turn-on-reftex)   ; with AUCTeX LaTeX mode
 (setq reftex-plug-into-AUCTeX t)
 
-;; ivy-bibtex
-(use-package helm-bibtex
+(use-package biblio-core
   :ensure t)
 
-(use-package ivy-bibtex
-  :ensure t)
+;; ivy-bibtex
+;; (use-package helm-bibtex
+;;   :ensure t)
+(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/helm-bibtex")
+(autoload 'helm-bibtex "helm-bibtex" "" t)
+(load "helm-bibtex")
+
+;; (use-package ivy-bibtex
+;;   :ensure t)
 (autoload 'ivy-bibtex "ivy-bibtex" "" t)
 ;; ivy-bibtex requires ivy's `ivy--regex-ignore-order` regex builder, which
 ;; ignores the order of regexp tokens when searching for matching candidates.
@@ -184,7 +194,7 @@
     (bibtex-completion-open-pdf keys fallback-action)))
 
 ;;uncomment
-(ivy-bibtex-ivify-action bibtex-completion-insert-citation ivy-bibtex-insert-citation)
+;;(ivy-bibtex-ivify-action bibtex-completion-insert-citation ivy-bibtex-insert-citation)
 
 ;; If you store files in various formats, then you can specify a list
 ;; Extensions in this list are then tried sequentially until a file is found.
@@ -201,8 +211,10 @@
         (default       . bibtex-completion-format-citation-default)))
 
 ;; use org-ref
-(use-package org-ref
-  :ensure t)
+;; (use-package org-ref
+;;   :ensure t)
+(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/org-ref-20230131.1743")
+(autoload 'org-ref "org-ref" "" t)
 
 (setq org-ref-bibliography-notes "~/Dropbox/Agenda/roam"
       org-ref-default-bibliography '("~/Dropbox/Research/library.bib")
@@ -256,6 +268,11 @@
 ;; Useful to activate while I write my cards
 (global-set-key "\C-cf" 'flyspell-mode)
 
+(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/lsp-grammarly-20221231.1655")
+(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/lsp-mode-20230401.434")
+(load "lsp-grammarly")
+(autoload 'lsp-grammarly "lsp-grammarly" "" t)
+
 (use-package lsp-grammarly
   :ensure t
   ;; or text-mode
@@ -266,6 +283,7 @@
 
 ;; Make sure lsp-auto-guess-root is not set to t.
 ;; run M-x lsp-workspace-blacklist-remove, if you get an error
+;; Use s-l a a to fix the error (lsp-execute-code-action)
 (defun lgm/activate-lsp-grammarly ()
   (interactive)
     (require 'lsp-grammarly)

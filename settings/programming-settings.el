@@ -25,7 +25,7 @@
     (global-company-mode)
     )
   :config (progn
-            (setq company-tooltip-limit 12
+            (setq company-tooltip-limit 10
                   company-idle-delay 0.5
                   company-echo-delay 0.5
                   company-begin-commands '(self-insert-command  self-insert-command org-self-insert-command orgtbl-self-insert-command c-scope-operator c-electric-colon c-electric-lt-gt c-electric-slash )
@@ -60,11 +60,12 @@
   (company-flx-mode +1))
 
 ;; Not so useful, but eventually...
-(use-package helm-company
-  :ensure t
-  :config (eval-after-load 'company
-  '(progn
-    (define-key company-active-map (kbd "C-:") 'helm-company))))
+;; It wasn't loading properly
+;; (use-package helm-company
+;;   :ensure t
+;;   :config (eval-after-load 'company
+;;   '(progn
+;;     (define-key company-active-map (kbd "C-:") 'helm-company))))
 
 ;; Test http rest webservices inside emacs
 ;; https://github.com/pashky/restclient.el

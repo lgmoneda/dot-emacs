@@ -4,8 +4,11 @@
   :ensure t)
 
 ;; Helm
-(use-package helm
-  :ensure t)
+;; (use-package helm
+;;   :ensure t)
+
+(add-to-list 'load-path "~/.emacs.d/elpa/helm-3.9.0")
+(load "helm")
 
 ;; Try
 (use-package try
@@ -60,6 +63,10 @@
 	     (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder)))
 	     (add-to-list 'ivy-highlight-functions-alist '(orderless-ivy-re-builder . orderless-ivy-highlight))
 	     )
+
+(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/counsel-20230327.1216")
+(load "counsel")
+(autoload 'counsel "counsel" "" t)
 
 (use-package counsel
 	     :ensure t
@@ -121,8 +128,8 @@
   :ensure t
   :init
   (setq which-key-show-early-on-C-h t)
-  (setq whickh-key-idle-delay 20000)
-  (setq which-key-idle-secondary-delay 0.15)
+  (setq whickh-key-idle-delay 60000)
+  (setq which-key-idle-secondary-delay 0.35)
   (which-key-mode)
   )
 
@@ -196,7 +203,7 @@ is called with a prefix argument."
 (define-key projectile-command-map (kbd "s f") 'lgm/look-for-def-in-project)
 (global-set-key (kbd "C-M-*") 'lgm/look-for-selected-word-in-project)
 
-(require 'helm-eshell)
+;; (require 'helm-eshell)
 
 (add-hook 'eshell-mode-hook
           #'(lambda ()
@@ -238,15 +245,16 @@ is called with a prefix argument."
 (use-package quelpa-use-package
   :ensure t)
 
-(use-package chatgpt
-  :quelpa ((chatgpt :fetcher git :url "https://github.com/joshcho/ChatGPT.el.git") :upgrade t)
-  :init
-  (require 'python)
-  (pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
-  (setq chatgpt-repo-path (expand-file-name "chatgpt/" quelpa-build-dir))
-  :bind ("C-c q" . chatgpt-query))
+;; (use-package chatgpt
+;;   :quelpa ((chatgpt :fetcher git :url "https://github.com/joshcho/ChatGPT.el.git") :upgrade t)
+;;   :init
+;;   (require 'python)
+;;   (pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+;;   (setq chatgpt-repo-path (expand-file-name "chatgpt/" quelpa-build-dir))
+;;   :bind ("C-c q" . chatgpt-query))
 
-
+;; Templates from work
+(load-file "~/Dropbox/Projetos/Emacs/work-templates.el")
 
 (provide 'productivity-settings)
 ;;; productivity-settings.el ends here
