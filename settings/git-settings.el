@@ -2,16 +2,13 @@
 
 ;; Magit
 (use-package magit
-  :ensure t
+  :quelpa ((magit :fetcher git :url "https://github.com/magit/magit") :upgrade t)
+  ;; :ensure t
   :init
   ;; Auto revert buffers when change branches
   (global-auto-revert-mode 1)
   (setq auto-revert-check-vc-info t)
   )
-
-;; Git-timemachine
-(use-package git-timemachine
-	     :ensure t)
 
 ;; Show differences between local and repo
 (use-package diff-hl
@@ -21,7 +18,7 @@
   :config
   (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
   (diff-hl-flydiff-mode)
-  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
+  ;; (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
   (global-diff-hl-mode)
 
   ;; defining the custom colors to the diff-hl
