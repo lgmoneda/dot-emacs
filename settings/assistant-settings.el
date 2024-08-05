@@ -124,7 +124,8 @@
 (add-hook 'before-save-hook
           (lambda ()
             (when (string= (buffer-file-name) "/Users/luis.moneda/Dropbox/Agenda/todo.org")
-              (save-todo-diff))))
+              (save-todo-diff)
+              (call-catalyst-server "<placeholder, passive mode>" "passive"))))
 
 ;; Dump agenda view in a text file
 ;; (defun export-org-agenda-to-file (file)
@@ -135,18 +136,25 @@
 ;;     (org-agenda-redo)
 ;;     (write-region (point-min) (point-max) file)))
 
-;; Dump agenda view in a text file without any visual side effects
+;; This function doesn't disrupt the agenda view on display
 (defun export-org-agenda-to-file (file)
   "Export org agenda view to a text FILE without showing the agenda buffer and without visual side effects."
   (interactive "FFile to export org agenda to: ")
-  (let ((org-agenda-buffer (get-buffer-create " *temp-agenda*")))
-    (save-window-excursion
-      (with-current-buffer org-agenda-buffer
-        (org-agenda nil "d")
-        (org-agenda-redo)
-        (write-region (point-min) (point-max) file)))
-    ;; Kill the temporary agenda buffer to avoid clutter
-    (kill-buffer org-agenda-buffer)))
+  (let* ((agenda-buffer (get-buffer "*Org Agenda*"))
+         (org-agenda-buffer (get-buffer-create " *temp-agenda*"))
+         (agenda-visible-window (when agenda-buffer (get-buffer-window agenda-buffer))))
+    (if agenda-visible-window
+        ;; If the agenda buffer is visible, use its current contents
+        (with-current-buffer agenda-buffer
+          (let ((inhibit-read-only t))
+            (write-region (point-min) (point-max) file)))
+      ;; Otherwise, create the agenda in a temporary buffer and export it
+      (save-window-excursion
+        (with-current-buffer org-agenda-buffer
+          (let ((org-agenda-sticky nil))  ; Disable sticky agendas to ensure temporary agenda creation
+            (org-agenda nil "d"))
+          (write-region (point-min) (point-max) file)
+          (kill-buffer org-agenda-buffer))))))
 
 (export-org-agenda-to-file "/Users/luis.moneda/Dropbox/ai-assistant/agenda.txt")
 
@@ -170,16 +178,31 @@
 ;; Emacs chat interface
 (require 'shell-maker)
 
-(defun call-catalyst-server (input-string)
-  "Call Python server with INPUT-STRING and return the output string."
+(defun call-catalyst-server (input-string &optional mode)
+  "Call Python server with INPUT-STRING and optional MODE ('active' or 'passive'), defaulting to 'active' mode."
   (let ((url-request-method "GET")
         (url-request-extra-headers
-         '(("Content-Type" . "text/plain"))))
-    (with-current-buffer
-        (url-retrieve-synchronously (concat "http://localhost:8888/api/" input-string))
-      (goto-char (point-min))
-      (search-forward-regexp "\n\n")
-      (buffer-substring (point) (point-max)))))
+         '(("Content-Type" . "text/plain")))
+        (base-url "http://localhost:8899/")
+        (mode (or mode "active")))
+    (if (not (string= mode "active"))
+        ;; Asynchronous call for passive mode
+        (url-retrieve
+         (concat base-url mode "/api/" input-string)
+         (lambda (status)
+           (goto-char (point-min))
+           (search-forward-regexp "\n\n")
+		   ;; For debugging
+           ;; (message "Passive response: %s" (buffer-substring (point) (point-max)))
+		   ;; (buffer-substring (point) (point-max))
+		   ))
+      ;; Synchronous call for active mode
+      (with-current-buffer
+          (url-retrieve-synchronously (concat base-url mode "/api/" input-string))
+        (goto-char (point-min))
+        (search-forward-regexp "\n\n")
+		;; (message "Active response: %s" (buffer-substring (point) (point-max)))
+        (buffer-substring (point) (point-max))))))
 
 (defvar ai-catalyst-assistant-shell--config
   (make-shell-maker-config
@@ -207,6 +230,207 @@
 
 (start-catalyst-server)
 
+;; Catalyst Proactive triggers
+
+;; Send messages to the catalyst shell programatically
+(defun send-command-directly-to-catalyst-shell (command mode)
+  "Send COMMAND directly to the Catalyst shell and return its output."
+  (let (output)
+    ;; Call the execute-command method from the shell config
+    (funcall (shell-maker-config-execute-command ai-catalyst-assistant-shell--config)
+             command
+             nil ;; Pass nil for history as it's not used here
+             (lambda (result _error)
+               (setq output result)) ;; Collect the output in a local variable
+             (lambda (_error)
+               (error "An error occurred while processing the command")))
+    ;; Wait until `output` is set
+    (while (null output)
+      (sit-for 0.1))
+    output))
+
+(require 'cl-lib)
+
+(defun call-catalyst-server (input-string &optional mode)
+  "Call Python server with INPUT-STRING and optional MODE ('active' or 'passive'), defaulting to 'active' mode."
+  (let ((url-request-method "GET")
+        (url-request-extra-headers '(("Content-Type" . "text/plain")))
+        (base-url "http://localhost:8899/")
+        (mode (or mode "active")))
+    (if (not (string= mode "active"))
+        ;; Asynchronous call for passive mode
+        (url-retrieve
+         (concat base-url mode "/api/" input-string)
+         (lambda (status)
+           (goto-char (point-min))
+           (search-forward-regexp "\n\n")
+           (let ((response (buffer-substring (point) (point-max))))
+			 (while (null response)
+			   (sit-for 0.1))
+             ;; Process the response as needed
+             ;; (message "Passive response: %s" response)
+             response)))
+      ;; Synchronous call for active mode
+      (let ((response-buffer (url-retrieve-synchronously (concat base-url mode "/api/" input-string))))
+        (with-current-buffer response-buffer
+          (goto-char (point-min))
+          (search-forward-regexp "\n\n")
+          (let ((response (buffer-substring (point) (point-max))))
+            ;; Return the response as a string
+            (kill-buffer response-buffer)
+            response))))))
+
+(defun print-catalyst-output-in-buffer (command mode buffer-name)
+  "Send COMMAND directly to the Catalyst shell and print the output in a new buffer called 'proactive catalyst'."
+  (interactive "sEnter command: ")
+  (let ((buffer (get-buffer-create buffer-name)))
+    (if (string= mode "active")
+        ;; Synchronous call
+        (let ((output (call-catalyst-server command mode)))
+          (with-current-buffer buffer
+            (save-excursion
+              (goto-char (point-max))
+              (insert (format "\n🤖 **%s**\n%s\n"
+                              (format-time-string "%Y-%m-%d %H:%M:%S")
+                              output))))
+          (display-buffer buffer))
+      ;; Asynchronous call
+      (url-retrieve
+       (concat "http://localhost:8899/" mode "/api/" command)
+       (lexical-let ((buffer buffer)) ;; Ensure buffer is accessible inside the callback
+         (lambda (status)
+           (let ((response-buffer (current-buffer))) ;; Save current buffer
+             (goto-char (point-min))
+             (search-forward-regexp "\n\n")
+             (let ((output (buffer-substring (point) (point-max))))
+               (with-current-buffer buffer
+				 (markdown-mode)
+                 (save-excursion
+                   (goto-char (point-min))
+				   (insert "-------------------------------------------------------")
+                   (insert (format "\n🤖 **%s**\n%s\n\n"
+                                   (format-time-string "%Y-%m-%d %H:%M:%S")
+                                   output)))
+				 (markdown-view-mode)
+				 )
+               ;; (display-buffer buffer)
+               (set-mode-line-notification "🧠")
+               (kill-buffer response-buffer)))))))))
+
+;; To debug or to get used to a command without an automatic trigger
+(defun catalyst/proactive-function-list ()
+  "Prompt the user to select a function to execute from a predefined list."
+  (interactive)
+  (let* ((function-list '(proactive-catalyst/show-proactive-notifications
+						  proactive-catalyst/morning-outline
+                          proactive-catalyst/evening-close
+						  proactive-catalyst/continuous-review
+						  ))
+         (function-name (completing-read "Select Catalyst function: " (mapcar 'symbol-name function-list))))
+    (call-interactively (intern function-name))))
+
+(global-set-key (kbd "C-c a") 'catalyst/proactive-function-list)
+
+
+(defun proactive-catalyst/show-proactive-notifications ()
+  (interactive)
+  (display-buffer "*Proactive Catalyst*")
+  )
+
+(defun proactive-catalyst/morning-outline ()
+  (interactive)
+  (print-catalyst-output-in-buffer
+   (concat
+	"This an automated message from your user. It is the beginning of the day, "
+	"I want you to look to my agenda and what I did recently. Focus on telling me how some tasks might be deviating from my year objectives. ")
+   "proactive"
+   "*Proactive Catalyst*"
+   )
+  )
+
+(defun proactive-catalyst/evening-close ()
+  (interactive)
+  (print-catalyst-output-in-buffer
+   (concat
+	"This an automated message from your user. It is the end of the day."
+	"I want you to look to what I have accomplished today and review it for quality issues.")
+   "proactive"
+   "*Proactive Catalyst*")
+  )
+(defun proactive-catalyst/continuous-review ()
+  (interactive)
+  (if (not (file-empty-p "~/Dropbox/ai-assistant/knowledge_base_changelog.txt"))
+  (print-catalyst-output-in-buffer
+   (concat
+	"This an automated message from your user. It is a call for a routine review."
+	"I want you to look to what is under 'The changelog of user's knowledge base/working space' and review it for quality.")
+   "proactive"
+   "*Proactive Catalyst*")
+	  )
+  )
+
+(run-at-time "0 sec" 3600 #'proactive-catalyst/continuous-review)
+
+(defun file-empty-p (file-path)
+  "Check if the file at FILE-PATH is empty."
+  (let ((attributes (file-attributes file-path)))
+    (if attributes
+        (zerop (file-attribute-size attributes))
+      (error "File does not exist: %s" file-path))))
+
+;; Timer triggers
+
+;; (defun my-custom-command ()
+;;   "Function to run custom command."
+;;   (message "This is my custom command running."))
+
+;; (defun my-check-time-window ()
+;;   "Check if the current time is between 4am and 9am, and if it's the first start of the day."
+;;   (let ((current-time (current-time))
+;;         (file "~/.emacs.d/last-emacs-start-time"))
+;;     (if (file-exists-p file)
+;;         (let* ((last-time (with-temp-buffer
+;;                             (insert-file-contents file)
+;;                             (read (current-buffer))))
+;;                (last-day (format-time-string "%Y-%m-%d" last-time))
+;;                (current-day (format-time-string "%Y-%m-%d" current-time))
+;;                (start-hour (string-to-number (format-time-string "%H" current-time))))
+;;           (when (and (string= last-day current-day)
+;;                      (>= start-hour 4)
+;;                      (< start-hour 9)
+;;                      (not (string= last-day current-day)))
+;;             (my-custom-command))))
+;;     ;; Save current time as last start time
+;;     (with-temp-buffer
+;;       (insert (format "%S" current-time))
+;;       (write-file file))))
+
+;; ;; Add to Emacs startup hook
+;; (add-hook 'emacs-startup-hook 'my-check-time-window)
+
+;; Notification functions for proactive calls
+(defvar my-mode-line-notification "" "Custom notification for mode line.")
+
+(defun set-mode-line-notification (msg)
+  "Set a custom notification in the mode line to MSG."
+  (setq my-mode-line-notification msg)
+  (force-mode-line-update))
+
+(defun clear-mode-line-notification ()
+  "Clear the custom notification from the mode line."
+  (setq my-mode-line-notification "")
+  (force-mode-line-update))
+
+;; Add the custom notification to the mode-line-format
+(setq-default mode-line-format
+              (list
+               '(:eval (if (not (string= my-mode-line-notification ""))
+                           (concat " " my-mode-line-notification " | ")
+                         ""))
+               mode-line-format))
+
+(run-at-time "0 sec" 600 #'clear-mode-line-notification)
+;; end of notification
 
 (provide 'assistant-settings)
 ;;; assistant-settings.el ends here
