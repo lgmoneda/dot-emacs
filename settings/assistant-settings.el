@@ -2,7 +2,7 @@
 
 ;; Assistant function to debug
 (defun show-todo-diff-buffer ()
-  "Show the diff of todo.org file."
+  "Show the diff of the todo.org file."
   (interactive)
   (let* ((old-todo-file "/Users/luis.moneda/Dropbox/Agenda/todo.org") ; Replace with your actual path
          (new-todo-file (buffer-file-name))
@@ -121,21 +121,15 @@
 
       (delete-file temp-file))))
 
+;; Trigger the function to save the diff when I save the todo.org file
+;; Additionally, triggers the catalyst in the passive mode to read it and integrate as a memory
 (add-hook 'before-save-hook
           (lambda ()
             (when (string= (buffer-file-name) "/Users/luis.moneda/Dropbox/Agenda/todo.org")
               (save-todo-diff)
               (call-catalyst-server "<placeholder, passive mode>" "passive"))))
 
-;; Dump agenda view in a text file
-;; (defun export-org-agenda-to-file (file)
-;;   "Export org agenda view to a text FILE."
-;;   (interactive "FFile to export org agenda to: ")
-;;   (with-temp-buffer
-;;     (org-agenda nil "d")
-;;     (org-agenda-redo)
-;;     (write-region (point-min) (point-max) file)))
-
+;; Save the agenda view (built on top of todo.org) in a file
 ;; This function doesn't disrupt the agenda view on display
 (defun export-org-agenda-to-file (file)
   "Export org agenda view to a text FILE without showing the agenda buffer and without visual side effects."
@@ -156,15 +150,17 @@
           (write-region (point-min) (point-max) file)
           (kill-buffer org-agenda-buffer))))))
 
+;; Run it once when starting Emacs
 (export-org-agenda-to-file "/Users/luis.moneda/Dropbox/ai-assistant/agenda.txt")
 
+;; Runs it everytime I save my todo.org
 (add-hook 'after-save-hook
           (lambda ()
             (when (string= (buffer-file-name) "/Users/luis.moneda/Dropbox/Agenda/todo.org")
               (export-org-agenda-to-file "/Users/luis.moneda/Dropbox/ai-assistant/agenda.txt"))))
 
 ;; Knowledge info module
-;; kb tracking
+;; Tracks changes in my knowledge base files, which is the Org roam folder
 (defun start-kb-tracking ()
   (interactive)
   (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
@@ -173,13 +169,13 @@
 
 (start-kb-tracking)
 
-;; Refresh the agenda view dump
-
 ;; Emacs chat interface
+;; Uses the shell-maker from the chatgpt-shell project
+;; https://github.com/xenodium/chatgpt-shell
 (require 'shell-maker)
 
 (defun call-catalyst-server (input-string &optional mode)
-  "Call Python server with INPUT-STRING and optional MODE ('active' or 'passive'), defaulting to 'active' mode."
+  "Call Python server with INPUT-STRING and optional MODE ('active', 'proactive, or 'passive'), defaulting to 'active' mode."
   (let ((url-request-method "GET")
         (url-request-extra-headers
          '(("Content-Type" . "text/plain")))
@@ -222,6 +218,7 @@
   (interactive)
   (shell-maker-start ai-catalyst-assistant-shell--config))
 
+;; The catalyst server
 (defun start-catalyst-server ()
   (interactive)
   (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
@@ -233,6 +230,9 @@
 ;; Catalyst Proactive triggers
 
 ;; Send messages to the catalyst shell programatically
+;; It isn't working. I need to review if it makes sense.
+;; The current flow calls the server and shows the answer as a notification
+;; in a new buffer.
 (defun send-command-directly-to-catalyst-shell (command mode)
   "Send COMMAND directly to the Catalyst shell and return its output."
   (let (output)
@@ -281,12 +281,14 @@
             response))))))
 
 (defun print-catalyst-output-in-buffer (command mode buffer-name)
-  "Send COMMAND directly to the Catalyst shell and print the output in a new buffer called 'proactive catalyst'."
+  "Send COMMAND to the Catalyst server and print the output in a new buffer called 'proactive catalyst'."
   (interactive "sEnter command: ")
+  ;; (message "The command: ")
+  ;; (message (url-encode-url (concat "http://localhost:8899/" mode "/api/" command)))
   (let ((buffer (get-buffer-create buffer-name)))
     (if (string= mode "active")
         ;; Synchronous call
-        (let ((output (call-catalyst-server command mode)))
+        (let ((output (call-catalyst-server (url-hexify-string command) mode)))
           (with-current-buffer buffer
             (save-excursion
               (goto-char (point-max))
@@ -296,7 +298,7 @@
           (display-buffer buffer))
       ;; Asynchronous call
       (url-retrieve
-       (concat "http://localhost:8899/" mode "/api/" command)
+       (concat "http://localhost:8899/" mode "/api/" (url-hexify-string command))
        (lexical-let ((buffer buffer)) ;; Ensure buffer is accessible inside the callback
          (lambda (status)
            (let ((response-buffer (current-buffer))) ;; Save current buffer
@@ -317,7 +319,9 @@
                (set-mode-line-notification "🧠")
                (kill-buffer response-buffer)))))))))
 
-;; To debug or to get used to a command without an automatic trigger
+;; To list of routines to call the Catalyst
+;; I've added the proactive ones as a way to debug. I'm still refining concepts and language
+;; Active/proactive/passive as a way to deliver a routine
 (defun catalyst/proactive-function-list ()
   "Prompt the user to select a function to execute from a predefined list."
   (interactive)
@@ -325,19 +329,28 @@
 						  proactive-catalyst/morning-outline
                           proactive-catalyst/evening-close
 						  proactive-catalyst/continuous-review
+						  active-catalyst/neuroscience-review
+						  active-catalyst/ai-researcher-review
+						  active-catalyst/evolutionary-biology-review
+						  active-catalyst/analytic-philosophy-review
+						  active-catalyst/greek-philosophy-review
+						  catalyst-routine/zettelkasten-connection-suggestion
+						  catalyst-routine/systems-thinking
 						  ))
          (function-name (completing-read "Select Catalyst function: " (mapcar 'symbol-name function-list))))
     (call-interactively (intern function-name))))
 
 (global-set-key (kbd "C-c a") 'catalyst/proactive-function-list)
 
-
+;; An easy way to jump to the notification when I see it in the mode line
 (defun proactive-catalyst/show-proactive-notifications ()
   (interactive)
   (display-buffer "*Proactive Catalyst*")
+  (clear-mode-line-notification)
   )
 
 (defun proactive-catalyst/morning-outline ()
+  "A routine to run proactively at the beginning of the day"
   (interactive)
   (print-catalyst-output-in-buffer
    (concat
@@ -348,6 +361,7 @@
    )
   )
 
+
 (defun proactive-catalyst/evening-close ()
   (interactive)
   (print-catalyst-output-in-buffer
@@ -357,6 +371,16 @@
    "proactive"
    "*Proactive Catalyst*")
   )
+
+(defun file-empty-p (file-path)
+  "Check if the file at FILE-PATH is empty."
+  (let ((attributes (file-attributes file-path)))
+    (if attributes
+        (zerop (file-attribute-size attributes))
+      (error "File does not exist: %s" file-path))))
+
+;; A proactive routine that runs from time to time, but
+;; conditioned on having content to review.
 (defun proactive-catalyst/continuous-review ()
   (interactive)
   (if (not (file-empty-p "~/Dropbox/ai-assistant/knowledge_base_changelog.txt"))
@@ -366,17 +390,82 @@
 	"I want you to look to what is under 'The changelog of user's knowledge base/working space' and review it for quality.")
    "proactive"
    "*Proactive Catalyst*")
+  (message "Catalyst: No changes to the knowledge base to review.")
 	  )
   )
 
 (run-at-time "0 sec" 3600 #'proactive-catalyst/continuous-review)
 
-(defun file-empty-p (file-path)
-  "Check if the file at FILE-PATH is empty."
-  (let ((attributes (file-attributes file-path)))
-    (if attributes
-        (zerop (file-attribute-size attributes))
-      (error "File does not exist: %s" file-path))))
+;; Active/routines
+(defun catalyst-on-region-or-buffer (prompt)
+  "Process the selected region or entire buffer and send to print-catalyst-output-in-buffer."
+  (interactive "sEnter the prompt: ")
+  (let* ((text-content (if (use-region-p)
+                           (buffer-substring (region-beginning) (region-end))
+                         (buffer-substring-no-properties (point-min) (point-max))))
+         (resulting-text (concat prompt text-content)))
+    ;; (message resulting-text)
+    (print-catalyst-output-in-buffer resulting-text "proactive" "*Proactive Catalyst*")
+    ))
+
+(defun active-catalyst/researcher-review (field)
+  (interactive)
+  (catalyst-on-region-or-buffer (concat
+				 "You are an expericiend "
+				 field
+				 " researcher and you will "
+				 "review the following text willing to provide insights from the "
+				 field
+				 " field that relate to it and justify every claim with a "
+				 "scientific paper. \n Text to review: \n "
+				 ))
+  )
+
+(defun active-catalyst/neuroscience-review ()
+  (interactive)
+  (active-catalyst/researcher-review "neuroscience")
+  )
+
+(defun active-catalyst/evolutionary-biology-review ()
+  (interactive)
+  (active-catalyst/researcher-review "evolutionary biology")
+  )
+
+(defun active-catalyst/analytic-philosophy-review ()
+  (interactive)
+  (active-catalyst/researcher-review "Analytic philosophy")
+  )
+
+(defun active-catalyst/greek-philosophy-review ()
+  (interactive)
+  (active-catalyst/researcher-review "Greek philosophy")
+  )
+
+(defun active-catalyst/ai-researcher-review ()
+  (interactive)
+  (active-catalyst/researcher-review "Artificial Intelligence (AI)")
+  )
+
+(defun catalyst-routine/zettelkasten-connection-suggestion ()
+  (interactive)
+  (catalyst-on-region-or-buffer (concat
+				 "Your current task is to review the provided text and find "
+				 "MEANINGFUL connections to Luis' Knowledge Base, "
+				 "supporting im to find connections in the zettelkasten style."
+				 "\n Text to review: \n "
+				 ))
+  )
+
+(defun catalyst-routine/systems-thinking ()
+  (interactive)
+  (catalyst-on-region-or-buffer (concat
+				 "You are an specialist in Systems Thinking. You use all the knowledge from  "
+				 "Russel Ackoff, Donella Meadows, and other promenient figures of this field "
+				 "to challenge and support ideas. Review the following text to challenge or "
+				 "enforce it using concepts and examples from systemic thinking."
+				 "\n Text to review: \n "
+				 ))
+  )
 
 ;; Timer triggers
 
@@ -429,7 +518,26 @@
                          ""))
                mode-line-format))
 
-(run-at-time "0 sec" 600 #'clear-mode-line-notification)
+;; ;; To clear notification after reading
+;; (defun check-and-trigger-on-buffer (my-buffer-name my-trigger-function)
+;;   "Check buffer name and trigger function if it matches."
+;;   (when (string-equal (buffer-name) my-buffer-name)
+;;     (funcall my-trigger-function)))
+
+;; (defun clear-proactive-catalyst-buffer-notification ()
+;;   (interactive)
+;;   (check-and-trigger-on-buffer "*Proactive Catalyst*" 'clear-mode-line-notification)
+;;   )
+
+;; (add-hook 'switch-to-buffer-hook 'clear-proactive-catalyst-buffer)
+
+;; (defun displayed-buffers ()
+;;   (interactive)
+;;   "Return a list of buffers currently displayed in any window."
+;;   (mapcar #'window-buffer (window-list)))
+
+;; (message "Displayed buffers: %s" (mapconcat #'buffer-name (displayed-buffers) ", "))
+
 ;; end of notification
 
 (provide 'assistant-settings)
