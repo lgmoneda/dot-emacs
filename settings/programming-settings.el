@@ -72,5 +72,9 @@
 (use-package restclient
   :ensure t)
 
+;; M-x eglot
+(use-package eglot
+  :ensure t)
+
 (provide 'programming-settings)
 ;;; programming-settings.el ends here

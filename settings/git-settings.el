@@ -1,6 +1,16 @@
 ;;; git-settings.el --- Settings for git utilities
 
 ;; Magit
+;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/magit-20240704.2248")
+;; (load "magit")
+
+(use-package with-editor
+  :ensure t)
+
+;; (use-package compat
+;;   :ensure t)
+
+;; Magit
 (use-package magit
   :quelpa ((magit :fetcher git :url "https://github.com/magit/magit") :upgrade t)
   ;; :ensure t
@@ -26,7 +36,14 @@
   (custom-set-faces
    '(diff-hl-change ((t (:background "#3a81c3"))))
    '(diff-hl-insert ((t (:background "#7ccd7c"))))
-   '(diff-hl-delete ((t (:background "#ee6363"))))))
+   '(diff-hl-delete ((t (:background "#ee6363")))))
+  
+  ;; Disable diff-hl in org-mode
+  (defun disable-diff-hl-in-org-mode ()
+    (diff-hl-mode -1))
+  (add-hook 'org-mode-hook 'disable-diff-hl-in-org-mode)
+
+  )
 
 (provide 'git-settings)
 ;;; git-settings.el ends here

@@ -183,7 +183,8 @@
         (mode (or mode "active")))
     (if (not (string= mode "active"))
         ;; Asynchronous call for passive mode
-        (url-retrieve
+        (decode-coding-string
+		 (url-retrieve
          (concat base-url mode "/api/" input-string)
          (lambda (status)
            (goto-char (point-min))
@@ -192,9 +193,14 @@
            ;; (message "Passive response: %s" (buffer-substring (point) (point-max)))
 		   ;; (buffer-substring (point) (point-max))
 		   ))
+		   'utf-8
+		 )
       ;; Synchronous call for active mode
       (with-current-buffer
-          (url-retrieve-synchronously (concat base-url mode "/api/" input-string))
+          (decode-coding-string
+		   (url-retrieve-synchronously (concat base-url mode "/api/" input-string))
+		   'utf-8
+		   )
         (goto-char (point-min))
         (search-forward-regexp "\n\n")
 		;; (message "Active response: %s" (buffer-substring (point) (point-max)))
@@ -269,7 +275,7 @@
 			   (sit-for 0.1))
              ;; Process the response as needed
              ;; (message "Passive response: %s" response)
-             response)))
+             (decode-coding-string response 'utf-8))))
       ;; Synchronous call for active mode
       (let ((response-buffer (url-retrieve-synchronously (concat base-url mode "/api/" input-string))))
         (with-current-buffer response-buffer
@@ -278,7 +284,7 @@
           (let ((response (buffer-substring (point) (point-max))))
             ;; Return the response as a string
             (kill-buffer response-buffer)
-            response))))))
+            (decode-coding-string response 'utf-8)))))))
 
 (defun print-catalyst-output-in-buffer (command mode buffer-name)
   "Send COMMAND to the Catalyst server and print the output in a new buffer called 'proactive catalyst'."
@@ -294,7 +300,7 @@
               (goto-char (point-max))
               (insert (format "\n🤖 **%s**\n%s\n"
                               (format-time-string "%Y-%m-%d %H:%M:%S")
-                              output))))
+                              (decode-coding-string output 'utf-8)))))
           (display-buffer buffer))
       ;; Asynchronous call
       (url-retrieve
@@ -312,7 +318,7 @@
 				   (insert "-------------------------------------------------------")
                    (insert (format "\n🤖 **%s**\n%s\n\n"
                                    (format-time-string "%Y-%m-%d %H:%M:%S")
-                                   output)))
+                                   (decode-coding-string output 'utf-8))))
 				 (markdown-view-mode)
 				 )
                ;; (display-buffer buffer)
@@ -326,17 +332,19 @@
   "Prompt the user to select a function to execute from a predefined list."
   (interactive)
   (let* ((function-list '(proactive-catalyst/show-proactive-notifications
-						  proactive-catalyst/morning-outline
-                          proactive-catalyst/evening-close
-						  proactive-catalyst/continuous-review
-						  active-catalyst/neuroscience-review
-						  active-catalyst/ai-researcher-review
-						  active-catalyst/evolutionary-biology-review
-						  active-catalyst/analytic-philosophy-review
-						  active-catalyst/greek-philosophy-review
-						  catalyst-routine/zettelkasten-connection-suggestion
-						  catalyst-routine/systems-thinking
-						  ))
+			  catalyst-shell
+			  proactive-catalyst/morning-outline
+			  proactive-catalyst/evening-close
+			  proactive-catalyst/continuous-review
+			  active-catalyst/neuroscience-review
+			  active-catalyst/ai-researcher-review
+			  active-catalyst/evolutionary-biology-review
+			  active-catalyst/analytic-philosophy-review
+			  active-catalyst/greek-philosophy-review
+			  catalyst-routine/zettelkasten-connection-suggestion
+			  catalyst-routine/systems-thinking
+			  proactive-catalyst/challenger-prompt
+			  ))
          (function-name (completing-read "Select Catalyst function: " (mapcar 'symbol-name function-list))))
     (call-interactively (intern function-name))))
 
@@ -355,7 +363,53 @@
   (print-catalyst-output-in-buffer
    (concat
 	"This an automated message from your user. It is the beginning of the day, "
-	"I want you to look to my agenda and what I did recently. Focus on telling me how some tasks might be deviating from my year objectives. ")
+	"I want you to look at my recent agenda and what I did. Focus on telling me which tasks might deviate from my year objectives and why. Don't be shallow. Help me balance reading and creation (writing, coding), skewing me to creative work. Make me at most three provocative questions that don't sound generic about the tasks and the objectives.")
+   "proactive"
+   "*Proactive Catalyst*"
+   )
+  )
+
+(defun proactive-catalyst/challenger-prompt ()
+  "A routine to run proactively at the beginning of the day"
+  (interactive)
+  (print-catalyst-output-in-buffer
+   (concat
+	"This an automated message from your user. It is the beginning of the day, "
+	"You are an AI assistant tasked with analyzing a person's recent agenda and activities in relation to their year objectives. Your goal is to identify potential deviations from these objectives, help balance reading and creative work, and formulate thought-provoking questions. Follow these steps carefully:
+
+1. First, review the provided information which is in previous messages.
+
+2. Analyze the recent agenda and activities, comparing them to the year objectives. Look for any misalignments or potential deviations. Consider both obvious and subtle discrepancies.
+
+3. As you analyze, keep in mind the importance of balancing reading and creative work (writing, coding). Pay special attention to opportunities where the person could shift more towards creative work.
+
+4. In your analysis, focus on tasks that might deviate from the year objectives. For each potential deviation:
+   a. Identify the specific task or activity
+   b. Explain why it might be deviating from the objectives
+   c. Consider the potential impact of this deviation
+
+5. Based on your analysis, formulate three provocative questions about the tasks and objectives. These questions should:
+   a. Be specific to the person's situation, not generic
+   b. Challenge assumptions or prompt deeper reflection
+   c. Encourage thinking about alignment with objectives or work balance
+
+6. Compile your findings and questions into a comprehensive response. Structure your response as follows:
+
+<analysis>
+[Provide your detailed analysis here, including identified deviations and explanations]
+</analysis>
+
+<balance_recommendation>
+[Offer specific suggestions for improving the balance between reading and creative work, with an emphasis on increasing creative activities]
+</balance_recommendation>
+
+<provocative_questions>
+1. [First provocative question]
+2. [Second provocative question]
+3. [Third provocative question]
+</provocative_questions>
+
+Remember to be thorough in your analysis, specific in your recommendations, and thought-provoking in your questions. Avoid generic statements and instead tailor your response to the unique situation presented in the agenda and objectives.")
    "proactive"
    "*Proactive Catalyst*"
    )
@@ -384,17 +438,38 @@
 (defun proactive-catalyst/continuous-review ()
   (interactive)
   (if (not (file-empty-p "~/Dropbox/ai-assistant/knowledge_base_changelog.txt"))
-  (print-catalyst-output-in-buffer
+	  (progn
+		;; (call-catalyst-server "" "new")
+		(print-catalyst-output-in-buffer
    (concat
 	"This an automated message from your user. It is a call for a routine review."
-	"I want you to look to what is under 'The changelog of user's knowledge base/working space' and review it for quality.")
+	"Look to the files changelogs inside the tag <knowledge-base-changelog> from the user's message to comment on the latest changes. Follow the rules:
+
+\n Tell at the beginning of the answer it is the Continuous Review Report.
+\n Review it by file in the form of: \n [File title](<file path>) \n {review content}.
+\n The title should use markdown link syntax;
+\n The {review content} should be SPECIFIC and cite the content of the changes, and provide examples on how to improve.
+\n DONT review the formatting or the structure of the file.
+\n Be very crictic.
+\n The curter you are, the better.
+\n Suggest connections with my knowledge base entries that were retrieved to you by similarity (also linking them with markdown syntax).
+\n Don't suggest connections that ALREADY exist in the file you are reviewing.
+\n Review ONLY the latest changes (NOT the ones coming from your memories or internal reflections the user doesn't see). Use this information only to enrich it.
+\n No need to provide a summary at the end by saying something like 'Overall, ...'.
+\n Split your suggestions by identifying them under different categories. Example: 'proof reading', 'originality', 'clarity', 'external references', etc
+\n When it seems it is a technical note, push for clarity and completeness, and suggest technical references;
+\n When it seems it is original work from the user, challenge if it is original by using your own knowledge and suggest references;
+\n When it seems it is original and creative work, prompt the user for originality. Example: This is a common idea present in {paper, book, or article references}. Can you provide a unique perspective on this? For example, <aspect> is an unsolved problem in this area. Can you explore this further?
+\n When it seems it is just a mundane note taking, don't push for originality, but try to suggest something useful;
+\n When it seems it is about work (meetings), don't push for originality, but for clarity and completeness;
+\n When it seems the user is just start to work on that knowledge base entry, refrain from providing suggestions, just acknowledge the beginning with a short phrase.")
    "proactive"
-   "*Proactive Catalyst*")
+   "*Proactive Catalyst*"))
   (message "Catalyst: No changes to the knowledge base to review.")
 	  )
   )
 
-(run-at-time "0 sec" 3600 #'proactive-catalyst/continuous-review)
+(run-at-time "0 sec" (* 240 60) #'proactive-catalyst/continuous-review)
 
 ;; Active/routines
 (defun catalyst-on-region-or-buffer (prompt)
@@ -539,6 +614,38 @@
 ;; (message "Displayed buffers: %s" (mapconcat #'buffer-name (displayed-buffers) ", "))
 
 ;; end of notification
+
+;; Notification buffer utils
+;; This function enables org links using IDs using Markdown syntax.
+;; I can force a refresh of the ids calling it with C-u C-c C-o. Or call
+;; org-roam-update-org-id-location
+(defun my/open-org-id-link-in-markdown (&optional refresh)
+  "Open an Org file by ID from a Markdown link.
+If REFRESH is non-nil, refresh the `org-id-locations` cache first."
+  (interactive "P")
+  (when refresh
+    (message "Refreshing org-id-locations...")
+    (org-id-update-id-locations
+     (directory-files-recursively "/Users/luis.moneda/Library/CloudStorage/Dropbox/Agenda/roam/" "\\.org$"))
+    (message "Refresh complete."))
+
+  (let* ((link (thing-at-point 'line))
+         (id-regexp "id:\\([A-Z0-9-]+\\)")
+         (link-matches (string-match id-regexp link)))
+    (if (not link-matches)
+		(call-interactively #'markdown-follow-thing-at-point)
+        ;; (message "No Markdown link ID found.")
+      (let* ((org-id (match-string 1 link)))
+        (message "Extracted ID: %s" org-id)
+        (if (org-id-find org-id 'marker)
+            (progn
+              (message "Attempting to open Org entry with ID: %s" org-id)
+              (org-id-open org-id 'marker))
+          (message "No Org entry found with ID: %s" org-id))))))
+
+;; Bind this function to C-c C-o in markdown-mode:
+(define-key markdown-mode-map (kbd "C-c C-o") #'my/open-org-id-link-in-markdown)
+
 
 (provide 'assistant-settings)
 ;;; assistant-settings.el ends here

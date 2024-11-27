@@ -64,7 +64,7 @@
 	     (add-to-list 'ivy-highlight-functions-alist '(orderless-ivy-re-builder . orderless-ivy-highlight))
 	     )
 
-(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/counsel-20230327.1216")
+(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/counsel-20240520.1323")
 (load "counsel")
 (autoload 'counsel "counsel" "" t)
 
@@ -249,7 +249,7 @@ is called with a prefix argument."
 ;;   :quelpa ((chatgpt :fetcher git :url "https://github.com/joshcho/ChatGPT.el.git") :upgrade t)
 ;;   :init
 ;;   (require 'python)
-;;   (pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+;;   (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
 ;;   (setq chatgpt-repo-path (expand-file-name "chatgpt/" quelpa-build-dir))
 ;;   :bind ("C-c q" . chatgpt-query))
 

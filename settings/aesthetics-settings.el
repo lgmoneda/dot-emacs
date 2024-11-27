@@ -1,5 +1,8 @@
 ;;; aesthetics-settings.el --- Settings for the theme, custom colors and faces
 
+;; Hides the title bar
+(setq default-frame-alist '((undecorated . t)))
+
 (use-package rebecca-theme
   :ensure t)
 
@@ -151,37 +154,10 @@ want to use in the modeline *in lieu of* the original.")
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(company-quickhelp-color-background "dark slate gray")
- '(company-quickhelp-color-foreground "wheat")
- '(conda-anaconda-home "/Users/luis.moneda/opt/miniconda3")
- '(display-time-mail-string "")
- '(ein:output-area-inlined-images t)
- '(ein:use-auto-complete t t)
- '(ein:use-auto-complete-superpack t)
- '(elfeed-goodies/entry-pane-position 'bottom)
- '(elfeed-goodies/show-mode-padding 40)
- '(global-hl-line-mode t)
- '(markdown-command "/usr/local/bin/pandoc")
- '(olivetti-body-width 105)
- '(org-roam-db-location "/Users/luis.moneda/Dropbox/agenda/roam/org-roam.db" nil nil "Customized with use-package org-roam")
+ '(conda-anaconda-home "/Users/luis.moneda/miniconda3")
  '(package-selected-packages
-   '(hide-mode-line org-present org-tree-slide org-tree-slides magit magit-section khoj whisper chatgpt-shell org-transclusion biblio-core zmq helm-bibtext org-mind-map py-autopep8 pyimport orderless lsp-grammarly ivy-bibtex pdf-tools emacs-jupyter ob-async smudge mindre-theme chatgpt epc ctable concurrent quelpa-use-package quelpa org-download poet-theme exotica-theme company-posframe company-postframe ivy-clipmenu org-roam-ui flycheck-grammarly scala-mode wwg wwe smart-mode-line sublime-themes zygospore academic-phrases ob-ipython ein restclient-test helm-bibtex interleave org-roam-protocol langtool flycheck-vale flyspell-vale helm-org-ql deft org-helm-rifle idle-org-agenda ivy-posframe scihub gscholar-bibtex bibtex-completion org-roam-bibtex virtualenvwrapper olivetti company-org-roam google-translate org-roam-server emojify disable-mouse dracula-theme dap-mode lsp-treemacs lsp-ivy helm-lsp lsp-ui company-tabnine engine-mode elfeed-goodies elfeed-org elfeed ess processing-mode elpy org-projectile-helm helm-org counsel-spotify helm-ag helm-rg clojure-mode-extra-font-locking pyvenv which-key org-gcal org-journal flymd restclient kaolin-themes rebecca-theme cherry-blossom-theme doom-modeline doom-themes helm-org-rifle org-wild-notifier cyberpunk-theme org-timeline fortune-cookie helm-spotify-plus paredit spacemacs-theme lsp-typescript sml-mode org-notify cider clj-refactor go-mode org-alert color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized sanityinc-color-theme power-line docker helm-tramp docker-tramp 0blayout counsel-projectile exec-path-from-shell default-text-scale slack ensime writeroom darkroom column-enforce-mode org-bullets latex-preview-pane scheme-complete quack org-dashboard electric-operator multi avy markdown-preview-mode beacon helm-company company-quickhelp company-flx company-anaconda neotree smex ag imenu-anywhere flx-ido ido-vertical-mode anzu thing-cmds rainbow-delimiters expand-region try base16-theme spinner monokai-theme hydra))
- '(paradox-github-token t)
- '(pdf-tools-handle-upgrades nil)
- '(show-paren-match ((t (:weight 'extra-bold))))
- '(spacemacs-theme-comment-bg nil)
- '(spacemacs-theme-comment-italic t)
- '(warning-suppress-types
-   '((with-editor)
-     (with-editor)
-     (initialization)
-     (initialization)
-     (websocket)
-     (ox-pandoc)
-     (org-roam)
-     (lsp-mode)
-     (comp)
-     (:warning))))
+   '(compat org-emms smudge emms ox-spectacle copilot-chat copilot editorconfig markdown-mode swiper conda poet-theme org-roam-bibtex org-ql anzu helm-bibtex google-translate company-posframe orderless langtool ag magit minions helm-org-rifle company-anaconda wwg org-mind-map virtualenvwrapper try rebecca-theme quelpa-use-package jupyter beacon imenu-anywhere all-the-icons-ivy-rich dracula-theme ivy-posframe diminish lsp-ui ob-ipython zygospore whisper lsp-grammarly hide-mode-line diff-hl electric-operator chatgpt-shell consult-org-roam writeroom-mode flymd org-ref chatgpt restclient engine-mode auto-complete processing-mode ob-async emacsql-sqlite org-download default-text-scale olivetti org-roam-server smartparens annotate pdf-tools svg-tag-mode latex-preview-pane helm-spotify-plus org-tree-slide org-transclusion ivy-bibtex ein gscholar-bibtex deadgrep org-bullets flymake-aspell mood-line company-quickhelp ivy-clipmenu column-enforce-mode multiple-cursors smex shell-pop rainbow-delimiters smart-mode-line org-timeline pyvenv mindre-theme org-roam-ui company-flx expand-region 0blayout markdown-preview-mode counsel-projectile neotree which-key disable-mouse org-present pyimport academic-phrases exotica-theme))
+ '(pdf-tools-handle-upgrades nil))
 ;; (custom-set-faces
 ;;  ;; custom-set-faces was added by Custom.
 ;;  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -202,6 +178,10 @@ want to use in the modeline *in lieu of* the original.")
 ;;  '(org-ref-cite-face ((t (:inherit org-link :foreground "#50fa7b"))))
 ;;  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
 
+;; Ivy-posframe dependency
+(use-package posframe
+  :ensure t)
+
 ;; Change M-x position
 (use-package ivy-posframe
   :ensure t
@@ -221,6 +201,12 @@ want to use in the modeline *in lieu of* the original.")
 (use-package ivy-rich
   :ensure t
   :init (ivy-rich-mode 1))
+
+(use-package counsel
+  :ensure t)
+
+;; (add-to-list 'load-path "~/.emacs.d/elpa/counsel-20240413.1905/")
+;; (require 'counsel)
 
 (use-package all-the-icons-ivy-rich
   :ensure t
@@ -335,12 +321,10 @@ want to use in the modeline *in lieu of* the original.")
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:font "Iosevka" :height 160))))
  '(diff-hl-change ((t (:background "#3a81c3"))))
  '(diff-hl-delete ((t (:background "#ee6363"))))
  '(diff-hl-insert ((t (:background "#7ccd7c"))))
- '(jupyter-repl-input-prompt ((t (:foreground "dark cyan"))))
- '(org-todo ((t (:inherit (mindre-keyword mindre-strong) :weight medium)))))
+ '(markdown-link-face ((t (:inherit mindre-keyword :underline t)))))
 
 ;; Change font size
 ;; Iosevka
@@ -349,6 +333,12 @@ want to use in the modeline *in lieu of* the original.")
 ;; Hide mode line
 (use-package hide-mode-line
   :ensure t)
+
+;; svg tag mode
+;; config it in the future maybe? exemple 2 in the repo has nice things.
+;; font issue: https://github.com/rougier/svg-tag-mode/issues/38
+;; (use-package svg-tag-mode
+;;   :ensure t)
 
 (provide 'aesthetics-settings)
 ;;; aesthetics-settings.el ends here

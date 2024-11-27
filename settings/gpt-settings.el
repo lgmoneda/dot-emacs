@@ -6,7 +6,7 @@
   :init-value nil
   :lighter " Chat"
   :keymap (let ((map (make-sparse-keymap)))
-            (define-key map (kbd "RET") 'send-message-to-api)
+            (define-key map (kbd "RET") 'exchange-with-chat-api)
             map))
 
 (defun lgm/org-roam-ai-chat-to-notes ()
@@ -119,7 +119,7 @@
   "Call the given Python SCRIPT-NAME with the given TEXT as input and
 display the output in a new temporary buffer."
     (interactive)
-	;; (pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+	;; (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
 	(let* ((text (if (use-region-p)
                      (buffer-substring-no-properties (region-beginning) (region-end))
                    (read-string "Enter search: ")))
@@ -147,13 +147,13 @@ display the output in a new temporary buffer."
   (setq chatgpt-shell-openai-key
       (plist-get (car (auth-source-search :host "openai.com"))
                  :secret))
+  (require 'chatgpt-shell)
+  (require 'ob-chatgpt-shell)
+  (ob-chatgpt-shell-setup)
+  (require 'ob-dall-e-shell)
   :bind
   ("C-c q" . chatgpt-shell)
   ("C-c d" . dall-e-shell))
-
-;; To use it in org mode, chatgpt-shell language
-(require 'ob-chatgpt-shell)
-(require 'ob-dall-e-shell)
 
 ;; Whisper
 ;; (use-package whisper
@@ -161,7 +161,7 @@ display the output in a new temporary buffer."
 ;;   :init
 ;;   (setq whisper-repo-path (expand-file-name "whisper/" quelpa-build-dir))
 ;;   :config
-;;   (setq whisper-install-directory "/tmp/"
+;;   (setq whisper-install-directory "~/.emacs.d/.cache/"
 ;;         whisper-model "base"
 ;;         whisper-language "en"
 ;;         whisper-translate nil)
@@ -203,9 +203,58 @@ display the output in a new temporary buffer."
 		(org-shifttab)
 		;; (insert "\n [[file:/Users/luis.moneda/Dropbox/Agenda/org-roam-ai/output.jpg]]")
 		;; (org-display-inline-images nil t)
-		(display-buffer buf))
+		(display-buffer buf)
+		)
 	  )
 	)
+
+;;I change the value of this variable to enable me to run two process in different output buffers
+;; without confirming I want to create another buffer
+(setq async-shell-command-buffer 'new-buffer)
+
+(defun start-semantic-search ()
+  (interactive)
+  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
+  ;; (async-shell-command "python /Users/luis.moneda/Library/CloudStorage/Dropbox/Agenda/org-roam-ai/blog_roam_search.py")
+  (async-shell-command "python /Users/luis.moneda/repos/org-roam-ai/semantic_search.py")
+  (delete-window (get-buffer-window (get-buffer "*Async Shell Command*"))))
+
+(start-semantic-search)
+
+;; Q&A
+
+(defun call-chat-server (input-string)
+  "Call Python server with INPUT-STRING and return the output string."
+  (let ((url-request-method "GET")
+        (url-request-extra-headers
+         '(("Content-Type" . "text/plain"))))
+    (with-current-buffer
+        (url-retrieve-synchronously (concat "http://localhost:8880/api/" input-string))
+      (goto-char (point-min))
+      (search-forward-regexp "\n\n")
+      (buffer-substring (point) (point-max)))))
+
+(defun exchange-with-chat-api ()
+  "Send the current message to the API and display the response."
+  (interactive)
+  (let* ((message (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+         (response (call-chat-server message)))
+    (goto-char (point-max))
+    (insert "\n\n")
+    (setq result (split-string-at-substring response "SOURCES:"))
+    (insert-string-simulating-typing (nth 0 result))
+    (if (nth 1 result)
+		(insert (decode-coding-string (nth 1 result) 'utf-8)))
+    (goto-char (point-max))
+    (insert "\n\n> ")))
+
+(defun start-qna ()
+  (interactive)
+  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
+  (async-shell-command "python /Users/luis.moneda/repos/org-roam-ai/qna.py")
+  (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<2>"))))
+
+(start-qna)
 
 (provide 'gpt-settings)
 ;;; gpt-settings.el ends here

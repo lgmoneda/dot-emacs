@@ -43,17 +43,20 @@
 (setq TeX-auto-save t) ; Enable parse on save.
 
 ;; Markdown mode and preview
-(use-package markdown-mode
-  :ensure t
-  :commands (markdown-mode gfm-mode)
-  :mode (("README\\.md\\'" . gfm-mode)
-         ("\\.md\\'" . markdown-mode)
-         ("\\.markdown\\'" . markdown-mode))
-  :init (setq markdown-command "multimarkdown"))
+;; (use-package markdown-mode
+;;   :ensure t
+;;   :commands (markdown-mode gfm-mode)
+;;   :mode (("README\\.md\\'" . gfm-mode)
+;;          ("\\.md\\'" . markdown-mode)
+;;          ("\\.markdown\\'" . markdown-mode))
+;;   :init (setq markdown-command "multimarkdown"))
 
-(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/markdown-preview-mode-20221006.1601")
+(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/markdown-preview-mode-20230707.803")
 (load "markdown-preview-mode")
-;; (autoload 'markdown-preview-mode "markdown-preview-mode" "" t)
+(autoload 'markdown-preview-mode "markdown-preview-mode" "" t)
+
+(use-package websocket
+  :ensure t)
 
 ;; Use M-x markdown-preview-mode in a md buffer
 (use-package markdown-preview-mode
@@ -64,7 +67,7 @@
   :ensure t)
 
 ;; PATH append
-(setenv "PATH" (concat "/Users/luis.moneda/opt/miniconda3/bin:" (getenv "PATH")))
+(setenv "PATH" (concat "/Users/luis.moneda/miniconda3/bin:" (getenv "PATH")))
 
 ;;; LATEX
 
@@ -154,6 +157,7 @@
         (t . ivy--regex-plus)))
 
 (global-set-key (kbd "C-c r") 'org-ref-insert-cite-link)
+(setq org-cite-global-bibliography '("~/Dropbox/Research/library.bib"))
 (setq ivy-bibtex-default-action 'ivy-bibtex-insert-citation)
 
 ;; telling bibtex-completion where your bibliographies can be found
@@ -211,10 +215,10 @@
         (default       . bibtex-completion-format-citation-default)))
 
 ;; use org-ref
-;; (use-package org-ref
-;;   :ensure t)
-(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/org-ref-20230131.1743")
-(autoload 'org-ref "org-ref" "" t)
+(use-package org-ref
+  :ensure t)
+;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/org-ref-20230131.1743")
+;; (autoload 'org-ref "org-ref" "" t)
 
 (setq org-ref-bibliography-notes "~/Dropbox/Agenda/roam"
       org-ref-default-bibliography '("~/Dropbox/Research/library.bib")
@@ -268,18 +272,22 @@
 ;; Useful to activate while I write my cards
 (global-set-key "\C-cf" 'flyspell-mode)
 
-(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/lsp-grammarly-20221231.1655")
-(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/lsp-mode-20230401.434")
-(load "lsp-grammarly")
-(autoload 'lsp-grammarly "lsp-grammarly" "" t)
+;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/lsp-grammarly-20230814.1827")
+;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/lsp-mode-20230401.434")
+(use-package lsp-mode
+  :ensure t)
+;; Hide the filename when active
+(setq lsp-headerline-breadcrumb-enable nil)
+;; (load "lsp-grammarly")
+;; (autoload 'lsp-grammarly "lsp-grammarly" "" t)
 
 (use-package lsp-grammarly
-  :ensure t
-  ;; or text-mode
-  :hook (latex-mode . (lambda ()
-                       (require 'lsp-grammarly)
-                       (lsp)))
-  )  ; or lsp-deferred
+  :ensure t)
+
+;; https://github.com/emacs-lsp/lsp-ui
+;; Show the recommendation in a box when I hover the mouse
+(setq lsp-ui-doc-show-with-cursor t)
+
 
 ;; Make sure lsp-auto-guess-root is not set to t.
 ;; run M-x lsp-workspace-blacklist-remove, if you get an error

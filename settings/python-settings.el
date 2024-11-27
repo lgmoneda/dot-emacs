@@ -1,10 +1,15 @@
 ;;; python-settings.el --- Settings for the programming language Python
 
+;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/conda-20230620.1745/")
+;; (load "conda")
+(use-package pythonic
+  :ensure t)
+
 (use-package conda
   :ensure t)
 
 (custom-set-variables
- '(conda-anaconda-home "/Users/luis.moneda/opt/miniconda3"))
+ '(conda-anaconda-home "/Users/luis.moneda/miniconda3"))
 
 ;; if you want interactive shell support, include:
 (conda-env-initialize-interactive-shells)
@@ -16,7 +21,7 @@
 (use-package pyvenv
   :ensure t)
 
-(setenv "WORKON_HOME" "/Users/luis.moneda/opt/miniconda3/envs")
+(setenv "WORKON_HOME" "/Users/luis.moneda/miniconda3/envs")
 (pyvenv-mode 1)
 
 (add-hook 'python-mode-hook
@@ -33,6 +38,10 @@
 	     (add-hook 'python-mode-hook 'column-enforce-mode)
 	     )
 
+(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/pythonic-20230821.1733/")
+(load "pythonic")
+(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/company-anaconda-20230821.2126/")
+(load "company-anaconda")
 ;; Company-anaconda
 (use-package company-anaconda
   :ensure t
@@ -47,21 +56,21 @@
 ;; To activate nupy environment
 (defun anupy ()
   (interactive)
-  (pythonic-activate "/Users/luis.moneda/opt/miniconda3/envs/nu")
+  (pythonic-activate "/Users/luis.moneda/miniconda3/envs/nu")
   )
 
 ;; Check if i'm at work and activate
 ;; the right environment
-(defun activate-work-env ()
-  (if (string= (system-name) "rc530")
-      (pythonic-activate "/Users/luis.moneda/opt/miniconda3/envs/ml3")
-      )
-  (if (string-match "luis.moneda" (system-name))
-      (pythonic-activate "/Users/luis.moneda/opt/miniconda3/envs/ml3")
-      )
-  )
+;; (defun activate-work-env ()
+;;   (if (string= (system-name) "rc530")
+;;       (pythonic-activate "/Users/luis.moneda/miniconda3/envs/ml3")
+;;       )
+;;   (if (string-match "luis.moneda" (system-name))
+;;       (pythonic-activate "/Users/luis.moneda/miniconda3/envs/ml3")
+;;       )
+;;   )
 
-(activate-work-env)
+;; (activate-work-env)
 
 ;; I don't want to see the error buffer
 (remove-hook 'anaconda-mode-response-read-fail-hook
@@ -228,11 +237,11 @@ if breakpoints are present in `python-mode' files"
 
 (define-key python-mode-map (kbd "C-c C-i") 'pyimport-insert-missing)
 
-(use-package py-autopep8
-  :ensure t
-  :init (progn
-           (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save)
-           ))
+;; (use-package py-autopep8
+;;   :ensure t
+;;   :init (progn
+;;            (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save)
+;;            ))
 
 (setq py-autopep8-options '("--max-line-length=120"))
 

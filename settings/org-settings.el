@@ -95,8 +95,15 @@
         ("\\.x?html?\\'" . "xdg-open %s")
         ("\\.pdf\\'" . "evince \"%s\"")
         ("\\.pdf::\\([0-9]+\\)\\'" . "xdg-open \"%s\" -p %1")
-        ("\\.pdf.xoj" . "xournal %s")))
-      )
+        ("\\.pdf.xoj" . "xournal %s")
+	))
+)
+
+(setq org-file-apps
+        (append org-file-apps
+                '(
+                  ("\\.mp3\\'" . (lambda (file) (emms-play-file file)))
+                  ("\\.mp4\\'" . (lambda (file) (emms-play-file file))))))
 
 ;; From cashestocashes.com
 ;; Once you've included this, activate org-columns with C-c C-x C-c while on a top-level heading, which will allow you to view the time you've spent at the different levels (you can exit the view by pressing q)
@@ -132,19 +139,22 @@
   (setq ob-async-no-async-languages-alist '("jupyter-python" "jupyter"))
   )
 
-(use-package jupyter
-  :demand t
-  :after (:all org python))
+;; (use-package jupyter
+;;   :demand t
+;;   :after (:all org python))
 
-(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/jupyter-20230214.215")
+(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/jupyter-20240716.2028")
 (load "jupyter")
 (autoload 'jupyter "jupyter" "" t)
 
-(pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+(pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
 
-;; ;; to redefine images from evaluating code blocks
-;; After executing code, it displays the image
-(add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
+;; Fix for 404 error
+(defun gm/jupyter-api-request-xsrf-cookie-error-advice (func &rest args)
+  (condition-case nil
+      (apply func args)
+    (jupyter-api-http-error nil)))
+(advice-add 'jupyter-api-request-xsrf-cookie :around #'gm/jupyter-api-request-xsrf-cookie-error-advice)
 
 ;; Org-babel
 (org-babel-do-load-languages
@@ -185,6 +195,7 @@
 ;; * Handling ansi codes
 
 (defun scimax-jupyter-ansi ()
+    (interactive)
   "Replaces ansi-codes in exceptions with colored text.
 I thought emacs-jupyter did this automatically, but it may only
 happen in the REPL. Without this, the tracebacks are very long
@@ -221,6 +232,10 @@ This should only apply to jupyter-lang blocks."
 
 (add-to-list 'org-babel-after-execute-hook 'scimax-jupyter-ansi t)
 
+;; ;; to redefine images from evaluating code blocks
+;; After executing code, it displays the image
+(add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
+
 ;; Latex in org
 (setq exec-path (append exec-path '("/Library/TeX/texbin/latex")))
 (setq exec-path (append exec-path '("/usr/local/Cellar/imagemagick/7.1.0-55/bin/magick")))
@@ -242,7 +257,7 @@ This should only apply to jupyter-lang blocks."
 (setq python-shell-interpreter "python3")
 (venv-initialize-interactive-shells) ;; if you want interactive shell support
 (venv-initialize-eshell) ;; if you want eshell support
-(setq venv-location "/Users/luis.moneda/opt/miniconda3/envs/edge")
+(setq venv-location "/Users/luis.moneda/miniconda3/envs/edge")
 
 
 ;Sunday, December 10, 2017
@@ -564,8 +579,18 @@ this command to copy it"
 
 (add-to-list 'org-capture-templates
              '("w" "Work task"  entry
-               (file "~/Dropbox/Agenda/nu.org")
+               (file+headline "~/Dropbox/Agenda/nu.org" "Tasks")
                "* TODO %?"
+	       :empty-lines 1))
+
+(add-to-list 'org-capture-templates
+             '("b" "Batch work task"  entry
+               (file+headline "~/Dropbox/Agenda/nu.org" "Batch")
+               "* TODO [#D] %?                                  :batch:
+:PROPERTIES:
+:Effort: 0:05
+:END:
+"
 			   :empty-lines 1))
 
 (add-to-list 'org-capture-templates
@@ -602,17 +627,58 @@ this command to copy it"
 (add-to-list 'org-capture-templates
              '("n" "Fleeting notes" entry
 			   (file "~/Dropbox/Agenda/roam/20200809213233-fleeting_notes.org")
-               "* %? \n%t "))
+			   "* %? \n%t "))
+
+(add-to-list 'org-capture-templates
+             '("u" "Nu Fleeting notes" entry
+			   (file "~/Dropbox/Agenda/roam/20231001003359-nubank_fleeting_notes.org")
+               "* %t %? \n "))
 
 (add-to-list 'org-capture-templates
              '("j" "Journal" entry
 			   (file "~/Dropbox/Agenda/roam/20220619113235-my_journal.org")
                "* %<%A, %D> \n** %?"))
 
+;; I'm not using currently, but it is a way of forcing thinking on urgency and importance and use filters in the Agenda to treat them accordingly
+;; (add-to-list 'org-capture-templates
+;;              '("t" "Task with Properties" entry
+;;                (file+headline "~/Dropbox/Agenda/nu.org" "Tasks")
+;;                "* TODO %^{Task}\n:PROPERTIES:\n:IMPORTANCE:%^{Importance|low|high}\n:URGENCY:%^{Urgency|low|high}\n:END:\n%?"
+;;                :empty-lines 1))
+
 (setq org-lowest-priority ?F)
 (setq org-default-priority ?F)
 (setq org-agenda-skip-scheduled-if-deadline-is-shown t)
 (setq org-tags-exclude-from-inheritance '("epic"))
+;; It didn't work as intended for tracking complex tasks and excluding the subtasks, but it is a cool feature to checkx
+;; (setq org-enforce-todo-dependencies t)
+;; (setq org-agenda-dim-blocked-tasks 'invisible)
+
+;; Skip if a tag is in the direct parent to use in bulk tasks
+(defun my-org-agenda-skip-if-parent-has-tag (tag)
+  "Skip agenda entry if its direct parent is tagged with TAG."
+  (save-excursion
+    (let* ((element (org-element-at-point))
+           (parent (org-element-property :parent element)))
+      ;; Check if we are at a headline, if not go up until we find one
+      (while (and parent (not (eq (org-element-type parent) 'headline)))
+        (setq element parent
+              parent (org-element-property :parent element)))
+      ;; If parent is a headline, not a TODO, and has specific tag, return position to skip to
+      (when (and (eq (org-element-type element) 'headline) parent
+                 (member tag (org-element-property :tags parent)))
+        (org-end-of-subtree t))))) ;; no change
+
+;; Identify with a symbol when a scheduled to-do has children
+(with-eval-after-load 'org-agenda
+  (defun my/org-has-children ()
+    (if (save-excursion (org-goto-first-child)) "▶" "  ")
+  )
+  (add-to-list 'org-agenda-prefix-format '(
+     agenda  . "%i%-3:(my/org-has-children) %-12:c%?-12t% s "
+  ))
+)
+
 
 ;; From https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html
 (defun air-org-skip-subtree-if-habit ()
@@ -630,7 +696,7 @@ this command to copy it"
 		  (tags-todo "+DEADLINE>=\"<-60d>\""
 					 ((org-agenda-overriding-columns-format
 					   "%25ITEM %DEADLINE %TAGS")
-					  (org-agenda-overriding-header "Deadlines in the next 60 days\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+					  (org-agenda-overriding-header "Deadlines \n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 					  (org-agenda-remove-tags t)
 					  (org-agenda-sorting-strategy '(deadline-up))
 					  (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"DEADLINE\")) ")
@@ -647,13 +713,22 @@ this command to copy it"
 	  			   (org-agenda-entry-types '(:deadline :scheduled))
 	  			   (org-agenda-overriding-header "Week tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 				   (org-agenda-scheduled-leaders '("" ""))
-				   (org-agenda-prefix-format "    %i %-12:c")
+				   ;; (org-agenda-prefix-format "    %i %-12:c")
+				   (org-agenda-prefix-format "    %i %-12:c%(my/org-has-children)")
 	  			   ))
 
 		  ;; High priority tasks
-		  (tags "PRIORITY=\"A\"-cult+epic-delegated"
+		  (tags "PRIORITY=\"A\"-cult+epic-delegated-family"
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-                 (org-agenda-overriding-header "High-priority Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+                 (org-agenda-overriding-header "Tech Epic\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+				 (org-agenda-remove-tags t)
+				 (org-agenda-todo-keyword-format "")
+				 ))
+
+		  ;; High priority tasks
+		  (tags "PRIORITY=\"A\"+family+epic"
+                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                 (org-agenda-overriding-header "Family Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 				 (org-agenda-remove-tags t)
 				 (org-agenda-todo-keyword-format "")
 				 ))
@@ -667,26 +742,28 @@ this command to copy it"
 				 ))
 
 		  ;; Late tasks
-		  (tags "+TODO=\"TODO\"+SCHEDULED<\"<today>\"-epic-goals-selfdevelopment"
+		  (tags "+TODO=\"TODO\"+SCHEDULED<\"<today>\"-epic-goals-selfdevelopment-family"
 				(
 				 (org-agenda-overriding-header "Late tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 				 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) :%-8:c")
 				 (org-agenda-sorting-strategy '(scheduled-up))
 				 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-												(org-agenda-skip-if-scheduled-today-or-later)
-												(org-agenda-skip-entry-if 'notscheduled)
-												))
+								(org-agenda-skip-if-scheduled-today-or-later)
+								(org-agenda-skip-entry-if 'notscheduled)
+								(my-org-agenda-skip-if-parent-has-tag "bulk")
+								))
 				 (org-agenda-remove-tags t)
 				 (org-agenda-todo-keyword-format "")
 				 )
 				)
 
 		  ;; All not scheduled things
-		  (tags "-goals-selfdevelopment+TODO=\"TODO\"-epic"
+		  (tags "-goals-selfdevelopment+TODO=\"TODO\"-epic-family"
 	  			(
 	  			 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-												(org-agenda-skip-if-scheduled-today-or-later)
-												))
+								(org-agenda-skip-if-scheduled-today-or-later)
+								(my-org-agenda-skip-if-parent-has-tag "bulk")
+								))
 				 (org-agenda-overriding-header "Backlog\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 	  			 (org-agenda-remove-tags t)))
 
@@ -695,9 +772,17 @@ this command to copy it"
 				((org-agenda-category-filter "-Nubank")
 				 (org-agenda-prefix-format " ")
 				 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-												(air-org-skip-subtree-if-priority ?A)
-												(org-agenda-skip-if nil '(scheduled deadline))))
-				 (org-agenda-overriding-header "2023 Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+								(air-org-skip-subtree-if-priority ?A)
+								(org-agenda-skip-if nil '(scheduled deadline))))
+				 (org-agenda-overriding-header "Season Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+				 (org-agenda-remove-tags t)))
+		  ;;Family goals
+		  (tags "+family-epic+LEVEL=3+TODO=\"TODO\"|+family+LEVEL=3+TODO=\"DONE\""
+			        ((org-agenda-prefix-format " ")
+				 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+								(air-org-skip-subtree-if-priority ?A)
+								(org-agenda-skip-if nil '(scheduled deadline))))
+				 (org-agenda-overriding-header "Season Family Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 				 (org-agenda-remove-tags t)))
 
 		  ;; Backlog projects
@@ -737,9 +822,12 @@ this command to copy it"
 	  					 (org-agenda-entry-types '(:deadline :scheduled))
 	  					 (org-agenda-overriding-header "⏳ Week tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 						 (org-agenda-scheduled-leaders '("" ""))
-						 (org-agenda-prefix-format "    %i %-4e  %-12:c")
+						 (org-agenda-prefix-format "    %i %-4e %-12:c%(my/org-has-children)")
 						 (org-agenda-remove-tags t)
 						 (org-agenda-skip-function '(air-org-skip-subtree-if-habit))
+						 (org-agenda-skip-function '(my-org-agenda-skip-if-parent-has-tag "bulk"))
+						 (tags-todo "batch")
+						 (tags-todo "-batch")
 						 ;; (org-agenda-skip-function #'add-clock-emoji-to-agenda)
 	  					 ))
 
@@ -785,9 +873,21 @@ this command to copy it"
 					   (org-agenda-remove-tags t)
 					   (org-agenda-todo-keyword-format "")
 					   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-													  (org-agenda-skip-if-scheduled-today-or-later)
-													  (org-agenda-skip-entry-if 'todo 'done)
-													  ))
+									  (org-agenda-skip-if-scheduled-today-or-later)
+									  (org-agenda-skip-entry-if 'todo 'done)
+									  ))
+					   ))
+
+				;; Batch tasks
+				(tags "-epic+batch-delegated"
+					  (
+					   (org-agenda-overriding-header "🚚 Batch Tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+					   (org-agenda-remove-tags t)
+					   (org-agenda-todo-keyword-format "")
+					   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+									  (org-agenda-skip-if-scheduled-today-or-later)
+									  (org-agenda-skip-entry-if 'todo 'done)
+									  ))
 					   ))
 
 				;; Blocked tasks
@@ -798,13 +898,14 @@ this command to copy it"
 					   (org-agenda-sorting-strategy '(priority-down))
 					   (org-agenda-todo-keyword-format "")
 					   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-													  (org-agenda-skip-if-scheduled-today-or-later)
+									  (org-agenda-skip-if-scheduled-today-or-later)
+									  (my-org-agenda-skip-if-parent-has-tag "bulk")
 													  ))
 					   )
 					  )
 
 				;; Tasks in Projects
-				(tags "+projects+TODO=\"TODO\"-PRIORITY=\"A\"-epic"
+				(tags "+projects-delegated+TODO=\"TODO\"-PRIORITY=\"A\"-epic"
 					  (
 					   (org-agenda-overriding-header "🚢 Tasks in Projects\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 					   (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
@@ -812,7 +913,8 @@ this command to copy it"
 					   (org-agenda-sorting-strategy '(priority-down))
 					   (org-agenda-todo-keyword-format "")
 					   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-													  (org-agenda-skip-if-scheduled-today-or-later)
+									  (org-agenda-skip-if-scheduled-today-or-later)
+									  (my-org-agenda-skip-if-parent-has-tag "bulk")
 													  ))
 					   )
 					  )
@@ -825,13 +927,14 @@ this command to copy it"
 					   (org-agenda-sorting-strategy '(priority-down))
 					   (org-agenda-todo-keyword-format "")
 					   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-													  (org-agenda-skip-if-scheduled-today-or-later)
+									  (org-agenda-skip-if-scheduled-today-or-later)
+									  (my-org-agenda-skip-if-parent-has-tag "bulk")
 													  ))
 					   )
 					  )
 
 				;; NEXT Manager
-				(tags "+manager-directreports+TODO=\"TODO\"-PRIORITY=\"A\"-epic-perfcycle-selfdevelopment-cyclegoals-delegated"
+				(tags "+manager-directreports+TODO=\"TODO\"-PRIORITY=\"A\"-epic-perfcycle-selfdevelopment-cyclegoals-delegated-batch"
 					  (
 					   (org-agenda-overriding-header "💼 Management\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 					   (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
@@ -839,7 +942,8 @@ this command to copy it"
 					   (org-agenda-category-filter "")
 					   (org-agenda-sorting-strategy '(priority-down))
 					   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-													  (org-agenda-skip-if-scheduled-today-or-later)
+									  (org-agenda-skip-if-scheduled-today-or-later)
+									  (my-org-agenda-skip-if-parent-has-tag "bulk")
 													  ))
 					   (org-agenda-todo-keyword-format "")
 					   )
@@ -852,7 +956,8 @@ this command to copy it"
 					   (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) ")
 					   (org-agenda-remove-tags t)
 					   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-													  (org-agenda-skip-if-scheduled-today-or-later)
+									  (org-agenda-skip-if-scheduled-today-or-later)
+									  (my-org-agenda-skip-if-parent-has-tag "bulk")
 													  ))
 					   (org-agenda-sorting-strategy '(priority-down))
 					   (org-agenda-todo-keyword-format "")
@@ -876,7 +981,8 @@ this command to copy it"
 				(tags "-cyclegoals-selfdevelopment+TODO=\"TODO\"-PRIORITY=\"A\"-manager-projects-education-directreports-spinning"
 	  				  (
 	  				   (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-													  (org-agenda-skip-if-scheduled-today-or-later)
+									  (org-agenda-skip-if-scheduled-today-or-later)
+									  (my-org-agenda-skip-if-parent-has-tag "bulk")
 													  ))
 					   (org-agenda-sorting-strategy '(priority-down))
 					   (org-agenda-overriding-header "❄️ Backlog tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
@@ -1085,8 +1191,9 @@ should be continued."
     )
 
 (setq org-roam-v2-ack t)
-;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/org-roam-20230307.1721")
-;; (load "org-roam")
+(add-to-list 'load-path "~/.emacs.d/elpa/org-roam-20240114.1941")
+(require 'org-roam)
+
 (use-package org-roam
   :init
   (setq org-roam-completion-everywhere t)
@@ -1107,7 +1214,7 @@ should be continued."
 	  ("r" "bibliography reference" plain
            (file "/Users/luis.moneda/Dropbox/Agenda/templates/bib_org_roam.org")
            :target
-           (file+head "${citekey}.org" "#+TITLE: ${title}, ${author-abbrev}\n#+ROAM_KEY: ${ref}\n#+Authors: ${author}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n")
+           (file+head "${citekey}.org" "#+TITLE: ${title}, ${author-abbrev}\n#+ROAM_KEY: ${citekey}\n#+Source: ${ref}\n#+Authors: ${author}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n")
 	   :unnarrowed t)
 	  )
 	)
@@ -1122,21 +1229,22 @@ should be continued."
 		 (window-height . fit-window-to-buffer)))
   :bind (("C-c n l" . org-roam-buffer-toggle)
          ("C-c n f" . org-roam-node-find)
-		 ("C-c n i" . org-roam-node-insert)
-		 ;; ("C-c n g" . org-roam-graph)
-		 ("C-c n g" . counsel-org-goto)
-		 ("C-c n b" . helm-bibtex)
-		 ("C-c n s" . lgm/screenshot-to-org-link)
-		 ;; ("C-c n a" . org-roam-ai-semantic-search)
-		 ;; ("C-c n a" . org-roam-ai-semantic-search-api)
-		 ("C-c n a" . org-roam-semantic-search-api)
-		 ("C-c n p" . lgm/gpt-prompt)
-		 ("C-c n c" . lgm/python-org-code-block)
-		 ("C-c n e" . lgm/double-dollar-sign)
-		 ("C-c k" . lgm/double-dollar-sign)
-		 ("C-c n n" . org-id-get-create)
-		 ("C-c n w" . my/drawio-create)
-		 ("C-c n o" . my/drawio-edit)
+	 ("C-c n i" . org-roam-node-insert)
+	 ;; ("C-c n g" . org-roam-graph)
+	 ("C-c n g" . counsel-org-goto)
+	 ("C-c n b" . helm-bibtex)
+	 ("C-c n s" . lgm/screenshot-to-org-link)
+	 ;; ("C-c n a" . org-roam-ai-semantic-search)
+	 ;; ("C-c n a" . org-roam-ai-semantic-search-api)
+	 ("C-c n a" . org-roam-semantic-search-api)
+	 ("C-c n q" . lgm/org-roam-ai-chat-to-notes)
+	 ("C-c n p" . lgm/gpt-prompt)
+	 ("C-c n c" . lgm/python-org-code-block)
+	 ("C-c n e" . lgm/double-dollar-sign)
+	 ("C-c k" . lgm/double-dollar-sign)
+	 ("C-c n n" . org-id-get-create)
+	 ("C-c n w" . my/drawio-create)
+	 ("C-c n o" . my/drawio-edit)
 	 )
   :config
   (org-roam-setup)
@@ -1145,6 +1253,9 @@ should be continued."
 	(concat "${title:105} "
 		(propertize "${tags:40}" 'face 'org-tag))))
 
+
+(add-to-list 'load-path "~/.emacs.d/elpa/org-roam-ui-20221105.1040")
+(require 'org-roam-ui)
 (use-package org-roam-ui
     :after org-roam
 ;;         normally we'd recommend hooking orui after org-roam, but since org-roam does not have
@@ -1183,10 +1294,9 @@ should be continued."
 ;; Olivetti
 ;; Look & Feel for long-form writing
 (use-package olivetti
-  :ensure t)
-
-;; Set the body text width
-(setq olivetti-body-width 0.65)
+  :ensure t
+  :config
+  (setq-default olivetti-body-width 120))
 
 ;; Enable Olivetti for text-related mode such as Org Mode
 (add-hook 'text-mode-hook 'olivetti-mode)
@@ -1293,7 +1403,7 @@ should be continued."
 				 "~/Dropbox/Agenda/roam/20211123125642-nu_meeting_notes.org"))
 
 ;; I need to call it to bring org-roam mode
-(org-roam-version)
+;; (org-roam-version)
 (setq personal-dynamic-roam-agenda-files (list-roam-files-with-tags-todo))
 (setq personal-roam-agenda-files (append '("~/Dropbox/Agenda/todo.org")
 				   personal-dynamic-roam-agenda-files))
@@ -1311,14 +1421,16 @@ should be continued."
   (interactive)
   (if org-agenda-files-personal-mode
       (progn (when (not nu-dynamic-files-fetched)
-	       (org-roam-version)
-	       (setq nu-dynamic-roam-agenda-files (list-roam-files-with-tags))
-	       (setq nu-roam-agenda-files (append '("~/Dropbox/Agenda/nu.org")
-						  nu-dynamic-roam-agenda-files))
-	       )
-	     (setq org-agenda-files nu-roam-agenda-files)
-	     (setq org-agenda-files-personal-mode nil)
-	     (setq nu-dynamic-files-fetched t))
+			   ;; I was getting an error from it
+			   ;; (org-roam-version)
+			   (require 'org-roam)
+			   (setq nu-dynamic-roam-agenda-files (list-roam-files-with-tags))
+			   (setq nu-roam-agenda-files (append '("~/Dropbox/Agenda/nu.org")
+												  nu-dynamic-roam-agenda-files))
+			   )
+			 (setq org-agenda-files nu-roam-agenda-files)
+			 (setq org-agenda-files-personal-mode nil)
+			 (setq nu-dynamic-files-fetched t))
 
     (progn (setq org-agenda-files personal-roam-agenda-files)
 	   (setq org-agenda-files-personal-mode t))
@@ -1512,7 +1624,15 @@ agenda buffer."
                                    ")"))
        (forward-line)))))
 
-(add-hook 'org-agenda-finalize-hook 'my/org-agenda-insert-efforts)
+;; (add-hook 'org-agenda-finalize-hook 'my/org-agenda-insert-efforts)
+
+;; Run only for work agenda
+(defun my/org-agenda-finalize-for-specific-file ()
+  "Customize agenda finalization for a specific org file."
+  (when (member "~/Dropbox/Agenda/nu.org" org-agenda-files)
+    (my/org-agenda-insert-efforts)))
+
+(add-hook 'org-agenda-finalize-hook #'my/org-agenda-finalize-for-specific-file)
 
 (defun lgm/prompt-for-effort-at-date (date)
   "Go through every TODO item scheduled for the specified DATE and prompt the user for the :effort: property if it is not defined.
@@ -1604,6 +1724,10 @@ If no date is specified, use today's date as the default."
     )
   )
 
+(defun web-link-p (string)
+  "Check if STRING is a web link."
+  (not (null (string-match-p "\\`\\(https?\\|ftp\\|file\\):\\/\\/" string))))
+
 (defun my-org-make-link ()
   "Turn selected text into an Org mode link by replacing the selected
 text with a link that uses the selected text as the link description
@@ -1613,8 +1737,12 @@ and the clipboard contents as the link URL."
                               (buffer-substring-no-properties (region-beginning) (region-end))
                             (read-string "Link description: ")))
         (clipboard-contents (current-kill 0)))
-    (delete-region (region-beginning) (region-end))
-    (insert (concat "[[" clipboard-contents "][" link-description "]]"))))
+    (if (not (web-link-p clipboard-contents))
+	(message "Not a valid link")
+      (progn
+	    (delete-region (region-beginning) (region-end))
+	    (insert (concat "[[" clipboard-contents "][" link-description "]]")))
+      )))
 
 (define-key org-mode-map (kbd "s-v") 'my-org-make-link)
 
@@ -1632,7 +1760,7 @@ and the clipboard contents as the link URL."
   "Summarize the selected text using the OpenAI API and display the
 summary in a new temporary buffer."
   (interactive)
-  (pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
   (let* ((selected-text (if (use-region-p)
                             (buffer-substring-no-properties (region-beginning) (region-end))
 						  ""
@@ -1652,7 +1780,7 @@ summary in a new temporary buffer."
   "Summarize the selected text using the OpenAI API and display the
 summary in a new temporary buffer."
   (interactive)
-  (pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
   (let* ((selected-text (if (use-region-p)
                            (buffer-substring-no-properties (region-beginning) (region-end))
                          (read-string "Enter text to summarize: ")))
@@ -1674,7 +1802,7 @@ summary in a new temporary buffer."
 (defun my-openai-summarize-text (text)
   "Call the OpenAI API and provide it with the given TEXT as input.
 API-KEY is the OpenAI API key to use for the request."
-  (pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
   (my-call-python-script "~/Dropbox/Projetos/Emacs/org-roam-ai/api_call.py" text open-ai-summary-prompt)
 )
 
@@ -1761,7 +1889,7 @@ display the output in a new temporary buffer."
   "Call the given Python SCRIPT-NAME with the given TEXT as input and
 display the output in a new temporary buffer."
     (interactive)
-	(pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+	(pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
 	(let* ((text (if (use-region-p)
                            (buffer-substring-no-properties (region-beginning) (region-end))
                          (read-string "Enter search: ")))
@@ -1773,6 +1901,8 @@ display the output in a new temporary buffer."
 	  )
 	)
 
+(add-to-list 'load-path "~/.emacs.d/elpa/consult-org-roam-20240217.1442")
+(require 'consult-org-roam)
 (use-package consult-org-roam
    :ensure t
    :after org-roam
@@ -1903,7 +2033,8 @@ display the output in a new temporary buffer."
 	(insert-and-inherit (concat " (" (number-to-string (floor (* accomplished-percentage 100))) "% done, " (number-to-string (floor (* blocked-percentage 100))) "% blocked, " total-efforts " total, " remaining-efforts " remaining)"))
 	(forward-line)))))
 
-(add-hook 'org-agenda-finalize-hook 'my/org-agenda-insert-efforts)
+;; There is a bug preventing the agenda view to finish
+;; (add-hook 'org-agenda-finalize-hook 'my/org-agenda-insert-efforts)
 
 ;; This is an Emacs package that creates graphviz directed graphs from
 ;; the headings of an org file
@@ -1940,7 +2071,7 @@ display the output in a new temporary buffer."
 (defun lgm/chatgpt-prompt ()
   "Calls the ChatGPT API"
   (interactive)
-  (pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
   (let* ((selected-text (if (use-region-p)
                             (buffer-substring-no-properties (region-beginning) (region-end))
 						  ""
@@ -1956,7 +2087,7 @@ display the output in a new temporary buffer."
 
 (defun lgm/chatgpt-assistant-prompt ()
   "Calls the ChatGPT API"
-  (pyvenv-activate "/Users/luis.moneda/opt/miniconda3/envs/edge")
+  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
   (let* ((selected-text (if (use-region-p)
                             (buffer-substring-no-properties (region-beginning) (region-end))
 						  ""
@@ -1996,8 +2127,8 @@ display the output in a new temporary buffer."
     (org-block-begin-line (:height 0.7) org-block)
     (org-level-1 (:height 2.0) org-block)
     (org-level-2 (:height 1.5) org-block)
-    (org-level-3 (:height 1.0) org-block)
-    (org-level-4 (:height 1.0) org-block)    
+    (org-level-3 (:height 1.5) org-block)
+    (org-level-4 (:height 1.5) org-block)
 	))
 
 (defvar face-remapping-alist-config-2
@@ -2031,7 +2162,12 @@ display the output in a new temporary buffer."
   (org-show-entry)
 
   ;; Show only direct subheadings of the slide but don't expand them
-  (org-show-children))
+  (org-show-children)
+
+  ;; Unfold children
+  (org-fold-show-subtree)
+  )
+
 
 (defun my/org-present-start ()
   ;; Tweak font sizes
@@ -2042,8 +2178,37 @@ display the output in a new temporary buffer."
                                      (org-verbatim (:height 1.55) org-verbatim)
                                      (org-block (:height 1.25) org-block)
                                      (org-block-begin-line (:height 0.7) org-block)
-									 (org-level-1 (:height 2.0) org-block)
+				     (org-level-1 (:height 1.7) org-block)
+				     (org-level-2 (:height 1.1) org-block)
+				     (org-level-3 (:height 1.05) org-block)
+				     (org-level-4 (:height 1.05) org-block)
 									 ))
+  ;; Set a blank header line string to create blank space at the top
+  (setq header-line-format " ")
+
+  ;; Display inline images automatically
+  (org-display-inline-images))
+
+(defun my/org-present-start ()
+  ;; Resize Org headings
+  (dolist (face '((org-level-1 . 1.3)
+                (org-level-2 . 1.1)
+                (org-level-3 . 1.05)
+                (org-level-4 . 1.0)
+                (org-level-5 . 1.1)
+                (org-level-6 . 1.1)
+                (org-level-7 . 1.1)
+                (org-level-8 . 1.1)))
+  (set-face-attribute (car face) nil :font "Iosevka" :weight 'medium :height (cdr face)))
+
+  ;; Tweak font sizes
+  (setq-local face-remapping-alist '((default (:height 1.5) variable-pitch)
+                                     (header-line (:height 4.0) variable-pitch)
+                                     (org-document-title (:height 1.75) org-document-title)
+                                     (org-code (:height 1.55) org-code)
+                                     (org-verbatim (:height 1.55) org-verbatim)
+                                     (org-block (:height 1.25) org-block)
+                                     (org-block-begin-line (:height 0.7) org-block)))
 
   ;; Set a blank header line string to create blank space at the top
   (setq header-line-format " ")
@@ -2054,9 +2219,21 @@ display the output in a new temporary buffer."
 (defun my/org-present-end ()
   ;; Reset font customizations
   (setq-local face-remapping-alist '((default variable-pitch default)))
+  (dolist (face '((org-level-1 . 1.0)
+                (org-level-2 . 1.0)
+                (org-level-3 . 1.0)
+                (org-level-4 . 1.0)
+                (org-level-5 . 1.0)
+                (org-level-6 . 1.0)
+                (org-level-7 . 1.0)
+                (org-level-8 . 1.0)))
+  (set-face-attribute (car face) nil :font "Iosevka" :weight 'normal :height (cdr face)))
 
   ;; Clear the header line string so that it isn't displayed
-  (setq header-line-format nil))
+  (setq header-line-format nil)
+
+  ;; Stop displaying inline images
+  (org-remove-inline-images))
 
 ;; Register hooks with org-present
 (add-hook 'org-present-mode-hook 'my/org-present-start)
@@ -2066,6 +2243,87 @@ display the output in a new temporary buffer."
 
 ;; Hide markupt elements, like the * for bold
 (setq org-hide-emphasis-markers t)
+
+;; So I can use <q + TAB to create a quote block quickly, s for SRC
+(require 'org-tempo)
+
+;; To check the links under link words in org-mode
+(defun show-org-link-target ()
+  (interactive)
+  (when (org-in-regexp org-link-bracket-re 1)
+    (message "Target: %s" (org-link-unescape (match-string 1)))))
+
+(global-set-key (kbd "C-c s") 'show-org-link-target)
+
+;; It selects a header from the same org file I'm in and link it
+;; It is useful when I want to refer other parts of the file, but they are not org roam nodes.
+(defun org-insert-link-to-header ()
+  "Insert a link to an existing header in the current Org file."
+  (interactive)
+  (let ((headers (org-element-map (org-element-parse-buffer) 'headline
+                   (lambda (headline)
+                     (cons
+                      (org-element-property :raw-value headline)
+                      (org-element-property :begin headline))))))
+    (if headers
+        (let* ((choice (completing-read "Choose a header: " (mapcar 'car headers)))
+               (header (assoc choice headers)))
+          (if header
+              (let* ((begin (cdr header))
+                     (link (format "[[*%s][%s]]" choice choice)))
+                (goto-char (point))
+                (insert link))
+            (message "Header not found.")))
+      (message "No headers found in this Org file."))))
+
+(define-key org-mode-map (kbd "C-c n u") 'org-insert-link-to-header)
+
+;; So I can quickly share org-roam with people without looking for the pdf file in the roam folder
+(defun lgm/export-org-to-downloads-folder ()
+  "Export the current Org file to PDF and save it in the downloads folder."
+  (interactive)
+  (let* ((org-file (buffer-file-name))
+         (pdf-file (concat (file-name-sans-extension org-file) ".pdf"))
+         (downloads-folder "~/Downloads/")) ; Change this path to your desired folder
+
+    (unless (and org-file (file-exists-p org-file))
+      (error "Buffer is not visiting a file or file does not exist"))
+
+    (org-latex-export-to-pdf) ; Export Org file to PDF
+
+    ;; Move the exported PDF to the specified folder
+    (if (file-exists-p pdf-file)
+        (rename-file pdf-file (concat downloads-folder (file-name-nondirectory pdf-file)) t)
+      (error "PDF file not found after export"))
+
+    (message "Org file exported to PDF and saved in %s" downloads-folder)))
+
+;; Makes it easy to share images I've saved in org files
+(defun lgm/org-copy-linked-image-to-downloads ()
+  "Copy the linked image at point in Org mode to ~/Downloads/."
+  (interactive)
+  (when (org-in-regexp org-link-any-re 1)
+    (let* ((link (org-element-context))
+           (type (org-element-type link))
+           (path (org-element-property :path link))
+           (dest-dir "~/Downloads/"))
+      (when (and (eq type 'link)
+                 (file-exists-p path))
+        (let* ((file-name (lgm/file-name-from-path path))
+               (new-path (expand-file-name file-name dest-dir)))
+          (copy-file path new-path t)
+          (message "Copied image to: %s" new-path))))))
+
+(defun lgm/file-name-from-path (path)
+  "Extract the file name from PATH."
+  (let ((parts (split-string path "/")))
+    (car (last parts))))
+
+;; Enable using org mode link syntax inside other modes
+;; (use-package org-link-minor-mode
+;;   :load-path  "~/.emacs.d/elisp/org-link-minor-mode")
+
+;; (add-hook 'markdown-mode-hook 'org-link-minor-mode)
 
 (provide 'org-settings)
 ;;; org-settings.el ends here

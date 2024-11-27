@@ -241,7 +241,13 @@
       (interactive)
       (other-frame 1)))
 
+;; Smartparens dependency
+(use-package dash
+  :ensure t)
+
 ;; Pair parenthesis
+(add-to-list 'load-path "~/.emacs.d/elpa/smartparens-20230529.1017")
+(require 'smartparens)
 (use-package smartparens
   :ensure t
   :init (smartparens-global-mode)
@@ -308,6 +314,9 @@
 ;; Saves clipboard to the kill ring in case
 ;; you kill something before you paste into Emacs
 (setq save-interprogram-paste-before-kill t)
+
+;; Set the minimum level of warning to pop up
+(setq warning-minimum-level :error)
 
 (provide 'editor-settings)
 ;;; editor-settings.el ends here
