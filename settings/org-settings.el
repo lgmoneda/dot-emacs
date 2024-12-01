@@ -2338,7 +2338,6 @@ display the output in a new temporary buffer."
 ;; Enable using org mode link syntax inside other modes
 ;; (use-package org-link-minor-mode
 ;;   :load-path  "~/.emacs.d/elisp/org-link-minor-mode")
-
 ;; (add-hook 'markdown-mode-hook 'org-link-minor-mode)
 
 (provide 'org-settings)
