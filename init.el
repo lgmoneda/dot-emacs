@@ -5,12 +5,12 @@
 
 (require 'package)
 (setq package-enable-at-startup nil)
-;; (add-to-list 'package-archives
-;;      '("melpa" . "https://melpa.org/packages/"))
+(add-to-list 'package-archives
+     '("melpa" . "https://melpa.org/packages/"))
 (add-to-list 'package-archives
 	     '("gnu" . "http://elpa.gnu.org/packages/"))
-;; (add-to-list 'package-archives
-;;      '("melpa-stable" . "https://stable.melpa.org/packages/"))
+(add-to-list 'package-archives
+     '("melpa-stable" . "https://stable.melpa.org/packages/"))
 (package-initialize)
 
 ;; Bootstrap `use-package'
@@ -44,7 +44,7 @@
 (require 'python-settings)
 (require 'gpt-settings)
 (require 'assistant-settings)
-(require 'copilot-settings)
+;; (require 'copilot-settings)
 ;; (require 'processing-settings)
 ;; (require 'nu-settings)
 ;; (require 'email-settings)
