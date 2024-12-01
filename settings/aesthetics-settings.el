@@ -156,7 +156,7 @@ want to use in the modeline *in lieu of* the original.")
  ;; If there is more than one, they won't work right.
  '(conda-anaconda-home "/Users/luis.moneda/miniconda3")
  '(package-selected-packages
-   '(compat org-emms smudge emms ox-spectacle copilot-chat copilot editorconfig markdown-mode swiper conda poet-theme org-roam-bibtex org-ql anzu helm-bibtex google-translate company-posframe orderless langtool ag magit minions helm-org-rifle company-anaconda wwg org-mind-map virtualenvwrapper try rebecca-theme quelpa-use-package jupyter beacon imenu-anywhere all-the-icons-ivy-rich dracula-theme ivy-posframe diminish lsp-ui ob-ipython zygospore whisper lsp-grammarly hide-mode-line diff-hl electric-operator chatgpt-shell consult-org-roam writeroom-mode flymd org-ref chatgpt restclient engine-mode auto-complete processing-mode ob-async emacsql-sqlite org-download default-text-scale olivetti org-roam-server smartparens annotate pdf-tools svg-tag-mode latex-preview-pane helm-spotify-plus org-tree-slide org-transclusion ivy-bibtex ein gscholar-bibtex deadgrep org-bullets flymake-aspell mood-line company-quickhelp ivy-clipmenu column-enforce-mode multiple-cursors smex shell-pop rainbow-delimiters smart-mode-line org-timeline pyvenv mindre-theme org-roam-ui company-flx expand-region 0blayout markdown-preview-mode counsel-projectile neotree which-key disable-mouse org-present pyimport academic-phrases exotica-theme))
+   '(ob-chatgpt-shell quelpa-use-package copilot org-emms emms chatgpt-shell pyimport electric-operator org-present org-tree-slide org-transclusion org-mind-map consult-org-roam org-download org-remark org-ql org-roam-bibtex olivetti org-roam-ui org-roam deadgrep org-bullets virtualenvwrapper simple-httpd column-enforce-mode conda pyvenv pyenv-mode pyenv magit default-text-scale zygospore writeroom-mode with-editor which-key try smartparens smart-mode-line shell-pop restclient rebecca-theme rainbow-delimiters poet-theme pdf-tools org-ref orderless ob-async neotree multiple-cursors multi mood-line minions mindre-theme markdown-preview-mode lsp-grammarly latex-preview-pane ivy-posframe imenu-anywhere hide-mode-line helm-bibtex gscholar-bibtex goto-chg google-translate flymd expand-region engine-mode disable-mouse diminish diff-hl counsel-projectile company-posframe company-flx beacon auto-complete anzu annotate all-the-icons-ivy-rich ag))
  '(pdf-tools-handle-upgrades nil))
 ;; (custom-set-faces
 ;;  ;; custom-set-faces was added by Custom.
@@ -323,8 +323,7 @@ want to use in the modeline *in lieu of* the original.")
  ;; If there is more than one, they won't work right.
  '(diff-hl-change ((t (:background "#3a81c3"))))
  '(diff-hl-delete ((t (:background "#ee6363"))))
- '(diff-hl-insert ((t (:background "#7ccd7c"))))
- '(markdown-link-face ((t (:inherit mindre-keyword :underline t)))))
+ '(diff-hl-insert ((t (:background "#7ccd7c")))))
 
 ;; Change font size
 ;; Iosevka

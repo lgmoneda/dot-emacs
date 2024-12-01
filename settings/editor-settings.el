@@ -36,11 +36,20 @@
  :ensure t
  :init (defalias 'sp 'shell-pop))
 
+(use-package goto-chg
+  :ensure t)
+
+(use-package smartparens
+ :ensure t)
+
 ;; Writeroom, a focus mode!
 (use-package writeroom-mode
  :ensure t
  :init (setq buffer-face-mode-face '(:family "dejavu sans mono" :height 150))
-       (setq writeroom-width 92))
+ (setq writeroom-width 92))
+
+(add-to-list 'load-path "~/.emacs.d/elpa/writeroom-mode-20231103.931")
+(load "writeroom-mode")
 
 ;; Expand-region
 (use-package expand-region
@@ -245,6 +254,9 @@
 (use-package dash
   :ensure t)
 
+(use-package counsel
+  :ensure t)
+
 ;; Pair parenthesis
 (add-to-list 'load-path "~/.emacs.d/elpa/smartparens-20230529.1017")
 (require 'smartparens)
@@ -317,6 +329,9 @@
 
 ;; Set the minimum level of warning to pop up
 (setq warning-minimum-level :error)
+
+;; Define the shell I want to use
+(setq explicit-shell-file-name "/bin/zsh")
 
 (provide 'editor-settings)
 ;;; editor-settings.el ends here

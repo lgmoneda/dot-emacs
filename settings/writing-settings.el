@@ -43,16 +43,16 @@
 (setq TeX-auto-save t) ; Enable parse on save.
 
 ;; Markdown mode and preview
-;; (use-package markdown-mode
-;;   :ensure t
-;;   :commands (markdown-mode gfm-mode)
-;;   :mode (("README\\.md\\'" . gfm-mode)
-;;          ("\\.md\\'" . markdown-mode)
-;;          ("\\.markdown\\'" . markdown-mode))
-;;   :init (setq markdown-command "multimarkdown"))
+(use-package markdown-mode
+  :ensure t
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "multimarkdown"))
 
-(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/markdown-preview-mode-20230707.803")
-(load "markdown-preview-mode")
+;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/markdown-preview-mode-20230707.803")
+;; (load "markdown-preview-mode")
 (autoload 'markdown-preview-mode "markdown-preview-mode" "" t)
 
 (use-package websocket
@@ -140,10 +140,10 @@
   :ensure t)
 
 ;; ivy-bibtex
-;; (use-package helm-bibtex
-;;   :ensure t)
-(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/helm-bibtex")
-(autoload 'helm-bibtex "helm-bibtex" "" t)
+(use-package helm-bibtex
+  :ensure t)
+;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/helm-bibtex")
+;; (autoload 'helm-bibtex "helm-bibtex" "" t)
 (load "helm-bibtex")
 
 ;; (use-package ivy-bibtex

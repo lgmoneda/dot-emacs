@@ -1,0 +1,33 @@
+DEBUG:Chroma:Logger created
+DEBUG:Chroma:Logger created
+WARNING:root:Collection langchain already exists, Do you have the right embedding function?
+DEBUG:Chroma:Index not found
+DEBUG:Chroma:Logger created
+DEBUG:Chroma:Index not found
+DEBUG:Chroma:Logger created
+WARNING:root:Collection langchain already exists, Do you have the right embedding function?
+DEBUG:Chroma:Index not found
+DEBUG:Chroma:Logger created
+WARNING:root:Collection langchain_store already exists, Do you have the right embedding function?
+DEBUG:Chroma:time to pre process our knn query: 5.9604644775390625e-06
+DEBUG:Chroma:time to run knn query: 9.512901306152344e-05
+DEBUG:Chroma:Logger created
+WARNING:root:Collection langchain_store already exists, Do you have the right embedding function?
+DEBUG:Chroma:time to pre process our knn query: 6.9141387939453125e-06
+DEBUG:Chroma:time to run knn query: 0.0001480579376220703
+DEBUG:Chroma:Logger created
+WARNING:root:Collection langchain_store already exists, Do you have the right embedding function?
+DEBUG:Chroma:time to pre process our knn query: 5.9604644775390625e-06
+DEBUG:Chroma:time to run knn query: 0.00017595291137695312
+DEBUG:Chroma:Logger created
+WARNING:root:Collection langchain_store already exists, Do you have the right embedding function?
+DEBUG:Chroma:time to pre process our knn query: 6.9141387939453125e-06
+DEBUG:Chroma:time to run knn query: 0.00012683868408203125
+DEBUG:Chroma:Logger created
+WARNING:root:Collection langchain_store already exists, Do you have the right embedding function?
+DEBUG:Chroma:time to pre process our knn query: 6.9141387939453125e-06
+DEBUG:Chroma:time to run knn query: 0.00010395050048828125
+DEBUG:Chroma:Logger created
+WARNING:root:Collection langchain_store already exists, Do you have the right embedding function?
+DEBUG:Chroma:time to pre process our knn query: 9.059906005859375e-06
+DEBUG:Chroma:time to run knn query: 0.00028896331787109375

@@ -143,9 +143,18 @@
 ;;   :demand t
 ;;   :after (:all org python))
 
-(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/jupyter-20240716.2028")
-(load "jupyter")
+(use-package simple-httpd
+  :ensure t)
+
+(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/jupyter-20241004.241/")
 (autoload 'jupyter "jupyter" "" t)
+;; (require 'jupyter)
+(load "jupyter")
+
+(use-package pyvenv
+  :ensure t
+  :config
+  (pyvenv-mode t))
 
 (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
 
@@ -1184,14 +1193,17 @@ should be continued."
   (backward-char 2)
   )
 
-(use-package deadgrep
-  :ensure t
-  :bind
-  ("C-c n d" . deadgrep)
-    )
+(add-to-list 'load-path "~/.emacs.d/elpa/deadgrep-20241012.1511/")
+(require 'deadgrep)
+
+;; (use-package deadgrep
+;;   :ensure t
+;;   :bind
+;;   ("C-c n d" . deadgrep)
+;;     )
 
 (setq org-roam-v2-ack t)
-(add-to-list 'load-path "~/.emacs.d/elpa/org-roam-20240114.1941")
+(add-to-list 'load-path "~/.emacs.d/elpa/org-roam-20241007.1704/")
 (require 'org-roam)
 
 (use-package org-roam
@@ -1254,7 +1266,7 @@ should be continued."
 		(propertize "${tags:40}" 'face 'org-tag))))
 
 
-(add-to-list 'load-path "~/.emacs.d/elpa/org-roam-ui-20221105.1040")
+(add-to-list 'load-path "~/.emacs.d/elpa/org-roam-ui-20221105.1040/")
 (require 'org-roam-ui)
 (use-package org-roam-ui
     :after org-roam
@@ -1438,9 +1450,13 @@ should be continued."
   )
 
 ;; Take notes in text files with a highlight mark
-(add-to-list 'load-path "~/repos/org-remark")
-(require 'org-remark-global-tracking)
-(org-remark-global-tracking-mode +1)
+(use-package org-remark
+  :ensure t
+  :init (org-remark-global-tracking-mode +1)
+
+  )
+;; (add-to-list 'load-path "~/repos/org-remark")
+;; (require 'org-remark-global-tracking)
 
 (autoload #'org-remark-mark "org-remark" nil t)
 (autoload #'org-remark-mode "org-remark" nil t)
@@ -1547,8 +1563,8 @@ should be continued."
         (filepath (concat dir "/" (org-download-file-format-default basename)))
         (org-download-image-org-width 400))
     (make-directory dir t)
-    ;; (when (not (file-exists-p filepath)) (copy-file "~/.emacs.d/drawio_template.svg" filepath)) ; create empty svg file
-	(when (not (file-exists-p filepath)) (copy-file "~/.emacs.d/drawio_transparent_template.svg" filepath)) ; create empty svg file
+    ;; (when (not (file-exists-p filepath)) (copy-file "~/.emacs.d/resources/drawio_template.svg" filepath)) ; create empty svg file
+	(when (not (file-exists-p filepath)) (copy-file "~/.emacs.d/resources/drawio_transparent_template.svg" filepath)) ; create empty svg file
     (start-process-shell-command "drawio" nil (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io %s" filepath)) ; open svg file
     (org-download-insert-link basename filepath)
     )
@@ -1901,8 +1917,8 @@ display the output in a new temporary buffer."
 	  )
 	)
 
-(add-to-list 'load-path "~/.emacs.d/elpa/consult-org-roam-20240217.1442")
-(require 'consult-org-roam)
+;; (add-to-list 'load-path "~/.emacs.d/elpa/consult-org-roam-20240217.1442")
+;; (require 'consult-org-roam)
 (use-package consult-org-roam
    :ensure t
    :after org-roam
@@ -1929,11 +1945,11 @@ display the output in a new temporary buffer."
    ("C-c n j" . consult-org-roam-forward-links))
 
 ;; Org-similarity
-(add-to-list 'load-path "~/repos/org-similarity")
-(require 'org-similarity)
+;; (add-to-list 'load-path "~/repos/org-similarity")
+;; (require 'org-similarity)
 
-(use-package org-similarity
-  :load-path  "~/repos/org-similarity")
+;; (use-package org-similarity
+;;   :load-path  "~/repos/org-similarity")
 
 ;; Directory to scan for possibly similar documents.
 ;; org-roam users might want to change it to `org-roam-directory'.

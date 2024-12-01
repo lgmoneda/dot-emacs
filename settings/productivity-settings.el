@@ -4,11 +4,11 @@
   :ensure t)
 
 ;; Helm
-;; (use-package helm
-;;   :ensure t)
+(use-package helm
+  :ensure t)
 
-(add-to-list 'load-path "~/.emacs.d/elpa/helm-3.9.0")
-(load "helm")
+;; (add-to-list 'load-path "~/.emacs.d/elpa/helm-3.9.0")
+;; (load "helm")
 
 ;; Try
 (use-package try
@@ -236,11 +236,11 @@ is called with a prefix argument."
   :ensure t
   :init (global-set-key (kbd "C-x 1") 'zygospore-toggle-delete-other-windows))
 
-(unless (package-installed-p 'quelpa)
-  (with-temp-buffer
-    (url-insert-file-contents "https://raw.githubusercontent.com/quelpa/quelpa/master/quelpa.el")
-    (eval-buffer)
-    (quelpa-self-upgrade)))
+;; (unless (package-installed-p 'quelpa)
+;;   (with-temp-buffer
+;;     (url-insert-file-contents "https://raw.githubusercontent.com/quelpa/quelpa/master/quelpa.el")
+;;     (eval-buffer)
+;;     (quelpa-self-upgrade)))
 
 (use-package quelpa-use-package
   :ensure t)

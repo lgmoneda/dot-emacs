@@ -4,7 +4,8 @@
   :quelpa (copilot :fetcher github
                    :repo "copilot-emacs/copilot.el"
                    :branch "main"
-                   :files ("*.el")))
+                   :files ("*.el"))
+  )
 
 (add-hook 'prog-mode-hook 'copilot-mode)
 

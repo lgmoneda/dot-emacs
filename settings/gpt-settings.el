@@ -138,19 +138,25 @@ display the output in a new temporary buffer."
 	  )
 	)
 
+;; (use-package ob-chatgpt-shell
+;;   :ensure t)
+;; (use-package ob-dall-e-shell
+;;   :ensure t)
+
 ;; ChatGPT Shell
 (use-package chatgpt-shell
-  :quelpa ((chatgpt-shell :fetcher git :url "https://github.com/xenodium/chatgpt-shell") :upgrade t)
+  ;; :quelpa ((chatgpt-shell :fetcher git :url "https://github.com/xenodium/chatgpt-shell") :upgrade t)
+  :ensure t
   :init
-  (setq chatgpt-repo-path (expand-file-name "chatgpt-shell/" quelpa-build-dir))
+  ;; (setq chatgpt-repo-path (expand-file-name "chatgpt-shell/" quelpa-build-dir))
   (setq chatgpt-shell-chatgpt-streaming t)
   (setq chatgpt-shell-openai-key
       (plist-get (car (auth-source-search :host "openai.com"))
                  :secret))
   (require 'chatgpt-shell)
-  (require 'ob-chatgpt-shell)
-  (ob-chatgpt-shell-setup)
-  (require 'ob-dall-e-shell)
+  ;; (require 'ob-chatgpt-shell)
+  ;; (ob-chatgpt-shell-setup)
+  ;; (require 'ob-dall-e-shell)
   :bind
   ("C-c q" . chatgpt-shell)
   ("C-c d" . dall-e-shell))
@@ -216,7 +222,7 @@ display the output in a new temporary buffer."
   (interactive)
   (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
   ;; (async-shell-command "python /Users/luis.moneda/Library/CloudStorage/Dropbox/Agenda/org-roam-ai/blog_roam_search.py")
-  (async-shell-command "python /Users/luis.moneda/repos/org-roam-ai/semantic_search.py")
+  (async-shell-command "source ~/.zshrc && conda activate edge && python /Users/luis.moneda/repos/org-roam-ai/semantic_search.py")
   (delete-window (get-buffer-window (get-buffer "*Async Shell Command*"))))
 
 (start-semantic-search)
@@ -251,7 +257,7 @@ display the output in a new temporary buffer."
 (defun start-qna ()
   (interactive)
   (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
-  (async-shell-command "python /Users/luis.moneda/repos/org-roam-ai/qna.py")
+  (async-shell-command "source ~/.zshrc && conda activate edge && python /Users/luis.moneda/repos/org-roam-ai/qna.py")
   (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<2>"))))
 
 (start-qna)

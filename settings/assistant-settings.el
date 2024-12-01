@@ -227,8 +227,7 @@
 ;; The catalyst server
 (defun start-catalyst-server ()
   (interactive)
-  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
-  (async-shell-command "python /Users/luis.moneda/repos/org-roam-ai/catalyst/catalyst.py")
+  (async-shell-command "source ~/.zshrc && conda activate edge && python /Users/luis.moneda/repos/org-roam-ai/catalyst/catalyst.py")
   (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<4>"))))
 
 (start-catalyst-server)
