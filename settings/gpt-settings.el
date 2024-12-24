@@ -149,10 +149,12 @@ display the output in a new temporary buffer."
   :ensure t
   :init
   ;; (setq chatgpt-repo-path (expand-file-name "chatgpt-shell/" quelpa-build-dir))
+  (setq chatgpt-shell-openai-key (getenv "OPENAI_API_KEY"))
   (setq chatgpt-shell-chatgpt-streaming t)
-  (setq chatgpt-shell-openai-key
-      (plist-get (car (auth-source-search :host "openai.com"))
-                 :secret))
+  ;; (setq chatgpt-shell-openai-key
+  ;;     (plist-get (car (auth-source-search :host "openai.com"))
+  ;;                :secret))
+  (setq chatgpt-shell-model-version "o1-mini")
   (require 'chatgpt-shell)
   ;; (require 'ob-chatgpt-shell)
   ;; (ob-chatgpt-shell-setup)
@@ -220,9 +222,7 @@ display the output in a new temporary buffer."
 
 (defun start-semantic-search ()
   (interactive)
-  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
-  ;; (async-shell-command "python /Users/luis.moneda/Library/CloudStorage/Dropbox/Agenda/org-roam-ai/blog_roam_search.py")
-  (async-shell-command "source ~/.zshrc && conda activate edge && python /Users/luis.moneda/repos/org-roam-ai/semantic_search.py")
+  (async-shell-command "source ~/.zshrc && conda activate ml3 && python /Users/luis.moneda/repos/org-roam-ai/semantic_search.py")
   (delete-window (get-buffer-window (get-buffer "*Async Shell Command*"))))
 
 (start-semantic-search)
@@ -256,11 +256,159 @@ display the output in a new temporary buffer."
 
 (defun start-qna ()
   (interactive)
-  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
-  (async-shell-command "source ~/.zshrc && conda activate edge && python /Users/luis.moneda/repos/org-roam-ai/qna.py")
+  (async-shell-command "source ~/.zshrc && conda activate ml3 && python /Users/luis.moneda/repos/org-roam-ai/qna.py")
   (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<2>"))))
 
 (start-qna)
+
+;; Colorful Chunk Semantic Search
+(require 'cl-lib)
+(require 'org-roam)
+(require 'json)
+(require 'popup)
+
+(defun my/split-into-sentences (start end)
+  "Split the region or buffer between START and END into sentences and return them as a list."
+  (save-excursion
+    (goto-char start)
+    (let ((sentences '()))
+      (while (re-search-forward "[^.!?]+[.!?]*" end t)
+        (push (string-trim (match-string 0)) sentences))
+      (nreverse sentences))))
+
+(defun my/generate-colors (length)
+  "Generate a list of LENGTH repeating the base colors."
+  (let ((base-colors '("#F4C1BD" "#F7D0B4" "#F7E5A6" "#D9E2B8" "#B9E2DE" "#AFC8EB" "#CDC3E5" "#F2C1D6"
+)))
+    (cl-loop for i below length
+             collect (nth (mod i (length base-colors)) base-colors))))
+
+(defun my/apply-colors-to-chunks (chunks)
+  "Apply different colors to CHUNKS in the current buffer."
+  (let ((colors (my/generate-colors (length chunks))))
+    (cl-loop for chunk in chunks
+             for color in colors
+             for start = (car chunk)
+             for end = (cdr chunk)
+             do (overlay-put (make-overlay start end) 'face `(:background ,color)))))
+
+(defun my/semantic-search (sentence callback)
+  "Perform semantic search for SENTENCE and call CALLBACK with parsed results."
+  (let ((response (call-roam-search-python-server sentence)))
+    (funcall callback (my/parse-roam-search-results response))))
+
+(defun my/parse-roam-search-results (response)
+  "Parse the RESPONSE from Roam search into a list of titles and links."
+  (let ((lines (split-string response "\n"))
+        results)
+    (dolist (line lines)
+      (when (string-match "\\(\\[\\[id:\\([^\]]+\\)\\]\\[\\([^]]+\\)\\]\\)" line)
+        (let ((id (match-string 2 line))
+              (title (match-string 3 line)))
+          (push (cons title id) results))))
+    results))
+
+(defun my/display-popup (results)
+  "Display RESULTS in a popup menu and handle selection."
+  (let ((titles (mapcar #'car results)))
+    (when titles
+      (let ((popup (popup-menu* titles
+                               :keymap (let ((map (make-sparse-keymap)))
+                                         (define-key map (kbd "RET") 'popup-select)
+                                         (define-key map (kbd "TAB") 'popup-selected-item)
+                                         (define-key map (kbd "C-n") 'popup-next)
+                                         (define-key map (kbd "C-p") 'popup-previous)
+                                         map))))
+        (when popup
+          (let ((entry (assoc popup results)))
+            (message "Selected: %s" (car entry))
+            (when entry
+              ;; Open the org-roam node in a new buffer without changing the cursor
+              (my/open-org-roam-in-new-buffer entry))))))))
+
+(defun my/open-org-roam-in-new-buffer (entry)
+  "Open the org-roam node's file in a new buffer using ENTRY (cons of title and ID)."
+  (let ((id (cdr entry)))
+    (if-let ((node (org-roam-node-from-id id)))
+        (let ((node-file (org-roam-node-file node)))  ;; Get the file of the org-roam node
+          (if node-file
+              (let ((new-buffer (generate-new-buffer (org-roam-node-title node))))
+                (with-current-buffer new-buffer
+                  ;; Set the buffer to org-mode to render content properly
+                  (org-mode)
+                  (insert-file-contents node-file)  ;; Insert content of the org-roam file
+                  ;; Display the new buffer without switching focus
+                  (display-buffer new-buffer '((display-buffer-in-side-window) . ((side . right)))))
+                (message "Opened org-roam node in a new buffer"))
+            (message "Node file not found for ID: %s" id)))
+      (message "Node not found for ID: %s" id))))
+
+
+(defun my/goto-org-roam-link (entry)
+  "Navigate to the org-roam link using ENTRY (cons of title and ID)."
+  (when entry
+    (let ((id (cdr entry)))
+      (if-let ((node (org-roam-node-from-id id)))
+          (org-roam-node-visit node)
+        (message "Node not found for ID: %s" id)))))
+
+(defun my/show-results-on-hover (start end)
+  "Show semantic search results in a popup for the chunk between START and END."
+  (let ((sentence (buffer-substring-no-properties start end)))
+    (my/semantic-search sentence
+     (lambda (results)
+       (overlay-put (make-overlay start end) 'my-results results)))))
+
+(defun my/setup-interactions (chunks)
+  "Set up key bindings and interactions for CHUNKS."
+  (cl-loop for chunk in chunks
+           for start = (car chunk)
+           for end = (cdr chunk)
+           do (my/show-results-on-hover start end)))
+
+(defun my/navigate-and-display (results)
+  "Set up navigation to dynamically display RESULTS in a side buffer."
+  (let ((buffer (get-buffer-create "*Semantic Search Results*")))
+    (with-current-buffer buffer
+      (erase-buffer)
+      (org-mode)
+      (insert (string-join results "\n")))
+    (display-buffer buffer)))
+
+(defun my/analyze-region (start end)
+  "Main function to analyze the region between START and END."
+  (interactive "r")
+  (let* ((sentences (my/split-into-sentences start end))
+         (chunks (cl-loop with pos = start
+                          for s in sentences
+                          collect (let ((chunk-start pos)
+                                        (chunk-end (+ pos (length s))))
+                                    (setq pos (1+ chunk-end)) ;; Move pos to after the chunk
+                                    (cons chunk-start chunk-end)))))
+    (my/apply-colors-to-chunks chunks)
+    (my/setup-interactions chunks))
+  (deactivate-mark))
+
+(defun my/display-popup-at-point ()
+  "Display popup with semantic search results for the chunk at point."
+  (interactive)
+  (let ((ov (car (overlays-at (point)))))
+    (when ov
+      (let* ((help-echo (overlay-get ov 'help-echo))
+             (results (split-string help-echo "\n")))
+        (when results
+          (my/display-popup results))))))
+
+(defun my/display-popup-at-point ()
+  "Display popup with semantic search results for the chunk at point."
+  (interactive)
+  (let ((ov (car (overlays-at (point)))))
+    (when ov
+      (let* ((results (overlay-get ov 'my-results)))
+        (my/display-popup results)))))
+
+(global-set-key (kbd "C-c h") 'my/display-popup-at-point)
+
 
 (provide 'gpt-settings)
 ;;; gpt-settings.el ends here
