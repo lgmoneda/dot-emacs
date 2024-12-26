@@ -456,15 +456,17 @@ display the output in a new temporary buffer."
 ;; Using consult as the interface
 (require 'consult)
 
-;; This function keeps the menu. it becomes flaky because it re-opens it
+;; This function keeps the menu. It is flaky due to the re-openning
 (defun my/display-popup-at-point ()
   "Display search results using consult for the chunk at point, without closing the menu after selection."
   (interactive)
   (let ((ov (car (overlays-at (point)))))
     (when ov
       (let ((results (overlay-get ov 'my-results))
-			        (ivy-posframe-height 16)
-					(ivy-height 16))
+			(ivy-height 16)
+            (ivy-posframe-height 16)
+            (ivy-posframe-width 100) ;; Adjust width
+			(ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-point))))
         (when results
           (let* ((titles (mapcar #'car results))
                  (last-selection nil)) ;; Store the last selection
@@ -483,8 +485,7 @@ display the output in a new temporary buffer."
                         (setq last-selection selected) ;; Update last selection
                         (let ((entry (assoc selected results)))
                           (when entry
-							(my/open-org-roam-node-in-side-buffer entry))))
-                    ;; (my/open-org-roam-in-new-buffer entry))))
+                            (my/open-org-roam-node-in-side-buffer entry))))
                     ;; Exit the menu if no selection is made
                     (throw 'exit nil)))))))))))
 
