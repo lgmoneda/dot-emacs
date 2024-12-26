@@ -154,7 +154,7 @@ display the output in a new temporary buffer."
   ;; (setq chatgpt-shell-openai-key
   ;;     (plist-get (car (auth-source-search :host "openai.com"))
   ;;                :secret))
-  (setq chatgpt-shell-model-version "o1-mini")
+  (setq chatgpt-shell-model-version "gpt-4o")
   (require 'chatgpt-shell)
   ;; (require 'ob-chatgpt-shell)
   ;; (ob-chatgpt-shell-setup)
@@ -269,6 +269,7 @@ display the output in a new temporary buffer."
 
 (defun my/split-into-sentences (start end)
   "Split the region or buffer between START and END into sentences and return them as a list."
+  (interactive "r")
   (save-excursion
     (goto-char start)
     (let ((sentences '()))
@@ -306,51 +307,40 @@ display the output in a new temporary buffer."
         (let ((id (match-string 2 line))
               (title (match-string 3 line)))
           (push (cons title id) results))))
-    results))
+    (nreverse results)))
 
-(defun my/display-popup (results)
-  "Display RESULTS in a popup menu and handle selection."
-  (let ((titles (mapcar #'car results)))
-    (when titles
-      (let ((popup (popup-menu* titles
-                               :keymap (let ((map (make-sparse-keymap)))
-                                         (define-key map (kbd "RET") 'popup-select)
-                                         (define-key map (kbd "TAB") 'popup-selected-item)
-                                         (define-key map (kbd "C-n") 'popup-next)
-                                         (define-key map (kbd "C-p") 'popup-previous)
-                                         map))))
-        (when popup
-          (let ((entry (assoc popup results)))
-            (message "Selected: %s" (car entry))
-            (when entry
-              ;; Open the org-roam node in a new buffer without changing the cursor
-              (my/open-org-roam-in-new-buffer entry))))))))
+;; (defun my/display-popup (results)
+;;   "Display RESULTS in a popup menu and handle selection."
+;;   (let ((titles (mapcar #'car results)))
+;;     (when titles
+;;       (let ((popup (popup-menu* titles
+;;                                :keymap (let ((map (make-sparse-keymap)))
+;;                                          (define-key map (kbd "RET") 'popup-select)
+;;                                          (define-key map (kbd "TAB") 'popup-selected-item)
+;;                                          (define-key map (kbd "C-n") 'popup-next)
+;;                                          (define-key map (kbd "C-p") 'popup-previous)
+;;                                          map))))
+;;         (when popup
+;;           (let ((entry (assoc popup results)))
+;;             (message "Selected: %s" (car entry))
+;;             (when entry
+;;               ;; Open the org-roam node in a new buffer without changing the cursor
+;;               (my/open-org-roam-in-new-buffer entry))))))))
 
-(defun my/open-org-roam-in-new-buffer (entry)
-  "Open the org-roam node's file in a new buffer using ENTRY (cons of title and ID)."
-  (let ((id (cdr entry)))
-    (if-let ((node (org-roam-node-from-id id)))
-        (let ((node-file (org-roam-node-file node)))  ;; Get the file of the org-roam node
-          (if node-file
-              (let ((new-buffer (generate-new-buffer (org-roam-node-title node))))
-                (with-current-buffer new-buffer
-                  ;; Set the buffer to org-mode to render content properly
-                  (org-mode)
-                  (insert-file-contents node-file)  ;; Insert content of the org-roam file
-                  ;; Display the new buffer without switching focus
-                  (display-buffer new-buffer '((display-buffer-in-side-window) . ((side . right)))))
-                (message "Opened org-roam node in a new buffer"))
-            (message "Node file not found for ID: %s" id)))
-      (message "Node not found for ID: %s" id))))
-
-
-(defun my/goto-org-roam-link (entry)
-  "Navigate to the org-roam link using ENTRY (cons of title and ID)."
-  (when entry
-    (let ((id (cdr entry)))
-      (if-let ((node (org-roam-node-from-id id)))
-          (org-roam-node-visit node)
-        (message "Node not found for ID: %s" id)))))
+(defun my/open-org-roam-node-in-side-buffer (entry)
+  "Open an org-roam node by NODE-ID in a side buffer, without moving cursor."
+  (interactive "sEnter node ID: ")
+  (let* ((node-id (cdr entry))
+  (node (org-roam-node-from-id node-id)))
+    (if node
+        (save-selected-window  ;; Prevent cursor from moving to the new window
+          (let ((buffer (org-roam-node-visit node t t))) ;; Visit the node
+			(message "Working on it!")
+			(org-fold-show-subtree)  ;; Expand the subtree
+			;; Center the content at the top of the window
+			(recenter 0)
+            ))
+      (message "Node ID not found."))))
 
 (defun my/show-results-on-hover (start end)
   "Show semantic search results in a popup for the chunk between START and END."
@@ -375,10 +365,84 @@ display the output in a new temporary buffer."
       (insert (string-join results "\n")))
     (display-buffer buffer)))
 
-(defun my/analyze-region (start end)
+;; This uses the simple regex parser
+;; (defun my/analyze-region (start end)
+;;   "Main function to analyze the region between START and END."
+;;   (interactive "r")
+;;   (let* ((sentences (my/split-into-sentences start end))
+;;          (chunks (cl-loop with pos = start
+;;                           for s in sentences
+;;                           collect (let ((chunk-start pos)
+;;                                         (chunk-end (+ pos (length s))))
+;;                                     (setq pos (1+ chunk-end)) ;; Move pos to after the chunk
+;;                                     (cons chunk-start chunk-end)))))
+;;     (my/apply-colors-to-chunks chunks)
+;;     (my/setup-interactions chunks))
+;;   (deactivate-mark))
+
+;; Using popup.el
+;; (defun my/display-popup-at-point ()
+;;   "Display popup with semantic search results for the chunk at point."
+;;   (interactive)
+;;   (let ((ov (car (overlays-at (point)))))
+;;     (when ov
+;;       (let* ((results (overlay-get ov 'my-results)))
+;;         (my/display-popup results)))))
+
+;; (global-set-key (kbd "C-c h") 'my/display-popup-at-point)
+
+;; Using python code to do the parsing so I can apply ml models
+(defun start-discourse-segmentation ()
+  (interactive)
+  (async-shell-command "source ~/.zshrc && conda activate ml3 && python /Users/luis.moneda/repos/org-roam-ai/discourse_segmentation.py")
+  (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<5>"))))
+
+(start-discourse-segmentation)
+
+(defun discourse-segmentation-api ()
+  "Call the given Python SCRIPT-NAME with the given TEXT as input and
+display the output in a new temporary buffer."
+    (interactive)
+	(let* ((text (buffer-substring-no-properties (region-beginning) (region-end)))
+		   (api-output (my/get-segments text)))
+	  api-output))
+
+(defun my/get-segments (query)
+  "Send QUERY to the Python HTTP server and return the segments as an Emacs Lisp list."
+  (require 'url)
+  (require 'json)
+  (let* ((url (concat "http://localhost:8866/api/segment/" (url-encode-url query)))
+         (response-buffer (url-retrieve-synchronously url))
+         segments)
+    (if response-buffer
+        (with-current-buffer response-buffer
+          (goto-char (point-min))
+          ;; Debug: Display the entire response
+          ;; (message "Response buffer: %s" (buffer-string))
+          ;; Skip HTTP headers
+          (if (search-forward "\n\n" nil t)
+              (let* ((json-object-type 'alist) ;; Parse JSON objects as alists
+                     (json-array-type 'list)   ;; Parse JSON arrays as lists
+                     (json-key-type 'string)  ;; Use strings for keys
+                     (parsed-json (condition-case err
+                                      (json-read)
+                                    (error (message "JSON read error: %s" err)
+                                           nil))))
+                ;; Debug: Show the parsed JSON content
+                ;; (message "Parsed JSON: %s" parsed-json)
+                ;; Extract segments key
+                (setq segments (cdr (assoc "segments" parsed-json))))
+            (message "Failed to locate JSON body in response"))
+          (kill-buffer response-buffer)) ;; Clean up buffer
+      (message "No response received"))
+    ;; Debug: Show the final segments list
+    ;; (message "Segments: %s" segments)
+    segments))
+
+(defun chunky-semantic-search (start end)
   "Main function to analyze the region between START and END."
   (interactive "r")
-  (let* ((sentences (my/split-into-sentences start end))
+  (let* ((sentences (discourse-segmentation-api))
          (chunks (cl-loop with pos = start
                           for s in sentences
                           collect (let ((chunk-start pos)
@@ -389,25 +453,44 @@ display the output in a new temporary buffer."
     (my/setup-interactions chunks))
   (deactivate-mark))
 
-(defun my/display-popup-at-point ()
-  "Display popup with semantic search results for the chunk at point."
-  (interactive)
-  (let ((ov (car (overlays-at (point)))))
-    (when ov
-      (let* ((help-echo (overlay-get ov 'help-echo))
-             (results (split-string help-echo "\n")))
-        (when results
-          (my/display-popup results))))))
+;; Using consult as the interface
+(require 'consult)
 
+;; This function keeps the menu. it becomes flaky because it re-opens it
 (defun my/display-popup-at-point ()
-  "Display popup with semantic search results for the chunk at point."
+  "Display search results using consult for the chunk at point, without closing the menu after selection."
   (interactive)
   (let ((ov (car (overlays-at (point)))))
     (when ov
-      (let* ((results (overlay-get ov 'my-results)))
-        (my/display-popup results)))))
+      (let ((results (overlay-get ov 'my-results))
+			        (ivy-posframe-height 16)
+					(ivy-height 16))
+        (when results
+          (let* ((titles (mapcar #'car results))
+                 (last-selection nil)) ;; Store the last selection
+            (catch 'exit
+              (while t
+                (let* ((selected (consult--read
+                                  titles
+                                  :prompt "Select entry: "
+                                  :category 'org-roam
+                                  :require-match t
+                                  :sort nil
+                                  :history t
+                                  :default last-selection))) ;; Default to the last selection
+                  (if selected
+                      (progn
+                        (setq last-selection selected) ;; Update last selection
+                        (let ((entry (assoc selected results)))
+                          (when entry
+							(my/open-org-roam-node-in-side-buffer entry))))
+                    ;; (my/open-org-roam-in-new-buffer entry))))
+                    ;; Exit the menu if no selection is made
+                    (throw 'exit nil)))))))))))
 
 (global-set-key (kbd "C-c h") 'my/display-popup-at-point)
+
+
 
 
 (provide 'gpt-settings)
