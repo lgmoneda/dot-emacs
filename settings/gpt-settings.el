@@ -279,7 +279,7 @@ display the output in a new temporary buffer."
 
 (defun my/generate-colors (length)
   "Generate a list of LENGTH repeating the base colors."
-  (let ((base-colors '("#F4C1BD" "#F7D0B4" "#F7E5A6" "#D9E2B8" "#B9E2DE" "#AFC8EB" "#CDC3E5" "#F2C1D6"
+  (let ((base-colors '("#F4C1BD" "#D9E2B8" "#F7E5A6" "#F7D0B4" "#B9E2DE" "#AFC8EB" "#CDC3E5" "#F2C1D6"
 )))
     (cl-loop for i below length
              collect (nth (mod i (length base-colors)) base-colors))))
@@ -395,7 +395,7 @@ display the output in a new temporary buffer."
 (defun start-discourse-segmentation ()
   (interactive)
   (async-shell-command "source ~/.zshrc && conda activate ml3 && python /Users/luis.moneda/repos/org-roam-ai/discourse_segmentation.py")
-  (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<5>"))))
+  (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<3>"))))
 
 (start-discourse-segmentation)
 
@@ -444,11 +444,17 @@ display the output in a new temporary buffer."
   (interactive "r")
   (let* ((sentences (discourse-segmentation-api))
          (chunks (cl-loop with pos = start
-                          for s in sentences
-                          collect (let ((chunk-start pos)
-                                        (chunk-end (+ pos (length s))))
-                                    (setq pos (1+ chunk-end)) ;; Move pos to after the chunk
-                                    (cons chunk-start chunk-end)))))
+         for s in sentences
+         collect (progn
+                   (goto-char pos) ;; Start searching from the current position
+                   (when (search-forward s end t)
+                     (let ((chunk-start (match-beginning 0))
+                           (chunk-end (match-end 0)))
+                       (setq pos (1+ chunk-end)) ;; Update `pos` for the next iteration
+                       (cons chunk-start chunk-end)))))))
+    ;; Filter out any nil results (in case a sentence isn't found)
+    (setq chunks (cl-remove-if-not #'identity chunks))
+    ;; Apply colors and interactions
     (my/apply-colors-to-chunks chunks)
     (my/setup-interactions chunks))
   (deactivate-mark))
@@ -463,8 +469,8 @@ display the output in a new temporary buffer."
   (let ((ov (car (overlays-at (point)))))
     (when ov
       (let ((results (overlay-get ov 'my-results))
-			(ivy-height 16)
-            (ivy-posframe-height 16)
+			(ivy-height 17)
+            (ivy-posframe-height 17)
             (ivy-posframe-width 100) ;; Adjust width
 			(ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-point))))
         (when results
@@ -489,7 +495,7 @@ display the output in a new temporary buffer."
                     ;; Exit the menu if no selection is made
                     (throw 'exit nil)))))))))))
 
-(global-set-key (kbd "C-c h") 'my/display-popup-at-point)
+(global-set-key (kbd "C-c s") 'my/display-popup-at-point)
 
 
 
