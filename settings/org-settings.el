@@ -697,9 +697,15 @@ this command to copy it"
         subtree-end
       nil)))
 
+(defun my-org-agenda-skip-all-scheduled ()
+  "Skip entries with any SCHEDULED timestamp."
+  (let ((scheduled (org-entry-get nil "SCHEDULED")))
+    (when scheduled
+      (save-excursion (org-end-of-subtree t)))))
+
 (setq org-agenda-block-separator " ")
 (setq org-agenda-custom-commands
-      '(("d" "Daily agenda and NEXTs!"
+      '(("d" "Personal agenda"
          (
 		  ;; Deadlines
 		  (tags-todo "+DEADLINE>=\"<-60d>\""
@@ -719,7 +725,7 @@ this command to copy it"
 	  			   (org-deadline-warning-days 0)
 	  			   (org-deadline-past-days 0)
 				   (org-scheduled-past-days 0)
-	  			   (org-agenda-entry-types '(:deadline :scheduled))
+	  			   ;; (org-agenda-entry-types '(:deadline :scheduled))
 	  			   (org-agenda-overriding-header "Week tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 				   (org-agenda-scheduled-leaders '("" ""))
 				   ;; (org-agenda-prefix-format "    %i %-12:c")
@@ -770,7 +776,8 @@ this command to copy it"
 		  (tags "-goals-selfdevelopment+TODO=\"TODO\"-epic-family"
 	  			(
 	  			 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-								(org-agenda-skip-if-scheduled-today-or-later)
+								;; (org-agenda-skip-if-scheduled-today-or-later)
+								(my-org-agenda-skip-all-scheduled)
 								(my-org-agenda-skip-if-parent-has-tag "bulk")
 								))
 				 (org-agenda-overriding-header "Backlog\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
@@ -1011,6 +1018,30 @@ this command to copy it"
 			   )
 			 )
 
+(add-to-list 'org-agenda-custom-commands
+      '("b" "Agenda view debugger"
+	 (
+	  ;; All not scheduled things
+	  		  (tags "-goals-selfdevelopment+TODO=\"TODO\"-epic-family"
+	  			(
+	  			 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
+								;; (org-agenda-skip-if-scheduled-today-or-later)
+								(my-org-agenda-skip-all-scheduled)
+								(my-org-agenda-skip-if-parent-has-tag "bulk")
+								))
+				 (org-agenda-overriding-header "Backlog\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+	  			 (org-agenda-remove-tags t)))
+	  )
+	 )
+      )
+
+(add-to-list 'org-agenda-custom-commands
+             '("i" "Debug backlog"
+               ((tags "-goals-selfdevelopment+TODO=\"TODO\"-epic-family"
+                      ((org-agenda-skip-function '(my-org-agenda-skip-all-scheduled))
+                       (org-agenda-overriding-header "Backlog Debug\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+                       (org-agenda-remove-tags t))))))
+
 ;; Work settings
 (add-to-list 'org-capture-templates
              '("e" "Work Epic"  entry
@@ -1193,14 +1224,14 @@ should be continued."
   (backward-char 2)
   )
 
-(add-to-list 'load-path "~/.emacs.d/elpa/deadgrep-20241012.1511/")
-(require 'deadgrep)
+;; (add-to-list 'load-path "~/.emacs.d/elpa/deadgrep-20241012.1511/")
+;; (require 'deadgrep)
 
-;; (use-package deadgrep
-;;   :ensure t
-;;   :bind
-;;   ("C-c n d" . deadgrep)
-;;     )
+(use-package deadgrep
+  :ensure t
+  :bind
+  ("C-c n d" . deadgrep)
+    )
 
 (setq org-roam-v2-ack t)
 (add-to-list 'load-path "~/.emacs.d/elpa/org-roam-20241007.1704/")
@@ -1450,18 +1481,17 @@ should be continued."
   )
 
 ;; Take notes in text files with a highlight mark
-(use-package org-remark
-  :ensure t
-  :init (org-remark-global-tracking-mode +1)
-
-  )
+;; (use-package org-remark
+;;   :ensure t
+;;   :init (org-remark-global-tracking-mode +1)
+;;   )
 ;; (add-to-list 'load-path "~/repos/org-remark")
 ;; (require 'org-remark-global-tracking)
 
-(autoload #'org-remark-mark "org-remark" nil t)
-(autoload #'org-remark-mode "org-remark" nil t)
-(define-key global-map (kbd "C-c n m") #'org-remark-mark)
-(define-key global-map (kbd "C-c n k") #'org-remark-change)
+;; (autoload #'org-remark-mark "org-remark" nil t)
+;; (autoload #'org-remark-mode "org-remark" nil t)
+;; (define-key global-map (kbd "C-c n m") #'org-remark-mark)
+;; (define-key global-map (kbd "C-c n k") #'org-remark-change)
 
 ;; The rest of keybidings are done only on loading `org-remark'
 (with-eval-after-load 'org-remark
@@ -1542,8 +1572,10 @@ should be continued."
 (use-package org-download
   :ensure t
   :init
-  (setq org-download-image-dir "~/Dropbox/Agenda/roam/resources")
+  (setq org-download-image-dir "/Users/luis.moneda/Dropbox/Agenda/roam/resources")
   )
+
+;; (add-to-list 'exec-path "/opt/homebrew/bin/")
 
 ;; The width to display images
 ;; If I want to set per image, this value needs to be nil
@@ -2338,7 +2370,47 @@ display the output in a new temporary buffer."
 ;; Enable using org mode link syntax inside other modes
 ;; (use-package org-link-minor-mode
 ;;   :load-path  "~/.emacs.d/elisp/org-link-minor-mode")
+
 ;; (add-hook 'markdown-mode-hook 'org-link-minor-mode)
+
+;; Publishing org roam files to my personal website so I can easily share notes
+;;; org-roam-publish.el --- Publish Org Roam file to GitHub Pages
+
+(defun lgm/publish-org-roam-to-github (github-repo-dir output-dir branch)
+  "Publish the current Org Roam file to a GitHub Pages site.
+
+GITHUB-REPO-DIR: Path to your GitHub Pages repository.
+OUTPUT-DIR: Directory inside the repository where the HTML file will be placed.
+BRANCH: Branch to which changes should be committed (e.g., 'gh-pages')."
+  (interactive
+   (list (read-directory-name "GitHub Repo Directory: " "~/repos/lgmoneda.github.io/")
+         (read-string "Output Directory (relative to repo root): " "org-roam/")
+         (read-string "Branch: " "master")))
+  (let* ((org-file (buffer-file-name))
+         (org-html-export-file (concat (file-name-sans-extension org-file) ".html"))
+         (output-path (expand-file-name output-dir github-repo-dir))
+         (output-file (expand-file-name (file-name-nondirectory org-html-export-file) output-path)))
+    (unless org-file
+      (error "This buffer is not visiting a file"))
+    (unless (derived-mode-p 'org-mode)
+      (error "This function only works in Org mode buffers"))
+    ;; Export the Org file to HTML
+    (org-html-export-to-html)
+    ;; Ensure the output directory exists
+    (unless (file-directory-p output-path)
+      (make-directory output-path t))
+    ;; Move the exported HTML to the output directory
+    (rename-file org-html-export-file output-file t)
+    (message "Exported %s to %s" org-file output-file)
+    ;; Commit and push the changes to GitHub
+    (let ((default-directory github-repo-dir))
+      (shell-command (format "git add %s" (shell-quote-argument output-file)))
+      (shell-command (format "git commit -m 'Publish %s'" (file-name-nondirectory output-file)))
+      (shell-command (format "git push origin %s" branch))
+      (message "Published to GitHub Pages branch: %s" branch))))
+
+;; accept broken links when exporting
+(setq org-export-with-broken-links 'mark)
 
 (provide 'org-settings)
 ;;; org-settings.el ends here
