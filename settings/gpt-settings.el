@@ -279,7 +279,7 @@ display the output in a new temporary buffer."
 
 (defun my/generate-colors (length)
   "Generate a list of LENGTH repeating the base colors."
-  (let ((base-colors '("#F4C1BD" "#D9E2B8" "#F7E5A6" "#F7D0B4" "#B9E2DE" "#AFC8EB" "#CDC3E5" "#F2C1D6"
+  (let ((base-colors '("#F4C1BD" "#D9E2B8" "#F7E5A6" "#F7D0B4" "#F2C1D6" "#AFC8EB" "#CDC3E5" "#B9E2DE"
 )))
     (cl-loop for i below length
              collect (nth (mod i (length base-colors)) base-colors))))
