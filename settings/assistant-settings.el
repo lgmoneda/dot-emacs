@@ -163,9 +163,9 @@
 ;; Tracks changes in my knowledge base files, which is the Org roam folder
 (defun start-kb-tracking ()
   (interactive)
-  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
+  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/ml3")
   (async-shell-command "fswatch --exclude '.git/' --exclude '.*\.#' --one-per-batch --latency 30 /Users/luis.moneda/Dropbox/Agenda/roam | xargs -n1 -I{} /Users/luis.moneda/repos/org-roam-ai/catalyst/dump_kb_changes.sh")
-  (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<3>"))))
+  (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<4>"))))
 
 (start-kb-tracking)
 
@@ -227,8 +227,8 @@
 ;; The catalyst server
 (defun start-catalyst-server ()
   (interactive)
-  (async-shell-command "source ~/.zshrc && conda activate edge && python /Users/luis.moneda/repos/org-roam-ai/catalyst/catalyst.py")
-  (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<4>"))))
+  (async-shell-command "source ~/.zshrc && conda activate ml3 && python /Users/luis.moneda/repos/org-roam-ai/catalyst/catalyst.py")
+  (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<5>"))))
 
 (start-catalyst-server)
 
@@ -625,7 +625,7 @@ If REFRESH is non-nil, refresh the `org-id-locations` cache first."
   (when refresh
     (message "Refreshing org-id-locations...")
     (org-id-update-id-locations
-     (directory-files-recursively "/Users/luis.moneda/Library/CloudStorage/Dropbox/Agenda/roam/" "\\.org$"))
+     (directory-files-recursively "/Users/luis.moneda/Dropbox/Agenda/roam/" "\\.org$"))
     (message "Refresh complete."))
 
   (let* ((link (thing-at-point 'line))
@@ -644,6 +644,7 @@ If REFRESH is non-nil, refresh the `org-id-locations` cache first."
 
 ;; Bind this function to C-c C-o in markdown-mode:
 (define-key markdown-mode-map (kbd "C-c C-o") #'my/open-org-id-link-in-markdown)
+
 
 (provide 'assistant-settings)
 ;;; assistant-settings.el ends here
