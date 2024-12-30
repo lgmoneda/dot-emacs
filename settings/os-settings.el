@@ -29,5 +29,12 @@
 
 (when window-system (set-exec-path-from-shell-PATH))
 
+(use-package exec-path-from-shell
+  :ensure t
+  :config
+  (exec-path-from-shell-initialize)
+  (exec-path-from-shell-copy-env "OPENAI_API_KEY")
+  )
+
 (provide 'os-settings)
 ;;; os-settings.el ends here
