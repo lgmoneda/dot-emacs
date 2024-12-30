@@ -29,7 +29,8 @@
 	    (setq-default indent-tabs-mode t)
 	    (setq-default tab-width 4)
 	    (setq-default py-indent-tabs-mode t)
-	    (add-to-list 'write-file-functions 'delete-trailing-whitespace)))
+	    (add-to-list 'write-file-functions 'delete-trailing-whitespace)
+		))
 
 ;; Column enforce
 (use-package column-enforce-mode
