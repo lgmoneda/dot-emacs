@@ -2377,7 +2377,7 @@ display the output in a new temporary buffer."
 ;;; org-roam-publish.el --- Publish Org Roam file to GitHub Pages
 
 (defun lgm/publish-org-roam-to-github (github-repo-dir output-dir branch)
-  "Publish the current Org Roam file to a GitHub Pages site.
+  "Publish the current Org Roam file to a GitHub Pages site, including images.
 
 GITHUB-REPO-DIR: Path to your GitHub Pages repository.
 OUTPUT-DIR: Directory inside the repository where the HTML file will be placed.
@@ -2389,23 +2389,58 @@ BRANCH: Branch to which changes should be committed (e.g., 'gh-pages')."
   (let* ((org-file (buffer-file-name))
          (org-html-export-file (concat (file-name-sans-extension org-file) ".html"))
          (output-path (expand-file-name output-dir github-repo-dir))
-         (output-file (expand-file-name (file-name-nondirectory org-html-export-file) output-path)))
+         (output-file (expand-file-name (file-name-nondirectory org-html-export-file) output-path))
+         (image-dir (expand-file-name "images/org-roam/" github-repo-dir))
+         (image-paths (make-hash-table :test 'equal)))
     (unless org-file
       (error "This buffer is not visiting a file"))
     (unless (derived-mode-p 'org-mode)
       (error "This function only works in Org mode buffers"))
+    ;; Ensure the image directory exists
+    (unless (file-directory-p image-dir)
+      (make-directory image-dir t))
+    ;; Find and copy images referenced in the Org file
+    (org-element-map (org-element-parse-buffer) 'link
+  (lambda (link)
+    (when (string= (org-element-property :type link) "file")
+      (let* ((image-path (org-element-property :path link)) ;; Path to the image
+             (absolute-image-path (expand-file-name image-path (file-name-directory org-file)))
+             (relative-image-path (file-relative-name absolute-image-path (file-name-directory org-file)))
+             (image-filename (file-name-nondirectory image-path))
+             (destination-image-path (expand-file-name image-filename image-dir)))
+        (when (and image-path (file-exists-p absolute-image-path))
+          ;; Copy the image and store the mapping for replacement
+          (copy-file absolute-image-path destination-image-path t)
+          (puthash relative-image-path ;; Store full relative path as the key
+                   (concat "../images/org-roam/" image-filename) ;; Store updated path
+                   image-paths))))))
+    (message "Image Paths: %s" (mapcar (lambda (key) (list key (gethash key image-paths))) (hash-table-keys image-paths)))
     ;; Export the Org file to HTML
     (org-html-export-to-html)
     ;; Ensure the output directory exists
     (unless (file-directory-p output-path)
       (make-directory output-path t))
     ;; Move the exported HTML to the output directory
-    (rename-file org-html-export-file output-file t)
+    (copy-file org-html-export-file output-file t)
+    ;; Post-process the HTML file to update image paths
+    (with-temp-buffer
+  (insert-file-contents output-file)
+  (let ((keys (hash-table-keys image-paths)))
+    (message "Hash table keys: %s" keys)
+    (dolist (key keys)
+      (message "Processing key: %s" key)
+      (goto-char (point-min))
+      (while (search-forward key nil t)
+        (message "Replacing key: %s with value: %s" key (gethash key image-paths))
+        (replace-match (gethash key image-paths) t t))))
+  (write-file output-file))
+
     (message "Exported %s to %s" org-file output-file)
     ;; Commit and push the changes to GitHub
     (let ((default-directory github-repo-dir))
       (shell-command (format "git add %s" (shell-quote-argument output-file)))
-      (shell-command (format "git commit -m 'Publish %s'" (file-name-nondirectory output-file)))
+      (shell-command (format "git add %s" (shell-quote-argument (expand-file-name "images/org-roam/" github-repo-dir))))
+      (shell-command (format "git commit -m 'Publish %s with images'" (file-name-nondirectory output-file)))
       (shell-command (format "git push origin %s" branch))
       (message "Published to GitHub Pages branch: %s" branch))))
 
