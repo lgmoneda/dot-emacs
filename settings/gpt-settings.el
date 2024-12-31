@@ -407,11 +407,26 @@ display the output in a new temporary buffer."
 		   (api-output (my/get-segments text)))
 	  api-output))
 
+(setq chunky-semantic-search/segmentation-granularity 0.5)
+
+(defun set-chunky-semantic-search-granularity ()
+  "Set the value of `chunky-semantic-search/segmentation-granularity`.
+Provides a selection from a predefined list, but also allows custom input."
+  (interactive)
+  (let* ((choices '(0 0.25 0.5 0.75 0.9 1))
+         (choice (completing-read
+                  "Select granularity (or type a custom value): "
+                  (mapcar #'number-to-string choices)
+                  nil nil)))
+    (setq chunky-semantic-search/segmentation-granularity
+          (min 1 (max 0 (string-to-number choice))))
+    (message "Granularity set to %f" chunky-semantic-search/segmentation-granularity)))
+
 (defun my/get-segments (query)
   "Send QUERY to the Python HTTP server and return the segments as an Emacs Lisp list."
   (require 'url)
   (require 'json)
-  (let* ((url (concat "http://localhost:8866/api/segment/" (url-encode-url query)))
+  (let* ((url (concat "http://localhost:8866/api/segment/" (url-encode-url query) "/" (number-to-string chunky-semantic-search/segmentation-granularity)))
          (response-buffer (url-retrieve-synchronously url))
          segments)
     (if response-buffer
