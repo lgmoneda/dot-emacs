@@ -512,8 +512,72 @@ Provides a selection from a predefined list, but also allows custom input."
 
 (global-set-key (kbd "C-c s") 'my/display-popup-at-point)
 
+;; Textual topography
+(defun textual-topography ()
+  "Prompt for domain, characteristic/anti-characteristic pair, and selected text.
+   Save selected text to a file and call a Python script with the arguments."
+  (interactive)
 
+  ;; Define the domains and their associated characteristic/anti-characteristic pairs
+  (setq domain-characteristics
+        '(("Mood" . (("Happy" . "Unhappy") ("Calm" . "Agitated")))
+          ("Style" . (("Complex sentences" . "Simple sentences")))
+          ("Personality" . (("Outgoing" . "Shy") ("Confident" . "Timid")))))
 
+  ;; Prompt user to select a domain
+  (setq domain (completing-read "Select a domain: " (mapcar 'car domain-characteristics)))
+
+  ;; Retrieve the list of characteristic/anti-characteristic pairs for the selected domain
+  (setq char-anti-char-pairs (cdr (assoc domain domain-characteristics)))
+
+  ;; Prompt user to select a characteristic/anti-characteristic pair
+  (setq selected-pair (completing-read "Select a characteristic/anti-characteristic: "
+                                      (mapcar (lambda (pair) (concat (car pair) " / " (cdr pair))) char-anti-char-pairs)))
+
+  ;; Split the selected pair into characteristic and anti-characteristic
+  (let ((selected-pair-split (assoc selected-pair (mapcar (lambda (pair)
+                                                           (cons (concat (car pair) " / " (cdr pair)) pair))
+                                                         char-anti-char-pairs))))
+    (setq characteristic (car (cdr selected-pair-split)))
+    (setq anti-characteristic (cdr (cdr selected-pair-split))))
+
+  ;; Ask for the selected text region
+  (if (use-region-p)
+      (setq selected-text (buffer-substring-no-properties (region-beginning) (region-end)))
+    (setq selected-text (read-string "Enter text manually: ")))
+
+  ;; Define the file location outside of the let block to ensure it's accessible later
+  (setq file-location (concat "~/Documents/" domain "-" characteristic "-" anti-characteristic ".txt"))
+
+  ;; Save the selected text to a file in ~/Documents/
+  (with-temp-file file-location
+    (insert selected-text))
+  (message "Text saved to %s" file-location)
+
+  ;; Call the Python script with the four arguments
+  (let ((python-script "~/repos/org-roam-ai/writing/textual_topography.py"))
+    (shell-command (format "source ~/.zshrc && conda activate ml3 && python3 %s %s %s %s %s"
+                           python-script domain characteristic anti-characteristic file-location)))
+
+  ;; Create the org-mode buffer with an image and link
+  (let ((svg-file (concat "~/Documents/" domain "_" characteristic ".svg"))
+        (html-file (concat "~/Documents/" domain "_" characteristic ".html"))
+        (org-buffer (generate-new-buffer "*Domain Characteristics*")))
+    (switch-to-buffer org-buffer)
+    (org-mode)
+
+	;; Optionally, add a heading
+    (insert (format "#+TITLE: Textual Topography: %s - %s / %s\n" domain characteristic anti-characteristic))
+
+    ;; Insert the image using org-mode syntax
+    (insert (format "[[file:%s]]\n" svg-file svg-file))
+
+    ;; Insert the link to the HTML file
+    (insert (format "[[file:%s]]\n" html-file html-file))
+
+	(org-toggle-inline-images)
+
+    (message "Org buffer created with image and link.")))
 
 (provide 'gpt-settings)
 ;;; gpt-settings.el ends here
