@@ -156,7 +156,7 @@ want to use in the modeline *in lieu of* the original.")
  ;; If there is more than one, they won't work right.
  '(conda-anaconda-home "/Users/luis.moneda/miniconda3")
  '(package-selected-packages
-   '(embark-consult embark exec-path-from-shell smex ob-chatgpt-shell quelpa-use-package copilot org-emms emms chatgpt-shell pyimport electric-operator org-present org-tree-slide org-transclusion org-mind-map consult-org-roam org-download org-remark org-ql org-roam-bibtex olivetti org-roam-ui org-roam deadgrep org-bullets virtualenvwrapper simple-httpd column-enforce-mode conda pyvenv pyenv-mode pyenv magit default-text-scale zygospore writeroom-mode with-editor which-key try smartparens smart-mode-line shell-pop restclient rebecca-theme rainbow-delimiters poet-theme pdf-tools org-ref orderless ob-async neotree multiple-cursors multi mood-line minions mindre-theme markdown-preview-mode lsp-grammarly latex-preview-pane ivy-posframe imenu-anywhere hide-mode-line helm-bibtex gscholar-bibtex goto-chg google-translate flymd expand-region engine-mode disable-mouse diminish diff-hl counsel-projectile company-posframe company-flx beacon auto-complete anzu annotate all-the-icons-ivy-rich ag))
+   '(spacious-padding golden-ratio embark-consult embark exec-path-from-shell smex ob-chatgpt-shell quelpa-use-package copilot org-emms emms chatgpt-shell pyimport electric-operator org-present org-tree-slide org-transclusion org-mind-map consult-org-roam org-download org-remark org-ql org-roam-bibtex olivetti org-roam-ui org-roam deadgrep org-bullets virtualenvwrapper simple-httpd column-enforce-mode conda pyvenv pyenv-mode pyenv magit default-text-scale zygospore writeroom-mode with-editor which-key try smartparens smart-mode-line shell-pop restclient rebecca-theme rainbow-delimiters poet-theme pdf-tools org-ref orderless ob-async neotree multiple-cursors multi mood-line minions mindre-theme markdown-preview-mode lsp-grammarly latex-preview-pane ivy-posframe imenu-anywhere hide-mode-line helm-bibtex gscholar-bibtex goto-chg google-translate flymd expand-region engine-mode disable-mouse diminish diff-hl counsel-projectile company-posframe company-flx beacon auto-complete anzu annotate all-the-icons-ivy-rich ag))
  '(pdf-tools-handle-upgrades nil))
 ;; (custom-set-faces
 ;;  ;; custom-set-faces was added by Custom.
@@ -338,6 +338,18 @@ want to use in the modeline *in lieu of* the original.")
 ;; font issue: https://github.com/rougier/svg-tag-mode/issues/38
 ;; (use-package svg-tag-mode
 ;;   :ensure t)
+
+;; Automatically resizes the window I'm focusing
+(use-package golden-ratio
+  :ensure t
+  :init
+  (golden-ratio-mode 1)
+  )
+
+;; Add a padding to the buffer
+;; (use-package spacious-padding
+;;   :ensure t
+;;   :hook (after-init . spacious-padding-mode))
 
 (provide 'aesthetics-settings)
 ;;; aesthetics-settings.el ends here
