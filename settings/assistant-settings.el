@@ -210,14 +210,13 @@
   (make-shell-maker-config
    :name "Catalyst"
    :execute-command
-   (lambda (command _history callback error-callback)
-     (funcall callback
-              (call-catalyst-server command)
-              nil))
+   (lambda (command shell)
+     (let ((output (call-catalyst-server command)))
+       (funcall (map-elt shell :write-output) output)
+       (funcall (map-elt shell :finish-output) t)))
    :on-command-finished
-   (lambda (command output)
-     (chatgpt-shell--put-source-block-overlays))
-   ))
+   (lambda (_command _output)
+     (chatgpt-shell--put-source-block-overlays))))
 
 (defun catalyst-shell ()
   "Start a Catalyst shell."
