@@ -520,8 +520,8 @@ Provides a selection from a predefined list, but also allows custom input."
 
   ;; Define the domains and their associated characteristic/anti-characteristic pairs
   (setq domain-characteristics
-        '(("Mood" . (("Happy" . "Unhappy") ("Calm" . "Agitated")))
-          ("Style" . (("Complex sentences" . "Simple sentences")))
+        '(("Mood" . (("Happy" . "Unhappy") ("Calm" . "Agitated") ("Optimistic" . "Pessimist")))
+          ("Style" . (("Complex" . "Simple") ("Specific" . "Generic")))
           ("Personality" . (("Outgoing" . "Shy") ("Confident" . "Timid")))))
 
   ;; Prompt user to select a domain
@@ -556,11 +556,13 @@ Provides a selection from a predefined list, but also allows custom input."
 
   ;; Call the Python script with the four arguments
   (let ((python-script "~/repos/org-roam-ai/writing/textual_topography.py"))
-    (shell-command (format "source ~/.zshrc && conda activate ml3 && python3 %s %s %s %s %s"
+	(shell-command (format "source ~/.zshrc && conda activate ml3 && python3 %s %s %s %s %s"
                            python-script domain characteristic anti-characteristic file-location)))
 
+  ;; Delete shell command buffer
+  (delete-window (get-buffer-window (get-buffer "*Shell Command Output*")))
   ;; Create the org-mode buffer with an image and link
-  (let ((svg-file (concat "~/Documents/" domain "_" characteristic ".svg"))
+  (let ((svg-file (concat "~/Documents/minimalistic_" domain "_" characteristic ".svg"))
         (html-file (concat "~/Documents/" domain "_" characteristic ".html"))
         (org-buffer (generate-new-buffer "*Domain Characteristics*")))
     (switch-to-buffer org-buffer)
@@ -577,7 +579,10 @@ Provides a selection from a predefined list, but also allows custom input."
 
 	(org-toggle-inline-images)
 
-    (message "Org buffer created with image and link.")))
+	(message "Org buffer created with image and link.")))
+
+(provide 'gpt-settings)
+;;; gpt-settings.el ends here
 
 (provide 'gpt-settings)
 ;;; gpt-settings.el ends here
