@@ -136,7 +136,7 @@ BRANCH: Branch to which changes should be committed (e.g., 'master')."
                        image-paths))))))
     ;; Export the Org file to HTML5 using org-pandoc-export-to-html5
     (let ((html-body nil)
-		  (pandoc-command (format "pandoc %s -o %s --from=org --to=html5 --shift-heading-level-by=1"
+		  (pandoc-command (format "pandoc %s -o %s --from=org --to=html5 --shift-heading-level-by=1 --citeproc --bibliography=/Users/luis.moneda/Dropbox/Research/library.bib"
                                  (shell-quote-argument org-file-path)
                                  (shell-quote-argument temp-html-file))))
 
