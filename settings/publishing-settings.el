@@ -143,21 +143,25 @@ BRANCH: Branch to which changes should be committed (e.g., 'master')."
 	;; Export the org file to HTML
       (shell-command-to-string pandoc-command)
 
-	  ;; Exclude org-roam-links from the temp-html-file
-	  ;; TO-DO
-  ;; Replace image paths in the exported body
-  (with-temp-buffer
-	(insert-file-contents temp-html-file)
-    (let ((keys (hash-table-keys image-paths)))
-      (dolist (key keys)
+;; Exclude org-roam links from the temp-html-file
+      (with-temp-buffer
+        (insert-file-contents temp-html-file)
+        ;; Find and replace org-roam links by removing the <a> tag, leaving only the link text
         (goto-char (point-min))
-        (while (search-forward key nil t)
-          (replace-match (gethash key image-paths) t t))))
-    ;; Prepend YAML front matter
-    (goto-char (point-min))
-    (insert yaml-front-matter "\n")
-    ;; Write the final content to the output file
-    (write-region (point-min) (point-max) output-file)))
+        (while (re-search-forward "<a\\s-+href=\"id:[^\"]*\">\\([^<]*\\)</a>" nil t)
+          (replace-match "\\1" nil nil))
+        ;; Replace image paths in the exported body
+        (let ((keys (hash-table-keys image-paths)))
+          (dolist (key keys)
+            (goto-char (point-min))
+            (while (search-forward key nil t)
+              (replace-match (gethash key image-paths) t t))))
+        ;; Prepend YAML front matter
+        (goto-char (point-min))
+        (insert yaml-front-matter "\n")
+        ;; Write the final content to the output file
+        (write-region (point-min) (point-max) output-file)))
+
 	;; Delete the temporary HTML file
 	(delete-file temp-html-file)
     ;; Commit and push the changes to GitHub
@@ -169,7 +173,7 @@ BRANCH: Branch to which changes should be committed (e.g., 'master')."
       ;; (shell-command (format "git push origin %s" branch))
       (message "Published to GitHub Pages branch: %s" branch))))
 
-  (defun lgm/merge-keywords-and-properties (keywords properties)
+(defun lgm/merge-keywords-and-properties (keywords properties)
   "Merge file KEYWORDS and PROPERTIES into a single plist.
 KEYWORDS is an alist from `org-collect-keywords`.
 PROPERTIES is an alist from `org-entry-properties`."
@@ -201,28 +205,6 @@ PROPERTIES is an alist from `org-entry-properties`."
                                       value))))))
           '(:layout :title :date :lang :ref :comments :author :tags :description :image))
     (concat yaml-front-matter "---\n")))
-
-;; (defun lgm/generate-yaml-front-matter (metadata)
-;;   "Generate YAML front matter from METADATA plist."
-;;   (let ((yaml-front-matter "---\n"))
-;; 	(message "%s" metadata)
-;;     (mapc (lambda (key)
-;;             (let ((value (plist-get metadata key)))
-;;               (when value
-;;                 (setq yaml-front-matter
-;;                       (concat yaml-front-matter
-;;                               (format "%s: %s\n"
-;;             (substring (symbol-name key) 1) ;; Remove leading :
-;;                                       value))))))
-;;           '(:layout :title :date :lang :ref :comments :author :description :image))
-;;     ;; Handle tags separately
-;;     (let ((tags (plist-get metadata :tags)))
-;;       (when tags
-;;         (setq yaml-front-matter
-;;               (concat yaml-front-matter
-;;                       (format "tags: [%s]\n"
-;;                               (mapconcat 'identity (split-string tags "[ ,]+" t) ", "))))))
-;;     (concat yaml-front-matter "---\n")))
 
 (defun lgm/slugify (title)
   "Convert TITLE to a slug suitable for filenames."
