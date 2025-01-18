@@ -619,7 +619,7 @@ this command to copy it"
 
 (add-to-list 'org-capture-templates
              '("d" "Personal task"  entry
-               (file "~/Dropbox/Agenda/todo.org")
+               (file "~/Dropbox/Agenda/todo.org" "Life" "Misc")
                "* TODO %?"
 			   :empty-lines 1))
 
@@ -2381,165 +2381,10 @@ display the output in a new temporary buffer."
 ;; I still need to see if I will find this issue from time to time
 ;; (org-id-update-id-locations (directory-files-recursively "~/Dropbox/Agenda/roam/" "\\.org$"))
 
-(unless (package-installed-p 'ox-gfm)
-  (package-install 'ox-gfm))
-
-(require 'ox-gfm)
-
-(defun lgm/publish-org-roam-to-jekyll-md (github-repo-dir output-dir branch)
-  "Export current Org Roam file to Jekyll-compatible Markdown, including YAML front matter.
-
-GITHUB-REPO-DIR: Path to your GitHub Pages repository.
-OUTPUT-DIR: Directory inside the repository where the markdown file will be placed.
-BRANCH: Branch to which changes should be committed (e.g., 'master')."
-  (interactive
-   (list (read-directory-name "GitHub Repo Directory: " "~/repos/lgmoneda.github.io/")
-         (read-string "Output Directory (relative to repo root): " "_posts/")
-         (read-string "Branch: " "master")))
-  (let* ((org-file (buffer-file-name))
-         ;; Collect file keywords
-         (file-keywords '("TITLE" "DATE" "AUTHOR" "TAGS" "DESCRIPTION" "LANG" "LAYOUT" "IMAGE" "REF" "COMMENTS"))
-         (keywords (org-collect-keywords file-keywords))
-         ;; Get properties from the PROPERTIES drawer
-         (properties (org-entry-properties nil 'standard))
-         ;; Merge keywords and properties into a single plist
-         (metadata (lgm/merge-keywords-and-properties keywords properties))
-         (yaml-front-matter (lgm/generate-yaml-front-matter metadata))
-         ;; Get title and date for filename
-         (title (or (plist-get metadata :title)
-                    (file-name-base org-file)))
-         ;; Remove date and timestamp from the title if present
-         (title-slug (lgm/remove-leading-timestamp title))
-         (publish-date (or (plist-get metadata :date)
-                           (format-time-string "%Y-%m-%d")))
-         (slug (lgm/slugify title-slug))
-         (output-filename (format "%s-%s.md" publish-date slug))
-         (output-path (expand-file-name output-dir github-repo-dir))
-         (output-file (expand-file-name output-filename output-path))
-         (image-dir (expand-file-name "images/" github-repo-dir))
-         (image-paths (make-hash-table :test 'equal)))
-    ;; Verify org-file exists and is in org-mode
-    (unless org-file
-      (error "This buffer is not visiting a file"))
-    (unless (derived-mode-p 'org-mode)
-      (error "This function only works in Org mode buffers"))
-    ;; Sync org-roam db
-    (org-roam-db-sync)
-    ;; Ensure the image directory exists
-    (unless (file-directory-p image-dir)
-      (make-directory image-dir t))
-    ;; Find and copy images referenced in the Org file
-    (org-element-map (org-element-parse-buffer) 'link
-      (lambda (link)
-        (when (string= (org-element-property :type link) "file")
-          (let* ((image-path (org-element-property :path link))
-                 (absolute-image-path (expand-file-name image-path (file-name-directory org-file)))
-                 (image-filename (file-name-nondirectory image-path))
-                 (destination-image-path (expand-file-name image-filename image-dir)))
-            (when (and image-path (file-exists-p absolute-image-path))
-              ;; Copy the image and store the mapping for replacement
-              (copy-file absolute-image-path destination-image-path t)
-              ;; Store mapping to replace in the content
-              (puthash image-path ;; Key is the path used in the org file
-                       (concat "/images/" image-filename) ;; Updated path
-            image-paths))))))
-    ;; Prepare the content for export
-    (let ((temp-buffer (get-buffer-create "*org-to-md*")))
-      (with-current-buffer temp-buffer
-        (erase-buffer)
-        ;; Insert YAML front matter
-        (insert yaml-front-matter)
-        (insert "\n")
-        ;; Insert the content of the org file
-        (insert-file-contents org-file)
-        ;; Remove the properties drawer
-        (goto-char (point-min))
-        (while (re-search-forward "^:PROPERTIES:\n\\(.\\|\n\\)*?:END:\n" nil t)
-          (replace-match ""))
-        ;; Remove specific #+ lines (metadata), but keep code block markers
-        (goto-char (point-min))
-        (while (re-search-forward "^#\\+\\(TITLE\\|AUTHOR\\|DATE\\|STARTUP\\|OPTIONS\\|.*EXPORT.*\\):.*$" nil t)
-          (replace-match ""))
-        ;; Replace image paths in the content
-        (let ((keys (hash-table-keys image-paths)))
-          (dolist (key keys)
-            (goto-char (point-min))
-            (while (search-forward key nil t)
-              (replace-match (gethash key image-paths) t t))))
-        ;; Ensure ox-gfm is loaded
-        (require 'ox)
-        ;; (require 'ox-gfm)
-		(require 'ox-md)
-		(require 'ox-jekyll-md)
-        ;; Set Org export options
-        (let ((org-export-with-author nil)
-              (org-export-with-toc nil)
-              (org-export-with-section-numbers nil)
-              (org-export-with-smart-quotes t)
-              (org-export-with-special-strings nil) ;; Prevent special string conversions
-              (org-export-preserve-breaks t)        ;; Preserve line breaks
-              ;; Ensure code blocks are exported correctly
-              (org-export-use-babel t)
-              (org-export-babel-evaluate nil))      ;; Prevent execution during export
-          ;; Export to markdown
-          (org-mode)
-		  (org-export-to-file 'jekyll output-file))))
-          ;; (org-export-to-file 'gfm output-file))))
-    ;; Commit and push the changes to GitHub
-    (let ((default-directory github-repo-dir))
-      (shell-command (format "git add %s" (shell-quote-argument output-file)))
-      (shell-command (format "git add %s" (shell-quote-argument (expand-file-name "images/" github-repo-dir))))
-      (shell-command (format "git commit -m 'Publish %s with images'" output-filename))
-      (shell-command (format "git push origin %s" branch))
-      (message "Published to GitHub Pages branch: %s" branch))))
-
-(defun lgm/merge-keywords-and-properties (keywords properties)
-  "Merge file KEYWORDS and PROPERTIES into a single plist.
-KEYWORDS is an alist from `org-collect-keywords`.
-PROPERTIES is an alist from `org-entry-properties`."
-  (let ((meta-plist nil))
-    ;; Add keywords to plist
-    (dolist (keyword keywords)
-      (let ((key (intern (concat ":" (downcase (car keyword)))))
-            (value (mapconcat 'identity (cdr keyword) " ")))
-        (setq meta-plist (plist-put meta-plist key value))))
-    ;; Add properties to plist
-    (dolist (prop properties)
-      (let ((key (intern (concat ":" (downcase (car prop)))))
-            (value (cdr prop)))
-        (setq meta-plist (plist-put meta-plist key value))))
-    meta-plist))
-
-(defun lgm/generate-yaml-front-matter (metadata)
-  "Generate YAML front matter from METADATA plist."
-  (let ((yaml-front-matter "---\n"))
-    (mapc (lambda (key)
-            (let ((value (plist-get metadata key)))
-              (when value
-                (setq yaml-front-matter
-                      (concat yaml-front-matter
-                              (format "%s: %s\n"
-            (substring (symbol-name key) 1) ;; Remove leading :
-                                      value))))))
-          '(:layout :title :date :lang :ref :comments :author :description :image))
-    ;; Handle tags separately
-    (let ((tags (plist-get metadata :tags)))
-      (when tags
-        (setq yaml-front-matter
-              (concat yaml-front-matter
-                      (format "tags: [%s]\n"
-                              (mapconcat 'identity (split-string tags "[ ,]+" t) ", "))))))
-    (concat yaml-front-matter "---\n")))
-
-(defun lgm/slugify (title)
-  "Convert TITLE to a slug suitable for filenames."
-  (let ((slug (replace-regexp-in-string "[^[:alnum:]]+" "-" (downcase title))))
-    (replace-regexp-in-string "^-\\|-+$" "" slug)))
-
-(defun lgm/remove-leading-timestamp (title)
-  "Remove leading date or timestamp from TITLE."
-  (replace-regexp-in-string "^[0-9]+[-_]*" "" title))
-
+(use-package citar-org-roam
+  :ensure t
+  :after (citar org-roam)
+  :config (citar-org-roam-mode))
 
 (provide 'org-settings)
 ;;; org-settings.el ends here
