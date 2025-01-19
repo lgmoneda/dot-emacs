@@ -619,7 +619,7 @@ this command to copy it"
 
 (add-to-list 'org-capture-templates
              '("d" "Personal task"  entry
-               (file "~/Dropbox/Agenda/todo.org" "Life" "Misc")
+               (file+olp "~/Dropbox/Agenda/todo.org" "Life" "Misc")
                "* TODO %?"
 			   :empty-lines 1))
 
@@ -2327,23 +2327,32 @@ display the output in a new temporary buffer."
 
 ;; So I can quickly share org-roam with people without looking for the pdf file in the roam folder
 (defun lgm/export-org-to-downloads-folder ()
-  "Export the current Org file to PDF and save it in the downloads folder."
+  "Export the current Org file to PDF and save it in the downloads folder.
+Prompts for the output filename, defaulting to the original Org file's name."
   (interactive)
   (let* ((org-file (buffer-file-name))
-         (pdf-file (concat (file-name-sans-extension org-file) ".pdf"))
-         (downloads-folder "~/Downloads/")) ; Change this path to your desired folder
+         (downloads-folder "~/Downloads/") ; Change this path to your desired folder
+         (default-pdf-name (concat (file-name-sans-extension (file-name-nondirectory org-file)) ".pdf"))
+         (output-file (read-file-name "Save PDF as: "
+                                      downloads-folder
+                                      (concat downloads-folder default-pdf-name)
+                                      nil
+                                      default-pdf-name)))
 
+    ;; Ensure the buffer is visiting a valid file
     (unless (and org-file (file-exists-p org-file))
       (error "Buffer is not visiting a file or file does not exist"))
 
-    (org-latex-export-to-pdf) ; Export Org file to PDF
+    ;; Export the Org file to PDF
+    (org-latex-export-to-pdf)
 
-    ;; Move the exported PDF to the specified folder
-    (if (file-exists-p pdf-file)
-        (rename-file pdf-file (concat downloads-folder (file-name-nondirectory pdf-file)) t)
-      (error "PDF file not found after export"))
+    ;; Move the exported PDF to the specified location
+    (let ((exported-pdf (concat (file-name-sans-extension org-file) ".pdf")))
+      (if (file-exists-p exported-pdf)
+          (rename-file exported-pdf output-file t)
+        (error "PDF file not found after export")))
 
-    (message "Org file exported to PDF and saved in %s" downloads-folder)))
+    (message "Org file exported to PDF and saved as %s" output-file)))
 
 ;; Makes it easy to share images I've saved in org files
 (defun lgm/org-copy-linked-image-to-downloads ()
