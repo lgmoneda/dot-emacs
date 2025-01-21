@@ -75,7 +75,7 @@ BRANCH: Branch to which changes should be committed (e.g., 'gh-pages')."
     (let ((default-directory github-repo-dir))
       (shell-command (format "git add %s" (shell-quote-argument output-file)))
       (shell-command (format "git add %s" (shell-quote-argument (expand-file-name "images/org-roam/" github-repo-dir))))
-      (shell-command (format "git commit -m 'Publish %s with images'" (file-name-nondirectory output-file)))
+      (shell-command (format "git commit --no-gpg-sign -m 'Publish %s with images'" (file-name-nondirectory output-file)))
       (shell-command (format "git push origin %s" branch))
       (message "Published to GitHub Pages branch: %s" branch))))
 
@@ -83,6 +83,33 @@ BRANCH: Branch to which changes should be committed (e.g., 'gh-pages')."
 ;; Blogging
 ;; The following function helps me to write in a single file in org-roam to produce my personal blog posts.
 ;; It avoids copying and pasting to the markdown file for jekyll.
+(defvar working-publishing-repository "~/repos/lgmoneda.github.io/"
+  "Path to the GitHub repository used for publishing.")
+
+(defvar working-publishing-directory "_posts/"
+  "Directory inside the repository where published files will be stored.")
+
+(defvar working-publishing-branch "master"
+  "Git branch used for publishing changes.")
+
+(defun lgm/set-working-publishing-vars (repo dir branch)
+  "Set the working publishing variables for the current project.
+
+REPO: Path to the GitHub repository.
+DIR: Directory inside the repository for publishing.
+BRANCH: Git branch to which changes will be committed."
+  (interactive
+   (list (read-directory-name "GitHub Repo Directory: " working-publishing-repository)
+         (read-string "Output Directory (relative to repo root): " working-publishing-directory)
+         (read-string "Branch: " working-publishing-branch)))
+  (setq working-publishing-repository repo)
+  (setq working-publishing-directory dir)
+  (setq working-publishing-branch branch)
+  (message "Publishing variables updated:\nRepository: %s\nDirectory: %s\nBranch: %s"
+           working-publishing-repository
+           working-publishing-directory
+           working-publishing-branch))
+
 
 (defun lgm/publish-org-roam-to-jekyll-html (github-repo-dir output-dir branch)
   "Export current Org Roam file to Jekyll-compatible HTML5 with YAML front matter.
@@ -91,11 +118,11 @@ GITHUB-REPO-DIR: Path to your GitHub Pages repository.
 OUTPUT-DIR: Directory inside the repository where the HTML file will be placed.
 BRANCH: Branch to which changes should be committed (e.g., 'master')."
   (interactive
-   (list (read-directory-name "GitHub Repo Directory: " "~/repos/lgmoneda.github.io/")
-         (read-string "Output Directory (relative to repo root): " "_posts/")
-         (read-string "Branch: " "master")))
+   (list (read-directory-name "GitHub Repo Directory: " working-publishing-repository)
+         (read-string "Output Directory (relative to repo root): " working-publishing-directory)
+         (read-string "Branch: " working-publishing-branch)))
   (let* ((org-file (buffer-file-name))
-         (file-keywords '("TITLE" "DATE" "AUTHOR" "TAGS" "DESCRIPTION" "LANG" "LAYOUT" "IMAGE" "REF" "COMMENTS"))
+         (file-keywords '("TITLE" "DATE" "AUTHOR" "TAGS" "DESCRIPTION" "LANG" "LAYOUT" "IMAGE" "REF" "COMMENTS" "PARENT" "NAV_ORDER" "MATHJAX"))
          (keywords (org-collect-keywords file-keywords))
          (properties (org-entry-properties nil 'standard))
          (metadata (lgm/merge-keywords-and-properties keywords properties))
@@ -136,8 +163,8 @@ BRANCH: Branch to which changes should be committed (e.g., 'master')."
                        image-paths))))))
     ;; Export the Org file to HTML5 using org-pandoc-export-to-html5
     (let ((html-body nil)
-		  (pandoc-command (format "pandoc %s -o %s --from=org --to=html5 --shift-heading-level-by=1 --citeproc --bibliography=/Users/luis.moneda/Dropbox/Research/library.bib"
-                                 (shell-quote-argument org-file-path)
+		  (pandoc-command (format "pandoc %s -o %s --from=org --to=html5 --shift-heading-level-by=1 --citeproc --bibliography=/Users/luis.moneda/Dropbox/Research/library.bib --csl=/Users/luis.moneda/Dropbox/Research/custom-style-blog.csl"
+                                 (shell-quote-argument org-file)
                                  (shell-quote-argument temp-html-file))))
 
 	;; Export the org file to HTML
@@ -171,7 +198,8 @@ BRANCH: Branch to which changes should be committed (e.g., 'master')."
       ;; (shell-command (format "git add %s" (shell-quote-argument image-dir)))
       ;; (shell-command (format "git commit -m 'Publish %s with images'" output-filename))
       ;; (shell-command (format "git push origin %s" branch))
-      (message "Published to GitHub Pages branch: %s" branch))))
+      ;; (message "Published to GitHub Pages branch: %s" branch)
+	  )))
 
 (defun lgm/merge-keywords-and-properties (keywords properties)
   "Merge file KEYWORDS and PROPERTIES into a single plist.
@@ -203,7 +231,7 @@ PROPERTIES is an alist from `org-entry-properties`."
                               (format "%s: %s\n"
                                       (substring (symbol-name key) 1) ;; Remove leading colon
                                       value))))))
-          '(:layout :title :date :lang :ref :comments :author :tags :description :image))
+          '(:layout :title :date :lang :ref :comments :author :tags :description :image :parent :nav_order :mathjax))
     (concat yaml-front-matter "---\n")))
 
 (defun lgm/slugify (title)
