@@ -2395,5 +2395,32 @@ Prompts for the output filename, defaulting to the original Org file's name."
   :after (citar org-roam)
   :config (citar-org-roam-mode))
 
+;; This function helps me label data for fine-tuning
+(defun lgm/org-roam-node-link-human-labeling ()
+  "Label a link in an Org-roam node with a human-defined type."
+  (interactive)
+  (let* ((input-node-id (org-id-get))
+         (link-node-id (save-excursion
+                         (when (org-in-regexp org-link-bracket-re)
+                           (org-element-property :path (org-element-context)))))
+         (classes '("Topic & Sub-topic"
+                    "Opposing ideas"
+                    "Causal relationship"
+                    "Component"
+                    "Prerequisite"
+                    "Referential"
+                    "Supporting evidence"))
+         (selected-class (completing-read "Select link type: " classes))
+         (datetime (format-time-string "%Y-%m-%d %H:%M:%S"))
+         (csv-file "/Users/luis.moneda/Dropbox/Agenda/org-roam-ai/datasets/nodes_link_type_human_labeling.csv"))
+    (if (and input-node-id link-node-id)
+        (progn
+          (with-temp-buffer
+            (insert (format "%s,%s,%s,%s\n" datetime input-node-id link-node-id selected-class))
+            (append-to-file (point-min) (point-max) csv-file))
+          (message "Link labeled and saved: %s -> %s (%s)" input-node-id link-node-id selected-class))
+      (message "Failed to capture node IDs. Ensure you're on a valid Org-roam link."))))
+
+
 (provide 'org-settings)
 ;;; org-settings.el ends here
