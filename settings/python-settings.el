@@ -286,5 +286,9 @@ if breakpoints are present in `python-mode' files"
 
 ;; (setq ein:notebook-modes '(ein:notebook-multilang-mode ein:notebook-python-mode))
 
+(with-eval-after-load 'jupyter-repl
+  (define-key jupyter-repl-mode-map (kbd "C-c C-p") #'jupyter-repl-backward-cell)
+  (define-key jupyter-repl-mode-map (kbd "C-c C-n") #'jupyter-repl-forward-cell))
+
 (provide 'python-settings)
 ;;; python-settings.el ends here
