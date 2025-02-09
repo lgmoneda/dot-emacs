@@ -49,6 +49,7 @@
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . markdown-mode)
          ("\\.markdown\\'" . markdown-mode))
+  ;; I define it differently in another place, take a look when needed
   :init (setq markdown-command "multimarkdown"))
 
 ;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/markdown-preview-mode-20230707.803")
@@ -156,12 +157,53 @@
       '((ivy-bibtex . ivy--regex-ignore-order)
         (t . ivy--regex-plus)))
 
-(global-set-key (kbd "C-c r") 'org-ref-insert-cite-link)
+;; While I try citar
+;; (global-set-key (kbd "C-c r") 'org-ref-insert-cite-link)
 (setq org-cite-global-bibliography '("~/Dropbox/Research/library.bib"))
 (setq ivy-bibtex-default-action 'ivy-bibtex-insert-citation)
 
 ;; telling bibtex-completion where your bibliographies can be found
 (setq bibtex-completion-bibliography "~/Dropbox/Research/library.bib")
+
+;; Because of citar
+(use-package vertico
+  :ensure t)
+
+;; Yet another framework for citations I want to test
+;; References
+;; https://kristofferbalintona.me/posts/202206141852/
+;; https://blog.tecosaur.com/tmio/2021-07-31-citations.html
+(use-package citar
+  :ensure t
+  :custom
+  (citar-bibliography '("~/Dropbox/Research/library.bib"))
+  (org-cite-insert-processor 'citar)
+  (org-cite-follow-processor 'citar)
+  (org-cite-activate-processor 'citar)
+  ;; Not relevant right now
+  ;; (org-cite-export-processors
+  ;;  '((md . (csl "chicago-fullnote-bibliography.csl"))   ; Footnote reliant
+  ;; 	 (latex biblatex)                                   ; For humanities
+  ;; 	 (odt . (csl "chicago-fullnote-bibliography.csl"))  ; Footnote reliant
+  ;; 	 (t . (csl "modern-language-association.csl"))))      ; Fallback
+  :custom-face
+  ;; Have citation link faces look closer to as they were for `org-ref'
+  (org-cite ((t (:foreground "DarkSeaGreen4"))))
+  (org-cite-key ((t (:foreground "forest green" :slant italic))))
+  :init
+  (global-set-key (kbd "C-c r") 'org-cite-insert)
+  :hook
+  (LaTeX-mode . citar-capf-setup)
+  (org-mode . citar-capf-setup))
+
+(use-package citar-embark
+  :ensure t
+  :after citar embark
+  :no-require
+  :config (citar-embark-mode))
+
+;; (setq citar-at-point-function 'embark-act)
+(setq citar-at-point-function 'embark-dwim)
 
 (use-package gscholar-bibtex
   :ensure t)
@@ -224,6 +266,7 @@
       org-ref-default-bibliography '("~/Dropbox/Research/library.bib")
       org-ref-pdf-directory "~/Dropbox/Research/Literature/"
       org-ref-completion-library 'org-ref-ivy-cite
+	  org-ref-default-citation-link 'citet
       )
 
 (setq org-latex-pdf-process (list "latexmk -shell-escape -bibtex -f -pdf %f"))
@@ -269,6 +312,8 @@
     ;; TKK='427110.1469889687'
   (list 427110 1469889687))
 
+;;
+(setq ispell-program-name "/opt/homebrew/bin/aspell")
 ;; Useful to activate while I write my cards
 (global-set-key "\C-cf" 'flyspell-mode)
 
@@ -304,6 +349,27 @@
 ;; c-c [ to jump to next note
 (use-package annotate
   :ensure t)
+
+;; Reading epubs in Emacs
+(use-package nov
+  :ensure t)
+
+;; Useful to use in images in eww and using org-download-clipboard
+;; Press w over an image in eww, run the function, then use org-download-clipboard in a org buffer
+(defun my/copy-image-from-url ()
+  "Download an image from a URL in the kill-ring and copy it to the clipboard."
+  (interactive)
+  (let* ((url (current-kill 0))
+         (temp-file (make-temp-file "emacs-image" nil ".png")))
+    (url-copy-file url temp-file t)
+    (cond
+     ((eq system-type 'darwin)
+      (shell-command (format "osascript -e 'set the clipboard to (read (POSIX file \"%s\") as JPEG picture)'" temp-file)))
+     ((eq system-type 'gnu/linux)
+      (shell-command (format "xclip -selection clipboard -t image/png -i %s" temp-file)))
+     ((eq system-type 'windows-nt)
+      (message "Windows support not implemented yet!")))
+    (message "Image copied to clipboard from %s" url)))
 
 (provide 'writing-settings)
 ;;; writing-settings.el ends here
