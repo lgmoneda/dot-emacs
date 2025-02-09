@@ -352,7 +352,9 @@
 
 ;; Reading epubs in Emacs
 (use-package nov
-  :ensure t)
+  :ensure t
+  :init
+  (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
 
 ;; Useful to use in images in eww and using org-download-clipboard
 ;; Press w over an image in eww, run the function, then use org-download-clipboard in a org buffer
