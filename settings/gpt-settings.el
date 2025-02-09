@@ -513,6 +513,18 @@ Provides a selection from a predefined list, but also allows custom input."
 
 (global-set-key (kbd "C-c s") 'my/display-popup-at-point)
 
+;; To clean the faces if I'm writing
+(defun chunky-semantic-search/clear-faces (&optional start end)
+  "Remove all face overlays applied by `chunky-semantic-search` from the selection or entire buffer."
+  (interactive (if (use-region-p) (list (region-beginning) (region-end)) (list nil nil)))
+  (let ((start (or start (point-min)))
+        (end (or end (point-max))))
+    (dolist (ov (overlays-in start end))
+      (when (overlay-get ov 'face)  ;; Only remove overlays that set a face
+        (delete-overlay ov))))
+  (message "Chunky Semantic Search highlights cleared."))
+
+
 ;; Textual topography
 (defun textual-topography ()
   "Prompt for domain, characteristic/anti-characteristic pair, and selected text.
