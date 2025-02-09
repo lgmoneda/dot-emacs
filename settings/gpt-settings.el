@@ -279,8 +279,11 @@ display the output in a new temporary buffer."
 
 (defun my/generate-colors (length)
   "Generate a list of LENGTH repeating the base colors."
-  (let ((base-colors '("#F4C1BD" "#D9E2B8" "#F7E5A6" "#F7D0B4" "#F2C1D6" "#AFC8EB" "#CDC3E5" "#B9E2DE"
-)))
+  (let ((base-colors
+		 ;; Higher contrast colors
+		 ;; '("#F4C1BD" "#D9E2B8" "#F7E5A6" "#F7D0B4" "#F2C1D6" "#AFC8EB" "#CDC3E5" "#B9E2DE")
+		 '("#F4DBD9" "#E7EBD6" "#F6EDCD" "#F6E2D4" "#F3DBE5" "#D2DEF0" "#E1DCED" "#D7EBE9")
+					 ))
     (cl-loop for i below length
              collect (nth (mod i (length base-colors)) base-colors))))
 
@@ -415,7 +418,7 @@ Provides a selection from a predefined list, but also allows custom input."
   (interactive)
   (let* ((choices '(0 0.25 0.5 0.75 0.9 1))
          (choice (completing-read
-                  "Select granularity (or type a custom value): "
+                  "Select granularity (or type a custom value); 0 generates a single chunk, 1 splits by sentence: "
                   (mapcar #'number-to-string choices)
                   nil nil)))
     (setq chunky-semantic-search/segmentation-granularity
@@ -426,33 +429,31 @@ Provides a selection from a predefined list, but also allows custom input."
   "Send QUERY to the Python HTTP server and return the segments as an Emacs Lisp list."
   (require 'url)
   (require 'json)
-  (let* ((url (concat "http://localhost:8866/api/segment/" (url-encode-url query) "/" (number-to-string chunky-semantic-search/segmentation-granularity)))
+  (let* ((encoded-query (url-hexify-string query))  ;; Encode special characters
+         (url (format "http://localhost:8866/api/segment?text=%s&granularity=%s"
+                      encoded-query
+                      (number-to-string chunky-semantic-search/segmentation-granularity)))
          (response-buffer (url-retrieve-synchronously url))
          segments)
     (if response-buffer
         (with-current-buffer response-buffer
           (goto-char (point-min))
-          ;; Debug: Display the entire response
-          ;; (message "Response buffer: %s" (buffer-string))
-          ;; Skip HTTP headers
+          ;; (message "Raw response: %s" (buffer-string))  ;; 🔍 DEBUG: Print raw response
           (if (search-forward "\n\n" nil t)
-              (let* ((json-object-type 'alist) ;; Parse JSON objects as alists
-                     (json-array-type 'list)   ;; Parse JSON arrays as lists
-                     (json-key-type 'string)  ;; Use strings for keys
+              (let* ((json-object-type 'alist)
+                     (json-array-type 'list)
+                     (json-key-type 'string)
                      (parsed-json (condition-case err
                                       (json-read)
                                     (error (message "JSON read error: %s" err)
                                            nil))))
-                ;; Debug: Show the parsed JSON content
-                ;; (message "Parsed JSON: %s" parsed-json)
-                ;; Extract segments key
                 (setq segments (cdr (assoc "segments" parsed-json))))
             (message "Failed to locate JSON body in response"))
-          (kill-buffer response-buffer)) ;; Clean up buffer
+          (kill-buffer response-buffer))
       (message "No response received"))
-    ;; Debug: Show the final segments list
-    ;; (message "Segments: %s" segments)
     segments))
+
+
 
 (defun chunky-semantic-search (start end)
   "Main function to analyze the region between START and END."
@@ -559,23 +560,28 @@ Provides a selection from a predefined list, but also allows custom input."
 	(shell-command (format "source ~/.zshrc && conda activate ml3 && python3 %s %s %s %s %s"
                            python-script domain characteristic anti-characteristic file-location)))
 
-  ;; Delete shell command buffer
-  (delete-window (get-buffer-window (get-buffer "*Shell Command Output*")))
   ;; Create the org-mode buffer with an image and link
   (let ((svg-file (concat "~/Documents/minimalistic_" domain "_" characteristic ".svg"))
         (html-file (concat "~/Documents/" domain "_" characteristic ".html"))
+		(html-file-granular (concat "~/Documents/" domain "_" characteristic "_wo_moving_average.html"))
         (org-buffer (generate-new-buffer "*Domain Characteristics*")))
     (switch-to-buffer org-buffer)
     (org-mode)
 
 	;; Optionally, add a heading
     (insert (format "#+TITLE: Textual Topography: %s - %s / %s\n" domain characteristic anti-characteristic))
+    (insert "\n")
 
     ;; Insert the image using org-mode syntax
     (insert (format "[[file:%s]]\n" svg-file svg-file))
+    (insert "\n")
 
     ;; Insert the link to the HTML file
-    (insert (format "[[file:%s]]\n" html-file html-file))
+    (insert (format "[[file:%s][Interactive plot]]\n" html-file html-file))
+    (insert "\n")
+
+    ;; Insert the link to the HTML file with granular scores
+    (insert (format "[[file:%s][Interactive without the moving average]]\n" html-file-granular html-file-granular))
 
 	(org-toggle-inline-images)
 
