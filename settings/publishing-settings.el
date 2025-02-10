@@ -230,7 +230,9 @@ PROPERTIES is an alist from `org-entry-properties`."
                       (concat yaml-front-matter
                               (format "%s: %s\n"
                                       (substring (symbol-name key) 1) ;; Remove leading colon
-                                      value))))))
+                                      (if (eq key :title)
+                                          (format "\"%s\"" value) ;; Enclose title in quotes
+                                          value)))))))
           '(:layout :title :date :lang :ref :comments :author :tags :description :image :parent :nav_order :mathjax))
     (concat yaml-front-matter "---\n")))
 
@@ -242,6 +244,43 @@ PROPERTIES is an alist from `org-entry-properties`."
 (defun lgm/remove-leading-timestamp (title)
   "Remove leading date or timestamp from TITLE."
   (replace-regexp-in-string "^[0-9]+[-_]*" "" title))
+
+;; When using lgm/publish-org-roam-to-jekyll-html, if I use the transclude tag,
+;; I need to use this function since I call pandoc directly on the file so the
+;; original file doesn't contain the content of the transclusion.
+;; I still don't get why this works while my other solutions not.
+(defun lgm/publish-org-roam-with-transclusions (github-repo-dir output-dir branch)
+  "Export current Org-roam file to Jekyll-compatible HTML5 with transclusions expanded."
+  (interactive
+   (list (read-directory-name "GitHub Repo Directory: " working-publishing-repository)
+         (read-string "Output Directory (relative to repo root): " working-publishing-directory)
+         (read-string "Branch: " working-publishing-branch)))
+  (let* ((org-file (buffer-file-name))
+         (temp-file (concat (file-name-sans-extension org-file) "-expanded.org")))
+
+    (unless org-file
+      (error "This buffer is not visiting a file"))
+    (unless (derived-mode-p 'org-mode)
+      (error "This function only works in Org mode buffers"))
+
+    ;; Create and open the temp file
+    (with-temp-file temp-file
+      (insert-file-contents org-file)
+      (org-mode)  ;; Ensure we are in Org mode
+      (org-transclusion-mode 1)
+      (org-transclusion-add-all)  ;; Expand transclusions
+      (org-roam-db-sync))  ;; Make sure Org-roam recognizes it
+
+    ;; Publish using the expanded file
+    (let ((buffer (find-file-noselect temp-file)))
+      (with-current-buffer buffer
+        (setq-local buffer-file-name temp-file)
+        (save-buffer)
+        (lgm/publish-org-roam-to-jekyll-html github-repo-dir output-dir branch)))
+
+    ;; Clean up
+    (delete-file temp-file)
+    (message "Published with transclusions expanded.")))
 
 (provide 'publishing-settings)
 ;;; publishing-settings.el ends here
