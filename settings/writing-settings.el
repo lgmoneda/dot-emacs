@@ -317,31 +317,14 @@
 ;; Useful to activate while I write my cards
 (global-set-key "\C-cf" 'flyspell-mode)
 
-;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/lsp-grammarly-20230814.1827")
-;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/lsp-mode-20230401.434")
 (use-package lsp-mode
   :ensure t)
 ;; Hide the filename when active
 (setq lsp-headerline-breadcrumb-enable nil)
-;; (load "lsp-grammarly")
-;; (autoload 'lsp-grammarly "lsp-grammarly" "" t)
-
-(use-package lsp-grammarly
-  :ensure t)
 
 ;; https://github.com/emacs-lsp/lsp-ui
 ;; Show the recommendation in a box when I hover the mouse
 (setq lsp-ui-doc-show-with-cursor t)
-
-
-;; Make sure lsp-auto-guess-root is not set to t.
-;; run M-x lsp-workspace-blacklist-remove, if you get an error
-;; Use s-l a a to fix the error (lsp-execute-code-action)
-(defun lgm/activate-lsp-grammarly ()
-  (interactive)
-    (require 'lsp-grammarly)
-    (lsp)
-    )
 
 ;; annotate-mode
 ;; c-c c-a to annotate
