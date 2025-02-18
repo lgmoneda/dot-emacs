@@ -485,27 +485,29 @@ Provides a selection from a predefined list, but also allows custom input."
   (let ((ov (car (overlays-at (point)))))
     (when ov
       (let ((results (overlay-get ov 'my-results))
-			(ivy-height 16)
+            (ivy-height 16)
             (ivy-posframe-height 16)
             (ivy-posframe-width 100) ;; Adjust width
-			(ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-point))))
+            (ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-point))))
         (when results
           (let* ((titles (mapcar (lambda (s) (decode-coding-string s 'utf-8)) (mapcar #'car results)))
                  (last-selection nil)) ;; Store the last selection
             (catch 'exit
               (while t
-                (let* ((selected (consult--read
-                                  titles
-                                  :prompt "Select entry: "
-                                  :category 'org-roam
-                                  :require-match t
-                                  :sort nil
-                                  :history t
-                                  :default last-selection))) ;; Default to the last selection
+                (let* ((selected (decode-coding-string (consult--read
+                                                         titles
+                                                         :prompt "Select entry: "
+                                                         :category 'org-roam
+                                                         :require-match t
+                                                         :sort nil
+                                                         :history t
+                                                         :default last-selection) 'utf-8))) ;; Decode user selection
                   (if selected
                       (progn
                         (setq last-selection selected) ;; Update last selection
-                        (let ((entry (assoc selected results)))
+                        (let ((entry (assoc selected (mapcar (lambda (r)
+                                                               (cons (decode-coding-string (car r) 'utf-8) (cdr r)))
+                                                             results)))) ;; Match correctly
                           (when entry
                             (my/open-org-roam-node-in-side-buffer entry))))
                     ;; Exit the menu if no selection is made
