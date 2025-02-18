@@ -410,7 +410,7 @@ display the output in a new temporary buffer."
 		   (api-output (my/get-segments text)))
 	  api-output))
 
-(setq chunky-semantic-search/segmentation-granularity 0.5)
+(setq chunky-semantic-search/segmentation-granularity 0.25)
 
 (defun set-chunky-semantic-search-granularity ()
   "Set the value of `chunky-semantic-search/segmentation-granularity`.
@@ -485,12 +485,12 @@ Provides a selection from a predefined list, but also allows custom input."
   (let ((ov (car (overlays-at (point)))))
     (when ov
       (let ((results (overlay-get ov 'my-results))
-			(ivy-height 17)
-            (ivy-posframe-height 17)
+			(ivy-height 16)
+            (ivy-posframe-height 16)
             (ivy-posframe-width 100) ;; Adjust width
 			(ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-point))))
         (when results
-          (let* ((titles (mapcar #'car results))
+          (let* ((titles (mapcar (lambda (s) (decode-coding-string s 'utf-8)) (mapcar #'car results)))
                  (last-selection nil)) ;; Store the last selection
             (catch 'exit
               (while t
