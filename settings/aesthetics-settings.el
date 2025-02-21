@@ -156,7 +156,7 @@ want to use in the modeline *in lieu of* the original.")
  ;; If there is more than one, they won't work right.
  '(conda-anaconda-home "/Users/luis.moneda/miniconda3")
  '(package-selected-packages
-   '(spacious-padding golden-ratio embark-consult embark exec-path-from-shell smex ob-chatgpt-shell quelpa-use-package copilot org-emms emms chatgpt-shell pyimport electric-operator org-present org-tree-slide org-transclusion org-mind-map consult-org-roam org-download org-remark org-ql org-roam-bibtex olivetti org-roam-ui org-roam deadgrep org-bullets virtualenvwrapper simple-httpd column-enforce-mode conda pyvenv pyenv-mode pyenv magit default-text-scale zygospore writeroom-mode with-editor which-key try smartparens smart-mode-line shell-pop restclient rebecca-theme rainbow-delimiters poet-theme pdf-tools org-ref orderless ob-async neotree multiple-cursors multi mood-line minions mindre-theme markdown-preview-mode lsp-grammarly latex-preview-pane ivy-posframe imenu-anywhere hide-mode-line helm-bibtex gscholar-bibtex goto-chg google-translate flymd expand-region engine-mode disable-mouse diminish diff-hl counsel-projectile company-posframe company-flx beacon auto-complete anzu annotate all-the-icons-ivy-rich ag))
+   '(org-modern nov shrface consult vertico citar-org-roam citar-embark citar ox-bibtex ivy-bibtex ox-gfm spacious-padding golden-ratio embark-consult embark exec-path-from-shell smex ob-chatgpt-shell quelpa-use-package copilot org-emms emms chatgpt-shell pyimport electric-operator org-present org-tree-slide org-transclusion org-mind-map consult-org-roam org-download org-remark org-ql org-roam-bibtex olivetti org-roam-ui org-roam deadgrep org-bullets virtualenvwrapper simple-httpd column-enforce-mode conda pyvenv pyenv-mode pyenv magit default-text-scale zygospore writeroom-mode with-editor which-key try smartparens smart-mode-line shell-pop restclient rebecca-theme rainbow-delimiters poet-theme pdf-tools org-ref orderless ob-async neotree multiple-cursors multi mood-line minions mindre-theme markdown-preview-mode lsp-grammarly latex-preview-pane ivy-posframe imenu-anywhere hide-mode-line helm-bibtex gscholar-bibtex goto-chg google-translate flymd expand-region engine-mode disable-mouse diminish diff-hl counsel-projectile company-posframe company-flx beacon auto-complete anzu annotate all-the-icons-ivy-rich ag))
  '(pdf-tools-handle-upgrades nil))
 ;; (custom-set-faces
 ;;  ;; custom-set-faces was added by Custom.
@@ -295,6 +295,7 @@ want to use in the modeline *in lieu of* the original.")
   ;;  '(org-link ((t (:foreground "cornflowerblue" :underline nil)))))
   )
 
+;; FAF9F5
 (defun lgm/set-mindre-theme ()
   "Set the mindre theme"
   (interactive)
@@ -323,7 +324,8 @@ want to use in the modeline *in lieu of* the original.")
  ;; If there is more than one, they won't work right.
  '(diff-hl-change ((t (:background "#3a81c3"))))
  '(diff-hl-delete ((t (:background "#ee6363"))))
- '(diff-hl-insert ((t (:background "#7ccd7c")))))
+ '(diff-hl-insert ((t (:background "#7ccd7c"))))
+ '(jupyter-repl-input-prompt ((t (:foreground "SeaGreen4")))))
 
 ;; Change font size
 ;; Iosevka
@@ -340,16 +342,36 @@ want to use in the modeline *in lieu of* the original.")
 ;;   :ensure t)
 
 ;; Automatically resizes the window I'm focusing
-(use-package golden-ratio
-  :ensure t
-  :init
-  (golden-ratio-mode 1)
-  )
+;; (use-package golden-ratio
+;;   :ensure t
+;;   :init
+;;   (golden-ratio-mode 1)
+;;   )
 
 ;; Add a padding to the buffer
 ;; (use-package spacious-padding
 ;;   :ensure t
 ;;   :hook (after-init . spacious-padding-mode))
+
+
+;; I'm interested only in timestamps, todo keywords, and tables.
+;; I disable the rest since I prefer my own customizations or other packages.
+(use-package org-modern
+  :ensure t
+  :init
+   (setq org-modern-star nil)
+   (setq org-modern-block-name nil)
+   (setq org-modern-keyword nil)
+   (setq org-modern-todo-faces
+      '(("TODO" :inherit (org-modern-todo mindre-keyword mindre-strong) :weight semi-bold)
+        ("STARTED" :inherit org-modern-label :foreground "SeaGreen" :inverse-video t)
+        ("DELEGATED" :inherit org-modern-label :foreground "VioletRed3" :inverse-video t)
+        ("WAIT" :inherit org-modern-label :foreground "HotPink4" :inverse-video t)
+        ("INACTIVE" :inherit org-modern-label :foreground "grey")
+        ("CANCELED" :inherit org-modern-label :foreground "blue" :weight bold)
+        ("FAIL" :inherit org-modern-label :foreground "blue" :weight bold)))
+   (global-org-modern-mode)
+   )
 
 (provide 'aesthetics-settings)
 ;;; aesthetics-settings.el ends here
