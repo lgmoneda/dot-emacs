@@ -2093,7 +2093,7 @@ display the output in a new temporary buffer."
                                       remaining-efforts))))
         (forward-line))))
 
-Run only for work agenda
+;; Run only for work agenda
 (defun my/org-agenda-finalize-for-specific-file ()
   "Customize agenda finalization for a specific org file."
   (when (member "~/Dropbox/Agenda/nu.org" org-agenda-files)

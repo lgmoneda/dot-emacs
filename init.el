@@ -44,6 +44,7 @@
 (require 'python-settings)
 (require 'gpt-settings)
 (require 'assistant-settings)
+(require 'publishing-settings)
 ;; (require 'copilot-settings)
 ;; (require 'processing-settings)
 ;; (require 'nu-settings)
