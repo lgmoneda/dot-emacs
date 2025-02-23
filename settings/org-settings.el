@@ -1287,6 +1287,7 @@ should be continued."
 	 ("C-c n n" . org-id-get-create)
 	 ("C-c n w" . my/drawio-create)
 	 ("C-c n o" . my/drawio-edit)
+	 ("C-c n r" . org-roam-node-random)
 	 )
   :config
   (org-roam-setup)
@@ -1296,15 +1297,16 @@ should be continued."
 		(propertize "${tags:40}" 'face 'org-tag))))
 
 
-(add-to-list 'load-path "~/.emacs.d/elpa/org-roam-ui-20221105.1040/")
-(require 'org-roam-ui)
+;; (add-to-list 'load-path "~/.emacs.d/elpa/org-roam-ui-20221105.1040/")
+;; (require 'org-roam-ui)
 (use-package org-roam-ui
-    :after org-roam
+  :ensure t
+  :after org-roam
 ;;         normally we'd recommend hooking orui after org-roam, but since org-roam does not have
 ;;         a hookable mode anymore, you're advised to pick something yourself
 ;;         if you don't care about startup time, use
 ;;  :hook (after-init . org-roam-ui-mode)
-    :config
+  :config
     (setq org-roam-ui-sync-theme t
           org-roam-ui-follow t
           org-roam-ui-update-on-save t
@@ -1629,7 +1631,7 @@ should be continued."
        "drawio"
        "drawio"
 	   ;; -t, --transparent for transparent png
-       (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io -x -f png --transparent -o %s %s" pngfilepath filepath))
+       (format "exec /Applications/draw.io.app/Contents/MacOS/draw.io -x -f png --transparent --scale 5 -o %s %s" pngfilepath filepath))
       (kill-whole-line)
       (org-insert-link nil (concat "file:" pngfilepath) nil)
       (org-toggle-inline-images)
@@ -1670,16 +1672,6 @@ agenda buffer."
                                     (next-single-property-change (point) 'day))
                                    ")"))
        (forward-line)))))
-
-;; (add-hook 'org-agenda-finalize-hook 'my/org-agenda-insert-efforts)
-
-;; Run only for work agenda
-(defun my/org-agenda-finalize-for-specific-file ()
-  "Customize agenda finalization for a specific org file."
-  (when (member "~/Dropbox/Agenda/nu.org" org-agenda-files)
-    (my/org-agenda-insert-efforts)))
-
-(add-hook 'org-agenda-finalize-hook #'my/org-agenda-finalize-for-specific-file)
 
 (defun lgm/prompt-for-effort-at-date (date)
   "Go through every TODO item scheduled for the specified DATE and prompt the user for the :effort: property if it is not defined.
@@ -1948,7 +1940,7 @@ display the output in a new temporary buffer."
 	  )
 	)
 
-;; (add-to-list 'load-path "~/.emacs.d/elpa/consult-org-roam-20240217.1442")
+;; (add-to-list 'load-path "~/.emacs.d/elpa/consult-org-roam")
 ;; (require 'consult-org-roam)
 (use-package consult-org-roam
    :ensure t
@@ -2066,21 +2058,49 @@ display the output in a new temporary buffer."
 (defun my/org-agenda-insert-efforts ()
   "Insert the efforts for each day inside the agenda buffer."
   (save-excursion
-    (let (pos total-efforts remaining-efforts percentage)
-      (while (setq pos (text-property-any
-			(point) (point-max) 'org-agenda-date-header t))
-	(goto-char pos)
-	(end-of-line)
-	(setq total-efforts (my/org-agenda-calculate-total-efforts (next-single-property-change (point) 'day)))
-	(setq remaining-efforts (my/org-agenda-calculate-state-efforts (next-single-property-change (point) 'day) "TODO"))
-	(setq blocked-efforts (my/org-agenda-calculate-state-efforts (next-single-property-change (point) 'day) "WAIT"))
-	(setq blocked-percentage (/ (org-duration-to-minutes blocked-efforts) (org-duration-to-minutes total-efforts)))
-	(setq percentage (- 1 (/ (org-duration-to-minutes remaining-efforts) (org-duration-to-minutes total-efforts))))
-	(setq accomplished-percentage (- percentage blocked-percentage))
-	(insert-and-inherit (concat " (" (number-to-string (floor (* accomplished-percentage 100))) "% done, " (number-to-string (floor (* blocked-percentage 100))) "% blocked, " total-efforts " total, " remaining-efforts " remaining)"))
-	(forward-line)))))
+    (let (pos total-efforts remaining-efforts blocked-efforts 
+              total-minutes remaining-minutes blocked-minutes 
+              accomplished-percentage blocked-percentage)
+      (while (setq pos (text-property-any (point) (point-max) 'org-agenda-date-header t))
+        (goto-char pos)
+        (end-of-line)
+        (let ((day-end (or (next-single-property-change (point) 'day) (point-max)))) ;; Prevent nil
+          (setq total-efforts (my/org-agenda-calculate-total-efforts day-end))
+          (setq remaining-efforts (my/org-agenda-calculate-state-efforts day-end "TODO"))
+          (setq blocked-efforts (my/org-agenda-calculate-state-efforts day-end "WAIT")))
 
-;; There is a bug preventing the agenda view to finish
+        ;; Skip if no tasks exist (total-efforts is nil)
+        (when total-efforts
+          ;; Convert to minutes (handle nil cases)
+          (setq total-minutes (or (org-duration-to-minutes total-efforts) 0))
+          (setq remaining-minutes (or (org-duration-to-minutes remaining-efforts) 0))
+          (setq blocked-minutes (or (org-duration-to-minutes blocked-efforts) 0))
+
+          ;; Avoid division by zero
+          (if (<= total-minutes 0)
+              (setq accomplished-percentage 0
+                    blocked-percentage 0)
+            (setq blocked-percentage (/ (float blocked-minutes) total-minutes))
+            (setq accomplished-percentage (- 1 (/ (float remaining-minutes) total-minutes)))
+            (setq accomplished-percentage (max 0.0 accomplished-percentage)) ;; Avoid negatives
+            (setq blocked-percentage (max 0.0 blocked-percentage)))
+
+          ;; Insert results
+          (insert-and-inherit (format " (%.0f%% done, %.0f%% blocked, %s total, %s remaining)"
+                                      (* 100 accomplished-percentage)
+                                      (* 100 blocked-percentage)
+                                      total-efforts
+                                      remaining-efforts))))
+        (forward-line))))
+
+Run only for work agenda
+(defun my/org-agenda-finalize-for-specific-file ()
+  "Customize agenda finalization for a specific org file."
+  (when (member "~/Dropbox/Agenda/nu.org" org-agenda-files)
+    (my/org-agenda-insert-efforts)))
+
+(add-hook 'org-agenda-finalize-hook #'my/org-agenda-finalize-for-specific-file)
+
 ;; (add-hook 'org-agenda-finalize-hook 'my/org-agenda-insert-efforts)
 
 ;; This is an Emacs package that creates graphviz directed graphs from
@@ -2404,6 +2424,7 @@ Prompts for the output filename, defaulting to the original Org file's name."
                          (when (org-in-regexp org-link-bracket-re)
                            (org-element-property :path (org-element-context)))))
          (classes '("Topic & Sub-topic"
+					"Concept & Instance"
                     "Opposing ideas"
                     "Causal relationship"
                     "Component"
@@ -2421,6 +2442,33 @@ Prompts for the output filename, defaulting to the original Org file's name."
           (message "Link labeled and saved: %s -> %s (%s)" input-node-id link-node-id selected-class))
       (message "Failed to capture node IDs. Ensure you're on a valid Org-roam link."))))
 
+(defun my/fetch-and-display-webpage (url)
+  "Fetch a webpage URL and display its content in a temporary buffer, fixing relative image paths."
+  (interactive "sEnter URL: ")
+  (url-retrieve
+   url
+   (lambda (_status)
+     (goto-char (point-min))
+     (when (re-search-forward "\n\n" nil t)
+       (let* ((html (buffer-substring (point) (point-max)))
+              (base-url (if (string-match "://[^/]+/" url)
+                            (match-string 0 url)
+                          (concat "https://" url)))
+			  (base-url-complete (concat "https" base-url) ))
+         ;; Fix relative image paths
+		 (message base-url-complete)
+         (setq html (replace-regexp-in-string
+                     "src=\"/[^/]"
+                     (concat "src=\"" base-url-complete)
+                     html))
+         (with-temp-buffer
+           (insert html)
+           (set-buffer-multibyte t)
+           (decode-coding-region (point-min) (point-max) 'utf-8)
+           (shr-render-buffer (current-buffer))
+           (pop-to-buffer (current-buffer))
+           (rename-buffer "*Webpage View*")))))
+   nil t))
 
 (provide 'org-settings)
 ;;; org-settings.el ends here
