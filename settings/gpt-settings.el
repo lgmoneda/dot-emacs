@@ -150,6 +150,7 @@ display the output in a new temporary buffer."
   :init
   ;; (setq chatgpt-repo-path (expand-file-name "chatgpt-shell/" quelpa-build-dir))
   (setq chatgpt-shell-openai-key (getenv "OPENAI_API_KEY"))
+  (setq chatgpt-shell-anthropic-key (getenv "ANTHROPIC_API_KEY"))
   (setq chatgpt-shell-chatgpt-streaming t)
   ;; (setq chatgpt-shell-openai-key
   ;;     (plist-get (car (auth-source-search :host "openai.com"))

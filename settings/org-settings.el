@@ -87,6 +87,66 @@
 ;; Call it using xbar, with a org-clock.ls.sh on xbar's folder
 ;; emacsclient --eval "(my-clock-string)" | sed 's/["()]//g'
 
+(defvar my-org-clock-halfway-notification-shown nil
+  "Tracks whether the halfway notification has been shown for the current task.")
+
+(defun my-org-clock-notify-at-halfway ()
+  "Show a notification when 50% of the estimated effort has passed."
+  (when (org-clocking-p)
+    (let ((effort-in-minutes (org-duration-to-minutes org-clock-effort))
+          (clocked-time (org-clock-get-clocked-time)))
+      (when (and effort-in-minutes (> effort-in-minutes 0))
+        (let ((halfway-time (/ effort-in-minutes 2)))
+          (if (and (>= clocked-time halfway-time)
+                   (not my-org-clock-halfway-notification-shown))
+              (progn
+                (setq my-org-clock-halfway-notification-shown t)
+                (org-notify
+                 (format "Halfway in task: `%s'. (%s)"
+                         org-clock-heading org-clock-effort)
+                 org-clock-sound))
+            (unless (>= clocked-time halfway-time)
+              (setq my-org-clock-halfway-notification-shown nil)
+			  )))))))
+
+(add-hook 'org-clock-in-hook (lambda ()
+                               (setq my-org-clock-halfway-notification-shown nil)))
+
+(add-hook 'org-clock-out-hook (lambda ()
+                                (setq my-org-clock-halfway-notification-shown nil)))
+
+;; Modifying the original org-clock function to add the halfway notification
+(defun org-clock-update-mode-line (&optional refresh)
+  "Update mode line with clock information.
+When optional argument is non-nil, refresh cached heading."
+  (if org-clock-effort
+      (org-clock-notify-once-if-expired)
+    (setq org-clock-task-overrun nil))
+    (if org-clock-effort
+		(my-org-clock-notify-at-halfway)
+	  )
+  (when refresh (setq org-clock-heading (org-clock--mode-line-heading)))
+  (setq org-mode-line-string
+	(propertize
+	 (let ((clock-string (org-clock-get-clock-string))
+	       (help-text "Org mode clock is running.\nmouse-1 shows a \
+menu\nmouse-2 will jump to task"))
+	   (if (and (> org-clock-string-limit 0)
+		    (> (length clock-string) org-clock-string-limit))
+	       (propertize
+		(substring clock-string 0 org-clock-string-limit)
+		'help-echo (concat help-text ": " org-clock-heading))
+	     (propertize clock-string 'help-echo help-text)))
+	 'local-map org-clock-mode-line-map
+	 'mouse-face 'mode-line-highlight))
+  (if (and org-clock-task-overrun org-clock-task-overrun-text)
+      (setq org-mode-line-string
+	    (concat (propertize
+		     org-clock-task-overrun-text
+		     'face 'org-mode-line-clock-overrun)
+		    org-mode-line-string)))
+  (force-mode-line-update))
+
 ;; Change viewer apps C-c C-o
 ;; When not in MAC
 (unless (string-equal system-type "darwin")
@@ -146,7 +206,7 @@
 (use-package simple-httpd
   :ensure t)
 
-(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/jupyter-20241004.241/")
+(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/jupyter-20241203.1917/")
 (autoload 'jupyter "jupyter" "" t)
 ;; (require 'jupyter)
 (load "jupyter")
@@ -2058,8 +2118,8 @@ display the output in a new temporary buffer."
 (defun my/org-agenda-insert-efforts ()
   "Insert the efforts for each day inside the agenda buffer."
   (save-excursion
-    (let (pos total-efforts remaining-efforts blocked-efforts 
-              total-minutes remaining-minutes blocked-minutes 
+    (let (pos total-efforts remaining-efforts blocked-efforts
+              total-minutes remaining-minutes blocked-minutes
               accomplished-percentage blocked-percentage)
       (while (setq pos (text-property-any (point) (point-max) 'org-agenda-date-header t))
         (goto-char pos)
@@ -2423,14 +2483,11 @@ Prompts for the output filename, defaulting to the original Org file's name."
          (link-node-id (save-excursion
                          (when (org-in-regexp org-link-bracket-re)
                            (org-element-property :path (org-element-context)))))
-         (classes '("Topic & Sub-topic"
-					"Concept & Instance"
-                    "Opposing ideas"
-                    "Causal relationship"
-                    "Component"
-                    "Prerequisite"
-                    "Referential"
-                    "Supporting evidence"))
+         (classes '("Compositional"
+		    "Contrasting"
+		    "Analogous"
+		    "Referential"
+                    "Artistic"))
          (selected-class (completing-read "Select link type: " classes))
          (datetime (format-time-string "%Y-%m-%d %H:%M:%S"))
          (csv-file "/Users/luis.moneda/Dropbox/Agenda/org-roam-ai/datasets/nodes_link_type_human_labeling.csv"))

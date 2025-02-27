@@ -14,8 +14,9 @@
 				      (setq exec-path (append (parse-colon-path (getenv "PATH")) (list exec-directory)))
 
 				      ))
+	 ;; I define it differently in another place, take a look when needed
 	 (setq markdown-command "/usr/local/bin/pandoc")
-	 (setq ispell-program-name "/usr/local/bin/aspell")
+	 (setq ispell-program-name "/opt/homebrew/bin/aspell")
 	 (setenv "PATH" "/usr/local/bin:/Library/TeX/texbin/:$PATH" t)
 	 )
 	)
@@ -34,6 +35,7 @@
   :config
   (exec-path-from-shell-initialize)
   (exec-path-from-shell-copy-env "OPENAI_API_KEY")
+  (exec-path-from-shell-copy-env "ANTHROPIC_API_KEY")
   )
 
 (provide 'os-settings)

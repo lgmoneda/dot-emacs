@@ -335,4 +335,3 @@
 
 (provide 'editor-settings)
 ;;; editor-settings.el ends here
-

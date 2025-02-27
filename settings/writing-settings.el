@@ -138,7 +138,10 @@
 (setq reftex-plug-into-AUCTeX t)
 
 (use-package biblio-core
-  :ensure t)
+  :ensure t
+  :init
+  (setq biblio-bibtex-file "~/Dropbox/Research/library.bib")
+  )
 
 ;; ivy-bibtex
 (use-package helm-bibtex
@@ -209,6 +212,13 @@
   :ensure t)
 ;; Where to add bibtex from google scholar
 (setq gscholar-bibtex-database-file "~/Dropbox/Research/library.bib")
+(setq gscholar-bibtex-default-source "Google Scholar")
+
+;; Since gscholar sometimes fails and I have to edit my bib file directly, here's a convenient way of doing it
+(defun lgm/open-bib ()
+  "Open the BibTeX library file."
+  (interactive)
+  (find-file "~/Dropbox/Research/library.bib"))
 
 ;;If one file per publication is preferred, bibtex-completion-notes-path should point to the directory used for storing the notes files:
 (setq bibtex-completion-notes-path "~/Dropbox/Agenda/roam/")
@@ -355,6 +365,19 @@
      ((eq system-type 'windows-nt)
       (message "Windows support not implemented yet!")))
     (message "Image copied to clipboard from %s" url)))
+
+;; I'm unsure if I will need it. Check in the future.
+;; (use-package lsp-ltex
+;;   :ensure t
+;;   :hook (text-mode . (lambda ()
+;;                        (require 'lsp-ltex)
+;;                        (lsp)))  ; or lsp-deferred
+;;   :init
+;;   (setq lsp-ltex-version "15.2.0"))  ; make sure you have set this, see below
+
+(setq langtool-language-tool-jar "/Users/luis.moneda/repos/LanguageTool-6.5/languagetool-commandline.jar")
+(use-package langtool
+  :ensure t)
 
 (provide 'writing-settings)
 ;;; writing-settings.el ends here
