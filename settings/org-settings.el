@@ -2476,28 +2476,68 @@ Prompts for the output filename, defaulting to the original Org file's name."
   :config (citar-org-roam-mode))
 
 ;; This function helps me label data for fine-tuning
+(defun lgm/extract-citation-key (link)
+  "Extract citation key from an Org citation link."
+  (when (string-match "\\(?:cite\\(?:/[^:]+\\)?\\):\\(?:&?\\)\\([^]]+\\)" link)
+    (match-string 1 link)))
+
 (defun lgm/org-roam-node-link-human-labeling ()
   "Label a link in an Org-roam node with a human-defined type."
   (interactive)
-  (let* ((input-node-id (org-id-get))
-         (link-node-id (save-excursion
-                         (when (org-in-regexp org-link-bracket-re)
-                           (org-element-property :path (org-element-context)))))
-         (classes '("Compositional"
-		    "Contrasting"
-		    "Analogous"
-		    "Referential"
-                    "Artistic"))
-         (selected-class (completing-read "Select link type: " classes))
-         (datetime (format-time-string "%Y-%m-%d %H:%M:%S"))
-         (csv-file "/Users/luis.moneda/Dropbox/Agenda/org-roam-ai/datasets/nodes_link_type_human_labeling.csv"))
+  (let* ((element (org-element-context))
+         (input-node-id (or (org-id-get)  ;; First, try to get the ID
+                            (when (org-roam-node-at-point)  ;; If nil, find nearest Org-roam node
+                              (org-roam-node-id (org-roam-node-at-point)))))
+         (link nil)  ;; Store the extracted link
+         (link-node-id nil)) ;; Store the resolved node ID
+
+    ;; Ensure `input-node-id` exists
+    (unless input-node-id
+      (message "[ERROR] No Org-roam node ID found for the current entry.")
+      (return-from lgm/org-roam-node-link-human-labeling))
+
+    ;; Determine if the element is a standard link or a citation
+    (cond
+     ;; Handle standard Org links [[id:...]]
+     ((eq (org-element-type element) 'link)
+      (setq link (org-element-property :path element)))
+
+     ;; Handle citation links [cite:@ref]
+     ((eq (org-element-type element) 'citation-reference)
+      (setq link (org-element-property :key element))))
+
+    ;; Debug messages
+    ;; (message "[DEBUG] Org element type: %s" (org-element-type element))
+    ;; (message "[DEBUG] Extracted link: %s" (or link "nil"))
+    ;; (message "[DEBUG] Input node-id: %s" (or input-node-id "nil"))
+
+    ;; Resolve the link if it's a citation
+    (when link
+      (setq link-node-id
+            (if (eq (org-element-type element) 'citation-reference)
+                (let* ((citation-key link)
+                       (node (org-roam-node-from-ref (format "cite:%s" citation-key))))
+                  (message "[DEBUG] Extracted citation key: %s" citation-key)
+                  (message "[DEBUG] Found Org-roam node: %s"
+                           (if node (org-roam-node-id node) "nil"))
+                  (when node (org-roam-node-id node)))
+              ;; Otherwise, assume it's a normal Org-roam link
+              link)))
+
+    ;; Debug messages
+    ;; (message "[DEBUG] Final link-node-id: %s" (or link-node-id "nil"))
+
+    ;; If both nodes are found, proceed with labeling
     (if (and input-node-id link-node-id)
-        (progn
+        (let* ((classes '("Compositional" "Contrasting" "Analogous" "Referential" "Artistic"))
+               (selected-class (completing-read "Select link type: " classes))
+               (datetime (format-time-string "%Y-%m-%d %H:%M:%S"))
+               (csv-file "/Users/luis.moneda/Dropbox/Agenda/org-roam-ai/datasets/nodes_link_type_human_labeling.csv"))
           (with-temp-buffer
             (insert (format "%s,%s,%s,%s\n" datetime input-node-id link-node-id selected-class))
             (append-to-file (point-min) (point-max) csv-file))
           (message "Link labeled and saved: %s -> %s (%s)" input-node-id link-node-id selected-class))
-      (message "Failed to capture node IDs. Ensure you're on a valid Org-roam link."))))
+      (message "Failed to capture node IDs. Ensure you're on a valid Org-roam or citation link."))))
 
 (defun my/fetch-and-display-webpage (url)
   "Fetch a webpage URL and display its content in a temporary buffer, fixing relative image paths."
