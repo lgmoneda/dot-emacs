@@ -301,6 +301,11 @@ This should only apply to jupyter-lang blocks."
 
 (add-to-list 'org-babel-after-execute-hook 'scimax-jupyter-ansi t)
 
+;; Navigation in code blocks
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "M-n") #'org-babel-next-src-block)
+  (define-key org-mode-map (kbd "M-p") #'org-babel-previous-src-block))
+
 ;; ;; to redefine images from evaluating code blocks
 ;; After executing code, it displays the image
 (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
