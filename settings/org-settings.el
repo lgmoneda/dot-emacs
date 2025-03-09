@@ -303,7 +303,12 @@ This should only apply to jupyter-lang blocks."
 
 ;; Navigation in code blocks
 (with-eval-after-load 'org
-  (define-key org-mode-map (kbd "M-n") #'org-babel-next-src-block)
+  ;; Custom function to move to the next block and recenter the view.
+  (defun my-org-next-src-block-and-recenter ()
+    (interactive)
+    (org-babel-next-src-block)
+    (recenter-top-bottom 0))
+    (define-key org-mode-map (kbd "M-n") #'my-org-next-src-block-and-recenter)
   (define-key org-mode-map (kbd "M-p") #'org-babel-previous-src-block))
 
 ;; ;; to redefine images from evaluating code blocks
@@ -2571,6 +2576,9 @@ Prompts for the output filename, defaulting to the original Org file's name."
            (pop-to-buffer (current-buffer))
            (rename-buffer "*Webpage View*")))))
    nil t))
+
+;; I want to have italic text in org mode quote blocks
+(setq org-fontify-quote-and-verse-blocks t)
 
 (provide 'org-settings)
 ;;; org-settings.el ends here
