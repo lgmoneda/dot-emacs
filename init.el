@@ -45,6 +45,7 @@
 (require 'gpt-settings)
 (require 'assistant-settings)
 (require 'publishing-settings)
+(require 'reading-settings)
 ;; (require 'copilot-settings)
 ;; (require 'processing-settings)
 ;; (require 'nu-settings)
