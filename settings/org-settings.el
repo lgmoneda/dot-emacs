@@ -751,13 +751,17 @@ this command to copy it"
 ;; Identify with a symbol when a scheduled to-do has children
 (with-eval-after-load 'org-agenda
   (defun my/org-has-children ()
-    (if (save-excursion (org-goto-first-child)) "▶" "  ")
+    (if (save-excursion (org-goto-first-child)) "▶ " "   ")
   )
   (add-to-list 'org-agenda-prefix-format '(
      agenda  . "%i%-3:(my/org-has-children) %-12:c%?-12t% s "
   ))
-)
+  )
 
+;; (defun my/org-has-children ()
+;;   (if (save-excursion (org-goto-first-child))
+;;       (propertize "▶" 'face 'shadow) ;; 'shadow' is a default Emacs subtle gray
+;;     "  "))
 
 ;; From https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html
 (defun air-org-skip-subtree-if-habit ()
@@ -799,7 +803,7 @@ this command to copy it"
 	  			   (org-agenda-overriding-header "Week tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 				   (org-agenda-scheduled-leaders '("" ""))
 				   ;; (org-agenda-prefix-format "    %i %-12:c")
-				   (org-agenda-prefix-format "    %i %-12:c%(my/org-has-children)")
+				   (org-agenda-prefix-format "    %i %-10:c%(my/org-has-children)")
 	  			   ))
 
 		  ;; High priority tasks
@@ -908,7 +912,7 @@ this command to copy it"
 	  					 (org-agenda-entry-types '(:deadline :scheduled))
 	  					 (org-agenda-overriding-header "⏳ Week tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 						 (org-agenda-scheduled-leaders '("" ""))
-						 (org-agenda-prefix-format "    %i %-4e %-12:c%(my/org-has-children)")
+						 (org-agenda-prefix-format "    %i %-4e %-10:c%(my/org-has-children)")
 						 (org-agenda-remove-tags t)
 						 (org-agenda-skip-function '(air-org-skip-subtree-if-habit))
 						 (org-agenda-skip-function '(my-org-agenda-skip-if-parent-has-tag "bulk"))
