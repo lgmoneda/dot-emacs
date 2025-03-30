@@ -401,14 +401,28 @@
                  (json-parse-buffer :object-type 'alist)))
          (title (cdr (assoc 'title json)))
          (author (cdr (assoc 'author_name json)))
-         (year (format-time-string "%Y" (current-time)))
-         (entry (format "@misc{%s,
+         ;; Get publication date using YouTube Data API
+         (data-api-url (concat "https://www.googleapis.com/youtube/v3/videos?id="
+                               video-id
+                               "&part=snippet&key=" (getenv "GOOGLE_API_KEY")))
+         (data-json (with-temp-buffer
+                      (url-insert-file-contents data-api-url)
+                      (json-parse-buffer :object-type 'alist)))
+         (published-at (cdr (assoc 'publishedAt
+                                   (cdr (assoc 'snippet
+                                               (aref (cdr (assoc 'items data-json)) 0))))))
+         (year (if published-at
+                   (substring published-at 0 4)  ;; Extract year from ISO date format
+                 (format-time-string "%Y" (current-time))))  ;; Fallback to current year
+         (access-date (format-time-string "%Y-%m-%d" (current-time)))
+         (entry (format "@misc{youtube:%s,
   author = {%s},
   title = {%s},
   year = {%s},
-  howpublished = {\\url{%s}}
+  howpublished = {\\url{%s}},
+  note = {Accessed: %s}
 }
-" video-id author title year url)))
+" video-id author title year url access-date)))
     (with-temp-buffer
       (insert entry)
       (append-to-file (point-min) (point-max) "~/Dropbox/Research/library.bib"))
