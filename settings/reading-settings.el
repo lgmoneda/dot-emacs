@@ -390,5 +390,15 @@
                            epub-dir output-epub output-epub))
     (message "EPUB saved as %s" output-epub)))
 
+(defun lgm/convert-pdf-to-epub (input)
+  "Convert a PDF file to EPUB using `pdf_to_epub.py`. INPUT can be a URL or a local file."
+  (interactive
+   (list (if (y-or-n-p "Convert from URL? ")
+             (read-string "Enter PDF URL: ")
+           (read-file-name "Choose a PDF file: "))))
+  (let ((command (format "source ~/.zshrc && conda activate ml3 && python /Users/luis.moneda/repos/my-life-scripts/pdf-to-epub/pdf_to_epub.py %s" (shell-quote-argument input))))
+    (message "Running: %s" command)
+    (async-shell-command command)))
+
 (provide 'reading-settings)
 ;;; reading-settings.el ends here
