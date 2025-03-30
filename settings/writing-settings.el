@@ -379,5 +379,45 @@
 (use-package langtool
   :ensure t)
 
+(defun lgm/youtube-generate-bibtex (url)
+  "Generate a BibTeX citation for a given YouTube URL and append it to the library.bib file."
+  (interactive "sEnter YouTube URL: ")
+  (let* ((video-id (cond
+                    ;; Match standard YouTube URLs
+                    ((string-match "youtube\\.com/watch\\?v=\\([^&]+\\)" url)
+                     (match-string 1 url))
+                    ;; Match shortened youtu.be URLs
+                    ((string-match "youtu\\.be/\\([^?&]+\\)" url)
+                     (match-string 1 url))
+                    ;; Match embedded URLs
+                    ((string-match "youtube\\.com/embed/\\([^?&]+\\)" url)
+                     (match-string 1 url))
+                    ;; If no pattern matches, throw an error
+                    (t (error "Invalid YouTube URL"))))
+         (api-url (concat "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v="
+                          (url-encode-url video-id) "&format=json"))
+         (json (with-temp-buffer
+                 (url-insert-file-contents api-url)
+                 (json-parse-buffer :object-type 'alist)))
+         (title (cdr (assoc 'title json)))
+         (author (cdr (assoc 'author_name json)))
+         (year (format-time-string "%Y" (current-time)))
+         (entry (format "@misc{%s,
+  author = {%s},
+  title = {%s},
+  year = {%s},
+  howpublished = {\\url{%s}}
+}
+" video-id author title year url)))
+    (with-temp-buffer
+      (insert entry)
+      (append-to-file (point-min) (point-max) "~/Dropbox/Research/library.bib"))
+    (message "BibTeX entry added: %s" entry)))
+
+(provide 'writing-settings)
+;;; writing-settings.el ends here
+
+
+
 (provide 'writing-settings)
 ;;; writing-settings.el ends here
