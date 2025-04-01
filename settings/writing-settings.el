@@ -382,7 +382,10 @@
 (defun lgm/youtube-generate-bibtex (url)
   "Generate a BibTeX citation for a given YouTube URL and append it to the library.bib file."
   (interactive "sEnter YouTube URL: ")
-  (let* ((video-id (cond
+  (message "Processing URL: %s" url)
+
+  (let* ((api-key (getenv "GOOGLE_API_KEY"))
+         (video-id (cond
                     ;; Match standard YouTube URLs
                     ((string-match "youtube\\.com/watch\\?v=\\([^&]+\\)" url)
                      (match-string 1 url))
@@ -393,40 +396,81 @@
                     ((string-match "youtube\\.com/embed/\\([^?&]+\\)" url)
                      (match-string 1 url))
                     ;; If no pattern matches, throw an error
-                    (t (error "Invalid YouTube URL"))))
-         (api-url (concat "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v="
-                          (url-encode-url video-id) "&format=json"))
-         (json (with-temp-buffer
-                 (url-insert-file-contents api-url)
-                 (json-parse-buffer :object-type 'alist)))
-         (title (cdr (assoc 'title json)))
-         (author (cdr (assoc 'author_name json)))
-         ;; Get publication date using YouTube Data API
-         (data-api-url (concat "https://www.googleapis.com/youtube/v3/videos?id="
-                               video-id
-                               "&part=snippet&key=" (getenv "GOOGLE_API_KEY")))
-         (data-json (with-temp-buffer
-                      (url-insert-file-contents data-api-url)
-                      (json-parse-buffer :object-type 'alist)))
-         (published-at (cdr (assoc 'publishedAt
-                                   (cdr (assoc 'snippet
-                                               (aref (cdr (assoc 'items data-json)) 0))))))
-         (year (if published-at
-                   (substring published-at 0 4)  ;; Extract year from ISO date format
-                 (format-time-string "%Y" (current-time))))  ;; Fallback to current year
-         (access-date (format-time-string "%Y-%m-%d" (current-time)))
-         (entry (format "@misc{youtube:%s,
+                    (t (error "Invalid YouTube URL")))))
+
+    (if (not api-key)
+        (error "GOOGLE_API_KEY environment variable not set. Please set it before using this function.")
+
+      (message "Extracted video ID: %s" video-id)
+
+      (let* ((data-api-url (concat "https://www.googleapis.com/youtube/v3/videos?id="
+                                   video-id
+                                   "&part=snippet&key=" api-key))
+             (curl-command (concat "curl -s \"" data-api-url "\""))
+             json-string
+             json-data
+             items
+             video-data
+             snippet
+             title
+             author
+             published-at
+             year
+             access-date
+             entry)
+
+        (message "Fetching data from YouTube Data API using curl")
+
+        (condition-case err
+            (progn
+              (setq json-string (shell-command-to-string curl-command))
+              (message "Received raw data (first 100 chars): %s"
+                       (if (> (length json-string) 100)
+                           (concat (substring json-string 0 100) "...")
+                         json-string))
+
+              ;; Parse JSON using alist objects instead of hash tables
+              (setq json-data (json-parse-string json-string :object-type 'alist))
+
+              ;; Extract items array
+              (setq items (cdr (assoc 'items json-data)))
+
+              ;; Check if we have items in the response
+              (if (= 0 (length items))
+                  (error "No video data found for ID: %s" video-id)
+
+                ;; Get the first video item (should be the only one)
+                (setq video-data (aref items 0))
+                (setq snippet (cdr (assoc 'snippet video-data)))
+
+                (setq title (cdr (assoc 'title snippet)))
+                (setq author (cdr (assoc 'channelTitle snippet)))
+                (setq published-at (cdr (assoc 'publishedAt snippet)))
+
+                ;; Extract year from ISO date format (YYYY-MM-DDThh:mm:ss.sssZ)
+                (setq year (if published-at
+                               (substring published-at 0 4)
+                             (format-time-string "%Y" (current-time))))
+
+                (setq access-date (format-time-string "%Y-%m-%d" (current-time)))
+
+                (message "Successfully retrieved video info: %s by %s (%s)" title author year)
+
+                (setq entry (format "@misc{youtube:%s,
   author = {%s},
   title = {%s},
   year = {%s},
   howpublished = {\\url{%s}},
   note = {Accessed: %s}
 }
-" video-id author title year url access-date)))
-    (with-temp-buffer
-      (insert entry)
-      (append-to-file (point-min) (point-max) "~/Dropbox/Research/library.bib"))
-    (message "BibTeX entry added: %s" entry)))
+" video-id author title year url access-date))
+
+                (with-temp-buffer
+                  (insert entry)
+                  (append-to-file (point-min) (point-max) "~/Dropbox/Research/library.bib"))
+                (message "BibTeX entry added: %s" entry)))
+
+          (error (message "Error occurred: %s" (error-message-string err))))))))
 
 (provide 'writing-settings)
 ;;; writing-settings.el ends here
