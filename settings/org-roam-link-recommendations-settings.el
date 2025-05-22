@@ -102,10 +102,10 @@ Optional argument K specifies the number of initial candidates to retrieve."
       (search-forward-regexp "\n\n")
       (buffer-substring (point) (point-max)))))
 
+;; I'm defining this function twice in my files...
 (defun org-roam-semantic-search-api (&optional k)
   "Call the semantic search API with text as input and display the results.
 If region is active, use the selected text as query.
-If called inside an org-roam node, use the node's content and ID.
 Otherwise, prompt for input text.
 Optional argument K specifies the number of initial candidates to retrieve."
   (interactive "P")
@@ -120,14 +120,6 @@ Optional argument K specifies the number of initial candidates to retrieve."
       (let ((text (buffer-substring-no-properties (region-beginning) (region-end))))
         (setq api-output (call-roam-search-python-server text k-value))))
 
-     ;; Case 2: Inside an org-roam node - use node content and ID
-     ((and (derived-mode-p 'org-mode)
-           (fboundp 'org-roam-current-node-id)
-           (org-roam-current-node-id))
-      (let ((node-content (org-roam-node-content))
-            (node-id (org-roam-current-node-id)))
-        (setq api-output (call-roam-search-python-server-with-node-id node-content node-id k-value))))
-
      ;; Case 3: Neither region nor org-roam node - prompt for input
      (t
       (let ((text (read-string "Enter search: ")))
@@ -140,7 +132,11 @@ Optional argument K specifies the number of initial candidates to retrieve."
       (org-mode)
       (insert (decode-coding-string api-output 'utf-8))
       (org-shifttab 2) ;; Show level 2 headings (class headings)
-      (display-buffer buf))))
+      (goto-char (point-min)) ;; Move to beginning of buffer
+      (org-next-visible-heading 1) ;; Move to first heading
+      (display-buffer buf)))
+  )
+
 
 (defun call-roam-search-python-server (input-string &optional k)
   "Call semantic search Python server with INPUT-STRING and return the output.
