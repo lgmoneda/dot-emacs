@@ -2585,7 +2585,7 @@ Prompts for the output filename, defaulting to the original Org file's name."
               (base-url (if (string-match "://[^/]+/" url)
                             (match-string 0 url)
                           (concat "https://" url)))
-			  (base-url-complete (concat "https" base-url) ))
+	      (base-url-complete (concat "https" base-url)))
          ;; Fix relative image paths
 		 (message base-url-complete)
          (setq html (replace-regexp-in-string
