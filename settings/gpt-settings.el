@@ -162,7 +162,9 @@ display the output in a new temporary buffer."
   ;; (require 'ob-dall-e-shell)
   :bind
   ("C-c q" . chatgpt-shell)
-  ("C-c d" . dall-e-shell))
+  ("C-c d" . chatgpt-shell-send-and-review-region)
+  ;; ("C-c d" . dall-e-shell)
+  )
 
 ;; Whisper
 ;; (use-package whisper
@@ -223,7 +225,7 @@ display the output in a new temporary buffer."
 
 (defun start-semantic-search ()
   (interactive)
-  (async-shell-command "source ~/.zshrc && conda activate ml3 && python /Users/luis.moneda/repos/org-roam-ai/semantic_search.py")
+  (async-shell-command "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m core.semantic_search")
   (delete-window (get-buffer-window (get-buffer "*Async Shell Command*"))))
 
 (start-semantic-search)
@@ -257,7 +259,7 @@ display the output in a new temporary buffer."
 
 (defun start-qna ()
   (interactive)
-  (async-shell-command "source ~/.zshrc && conda activate ml3 && python /Users/luis.moneda/repos/org-roam-ai/qna.py")
+  (async-shell-command "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m core.qna")
   (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<2>"))))
 
 (start-qna)
@@ -398,7 +400,7 @@ display the output in a new temporary buffer."
 ;; Using python code to do the parsing so I can apply ml models
 (defun start-discourse-segmentation ()
   (interactive)
-  (async-shell-command "source ~/.zshrc && conda activate ml3 && python /Users/luis.moneda/repos/org-roam-ai/discourse_segmentation.py")
+  (async-shell-command "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m core.discourse_segmentation")
   (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<3>"))))
 
 (start-discourse-segmentation)
@@ -602,8 +604,14 @@ Provides a selection from a predefined list, but also allows custom input."
 
 	(message "Org buffer created with image and link.")))
 
-(provide 'gpt-settings)
-;;; gpt-settings.el ends here
+
+;;gpt.el
+(use-package gptel
+  :ensure t
+  :init
+  (setq gptel-api-key (getenv "OPENAI_API_KEY"))
+  (gptel-make-anthropic "Claude" :stream t :key (getenv "ANTHROPIC_API_KEY"))
+  )
 
 (provide 'gpt-settings)
 ;;; gpt-settings.el ends here

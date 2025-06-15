@@ -36,7 +36,8 @@
   (exec-path-from-shell-initialize)
   (exec-path-from-shell-copy-env "OPENAI_API_KEY")
   (exec-path-from-shell-copy-env "ANTHROPIC_API_KEY")
-  (exec-path-from-shell-copy-env "ANTHROPIC_API_KEY")
+  (exec-path-from-shell-copy-env "GOOGLE_API_KEY")
+  (exec-path-from-shell-copy-env "OPENROUTER_API_KEY")
   )
 
 (provide 'os-settings)

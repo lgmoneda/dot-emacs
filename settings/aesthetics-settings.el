@@ -156,7 +156,7 @@ want to use in the modeline *in lieu of* the original.")
  ;; If there is more than one, they won't work right.
  '(conda-anaconda-home "/Users/luis.moneda/miniconda3")
  '(package-selected-packages
-   '(langtool org-modern nov shrface consult vertico citar-org-roam citar-embark citar ox-bibtex ivy-bibtex ox-gfm spacious-padding golden-ratio embark-consult embark exec-path-from-shell smex ob-chatgpt-shell quelpa-use-package copilot org-emms emms chatgpt-shell pyimport electric-operator org-present org-tree-slide org-transclusion org-mind-map consult-org-roam org-download org-remark org-ql org-roam-bibtex olivetti org-roam-ui org-roam deadgrep org-bullets virtualenvwrapper simple-httpd column-enforce-mode conda pyvenv pyenv-mode pyenv magit default-text-scale zygospore writeroom-mode with-editor which-key try smartparens smart-mode-line shell-pop restclient rebecca-theme rainbow-delimiters poet-theme pdf-tools org-ref orderless ob-async neotree multiple-cursors multi mood-line minions mindre-theme markdown-preview-mode lsp-grammarly latex-preview-pane ivy-posframe imenu-anywhere hide-mode-line helm-bibtex gscholar-bibtex goto-chg google-translate flymd expand-region engine-mode disable-mouse diminish diff-hl counsel-projectile company-posframe company-flx beacon auto-complete anzu annotate all-the-icons-ivy-rich ag))
+   '(straight org-sliced-images gptel ob-mermaid aider aidermacs langtool org-modern nov shrface consult vertico citar-org-roam citar-embark citar ox-bibtex ivy-bibtex ox-gfm spacious-padding golden-ratio embark-consult embark exec-path-from-shell smex ob-chatgpt-shell quelpa-use-package copilot org-emms emms chatgpt-shell pyimport electric-operator org-present org-tree-slide org-transclusion org-mind-map consult-org-roam org-download org-remark org-ql org-roam-bibtex olivetti org-roam-ui org-roam deadgrep org-bullets virtualenvwrapper simple-httpd column-enforce-mode conda pyvenv pyenv-mode pyenv magit default-text-scale zygospore writeroom-mode with-editor which-key try smartparens smart-mode-line shell-pop restclient rebecca-theme rainbow-delimiters poet-theme pdf-tools org-ref orderless ob-async neotree multiple-cursors multi mood-line minions mindre-theme markdown-preview-mode lsp-grammarly latex-preview-pane ivy-posframe imenu-anywhere hide-mode-line helm-bibtex gscholar-bibtex goto-chg google-translate flymd expand-region engine-mode disable-mouse diminish diff-hl counsel-projectile company-posframe company-flx beacon auto-complete anzu annotate all-the-icons-ivy-rich ag))
  '(pdf-tools-handle-upgrades nil))
 ;; (custom-set-faces
 ;;  ;; custom-set-faces was added by Custom.
@@ -186,27 +186,19 @@ want to use in the modeline *in lieu of* the original.")
 (use-package ivy-posframe
   :ensure t
   :init
-  (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display)))
-  (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-center)))
-  (setq ivy-posframe-parameters
-      '((left-fringe . 15)
-        (right-fringe . 15)
-	))
-  (setq ivy-posframe-width 150
-	ivy-posframe-height 11)
-  (setq ivy-posframe-border-width 2)
-  (ivy-posframe-mode 1)
-  )
+  (setq ivy-posframe-height 11
+ ivy-posframe-border-width 2
+        ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-center)))
+  (ivy-posframe-mode 1))
 
 (use-package ivy-rich
   :ensure t
-  :init (ivy-rich-mode 1))
+  :init
+  (setcdr (assq t ivy-format-functions-alist) #'ivy-format-function-line)
+  (ivy-rich-mode 1))
 
 (use-package counsel
   :ensure t)
-
-;; (add-to-list 'load-path "~/.emacs.d/elpa/counsel-20240413.1905/")
-;; (require 'counsel)
 
 (use-package all-the-icons-ivy-rich
   :ensure t
@@ -225,8 +217,7 @@ want to use in the modeline *in lieu of* the original.")
   ;; Slow Rendering
   ;; If you experience a slow down in performance when rendering multiple icons simultaneously,
   ;; you can try setting the following variable
-  (setq inhibit-compacting-font-caches t)
-  )
+  (setq inhibit-compacting-font-caches t))
 
 ;; Poet theme change
 ;; https://explog.in/notes/poet.html
@@ -325,7 +316,8 @@ want to use in the modeline *in lieu of* the original.")
  '(diff-hl-change ((t (:background "#3a81c3"))))
  '(diff-hl-delete ((t (:background "#ee6363"))))
  '(diff-hl-insert ((t (:background "#7ccd7c"))))
- '(jupyter-repl-input-prompt ((t (:foreground "SeaGreen4")))))
+ '(jupyter-repl-input-prompt ((t (:foreground "SeaGreen4"))))
+ '(org-quote ((t (:inherit mindre-default :slant italic)))))
 
 ;; Change font size
 ;; Iosevka

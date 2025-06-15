@@ -226,7 +226,7 @@
 ;; The catalyst server
 (defun start-catalyst-server ()
   (interactive)
-  (async-shell-command "source ~/.zshrc && conda activate ml3 && python /Users/luis.moneda/repos/org-roam-ai/catalyst/catalyst.py")
+  (async-shell-command "source ~/.zshrc && conda activate edge && python /Users/luis.moneda/repos/catalyst-assistant/catalyst.py")
   (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<5>"))))
 
 (start-catalyst-server)

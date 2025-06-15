@@ -156,6 +156,7 @@ menu\nmouse-2 will jump to task"))
         ("\\.pdf\\'" . "evince \"%s\"")
         ("\\.pdf::\\([0-9]+\\)\\'" . "xdg-open \"%s\" -p %1")
         ("\\.pdf.xoj" . "xournal %s")
+
 	))
 )
 
@@ -163,7 +164,9 @@ menu\nmouse-2 will jump to task"))
         (append org-file-apps
                 '(
                   ("\\.mp3\\'" . (lambda (file) (emms-play-file file)))
-                  ("\\.mp4\\'" . (lambda (file) (emms-play-file file))))))
+                  ("\\.mp4\\'" . (lambda (file) (emms-play-file file)))
+		  ("\\.ogg" . "mpv %s")
+		  )))
 
 ;; From cashestocashes.com
 ;; Once you've included this, activate org-columns with C-c C-x C-c while on a top-level heading, which will allow you to view the time you've spent at the different levels (you can exit the view by pressing q)
@@ -206,7 +209,15 @@ menu\nmouse-2 will jump to task"))
 (use-package simple-httpd
   :ensure t)
 
-(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/jupyter-20241203.1917/")
+
+;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/zmq-20241006.1857/")
+;; (autoload 'zmq "emacs-zmq" "" t)
+;; (load "zmq")
+
+;; (zmq-message)
+;; (zmq-load)
+
+(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/jupyter-20250402.1740/")
 (autoload 'jupyter "jupyter" "" t)
 ;; (require 'jupyter)
 (load "jupyter")
@@ -235,11 +246,19 @@ menu\nmouse-2 will jump to task"))
    (python . t)
    (jupyter . t)
    (emacs-lisp . t)
+   ;; for music sheet
+   (lilypond . t)
    ;; Problems with orb capture
    (shell . t)
    (dot . t)
    (sql . nil)
    (sqlite . t)))
+
+(setq org-babel-lilypond-ly-command "lilypond")
+(add-to-list 'load-path "/opt/homebrew/share/emacs/site-lisp/lilypond")
+(require 'lilypond-mode)
+(add-to-list 'org-src-lang-modes '("lilypond" . lilypond))
+
 
 ;; (setq org-babel-default-header-args:jupyter-python '((:async . "yes")
 ;; 													 (:result . "both")
@@ -894,7 +913,7 @@ this command to copy it"
 				(tags-todo "+DEADLINE>=\"<-60d>\"|+perfcycle"
 						   ((org-agenda-overriding-columns-format
 							 "%25ITEM %DEADLINE %TAGS")
-							(org-agenda-overriding-header "📅 Deadlines in the next 60 days\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
+							(org-agenda-overriding-header "📅 Deadlines days\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 							(org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
 							(org-agenda-remove-tags t)
 							(org-agenda-entry-types '(:deadline :scheduled))
@@ -1352,6 +1371,7 @@ should be continued."
 	 ("C-c n b" . helm-bibtex)
 	 ("C-c n s" . lgm/screenshot-to-org-link)
 	 ("C-c n a" . org-roam-semantic-search-api)
+	 ("C-c n t" . org-roam-link-recommendations-api)
 	 ("C-c n y" . chunky-semantic-search)
 	 ("C-c n q" . lgm/org-roam-ai-chat-to-notes)
 	 ("C-c n p" . lgm/gpt-prompt)
@@ -2583,6 +2603,59 @@ Prompts for the output filename, defaulting to the original Org file's name."
 
 ;; I want to have italic text in org mode quote blocks
 (setq org-fontify-quote-and-verse-blocks t)
+
+;; So I can make diagrams inside emacs and generate them directly there.
+(use-package ob-mermaid
+  :ensure t
+  :after org
+  :config
+  (add-to-list 'org-babel-load-languages '(mermaid . t))
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   org-babel-load-languages))
+
+;; npm install -g @mermaid-js/mermaid-cli
+;;
+(setq ob-mermaid-cli-path "/opt/homebrew/bin/mmdc") ;; Apple Silicon
+
+;; I use it in the link rec sys
+(defun my/get-drawer-content (drawer-name)
+  "Return the content of DRAWER-NAME as a string in the current buffer."
+  (save-excursion
+    (goto-char (point-min))
+    (let ((drawer-regex (format "^[ \t]*:%s:[ \t]*$" (upcase drawer-name))))
+      (when (re-search-forward drawer-regex nil t)
+        (let ((start (point)))
+          (when (re-search-forward "^[ \t]*:END:[ \t]*$" nil t)
+            (buffer-substring-no-properties start (match-beginning 0))))))))
+
+;; org-download-clipboard does not work with svg
+(defun my/org-insert-svg-from-clipboard-url ()
+  "If clipboard contains a URL to an SVG, download it to a known location and insert as Org image link."
+  (interactive)
+  (let* ((url (string-trim (shell-command-to-string "pbpaste")))
+         (image-dir (expand-file-name "~/Dropbox/Agenda/roam/images/"))
+         (filename (when (string-match "\\([^/]+\\.svg\\)\\(?:\\?.*\\)?$" url)
+                     (match-string 1 url)))
+         (destination (when filename (expand-file-name filename image-dir))))
+    (cond
+     ((not (and url (string-match-p "^https?://" url)))
+      (message "Clipboard does not contain a valid URL."))
+     ((not filename)
+      (message "URL does not point to an SVG file."))
+     (t
+      (unless (file-directory-p image-dir)
+        (make-directory image-dir t))
+      (url-copy-file url destination t)
+      (insert (format "[[file:%s]]" (file-relative-name destination (file-name-directory (buffer-file-name)))))
+	  (org-display-inline-images)
+      (message "SVG downloaded and link inserted.")))))
+
+;; Before using it I need to solve some org display images I do when saving a buffer
+;; (use-package org-sliced-images
+;;   :ensure t
+;;   :config
+;;   (org-sliced-images-mode 1))
 
 (provide 'org-settings)
 ;;; org-settings.el ends here

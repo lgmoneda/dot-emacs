@@ -162,7 +162,7 @@
 
 ;; While I try citar
 ;; (global-set-key (kbd "C-c r") 'org-ref-insert-cite-link)
-(setq org-cite-global-bibliography '("~/Dropbox/Research/library.bib"))
+(setq org-cite-global-bibliography '("/Users/luis.moneda/Dropbox/Research/library.bib"))
 (setq ivy-bibtex-default-action 'ivy-bibtex-insert-citation)
 
 ;; telling bibtex-completion where your bibliographies can be found
@@ -460,7 +460,7 @@
   author = {%s},
   title = {%s},
   year = {%s},
-  howpublished = {\\url{%s}},
+  url = {%s},
   note = {Accessed: %s}
 }
 " video-id author title year url access-date))

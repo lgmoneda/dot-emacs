@@ -40,7 +40,12 @@
   :ensure t)
 
 (use-package smartparens
- :ensure t)
+  :ensure t
+  :init
+  (with-eval-after-load 'smartparens
+  (sp-local-pair 'org-mode "'" "'" :actions '(rem)))
+
+  )
 
 ;; Writeroom, a focus mode!
 (use-package writeroom-mode
