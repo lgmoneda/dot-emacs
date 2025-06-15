@@ -18,9 +18,27 @@
   (package-refresh-contents)
    (package-install 'use-package))
 
-;; Paradox (package-list)
-;; (use-package paradox
-;;     :ensure t)
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+
+;; Use straight.el by default with use-package
+(setq straight-use-package-by-default t)
+
+;; Install use-package via straight
+(straight-use-package 'use-package)
 
 ;; Fast init.el open
 (global-set-key (kbd "<f6>") (lambda() (interactive)(find-file "~/.emacs.d/init.el")))
@@ -44,9 +62,10 @@
 (require 'python-settings)
 (require 'gpt-settings)
 (require 'assistant-settings)
+(require 'org-roam-link-recommendations-settings)
 (require 'publishing-settings)
 (require 'reading-settings)
-;; (require 'copilot-settings)
+(require 'copilot-settings)
 ;; (require 'processing-settings)
 ;; (require 'nu-settings)
 ;; (require 'email-settings)
