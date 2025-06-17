@@ -35,7 +35,7 @@
   (load bootstrap-file nil 'nomessage))
 
 ;; Use straight.el by default with use-package
-(setq straight-use-package-by-default t)
+;; (setq straight-use-package-by-default t)
 
 ;; Install use-package via straight
 (straight-use-package 'use-package)
@@ -49,6 +49,7 @@
 (setq custom-file "~/.emacs.d/settings/aesthetics-settings.el")
 
 (add-to-list 'load-path setting-dir)
+(add-to-list 'load-path "~/repos/catalyst-assistant/")
 
 (require 'editor-settings)
 (require 'productivity-settings)
@@ -62,6 +63,7 @@
 (require 'python-settings)
 (require 'gpt-settings)
 (require 'assistant-settings)
+(require 'catalyst-settings)
 (require 'org-roam-link-recommendations-settings)
 (require 'publishing-settings)
 (require 'reading-settings)
