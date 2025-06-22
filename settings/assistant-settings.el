@@ -643,6 +643,7 @@ If REFRESH is non-nil, refresh the `org-id-locations` cache first."
 
 ;; Bind this function to C-c C-o in markdown-mode:
 (define-key markdown-mode-map (kbd "C-c C-o") #'my/open-org-id-link-in-markdown)
+(define-key comint-mode-map (kbd "C-c C-o") #'my/open-org-id-link-in-markdown)
 
 
 (provide 'assistant-settings)
