@@ -1732,12 +1732,34 @@ should be continued."
       (org-toggle-inline-images)
       )))
 
+
+;; Defining default values for custom properties
+;; Rating system comes from https://stephango.com/vault
+(setq org-global-properties
+      '(("Effort_ALL" .
+         "0:05 0:10 0:15 0:30 0:45 1:00 1:30 2:00 2:30")
+        ("RATING_ALL" .
+         "7 6 5 4 3 2 1")))
+
+;; I wish I could show the tip in the regular C-c C-x p, but since I can't, here's a custom function to set ratings and provide the meaning
+
+(defun my/set-org-rating ()
+  "Prompt with rating descriptions and set the RATING property."
+  (interactive)
+  (let* ((choices
+          '(("7 — Perfect, must try, life-changing, go out of your way to seek this out" . "7")
+            ("6 — Excellent, worth repeating" . "6")
+            ("5 — Good, don’t go out of your way, but enjoyable" . "5")
+            ("4 — Passable, works in a pinch" . "4")
+            ("3 — Bad, don’t do this if you can" . "3")
+            ("2 — Atrocious, actively avoid, repulsive" . "2")
+            ("1 — Evil, life-changing in a bad way" . "1")))
+         (selection (completing-read "Select RATING: " (mapcar #'car choices) nil t)))
+    (org-set-property "RATING" (cdr (assoc selection choices)))))
+
 ;; Functions related to effort in the tasks
 ;; Add total effort for the tasks in a day to enable a reality check
 (require 'cl-lib)
-(setq org-global-properties
-      '(("Effort_ALL" .
-         "0:05 0:10 0:15 0:30 0:45 1:00 1:30 2:00 2:30")))
 
 (defun my/org-agenda-calculate-efforts (limit)
   "Sum the efforts of scheduled entries up to LIMIT in the
