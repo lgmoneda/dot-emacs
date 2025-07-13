@@ -317,7 +317,9 @@ want to use in the modeline *in lieu of* the original.")
  '(diff-hl-delete ((t (:background "#ee6363"))))
  '(diff-hl-insert ((t (:background "#7ccd7c"))))
  '(jupyter-repl-input-prompt ((t (:foreground "SeaGreen4"))))
- '(org-quote ((t (:inherit mindre-default :slant italic)))))
+ '(org-quote ((t (:inherit mindre-default :slant italic))))
+ '(org-link ((nil (:foreground "cornflowerblue" :underline nil))))
+ )
 
 ;; Change font size
 ;; Iosevka

@@ -26,10 +26,12 @@
   ; Set API_KEY in .bashrc, that will automatically picked up by aider or in elisp
   (setenv "ANTHROPIC_API_KEY" (getenv "ANTHROPIC_API_KEY"))
   (setenv "OPENROUTER_API_KEY" (getenv "OPENROUTER_API_KEY"))
+  (setq aider-model "anthropic/claude-sonnet-4-20250514")
   :custom
   ; See the Configuration section below
   (aidermacs-use-architect-mode t)
-  (aidermacs-default-model "sonnet"))
+  (aidermacs-default-model "openrouter/anthropic/claude-sonnet-4")
+  )
 
 (use-package emigo
   :straight (:host github :repo "MatthewZMD/emigo" :files (:defaults "*.py" "*.el"))
