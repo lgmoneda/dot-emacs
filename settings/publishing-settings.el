@@ -282,5 +282,177 @@ PROPERTIES is an alist from `org-entry-properties`."
     (delete-file temp-file)
     (message "Published with transclusions expanded.")))
 
+;; The attic
+(defun lgm/publish-the-attic-node (github-repo-dir output-dir branch)
+  "Publish the current Org Roam node (or file) to the GitHub Pages site under /the-attic/.
+If called inside a heading with :the_attic: tag, exports just that node. Otherwise, exports the entire file.
+Uses TITLE property (if any) and DATE to build the HTML file name.
+Updates _data/attic.yml with the filename and title.
+Asks whether to commit and push to GitHub after export."
+  (interactive
+   (list (read-directory-name "GitHub Repo Directory: " "~/repos/lgmoneda.github.io/")
+         (read-string "Output Directory (relative to repo root): " "the-attic/")
+         (read-string "Branch: " "master")))
+  (unless (derived-mode-p 'org-mode)
+    (error "This function only works in Org mode buffers"))
+  (let* ((org-file (buffer-file-name))
+         (node (org-roam-node-at-point))
+         (is-node node)
+         (tags (when is-node (org-get-tags)))
+         (date (org-entry-get (point) "DATE"))
+         (custom-title (org-entry-get (point) "TITLE"))
+         (export-html-file nil)
+         (basename nil)
+         (title-for-yml (or custom-title (and node (org-roam-node-title node))))
+         (output-path (expand-file-name output-dir github-repo-dir))
+         (image-dir (expand-file-name "images/the-attic/" github-repo-dir))
+         (image-paths (make-hash-table :test 'equal))
+         (attic-yml-path (expand-file-name "_data/attic.yml" github-repo-dir)))
+
+    (when (and is-node (not (member "the_attic" tags)))
+      (error "Node is not marked with :the_attic: tag"))
+    (make-directory output-path t)
+    (make-directory image-dir t)
+    (org-roam-db-sync)
+
+    ;; Sanitize title to be used in filename (remove accents, symbols)
+    (defun lgm/sanitize-filename (s)
+  "Sanitize string S to be used in a filename: remove accents and special chars."
+  (let* ((decomposed (ucs-normalize-NFD-string s))
+         ;; Remove diacritics (Unicode marks)
+         (no-diacritics (replace-regexp-in-string "[\u0300-\u036f]" "" decomposed))
+         ;; Replace anything not a-z, A-Z, 0-9, hyphen or underscore with hyphen
+         (ascii-only (replace-regexp-in-string "[^a-zA-Z0-9_-]" "-" no-diacritics))
+         ;; Collapse multiple hyphens
+         (clean (replace-regexp-in-string "--+" "-" ascii-only)))
+    (downcase (string-trim clean "-+" "-+"))))
+
+    (setq basename
+          (if is-node
+              (let ((slug (lgm/sanitize-filename (or custom-title (org-roam-node-title node)))))
+                (if date
+                    (format "%s--%s.html"
+                            (format-time-string "%Y-%m-%d" (org-time-string-to-time date))
+                            slug)
+                  (error "Node is missing DATE in the property drawer")))
+            (file-name-nondirectory (file-name-sans-extension org-file))))
+
+    ;; Inject custom TITLE into buffer for export
+    (when custom-title
+      (add-hook 'org-export-before-processing-hook
+                (lambda (_backend)
+                  (goto-char (point-min))
+                  (if (re-search-forward "^#\\+TITLE:.*$" nil t)
+                      (replace-match (concat "#+TITLE: " custom-title))
+                    (goto-char (point-min))
+                    (insert (concat "#+TITLE: " custom-title "\n"))))
+                nil t))
+
+    ;; Export HTML
+    (setq export-html-file
+          (if is-node
+              (let ((org-export-with-toc nil)
+                    (org-export-with-section-numbers nil))
+                (org-export-to-file 'html (make-temp-file "attic" nil ".html") nil t))
+            (org-html-export-to-html)))
+
+;; Handle images
+(let ((link-parser
+       (if is-node
+           ;; Parse only the content of the current node (subtree)
+           (let* ((beg (save-excursion
+                         (org-back-to-heading t)
+                         (point)))
+                  (end (save-excursion
+                         (org-end-of-subtree t t)
+                         (point)))
+                  (content (buffer-substring-no-properties beg end)))
+             (with-temp-buffer
+               (insert content)
+               (org-mode)
+               (org-element-parse-buffer)))
+         ;; Else parse the whole buffer
+         (org-element-parse-buffer))))
+  (org-element-map link-parser 'link
+    (lambda (link)
+      (when (string= (org-element-property :type link) "file")
+        (let* ((image-path (org-element-property :path link))
+               (absolute-image-path (expand-file-name image-path (file-name-directory org-file)))
+               (relative-image-path (file-relative-name absolute-image-path (file-name-directory org-file)))
+               (image-filename (file-name-nondirectory image-path))
+               (destination-image-path (expand-file-name image-filename image-dir)))
+          (when (file-exists-p absolute-image-path)
+            (copy-file absolute-image-path destination-image-path t)
+            (puthash relative-image-path
+                     (concat "../images/the-attic/" image-filename)
+                     image-paths)))))))
+
+
+    ;; Clean and finalize HTML
+    (let ((final-output-file (expand-file-name basename output-path)))
+      (copy-file export-html-file final-output-file t)
+      (with-temp-buffer
+        (insert-file-contents final-output-file)
+
+        ;; Remove postamble div
+        (goto-char (point-min))
+        (when (re-search-forward "<div id=\"postamble\" class=\"status\">\\(?:.\\|\n\\)+?</div>" nil t)
+          (replace-match ""))
+
+        ;; Replace image paths
+        (maphash
+         (lambda (key value)
+           (goto-char (point-min))
+           (while (search-forward key nil t)
+             (replace-match value t t)))
+         image-paths)
+        (write-file final-output-file))
+
+      (message "Exported to: %s" final-output-file)
+
+      ;; Update _data/attic.yml
+      (when is-node
+        (let* ((yml-full-path attic-yml-path)
+               (yml-filename (file-name-sans-extension basename))
+               (yml-entry (format "  - filename: \"%s\"\n    title: \"%s\"\n"
+                                  yml-filename title-for-yml))
+               (new-entries nil)
+               (found nil))
+          (with-temp-buffer
+            (if (file-exists-p yml-full-path)
+                (insert-file-contents yml-full-path)
+              (insert "entries:\n"))
+
+            (goto-char (point-min))
+            (if (re-search-forward "^entries:" nil t)
+                (forward-line))
+
+            ;; Parse entries and check for duplicates
+            (while (re-search-forward "  - filename: \"\\([^\"]+\\)\"" nil t)
+              (let ((existing-fn (match-string 1)))
+                (if (string= existing-fn yml-filename)
+                    (setq found t))))
+
+            ;; If not found, append new entry
+            (unless found
+              (goto-char (point-max))
+              (unless (bolp) (insert "\n"))
+              (insert yml-entry)
+              (write-region (point-min) (point-max) yml-full-path)
+              (message "Added new entry to %s" yml-full-path)))))
+
+
+      ;; Ask whether to commit
+      (let* ((choices '("No" "Yes"))
+             (choice (completing-read "Do you want to commit and push to GitHub? " choices nil t nil nil "No")))
+        (when (string= choice "Yes")
+          (let ((default-directory github-repo-dir))
+            (shell-command (format "git add %s" (shell-quote-argument final-output-file)))
+            (shell-command (format "git add %s" (shell-quote-argument attic-yml-path)))
+            (shell-command (format "git add %s" (shell-quote-argument image-dir)))
+            (shell-command (format "git commit --no-gpg-sign -m 'Publish attic piece: %s'" basename))
+            (shell-command (format "git push origin %s" branch))
+            (message "Changes committed and pushed to GitHub")))))))
+
 (provide 'publishing-settings)
 ;;; publishing-settings.el ends here
