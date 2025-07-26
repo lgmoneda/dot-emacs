@@ -300,6 +300,8 @@ Asks whether to commit and push to GitHub after export."
          (is-node node)
          (tags (when is-node (org-get-tags)))
          (date (org-entry-get (point) "DATE"))
+		 (author (org-entry-get (point) "AUTHOR"))
+		 (collection (org-entry-get (point) "COLLECTION"))
          (custom-title (org-entry-get (point) "TITLE"))
          (export-html-file nil)
          (basename nil)
@@ -406,7 +408,18 @@ Asks whether to commit and push to GitHub after export."
            (while (search-forward key nil t)
              (replace-match value t t)))
          image-paths)
-        (write-file final-output-file))
+        (write-file final-output-file)
+
+		;; Add collection title at the end if present
+		(when (and collection (not (string-empty-p collection)))
+		  (goto-char (point-max))
+		  (insert (format "<br><br><br><p><i>%s</i></p>" (org-html-encode-plain-text collection))))
+
+		;; Add author at the end if present
+		(when (and author (not (string-empty-p author)))
+		  (goto-char (point-max))
+		  (insert (format "<p>- %s</p>\n" (org-html-encode-plain-text author))))
+		)
 
       (message "Exported to: %s" final-output-file)
 
@@ -440,7 +453,6 @@ Asks whether to commit and push to GitHub after export."
               (insert yml-entry)
               (write-region (point-min) (point-max) yml-full-path)
               (message "Added new entry to %s" yml-full-path)))))
-
 
       ;; Ask whether to commit
       (let* ((choices '("No" "Yes"))
