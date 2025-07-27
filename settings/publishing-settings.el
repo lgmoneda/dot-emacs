@@ -468,7 +468,7 @@ Asks whether to commit and push to GitHub after export."
 
 ;; em busca das referências perdidas
 (defun lgm/org-roam-export-proust-page ()
-  "Export Org-roam file into custom HTML for Proust immersive experience, handling images and decorations."
+  "Export Org-roam file into custom HTML for Proust immersive experience, handling images, decorations, and bibliography."
   (interactive)
   (let* ((repo-root "/Users/luis.moneda/repos/lgmoneda.github.io/")
          (output-file (expand-file-name "em-busca-do-tempo-perdido/test.html" repo-root))
@@ -476,12 +476,13 @@ Asks whether to commit and push to GitHub after export."
          (sections '())
          (image-paths (make-hash-table :test 'equal))
          (org-file (buffer-file-name))
-         (current-buffer (current-buffer))) ; Store reference to current buffer
+         (current-buffer (current-buffer))
+         (bib-html-file (make-temp-file "bib-" nil ".html")))  ;; temp file for bib
 
     (make-directory image-dir t)
 
     ;; Process each top-level node (LEVEL=1)
-    (with-current-buffer current-buffer ; Ensure we're in the right buffer
+    (with-current-buffer current-buffer
       (org-map-entries
        (lambda ()
          (let* ((props (org-entry-properties))
@@ -493,7 +494,6 @@ Asks whether to commit and push to GitHub after export."
                 (decor-class (cdr (assoc "DECORATIONS" props)))
                 (subtree-begin (save-excursion (org-back-to-heading t) (point)))
                 (subtree-end (save-excursion (org-end-of-subtree t t) (point)))
-                ;; Extract content without the heading line
                 (content-begin (save-excursion 
                                  (org-back-to-heading t)
                                  (forward-line 1)
@@ -503,18 +503,25 @@ Asks whether to commit and push to GitHub after export."
                                    ""))
                 (subtree-html
                  (with-temp-buffer
-                   (insert subtree-content) ; Use the extracted content
+                   (insert subtree-content)
                    (org-mode)
-                   ;; Configure export options to exclude numbering, TOC, and title
                    (let ((org-export-with-toc nil)
                          (org-export-with-section-numbers nil)
-                         (org-export-with-title nil))
+                         (org-export-with-title nil)
+                         (org-html-with-latex nil)
+                         (org-export-with-sub-superscripts nil)
+                         (org-export-with-author nil)
+                         (org-export-with-date nil)
+                         (org-export-with-creator nil)
+                         ;; Bibliography settings
+                         (org-cite-global-bibliography '("/Users/luis.moneda/Dropbox/Research/library.bib"))
+                         (org-cite-export-processors '((html csl "/Users/luis.moneda/Dropbox/Research/custom-style-blog.csl"))))
                      (org-export-string-as (buffer-string) 'html t)))))
 
-           ;; Parse and copy images from subtree
+           ;; Parse and copy images
            (let ((parsed-subtree
                   (with-temp-buffer
-                    (insert subtree-content) ; Use the extracted content here too
+                    (insert subtree-content)
                     (org-mode)
                     (org-element-parse-buffer))))
              (org-element-map parsed-subtree 'link
@@ -528,13 +535,13 @@ Asks whether to commit and push to GitHub after export."
                        (copy-file absolute-path dest-path t)
                        (puthash image-path (concat "../images/em-busca-do-tempo-perdido/" filename) image-paths)))))))
 
-           ;; Replace any local image paths in HTML
+           ;; Replace image paths in subtree HTML
            (maphash
             (lambda (key value)
               (setq subtree-html (replace-regexp-in-string (regexp-quote key) value subtree-html)))
             image-paths)
 
-           ;; Generate section HTML
+           ;; Build section HTML
            (push
             (cond
              ((string= id "intro")
@@ -583,12 +590,34 @@ Asks whether to commit and push to GitHub after export."
             sections)))
        "LEVEL=1"))
 
-    ;; Generate final HTML content and save
-    (let ((main-content (mapconcat #'identity (nreverse sections) "\n\n")))
-      (with-temp-file output-file
-        (insert main-content))
-      (message "✅ Exported Proust HTML to: %s" output-file))))
+    ;; Step: Export full buffer bibliography using Pandoc
+    (let ((pandoc-command
+           (format "pandoc %s -o %s --from=org --to=html5 --citeproc --bibliography=/Users/luis.moneda/Dropbox/Research/library.bib --csl=/Users/luis.moneda/Dropbox/Research/custom-style-blog.csl"
+                   (shell-quote-argument org-file)
+                   (shell-quote-argument bib-html-file))))
+      (shell-command-to-string pandoc-command))
 
+    ;; Read bibliography fragment
+    ;; Read bibliography fragment (excluding footnotes)
+    (let ((bibliography-html
+	   (with-temp-buffer
+             (insert-file-contents bib-html-file)
+             (goto-char (point-min))
+             (if (re-search-forward "<div[^>]+id=\"refs\"[^>]*>" nil t)
+		 (let ((start (match-beginning 0)))
+		   (if (re-search-forward "</div>" nil t)
+                       (buffer-substring-no-properties start (point))
+                     ""))  ;; If no closing </div>, return nothing
+               ""))))  ;; If no refs found, return nothing
+
+      ;; Generate final HTML
+      (let ((main-content (mapconcat #'identity (nreverse sections) "\n\n")))
+        (with-temp-file output-file
+          (insert main-content "\n\n<section class=\"bibliography\">\n"
+                  bibliography-html
+                  "\n</section>"))
+        (delete-file bib-html-file)
+        (message "✅ Exported Proust HTML with bibliography to: %s" output-file)))))
 
 (provide 'publishing-settings)
 ;;; publishing-settings.el ends here
