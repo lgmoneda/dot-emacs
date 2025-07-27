@@ -413,7 +413,7 @@ Asks whether to commit and push to GitHub after export."
 		;; Add collection title at the end if present
 		(when (and collection (not (string-empty-p collection)))
 		  (goto-char (point-max))
-		  (insert (format "<br><br><br><p><i>%s</i></p>" (org-html-encode-plain-text collection))))
+		  (insert (format "<br><br><p><i>%s</i></p>" (org-html-encode-plain-text collection))))
 
 		;; Add author at the end if present
 		(when (and author (not (string-empty-p author)))
@@ -465,6 +465,130 @@ Asks whether to commit and push to GitHub after export."
             (shell-command (format "git commit --no-gpg-sign -m 'Publish attic piece: %s'" basename))
             (shell-command (format "git push origin %s" branch))
             (message "Changes committed and pushed to GitHub")))))))
+
+;; em busca das referências perdidas
+(defun lgm/org-roam-export-proust-page ()
+  "Export Org-roam file into custom HTML for Proust immersive experience, handling images and decorations."
+  (interactive)
+  (let* ((repo-root "/Users/luis.moneda/repos/lgmoneda.github.io/")
+         (output-file (expand-file-name "em-busca-do-tempo-perdido/test.html" repo-root))
+         (image-dir (expand-file-name "images/em-busca-do-tempo-perdido/" repo-root))
+         (sections '())
+         (image-paths (make-hash-table :test 'equal))
+         (org-file (buffer-file-name))
+         (current-buffer (current-buffer))) ; Store reference to current buffer
+
+    (make-directory image-dir t)
+
+    ;; Process each top-level node (LEVEL=1)
+    (with-current-buffer current-buffer ; Ensure we're in the right buffer
+      (org-map-entries
+       (lambda ()
+         (let* ((props (org-entry-properties))
+                (id (cdr (assoc "ID" props)))
+                (title (or (cdr (assoc "TITLE" props))
+                           (nth 4 (org-heading-components))))
+                (img (cdr (assoc "IMG" props)))
+                (alt (cdr (assoc "ALT" props)))
+                (decor-class (cdr (assoc "DECORATIONS" props)))
+                (subtree-begin (save-excursion (org-back-to-heading t) (point)))
+                (subtree-end (save-excursion (org-end-of-subtree t t) (point)))
+                ;; Extract content without the heading line
+                (content-begin (save-excursion 
+                                 (org-back-to-heading t)
+                                 (forward-line 1)
+                                 (point)))
+                (subtree-content (if (< content-begin subtree-end)
+                                   (buffer-substring-no-properties content-begin subtree-end)
+                                   ""))
+                (subtree-html
+                 (with-temp-buffer
+                   (insert subtree-content) ; Use the extracted content
+                   (org-mode)
+                   ;; Configure export options to exclude numbering, TOC, and title
+                   (let ((org-export-with-toc nil)
+                         (org-export-with-section-numbers nil)
+                         (org-export-with-title nil))
+                     (org-export-string-as (buffer-string) 'html t)))))
+
+           ;; Parse and copy images from subtree
+           (let ((parsed-subtree
+                  (with-temp-buffer
+                    (insert subtree-content) ; Use the extracted content here too
+                    (org-mode)
+                    (org-element-parse-buffer))))
+             (org-element-map parsed-subtree 'link
+               (lambda (link)
+                 (when (string= (org-element-property :type link) "file")
+                   (let* ((image-path (org-element-property :path link))
+                          (absolute-path (expand-file-name image-path (file-name-directory org-file)))
+                          (filename (file-name-nondirectory image-path))
+                          (dest-path (expand-file-name filename image-dir)))
+                     (when (file-exists-p absolute-path)
+                       (copy-file absolute-path dest-path t)
+                       (puthash image-path (concat "../images/em-busca-do-tempo-perdido/" filename) image-paths)))))))
+
+           ;; Replace any local image paths in HTML
+           (maphash
+            (lambda (key value)
+              (setq subtree-html (replace-regexp-in-string (regexp-quote key) value subtree-html)))
+            image-paths)
+
+           ;; Generate section HTML
+           (push
+            (cond
+             ((string= id "intro")
+              (format "
+<section class=\"intro-section\" id=\"%s\">
+  <div class=\"intro-decorations\">
+    <div class=\"decoration-element proust-portrait\">
+      <img src=\"%s\" alt=\"%s\" />
+    </div>
+  </div>
+  <div class=\"intro-content\">
+    <h2>%s</h2>
+    <div class=\"intro-text\">
+      %s
+    </div>
+  </div>
+</section>" id img (or alt "") title subtree-html))
+
+             (decor-class
+              (format "
+<section class=\"full-bleed-section\" id=\"%s\">
+  <div class=\"image-container\">
+    <img src=\"%s\" alt=\"%s\" />
+    <div class=\"text\">%s</div>
+  </div>
+  <div class=\"content-section %s-decoration\">
+    <div class=\"text-content\">
+      %s
+    </div>
+  </div>
+</section>" id img (or alt "") title decor-class subtree-html))
+
+             (t
+              (format "
+<section class=\"full-bleed-section\" id=\"%s\">
+  <div class=\"image-container\">
+    <img src=\"%s\" alt=\"%s\" />
+    <div class=\"text\">%s</div>
+  </div>
+  <div class=\"content-section\">
+    <div class=\"text-content\">
+      %s
+    </div>
+  </div>
+</section>" id img (or alt "") title subtree-html)))
+            sections)))
+       "LEVEL=1"))
+
+    ;; Generate final HTML content and save
+    (let ((main-content (mapconcat #'identity (nreverse sections) "\n\n")))
+      (with-temp-file output-file
+        (insert main-content))
+      (message "✅ Exported Proust HTML to: %s" output-file))))
+
 
 (provide 'publishing-settings)
 ;;; publishing-settings.el ends here
