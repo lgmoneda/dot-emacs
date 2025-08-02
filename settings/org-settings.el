@@ -1367,7 +1367,7 @@ should be continued."
          ("C-c n f" . org-roam-node-find)
 	 ("C-c n i" . org-roam-node-insert)
 	 ;; ("C-c n g" . org-roam-graph)
-	 ("C-c n g" . counsel-org-goto)
+	 ("C-c n g" . consult-org-heading)
 	 ("C-c n b" . helm-bibtex)
 	 ("C-c n s" . lgm/screenshot-to-org-link)
 	 ("C-c n a" . org-roam-semantic-search-api)
@@ -1390,6 +1390,8 @@ should be continued."
 	(concat "${title:105} "
 		(propertize "${tags:40}" 'face 'org-tag))))
 
+;; Improve org-consult by revealing a heading if folded and keep recentering
+(add-hook 'consult-after-jump-hook (lambda () (org-reveal) (recenter)))
 
 ;; (add-to-list 'load-path "~/.emacs.d/elpa/org-roam-ui-20221105.1040/")
 ;; (require 'org-roam-ui)
