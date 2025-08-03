@@ -163,7 +163,7 @@ BRANCH: Branch to which changes should be committed (e.g., 'master')."
                        image-paths))))))
     ;; Export the Org file to HTML5 using org-pandoc-export-to-html5
     (let ((html-body nil)
-		  (pandoc-command (format "pandoc %s -o %s --from=org --to=html5 --shift-heading-level-by=1 --citeproc --bibliography=/Users/luis.moneda/Dropbox/Research/library.bib --csl=/Users/luis.moneda/Dropbox/Research/custom-style-blog.csl"
+		  (pandoc-command (format "pandoc %s -o %s --from=org --to=html5 --shift-heading-level-by=1 --citeproc --metadata link-citations=true   --lua-filter=/Users/luis.moneda/Dropbox/Research/add-citation-backlinks.lua \ --bibliography=/Users/luis.moneda/Dropbox/Research/library.bib --csl=/Users/luis.moneda/Dropbox/Research/custom-style-blog.csl"
                                  (shell-quote-argument org-file)
                                  (shell-quote-argument temp-html-file))))
 
@@ -190,16 +190,19 @@ BRANCH: Branch to which changes should be committed (e.g., 'master')."
         (write-region (point-min) (point-max) output-file)))
 
 	;; Delete the temporary HTML file
-	(delete-file temp-html-file)
+    (delete-file temp-html-file)
     ;; Commit and push the changes to GitHub
-    (let ((default-directory github-repo-dir))
-      ;; Uncomment the following commands to enable Git automation:
-      ;; (shell-command (format "git add %s" (shell-quote-argument output-file)))
-      ;; (shell-command (format "git add %s" (shell-quote-argument image-dir)))
-      ;; (shell-command (format "git commit -m 'Publish %s with images'" output-filename))
-      ;; (shell-command (format "git push origin %s" branch))
-      ;; (message "Published to GitHub Pages branch: %s" branch)
-	  )))
+    (let* ((choices '("No" "Yes"))
+		 (choice (completing-read "Do you want to commit and push to GitHub? " choices nil t nil nil "No")))
+	    (when (string= choice "Yes")
+	      (let ((default-directory github-repo-dir))
+	  ;; Uncomment the following commands to enable Git automation:
+	  (shell-command (format "git add %s" (shell-quote-argument output-file)))
+	  (shell-command (format "git add %s" (shell-quote-argument image-dir)))
+	  (shell-command (format "git commit -m 'Publish %s with images'" output-filename))
+	  (shell-command (format "git push origin %s" branch))
+	  (message "Published to GitHub Pages branch: %s" branch)
+	      )))))
 
 (defun lgm/merge-keywords-and-properties (keywords properties)
   "Merge file KEYWORDS and PROPERTIES into a single plist.
@@ -494,7 +497,7 @@ Asks whether to commit and push to GitHub after export."
                 (decor-class (cdr (assoc "DECORATIONS" props)))
                 (subtree-begin (save-excursion (org-back-to-heading t) (point)))
                 (subtree-end (save-excursion (org-end-of-subtree t t) (point)))
-                (content-begin (save-excursion 
+                (content-begin (save-excursion
                                  (org-back-to-heading t)
                                  (forward-line 1)
                                  (point)))
