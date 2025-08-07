@@ -336,7 +336,7 @@ Asks whether to commit and push to GitHub after export."
           (if is-node
               (let ((slug (lgm/sanitize-filename (or custom-title (org-roam-node-title node)))))
                 (if date
-                    (format "%s--%s.html"
+                    (format "%s-%s.html"
                             (format-time-string "%Y-%m-%d" (org-time-string-to-time date))
                             slug)
                   (error "Node is missing DATE in the property drawer")))
@@ -398,6 +398,12 @@ Asks whether to commit and push to GitHub after export."
       (copy-file export-html-file final-output-file t)
       (with-temp-buffer
         (insert-file-contents final-output-file)
+
+		;; Replace main <h1> heading with custom-title, if present
+        (when (and custom-title (not (string-empty-p custom-title)))
+          (goto-char (point-min))
+          (when (re-search-forward "<h1[^>]*>.*?</h1>" nil t)
+            (replace-match (format "<h1 class=\"title\">%s</h1>" (org-html-encode-plain-text custom-title)) t t)))
 
         ;; Remove postamble div
         (goto-char (point-min))
