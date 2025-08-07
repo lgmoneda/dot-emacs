@@ -399,6 +399,13 @@ Asks whether to commit and push to GitHub after export."
       (with-temp-buffer
         (insert-file-contents final-output-file)
 
+		;; Replace <title> in <head> with custom-title, if present
+        (when (and custom-title (not (string-empty-p custom-title)))
+          ;; Replace HTML <title> tag (tab title)
+          (goto-char (point-min))
+          (when (re-search-forward "<title>.*?</title>" nil t)
+            (replace-match (format "<title>%s</title>" (org-html-encode-plain-text custom-title)) t t))
+
 		;; Replace main <h1> heading with custom-title, if present
         (when (and custom-title (not (string-empty-p custom-title)))
           (goto-char (point-min))
