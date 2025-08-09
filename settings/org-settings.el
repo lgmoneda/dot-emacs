@@ -2751,7 +2751,7 @@ Records until `org-screen-record-stop-and-insert-link' is called."
     (user-error "ffmpeg not found in PATH. Please install ffmpeg first (brew install ffmpeg)"))
 
   ;; Ensure the output directory exists
-  (let ((output-dir (expand-file-name "~/Videos/org-clips")))
+  (let ((output-dir (expand-file-name "~/Dropbox/Agenda/roam/video-clips")))
     (unless (file-directory-p output-dir)
       (make-directory output-dir t))
 
