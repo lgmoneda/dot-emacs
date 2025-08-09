@@ -161,12 +161,13 @@ menu\nmouse-2 will jump to task"))
 )
 
 (setq org-file-apps
-        (append org-file-apps
-                '(
-                  ("\\.mp3\\'" . (lambda (file) (emms-play-file file)))
-                  ("\\.mp4\\'" . (lambda (file) (emms-play-file file)))
-		  ("\\.ogg" . "mpv %s")
-		  )))
+      (append org-file-apps
+              '(
+                ("\\.mp3\\'" . (lambda (file) (emms-play-file file)))
+                ("\\.mp4\\'" . "open %s")
+                ("\\.ogg\\'" . "mpv %s")
+                )))
+
 
 ;; From cashestocashes.com
 ;; Once you've included this, activate org-columns with C-c C-x C-c while on a top-level heading, which will allow you to view the time you've spent at the different levels (you can exit the view by pressing q)
@@ -2680,6 +2681,209 @@ Prompts for the output filename, defaulting to the original Org file's name."
 ;;   :ensure t
 ;;   :config
 ;;   (org-sliced-images-mode 1))
+
+;; I don't think I have a day-to-day use case to justify it
+;; (use-package org-roam-ql
+;;   ;; If using quelpa
+;;   :quelpa (org-roam-ql :fetcher github :repo "ahmed-shariff/org-roam-ql"
+;;                        :files (:defaults (:exclude "org-roam-ql-ql.el")))
+;;   ;; Simple configuration
+;;   :after (org-roam)
+;;   :bind ((:map org-roam-mode-map
+;;                ;; Have org-roam-ql's transient available in org-roam-mode buffers
+;;                ("v" . org-roam-ql-buffer-dispatch)
+;;                :map minibuffer-mode-map
+;;                ;; Be able to add titles in queries while in minibuffer.
+;;                ;; This is similar to `org-roam-node-insert', but adds
+;;                ;; only title as a string.
+;;                ("C-c n i" . org-roam-ql-insert-node-title))))
+
+;; Screen recording function for org-mode
+;; Records upper-left quadrant of primary screen and inserts org link
+
+(defun org-screen-record-get-screen-dimensions ()
+  "Get the dimensions of the primary screen on macOS.
+Returns a list (width height) or nil if unable to determine."
+  (condition-case nil
+      (let ((output (shell-command-to-string
+                     "system_profiler SPDisplaysDataType | grep Resolution | head -1 | sed 's/.*Resolution: \\([0-9]*\\) x \\([0-9]*\\).*/\\1 \\2/'")))
+        (when (string-match "\\([0-9]+\\) \\([0-9]+\\)" (string-trim output))
+          (list (string-to-number (match-string 1 output))
+                (string-to-number (match-string 2 output)))))
+    (error nil)))
+
+(defun org-screen-record-get-quadrant-dimensions ()
+  "Calculate dimensions for the upper-left quadrant of the primary screen.
+Returns a list (width height x-offset y-offset)."
+  (let ((screen-dims (org-screen-record-get-screen-dimensions)))
+    (if screen-dims
+        (let* ((screen-width (nth 0 screen-dims))
+               (screen-height (nth 1 screen-dims))
+               (quad-width (/ screen-width 2))
+               (quad-height (/ screen-height 2)))
+          (list quad-width quad-height 0 0))
+      ;; Fallback dimensions if we can't detect screen size
+      (progn
+        (message "Warning: Could not detect screen dimensions, using fallback values")
+        (list 960 540 0 0)))))
+
+(defvar org-screen-record-process nil
+  "Process object for the current screen recording.")
+
+(defvar org-screen-record-output-path nil
+  "Path to the current/last screen recording output file.")
+
+(defun org-screen-record-check-permissions ()
+  "Check if screen recording permissions are granted on macOS."
+  (let ((result (shell-command-to-string
+                 "sqlite3 /Library/Application\\ Support/com.apple.TCC/TCC.db \"SELECT client FROM access WHERE service='kTCCServiceScreenCapture' AND client LIKE '%Emacs%'\" 2>/dev/null || echo 'no_permission'")))
+    (not (string-match-p "no_permission\\|^$" result))))
+
+(defun org-screen-record-start ()
+  "Start recording the upper-left portion of the screen.
+Records until `org-screen-record-stop-and-insert-link' is called."
+  (interactive)
+  (when org-screen-record-process
+    (user-error "Recording already in progress"))
+
+  ;; Check if ffmpeg is available
+  (unless (executable-find "ffmpeg")
+    (user-error "ffmpeg not found in PATH. Please install ffmpeg first (brew install ffmpeg)"))
+
+  ;; Ensure the output directory exists
+  (let ((output-dir (expand-file-name "~/Videos/org-clips")))
+    (unless (file-directory-p output-dir)
+      (make-directory output-dir t))
+
+    ;; Get dynamic quadrant dimensions
+    (let* ((quadrant-dims (org-screen-record-get-quadrant-dimensions))
+           (quad-width (nth 0 quadrant-dims))
+           (quad-height (nth 1 quadrant-dims))
+           (quad-x (nth 2 quadrant-dims))
+           (quad-y (nth 3 quadrant-dims))
+           ;; Generate filename with timestamp
+           (timestamp (format-time-string "%Y%m%d_%H%M%S"))
+           (filename (format "screen_recording_%s.mp4" timestamp))
+           (output-path (expand-file-name filename output-dir)))
+
+      (setq org-screen-record-output-path output-path)
+
+      ;; First, let's check what capture devices are available
+      (message "Checking available capture devices...")
+      (let ((devices-output (shell-command-to-string "ffmpeg -f avfoundation -list_devices true -i \"\" 2>&1")))
+        (message "Available devices: %s" devices-output))
+
+      ;; Try different approaches for screen capture on macOS
+      (let ((args (list "-f" "avfoundation"
+                        "-capture_cursor" "1"
+                        "-framerate" "30"
+                        "-i" "2:none"  ; Device 2 for screen capture, no audio
+                        "-vf" (format "crop=%d:%d:%d:%d" quad-width quad-height quad-x quad-y)
+                        "-c:v" "libx264"
+                        "-pix_fmt" "yuv420p"
+                        "-preset" "ultrafast"
+                        "-y"
+                        output-path)))
+
+        (message "Starting FFmpeg with args: %s" (mapconcat 'identity args " "))
+
+        ;; Start the recording process
+        (setq org-screen-record-process
+              (apply #'start-process "org-screen-record" "*org-screen-record*" "ffmpeg" args))
+
+        ;; Setup a process sentinel to handle process exit
+        (set-process-sentinel org-screen-record-process
+                              (lambda (process event)
+                                (let ((exit-status (process-exit-status process)))
+                                  (message "FFmpeg process %s with status %s" event exit-status)
+                                  (when (not (zerop exit-status))
+                                    (with-current-buffer "*org-screen-record*"
+                                      (message "FFmpeg error output: %s" (buffer-string))))
+                                  (setq org-screen-record-process nil))))
+
+        ;; Give FFmpeg a moment to start
+        (sit-for 1)
+
+        ;; Check if the process is still running (indicates successful start)
+        (if (and org-screen-record-process (process-live-p org-screen-record-process))
+            (message "Screen recording started (upper-left quadrant: %dx%d). Use C-c v to stop..."
+                     quad-width quad-height)
+          (progn
+            (message "FFmpeg failed to start. Check *org-screen-record* buffer for errors.")
+            (setq org-screen-record-process nil)))))))
+
+(defun org-screen-record-stop-and-insert-link ()
+  "Stop the current recording and insert an org-mode link."
+  (interactive)
+  (unless org-screen-record-process
+    (user-error "No recording in progress"))
+
+  (message "Stopping screen recording...")
+
+  ;; Send 'q' to ffmpeg to stop gracefully
+  (condition-case err
+      (process-send-string org-screen-record-process "q")
+    (error (message "Error sending quit signal: %s" err)))
+
+  ;; Wait for the process to finish
+  (let ((timeout 10)
+        (start-time (float-time)))
+    (while (and org-screen-record-process
+                (process-live-p org-screen-record-process)
+                (< (- (float-time) start-time) timeout))
+      (sit-for 0.2)))
+
+  ;; If still running, force kill
+  (when (and org-screen-record-process (process-live-p org-screen-record-process))
+    (message "Force killing FFmpeg process...")
+    (kill-process org-screen-record-process))
+
+  (setq org-screen-record-process nil)
+
+  ;; Wait a bit more to ensure file is written
+  (sit-for 1)
+
+  ;; Check if output file exists and has content
+  (if (and org-screen-record-output-path
+           (file-exists-p org-screen-record-output-path)
+           (> (file-attribute-size (file-attributes org-screen-record-output-path)) 0))
+      (let ((description (read-string "Link description: " "Screen Recording")))
+        ;; Insert the org-mode link at point
+        (insert (format "[[file:%s][%s]]" org-screen-record-output-path description))
+        (message "Recording stopped and link inserted. File size: %d bytes"
+                 (file-attribute-size (file-attributes org-screen-record-output-path))))
+    (progn
+      (message "Recording stopped but output file not found or empty: %s" org-screen-record-output-path)
+      (message "Check the *org-screen-record* buffer for FFmpeg errors")
+      ;; Show the buffer with FFmpeg output
+      (when (get-buffer "*org-screen-record*")
+        (display-buffer "*org-screen-record*")))))
+
+(defun org-screen-record-toggle ()
+  "Toggle screen recording - start if not running, stop and insert link if running."
+  (interactive)
+  (if org-screen-record-process
+      (org-screen-record-stop-and-insert-link)
+    (org-screen-record-start)))
+
+(defun org-screen-record-show-log ()
+  "Show the FFmpeg output buffer for debugging."
+  (interactive)
+  (if (get-buffer "*org-screen-record*")
+      (display-buffer "*org-screen-record*")
+    (message "No recording log buffer found")))
+
+;; Bind the function to C-c v in org-mode
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c v") 'org-screen-record-toggle)
+  (define-key org-mode-map (kbd "C-c V") 'org-screen-record-show-log))
+
+;; Optional: Add a hook to kill any running recording when Emacs exits
+(add-hook 'kill-emacs-hook
+          (lambda ()
+            (when (and org-screen-record-process (process-live-p org-screen-record-process))
+              (kill-process org-screen-record-process)
+              (setq org-screen-record-process nil))))
 
 (provide 'org-settings)
 ;;; org-settings.el ends here
