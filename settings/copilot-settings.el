@@ -19,29 +19,51 @@
 ;;                    :files ("*.el"))
 ;;   :after (request))
 
-(use-package aidermacs
-  :ensure t
-  :bind (("C-x a" . aidermacs-transient-menu))
-  :config
-  ; Set API_KEY in .bashrc, that will automatically picked up by aider or in elisp
-  (setenv "ANTHROPIC_API_KEY" (getenv "ANTHROPIC_API_KEY"))
-  (setenv "OPENROUTER_API_KEY" (getenv "OPENROUTER_API_KEY"))
-  (setq aider-model "anthropic/claude-sonnet-4-20250514")
-  :custom
-  ; See the Configuration section below
-  (aidermacs-use-architect-mode t)
-  (aidermacs-default-model "openrouter/anthropic/claude-sonnet-4")
-  )
+;; Commentinh to try claude code ide for a while
+;; (use-package aidermacs
+;;   :ensure t
+;;   :bind (("C-x a" . aidermacs-transient-menu))
+;;   :config
+;;   ; Set API_KEY in .bashrc, that will automatically picked up by aider or in elisp
+;;   (setenv "ANTHROPIC_API_KEY" (getenv "ANTHROPIC_API_KEY"))
+;;   (setenv "OPENROUTER_API_KEY" (getenv "OPENROUTER_API_KEY"))
+;;   (setq aider-model "anthropic/claude-sonnet-4-20250514")
+;;   :custom
+;;   ; See the Configuration section below
+;;   (aidermacs-use-architect-mode t)
+;;   (aidermacs-default-model "openrouter/anthropic/claude-sonnet-4")
+;;   )
 
-(use-package emigo
-  :straight (:host github :repo "MatthewZMD/emigo" :files (:defaults "*.py" "*.el"))
+(use-package claude-code-ide
+  :straight (:type git :host github :repo "manzaltu/claude-code-ide.el" :branch "main")
+  :bind ("C-x a" . claude-code-ide-menu)
   :config
-  (emigo-enable) ;; Starts the background process automatically
-  :custom
-  ;; Encourage using OpenRouter with Deepseek
-  (emigo-model "openrouter/deepseek/deepseek-chat-v3-0324")
-  (emigo-base-url "https://openrouter.ai/api/v1")
-  (emigo-api-key (getenv "OPENROUTER_API_KEY")))
+  (claude-code-ide-emacs-tools-setup))
 
+;; I didn't try this one
+;; (use-package emigo
+;;   :straight (:host github :repo "MatthewZMD/emigo" :files (:defaults "*.py" "*.el"))
+;;   :config
+;;   (emigo-enable) ;; Starts the background process automatically
+;;   :custom
+;;   ;; Encourage using OpenRouter with Deepseek
+;;   (emigo-model "openrouter/deepseek/deepseek-chat-v3-0324")
+;;   (emigo-base-url "https://openrouter.ai/api/v1")
+;;   (emigo-api-key (getenv "OPENROUTER_API_KEY")))
+
+
+;; A fourth option
+;; add melp to package archives, as vterm is on melpa:
+;; for eat terminal backend:
+(use-package eat :ensure t)
+
+;; for vterm terminal backend:
+(use-package vterm :ensure t)
+
+;; install claude-code.el
+;; (use-package claude-code :ensure t
+;;   :vc (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
+;;   :config (claude-code-mode)
+;;   :bind-keymap ("C-c c" . claude-code-command-map))
 (provide 'copilot-settings)
 ;;; copilot-settings.el ends here
