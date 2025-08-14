@@ -338,5 +338,11 @@
 ;; Define the shell I want to use
 (setq explicit-shell-file-name "/bin/zsh")
 
+;; Improve the candidates sorting
+(straight-use-package 'prescient)
+(straight-use-package 'company-prescient)
+(straight-use-package 'ivy-prescient)
+(straight-use-package 'vertico-prescient)
+
 (provide 'editor-settings)
 ;;; editor-settings.el ends here
