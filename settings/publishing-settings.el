@@ -480,7 +480,7 @@ Asks whether to commit and push to GitHub after export."
             (shell-command (format "git add %s" (shell-quote-argument image-dir)))
             (shell-command (format "git commit --no-gpg-sign -m 'Publish attic piece: %s'" basename))
             (shell-command (format "git push origin %s" branch))
-            (message "Changes committed and pushed to GitHub")))))))
+            (message "Changes committed and pushed to GitHub"))))))))
 
 ;; em busca das referências perdidas
 (defun lgm/org-roam-export-proust-page ()
