@@ -65,5 +65,12 @@
 ;;   :vc (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
 ;;   :config (claude-code-mode)
 ;;   :bind-keymap ("C-c c" . claude-code-command-map))
+
+(add-to-list 'load-path "~/.emacs.d/elpa/mcp-server-lib-20250728.457/")
+(require 'mcp-server-lib)
+
+(load "~/.emacs.d/settings/org-babel-mcp.el")
+;; (org-babel-mcp-start-server)
+
 (provide 'copilot-settings)
 ;;; copilot-settings.el ends here
