@@ -158,14 +158,20 @@ executes the block at point or the first block found."
           (setq executed t)
 
           (if success
-              (org-babel-mcp--format-success
-               (format "Successfully executed source block%s"
-                       (if block-name (format " '%s'" block-name) ""))
-               `(("File Path" . ,file-path)
-                 ("Block Name" . ,(or block-name "(unnamed)"))
-                 ("Language" . ,(nth 0 block-info))
-                 ("Output" . ,(or output "(no output)"))
-                 ("Result" . ,(if result (format "%s" result) "(no result)"))))
+              (progn
+                ;; Save the buffer to persist execution results
+                (save-buffer)
+                (concat
+                 (org-babel-mcp--format-success
+                  (format "Successfully executed source block%s"
+                          (if block-name (format " '%s'" block-name) ""))
+                  `(("File Path" . ,file-path)
+                    ("Block Name" . ,(or block-name "(unnamed)"))
+                    ("Language" . ,(nth 0 block-info))
+                    ("Output" . ,(or output "(no output)"))
+                    ("Result" . ,(if result (format "%s" result) "(no result)"))
+                    ("File Saved" . "true")))
+                 "\n\nREMINDER: File has been modified. Use Read tool to see changes."))
             (mcp-server-lib-tool-throw
              (org-babel-mcp--format-error
               (format "Failed to execute source block%s"
@@ -236,6 +242,9 @@ FILE-PATH is the path to the org file."
                                          "Success"
                                        (format "Failed - %s" (cdr (assoc 'error detail))))))
                            (reverse execution-details) "\n")))
+          ;; Save the buffer to persist execution results
+          (when (> executed-count 0)
+            (save-buffer))
           (if (> failed-count 0)
               (mcp-server-lib-tool-throw
                (org-babel-mcp--format-error
@@ -245,13 +254,17 @@ FILE-PATH is the path to the org file."
                   ("Executed Blocks" . ,(number-to-string executed-count))
                   ("Failed Blocks" . ,(number-to-string failed-count))
                   ("Total Blocks" . ,(number-to-string (+ executed-count failed-count)))
-                  ("Execution Details" . ,details-str))))
-            (org-babel-mcp--format-success
-             (format "Successfully executed all %d source blocks" executed-count)
-             `(("File Path" . ,file-path)
-               ("Executed Blocks" . ,(number-to-string executed-count))
-               ("Total Blocks" . ,(number-to-string executed-count))
-               ("Execution Details" . ,details-str)))))))))
+                  ("Execution Details" . ,details-str)
+                  ("File Saved" . ,(if (> executed-count 0) "true" "false")))))
+            (concat
+             (org-babel-mcp--format-success
+              (format "Successfully executed all %d source blocks" executed-count)
+              `(("File Path" . ,file-path)
+                ("Executed Blocks" . ,(number-to-string executed-count))
+                ("Total Blocks" . ,(number-to-string executed-count))
+                ("Execution Details" . ,details-str)
+                ("File Saved" . "true")))
+             "\n\nREMINDER: File has been modified. Use Read tool to see changes."))))))))
 
 ;;; MCP Tool Handler Functions
 
