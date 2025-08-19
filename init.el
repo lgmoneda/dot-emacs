@@ -68,6 +68,8 @@
 (require 'publishing-settings)
 (require 'reading-settings)
 (require 'copilot-settings)
+(require 'claude-code-ide-settings)
+(require 'emacs-mcp-server-settings)
 ;; (require 'processing-settings)
 ;; (require 'nu-settings)
 ;; (require 'email-settings)
