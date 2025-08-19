@@ -2770,47 +2770,53 @@ Records until `org-screen-record-stop-and-insert-link' is called."
 
       ;; First, let's check what capture devices are available
       (message "Checking available capture devices...")
-      (let ((devices-output (shell-command-to-string "ffmpeg -f avfoundation -list_devices true -i \"\" 2>&1")))
-        (message "Available devices: %s" devices-output))
+      (let* ((devices-output (shell-command-to-string
+                              "ffmpeg -f avfoundation -list_devices true -i \"\" 2>&1"))
+             (screen-device
+              (if (string-match "Capture screen 1" devices-output)
+                  "2:none"  ;; secondary monitor
+                "1:none"))) ;; primary monitor only
+        (message "Available devices: %s" devices-output)
+        (message "Using capture device: %s" screen-device)
 
-      ;; Try different approaches for screen capture on macOS
-      (let ((args (list "-f" "avfoundation"
-                        "-capture_cursor" "1"
-                        "-framerate" "30"
-                        "-i" "2:none"  ; Device 2 for screen capture, no audio
-                        "-vf" (format "crop=%d:%d:%d:%d" quad-width quad-height quad-x quad-y)
-                        "-c:v" "libx264"
-                        "-pix_fmt" "yuv420p"
-                        "-preset" "ultrafast"
-                        "-y"
-                        output-path)))
+        ;; Try different approaches for screen capture on macOS
+        (let ((args (list "-f" "avfoundation"
+                          "-capture_cursor" "1"
+                          "-framerate" "30"
+                          "-i" screen-device
+                          "-vf" (format "crop=%d:%d:%d:%d" quad-width quad-height quad-x quad-y)
+                          "-c:v" "libx264"
+                          "-pix_fmt" "yuv420p"
+                          "-preset" "ultrafast"
+                          "-y"
+                          output-path)))
 
-        (message "Starting FFmpeg with args: %s" (mapconcat 'identity args " "))
+          (message "Starting FFmpeg with args: %s" (mapconcat 'identity args " "))
 
-        ;; Start the recording process
-        (setq org-screen-record-process
-              (apply #'start-process "org-screen-record" "*org-screen-record*" "ffmpeg" args))
+          ;; Start the recording process
+          (setq org-screen-record-process
+                (apply #'start-process "org-screen-record" "*org-screen-record*" "ffmpeg" args))
 
-        ;; Setup a process sentinel to handle process exit
-        (set-process-sentinel org-screen-record-process
-                              (lambda (process event)
-                                (let ((exit-status (process-exit-status process)))
-                                  (message "FFmpeg process %s with status %s" event exit-status)
-                                  (when (not (zerop exit-status))
-                                    (with-current-buffer "*org-screen-record*"
-                                      (message "FFmpeg error output: %s" (buffer-string))))
-                                  (setq org-screen-record-process nil))))
+          ;; Setup a process sentinel to handle process exit
+          (set-process-sentinel org-screen-record-process
+                                (lambda (process event)
+                                  (let ((exit-status (process-exit-status process)))
+                                    (message "FFmpeg process %s with status %s" event exit-status)
+                                    (when (not (zerop exit-status))
+                                      (with-current-buffer "*org-screen-record*"
+                                        (message "FFmpeg error output: %s" (buffer-string))))
+                                    (setq org-screen-record-process nil))))
 
-        ;; Give FFmpeg a moment to start
-        (sit-for 1)
+          ;; Give FFmpeg a moment to start
+          (sit-for 1)
 
-        ;; Check if the process is still running (indicates successful start)
-        (if (and org-screen-record-process (process-live-p org-screen-record-process))
-            (message "Screen recording started (upper-left quadrant: %dx%d). Use C-c v to stop..."
-                     quad-width quad-height)
-          (progn
-            (message "FFmpeg failed to start. Check *org-screen-record* buffer for errors.")
-            (setq org-screen-record-process nil)))))))
+          ;; Check if the process is still running (indicates successful start)
+          (if (and org-screen-record-process (process-live-p org-screen-record-process))
+              (message "Screen recording started (upper-left quadrant: %dx%d). Use C-c v to stop..."
+                       quad-width quad-height)
+            (progn
+              (message "FFmpeg failed to start. Check *org-screen-record* buffer for errors.")
+              (setq org-screen-record-process nil))))))))
 
 (defun org-screen-record-stop-and-insert-link ()
   "Stop the current recording and insert an org-mode link."

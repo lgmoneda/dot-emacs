@@ -34,12 +34,6 @@
 ;;   (aidermacs-default-model "openrouter/anthropic/claude-sonnet-4")
 ;;   )
 
-(use-package claude-code-ide
-  :straight (:type git :host github :repo "manzaltu/claude-code-ide.el" :branch "main")
-  :bind ("C-x a" . claude-code-ide-menu)
-  :config
-  (claude-code-ide-emacs-tools-setup))
-
 ;; I didn't try this one
 ;; (use-package emigo
 ;;   :straight (:host github :repo "MatthewZMD/emigo" :files (:defaults "*.py" "*.el"))
@@ -52,14 +46,6 @@
 ;;   (emigo-api-key (getenv "OPENROUTER_API_KEY")))
 
 
-;; A fourth option
-;; add melp to package archives, as vterm is on melpa:
-;; for eat terminal backend:
-(use-package eat :ensure t)
-
-;; for vterm terminal backend:
-(use-package vterm :ensure t)
-
 ;; install claude-code.el
 ;; (use-package claude-code :ensure t
 ;;   :vc (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
@@ -69,8 +55,10 @@
 (add-to-list 'load-path "~/.emacs.d/elpa/mcp-server-lib-20250728.457/")
 (require 'mcp-server-lib)
 
-(load "~/.emacs.d/settings/org-babel-mcp.el")
+
 ;; (org-babel-mcp-start-server)
+;; (org-roam-mcp-start-server)
+;; (mcp-server-lib-start)
 
 (provide 'copilot-settings)
 ;;; copilot-settings.el ends here

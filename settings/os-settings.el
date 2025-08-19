@@ -41,5 +41,8 @@
   (exec-path-from-shell-copy-env "BRAVESEARCH_API_KEY")
   )
 
+(setenv "PATH" (concat (getenv "PATH") ":/Users/luis.moneda/.npm-global/bin"))
+(setq exec-path (append exec-path '("/Users/luis.moneda/.npm-global/bin")))
+
 (provide 'os-settings)
 ;;; os-settings.el ends here

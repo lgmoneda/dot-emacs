@@ -72,9 +72,33 @@
 (use-package restclient
   :ensure t)
 
-;; M-x eglot
+;; From https://github.com/Automattic/harper/discussions/150
 (use-package eglot
-  :ensure t)
+  :defer
+  ;; :hook
+  ;; (python-mode . eglot-ensure)
+  ;; (text-mode . eglot-ensure)
+  :bind (:map
+         eglot-mode-map
+         ("C-c e r" . eglot-rename)
+         ("C-c e a" . eglot-code-actions)
+         ("C-c e o" . eglot-code-action-organize-imports)
+         ;; ("C-c e d" . eldoc)
+         ("C-c e f" . eglot-format)
+         ("C-c e =" . eglot-format))
+  :config
+  (add-to-list 'eglot-server-programs
+               '((text-mode :language-id "plaintext") . ("harper-ls" "--stdio")))
+  (add-to-list 'eglot-server-programs
+               '((english-prose-mode :language-id "plaintext") . ("harper-ls" "--stdio")))
+  :custom
+  (eglot-autoshutdown t) ;; default is to leave servers runing when last buffer exits
+  (eglot-events-buffer-size 0) ;; disable events recording to speed
+                               ;; things up, comment out to
+                               ;; troubleshoot and look for the EGLOT
+                               ;; buffer (eglot-stay-out-of
+                               ;; '(yasnippet))
+  (eglot-extend-to-xref nil)) ;; cover files found through xref (M-.)
 
 (provide 'programming-settings)
 ;;; programming-settings.el ends here

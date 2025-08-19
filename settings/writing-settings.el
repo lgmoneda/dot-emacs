@@ -375,10 +375,6 @@
 ;;   :init
 ;;   (setq lsp-ltex-version "15.2.0"))  ; make sure you have set this, see below
 
-(setq langtool-language-tool-jar "/Users/luis.moneda/repos/LanguageTool-6.5/languagetool-commandline.jar")
-(use-package langtool
-  :ensure t)
-
 (defun lgm/youtube-generate-bibtex (url)
   "Generate a BibTeX citation for a given YouTube URL and append it to the library.bib file."
   (interactive "sEnter YouTube URL: ")

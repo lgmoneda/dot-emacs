@@ -123,11 +123,11 @@
 
 ;; Trigger the function to save the diff when I save the todo.org file
 ;; Additionally, triggers the catalyst in the passive mode to read it and integrate as a memory
-(add-hook 'before-save-hook
-          (lambda ()
-            (when (string= (buffer-file-name) "/Users/luis.moneda/Dropbox/Agenda/todo.org")
-              (save-todo-diff)
-              (call-catalyst-server "<placeholder, passive mode>" "passive"))))
+;; (add-hook 'before-save-hook
+;;           (lambda ()
+;;             (when (string= (buffer-file-name) "/Users/luis.moneda/Dropbox/Agenda/todo.org")
+;;               (save-todo-diff)
+;;               (call-catalyst-server "<placeholder, passive mode>" "passive"))))
 
 ;; Save the agenda view (built on top of todo.org) in a file
 ;; This function doesn't disrupt the agenda view on display

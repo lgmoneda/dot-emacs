@@ -157,6 +157,8 @@ want to use in the modeline *in lieu of* the original.")
  '(conda-anaconda-home "/Users/luis.moneda/miniconda3")
  '(package-selected-packages
    '(straight org-sliced-images gptel ob-mermaid aider aidermacs langtool org-modern nov shrface consult vertico citar-org-roam citar-embark citar ox-bibtex ivy-bibtex ox-gfm spacious-padding golden-ratio embark-consult embark exec-path-from-shell smex ob-chatgpt-shell quelpa-use-package copilot org-emms emms chatgpt-shell pyimport electric-operator org-present org-tree-slide org-transclusion org-mind-map consult-org-roam org-download org-remark org-ql org-roam-bibtex olivetti org-roam-ui org-roam deadgrep org-bullets virtualenvwrapper simple-httpd column-enforce-mode conda pyvenv pyenv-mode pyenv magit default-text-scale zygospore writeroom-mode with-editor which-key try smartparens smart-mode-line shell-pop restclient rebecca-theme rainbow-delimiters poet-theme pdf-tools org-ref orderless ob-async neotree multiple-cursors multi mood-line minions mindre-theme markdown-preview-mode lsp-grammarly latex-preview-pane ivy-posframe imenu-anywhere hide-mode-line helm-bibtex gscholar-bibtex goto-chg google-translate flymd expand-region engine-mode disable-mouse diminish diff-hl counsel-projectile company-posframe company-flx beacon auto-complete anzu annotate all-the-icons-ivy-rich ag))
+ '(package-vc-selected-packages
+   '((claude-code :url "https://github.com/stevemolitor/claude-code.el")))
  '(pdf-tools-handle-upgrades nil))
 ;; (custom-set-faces
 ;;  ;; custom-set-faces was added by Custom.
@@ -317,9 +319,8 @@ want to use in the modeline *in lieu of* the original.")
  '(diff-hl-delete ((t (:background "#ee6363"))))
  '(diff-hl-insert ((t (:background "#7ccd7c"))))
  '(jupyter-repl-input-prompt ((t (:foreground "SeaGreen4"))))
- '(org-quote ((t (:inherit mindre-default :slant italic))))
  '(org-link ((nil (:foreground "cornflowerblue" :underline nil))))
- )
+ '(org-quote ((t (:inherit mindre-default :slant italic)))))
 
 ;; Change font size
 ;; Iosevka
