@@ -2,71 +2,47 @@
 
 (add-to-list 'load-path "~/.emacs.d/elpa/mcp-server-lib-20250728.457/")
 (require 'mcp-server-lib)
+(setq mcp-server-lib-log-io t)
+
+(load "mcp-tools/org-roam-tools.el")
+(load "mcp-tools/org-babel-tools.el")
+
+(defun wrap-fn-for-mcp (fn)
+  "Return a function that calls FN with alist values."
+  (lambda (args)
+    (apply fn (mapcar #'cdr args))))
 
 ;;; Org-roam MCP tools
 
 (defun emacs-org-roam-mcp-enable ()
   "Enable the Org-roam MCP tools."
   (mcp-server-lib-register-tool
-   #'org-roam-mcp-retrieve-node-by-id
+   (wrap-fn-for-mcp #'org-roam-retrieve-node-by-id)
    :id "org-roam-retrieve-node-by-id"
    :title "Retrieve Org-roam Node by ID"
    :description
-   "Retrieve file path, start line, end line, and content of an org-roam node by its ID.
+   "Retrieve file path, start line, end line, and content of an org-roam node by its ID. Returns node information including node ID and title, file path and location (start/end line numbers), node level and hierarchical position, associated tags and aliases, complete node content text, and success/error status with detailed messages. The org-roam ID should be a valid UUID string that exists in the org-roam database. Use this tool to fetch complete node details when you know the specific node ID.
 
 Parameters:
-  roam_id - The org-roam ID of the node to retrieve (required)
+  roam_id - The org-roam ID of the node to retrieve (string)
+"
 
-Returns node information including:
-- node ID and title
-- file path and location (start/end line numbers)
-- node level and hierarchical position
-- associated tags and aliases
-- complete node content text
-- success/error status with detailed messages
-
-The org-roam ID should be a valid UUID string that exists in the org-roam database.
-Use this tool to fetch complete node details when you know the specific node ID."
    :read-only t)
+
   (mcp-server-lib-register-tool
-   #'org-roam-mcp-search-nodes-by-title
+   #'org-roam-mcp--search-nodes-by-title
    :id "org-roam-search-nodes-by-title"
    :title "Search Org-roam Nodes by Title"
    :description
-   "Search for org-roam nodes by title pattern using SQL LIKE matching.
-
-Parameters:
-  title - Search pattern for node titles (required)
-  limit - Maximum number of results to return (optional, default: 10)
-
-Returns search results including:
-- list of matching nodes with ID, title, file path
-- node level and associated tags
-- total count of results found
-- formatted summary of all matches
-
-The title parameter supports partial matching (e.g., 'project' will match 'My Project Notes').
-Use this tool when you need to find nodes by their title content but don't know the exact ID."
+   "Search for org-roam nodes by title pattern using SQL LIKE matching. Returns search results including list of matching nodes with ID, title, file path, node level and associated tags, total count of results found, and formatted summary of all matches. The title parameter supports partial matching (e.g., 'project' will match 'My Project Notes'). Use this tool when you need to find nodes by their title content but don't know the exact ID."
    :read-only t)
+
   (mcp-server-lib-register-tool
-   #'org-roam-mcp-get-backlinks
+   #'org-roam-mcp--get-backlinks
    :id "org-roam-get-backlinks"
    :title "Get Org-roam Node Backlinks"
    :description
-   "Find all nodes that link to a specific org-roam node (reverse link lookup).
-
-Parameters:
-  roam_id - The org-roam ID of the target node (required)
-  limit - Maximum number of backlinks to return (optional, default: 10)
-
-Returns backlink information including:
-- source node details (ID, title, file path)
-- link position within source files
-- total count of backlinks found
-- formatted list of all linking nodes
-
-Use this tool to understand node relationships and find all references to a specific node.
-Essential for analyzing knowledge graph connections and content dependencies."
+   "Find all nodes that link to a specific org-roam node (reverse link lookup). Returns backlink information including source node details (ID, title, file path), link position within source files, total count of backlinks found, and formatted list of all linking nodes. Use this tool to understand node relationships and find all references to a specific node. Essential for analyzing knowledge graph connections and content dependencies."
    :read-only t))
 
 (defun emacs-org-roam-mcp-disable ()
@@ -79,58 +55,30 @@ Essential for analyzing knowledge graph connections and content dependencies."
 
 (defun emacs-org-babel-mcp-enable ()
   "Enable the Org-babel MCP tools."
+  ;; (mcp-server-lib-register-tool
+  ;;  #'org-babel-mcp--execute-src-block
+  ;;  :id "execute_src_block"
+  ;;  :title "Execute Org Babel Source Block"
+  ;;  :description
+  ;;  "Execute a specific Org Babel source block in an org file. Returns execution results including success status and execution confirmation, output from the block execution (#+RESULTS content), error messages if any occur during execution, block metadata (language, line number, file path), and file modification status. The block name should match a #+NAME: declaration in the org file. If no block name is provided, the first source block in the file will be executed. The file is automatically saved after successful execution to persist results."
+  ;;  :read-only nil)
+
   (mcp-server-lib-register-tool
-   #'org-babel-mcp-execute-src-block
-   :id "org-babel-execute-src-block"
-   :title "Execute Org Babel Source Block"
-   :description
-   "Execute a specific Org Babel source block in an org file.
-
-Parameters:
-  file_path - Path to the .org file (required)
-  block_name - Optional name of the block to execute. If not provided,
-               executes the first source block found.
-
-Returns execution results including:
-- success status and execution confirmation
-- output from the block execution (#+RESULTS content)
-- error messages if any occur during execution
-- block metadata (language, line number, file path)
-- file modification status
-
-The block name should match a #+NAME: declaration in the org file.
-If no block name is provided, the first source block in the file will be executed.
-The file is automatically saved after successful execution to persist results."
-   :read-only nil)
-  (mcp-server-lib-register-tool
-   #'org-babel-mcp-execute-buffer
-   :id "org-babel-execute-buffer"
+   #'org-babel-mcp--execute-buffer
+   :id "execute_buffer"
    :title "Execute All Org Babel Blocks"
    :description
-   "Execute all Org Babel source blocks in an org file buffer.
-
-Parameters:
-  file_path - Path to the .org file (required)
-
-Returns execution results including:
-- total number of blocks executed successfully
-- count of failed executions (if any)
-- detailed results for each individual block
-- execution output and error details per block
-- file save status after execution
-
-All source blocks in the file will be executed sequentially in the order
-they appear in the file. The results include comprehensive information about each
-individual block execution, including line numbers, languages, and success status.
-The file is automatically saved to persist all execution results."
+   "Execute all Org Babel source blocks in an org file buffer. Returns execution results including total number of blocks executed successfully, count of failed executions (if any), detailed results for each individual block, execution output and error details per block, and file save status after execution. All source blocks in the file will be executed sequentially in the order they appear in the file. The results include comprehensive information about each individual block execution, including line numbers, languages, and success status. The file is automatically saved to persist all execution results."
    :read-only nil))
 
 (defun emacs-org-babel-mcp-disable ()
   "Disable the Org-babel MCP tools."
-  (mcp-server-lib-unregister-tool "org-babel-execute-src-block")
-  (mcp-server-lib-unregister-tool "org-babel-execute-buffer"))
+  (mcp-server-lib-unregister-tool "execute_src_block")
+  (mcp-server-lib-unregister-tool "execute_buffer"))
 
 ;; Start the server
+(emacs-org-roam-mcp-enable)
+(emacs-org-babel-mcp-enable)
 (mcp-server-lib-start)
 
 (provide 'emacs-mcp-server-settings)

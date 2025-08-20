@@ -3,6 +3,8 @@
 (use-package claude-code-ide
   :straight (:type git :host github :repo "manzaltu/claude-code-ide.el" :branch "main")
   :bind ("C-x a" . claude-code-ide-menu)
+  :config
+  (claude-code-ide-emacs-tools-setup)
   )
 
 ;; for eat terminal backend:
