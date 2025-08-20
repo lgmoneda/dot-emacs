@@ -345,7 +345,7 @@ Use cases:
 
 Security considerations:
 - Executes ALL code blocks in the document
-- File modification - saves results automatically  
+- File modification - saves results automatically
 - Use only with trusted org files
 - Review document content before batch execution
 
@@ -357,7 +357,7 @@ Performance considerations:
 
 Error cases:
 - File not found or not accessible
-- File is not a valid .org file  
+- File is not a valid .org file
 - No source blocks found in file
 - File write permission issues
 - Mixed execution results (some blocks fail)"

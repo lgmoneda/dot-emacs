@@ -14,27 +14,25 @@
 (use-package vterm :ensure t)
 
 ; Add MCP tools to load path
-(add-to-list 'load-path (expand-file-name "settings/mcp-tools/" user-emacs-directory))
-
-(require 'org-roam-tools)
-(require 'org-babel-tools)
+(load (expand-file-name "mcp-tools/org-roam-tools.el" (file-name-directory (or load-file-name (buffer-file-name)))))
+(load (expand-file-name "mcp-tools/org-babel-tools.el" (file-name-directory (or load-file-name (buffer-file-name)))))
 
 ;;; Claude Code IDE MCP Tool Functions with Context
 
 (defun org-roam-mcp-retrieve-node-by-id-with-context (roam-id)
   "Retrieve an org-roam node by its ID with session context."
   (claude-code-ide-mcp-server-with-session-context nil
-    (org-roam-mcp-retrieve-node-by-id roam-id)))
+    (org-roam-mcp--retrieve-node-by-id roam-id)))
 
 (defun org-roam-mcp-search-nodes-by-title-with-context (title &optional limit)
   "Search for org-roam nodes by title with session context."
   (claude-code-ide-mcp-server-with-session-context nil
-    (org-roam-mcp-search-nodes-by-title title limit)))
+    (org-roam-mcp--search-nodes-by-title title limit)))
 
 (defun org-roam-mcp-get-backlinks-with-context (roam-id &optional limit)
   "Get nodes that link to the node with ROAM-ID with session context."
   (claude-code-ide-mcp-server-with-session-context nil
-    (org-roam-mcp-get-backlinks roam-id limit)))
+    (org-roam-mcp--get-backlinks roam-id limit)))
 
 ;; Define and register the retrieve_node_by_id tool
 (claude-code-ide-make-tool
@@ -77,15 +75,15 @@
   "Execute a specific source block in an org file with session context."
   (if (fboundp 'claude-code-ide-mcp-server-with-session-context)
       (claude-code-ide-mcp-server-with-session-context nil
-        (org-babel-mcp-execute-src-block file-path block-name))
-    (org-babel-mcp-execute-src-block file-path block-name)))
+        (org-babel-mcp--execute-src-block file-path block-name))
+    (org-babel-mcp--execute-src-block file-path block-name)))
 
 (defun org-babel-mcp-execute-buffer-with-context (file-path)
   "Execute all source blocks in an org file buffer with session context."
   (if (fboundp 'claude-code-ide-mcp-server-with-session-context)
       (claude-code-ide-mcp-server-with-session-context nil
-        (org-babel-mcp-execute-buffer file-path))
-    (org-babel-mcp-execute-buffer file-path)))
+        (org-babel-mcp--execute-buffer file-path))
+    (org-babel-mcp--execute-buffer file-path)))
 
 ;; Define and register the execute_src_block tool
 (claude-code-ide-make-tool
