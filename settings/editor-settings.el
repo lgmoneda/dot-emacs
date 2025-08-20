@@ -341,7 +341,7 @@
 ;; Improve the candidates sorting
 (straight-use-package 'prescient)
 (straight-use-package 'company-prescient)
-(straight-use-package 'ivy-prescient)
+;; (straight-use-package 'ivy-prescient)
 (straight-use-package 'vertico-prescient)
 
 (provide 'editor-settings)

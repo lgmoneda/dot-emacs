@@ -7,7 +7,8 @@
   :ensure t)
 
 (use-package mindre-theme
-    :ensure t
+  ;; :ensure t
+    :straight (:local-repo "/Users/luis.moneda/repos/mindre-theme/")
     :custom
     (mindre-use-more-bold nil)
     (mindre-use-faded-lisp-parens t)
@@ -287,6 +288,7 @@ want to use in the modeline *in lieu of* the original.")
   ;;  '(org-agenda-date-today ((t (:box nil :background "#e1d9c2" :foreground "darkgreen" :underline nil :weight extra-bold))))
   ;;  '(org-link ((t (:foreground "cornflowerblue" :underline nil)))))
   )
+
 
 ;; FAF9F5
 (defun lgm/set-mindre-theme ()
