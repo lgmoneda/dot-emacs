@@ -521,9 +521,12 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
 	(insert "Action items")))
   )
 
-(org-defkey org-mode-map (kbd "C-M-<return>") (lambda ()
-						(interactive)
-						(org-insert-subheading 2)))
+(org-defkey org-mode-map (kbd "C-M-<return>")
+  (lambda ()
+    (interactive)
+    (beginning-of-line)
+    (let ((level (1+ (or (org-current-level) 0))))
+      (insert (make-string level ?*) " "))))
 
 
 ;; Make Org Journal remember me about
