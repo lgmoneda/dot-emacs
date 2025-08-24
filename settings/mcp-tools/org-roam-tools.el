@@ -50,17 +50,17 @@ MCP Parameters:
       (signal 'wrong-type-argument (list 'stringp roam_id)))
     (when (string-empty-p roam_id)
       (error "Empty ID provided"))
-    
+
     (let ((node (org-roam-node-from-id roam_id)))
       (unless node
         (error "No node found with ID: %s" roam_id))
-      
+
       (let* ((file (org-roam-node-file node))
              (content-info (org-roam-mcp--get-node-content node))
              (content (nth 0 content-info))
              (start-line (nth 1 content-info))
              (end-line (nth 2 content-info)))
-        
+
         ;; Return alist format expected by MCP
         `((id . ,roam_id)
           (title . ,(or (org-roam-node-title node) ""))
@@ -78,36 +78,42 @@ MCP Parameters:
   title - The title pattern to search for
   limit - Optional maximum number of results (default 10)"
   (mcp-server-lib-with-error-handling
+    (require 'subr-x)
     (unless (stringp title)
       (signal 'wrong-type-argument (list 'stringp title)))
     (when (string-empty-p title)
       (error "Empty title provided"))
-    
+
     (setq limit (or limit 10))
-    
-    (let* ((query [:select [id title file level tags]
-                   :from nodes
-                   :where (like title $r1)
-                   :limit $s2])
-           (results (org-roam-db-query query (format "%%%s%%" title) limit))
+    (let* ((pattern (format "%%%s%%" title))
+           ;; nodes: list of vectors [id title file level]
+           (node-results
+            (org-roam-db-query
+             '[:select [id title file level]
+               :from nodes
+               :where (like title $s1)
+               :limit $s2]
+             pattern limit))
            (nodes '()))
-      
-      (dolist (result results)
-        (let ((id (nth 0 result))
-              (node-title (nth 1 result))
-              (file (nth 2 result))
-              (level (nth 3 result))
-              (tags (nth 4 result)))
+      (dolist (row node-results)
+        (let* ((id         (elt row 0))
+               (node-title (elt row 1))
+               (file       (elt row 2))
+               (level      (elt row 3))
+               ;; tags-results: list of vectors [tag]
+               (tags-results
+                (org-roam-db-query
+                 '[:select tag :from tags :where (= node_id $s1)]
+                 id))
+               (tags (mapcar (lambda (r) (elt r 0)) tags-results)))
           (push `((id . ,id)
                   (title . ,(or node-title ""))
                   (file_path . ,(or file ""))
                   (level . ,(or level 0))
-                  (tags . ,(if tags (split-string tags) '())))
+                  (tags . ,tags))
                 nodes)))
-      
-      ;; Return alist format
       `((search_term . ,title)
-        (results_count . ,(length results))
+        (results_count . ,(length node-results))
         (nodes . ,(nreverse nodes))))))
 
 (defun org-roam-mcp--get-backlinks (roam_id &optional limit)
@@ -120,9 +126,9 @@ MCP Parameters:
       (signal 'wrong-type-argument (list 'stringp roam_id)))
     (when (string-empty-p roam_id)
       (error "Empty ID provided"))
-    
+
     (setq limit (or limit 10))
-    
+
     (let* ((query [:select [nodes:id nodes:title nodes:file links:pos]
                    :from links
                    :inner-join nodes :on (= links:source nodes:id)
@@ -130,7 +136,7 @@ MCP Parameters:
                    :limit $s2])
            (results (org-roam-db-query query roam_id limit))
            (backlinks '()))
-      
+
       (dolist (result results)
         (let ((source-id (nth 0 result))
               (source-title (nth 1 result))
@@ -141,7 +147,7 @@ MCP Parameters:
                   (source_file . ,(or source-file ""))
                   (link_position . ,(or link-pos 0)))
                 backlinks)))
-      
+
       ;; Return alist format
       `((target_id . ,roam_id)
         (backlinks_count . ,(length results))
