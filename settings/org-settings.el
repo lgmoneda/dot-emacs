@@ -713,8 +713,17 @@ this command to copy it"
 (add-to-list 'org-capture-templates
              '("d" "Personal task"  entry
                (file+olp "~/Dropbox/Agenda/todo.org" "Life" "Misc")
-               "* TODO %?"
+               "* TODO %i%?"
 			   :empty-lines 1))
+
+;; For headless addition
+(add-to-list 'org-capture-templates
+             '("D" "Personal task (programmatic)" entry
+               (file+olp "~/Dropbox/Agenda/todo.org" "Life" "Misc")
+               "* TODO %i"
+               :empty-lines 1
+               :immediate-finish t))
+
 
 (add-to-list 'org-capture-templates
              '("a" "Org Roam daily" plain
@@ -1196,20 +1205,22 @@ should be continued."
                  "%25ITEM %DEADLINE %TAGS")))
              )
 
+
 ;; Compact only day view
+;; Custom agenda command: today's scheduled tasks, compact format
 (add-to-list 'org-agenda-custom-commands
              '("l" "Compact today"
-	       agenda "" ((org-agenda-ndays 5)
-			  (org-agenda-span 'day)
-			  (org-deadline-warning-days 0)
-			  (org-agenda-skip-scheduled-delay-if-deadline t)
-			  (org-agenda-todo-ignore-scheduled t)
-			  (org-agenda-scheduled-leaders '("" ""))
-			  (org-agenda-tags-todo-honor-ignore-options t)
-			  (org-agenda-overriding-header "Today Agenda:")
-			  )
-	       )
-	     )
+               agenda ""
+               ((org-agenda-span 'day)
+                (org-agenda-start-day "+0d")
+                (org-agenda-entry-types '(:scheduled))
+                (org-agenda-skip-scheduled-if-done t)
+                (org-agenda-use-time-grid nil)
+                (org-agenda-remove-tags t)
+                (org-agenda-prefix-format '((agenda . " %s")))
+                (org-agenda-scheduled-leaders '("" ""))
+                (org-agenda-overriding-header "Today Agenda:"))))
+
 
 ;; Compact only day view
 (add-to-list 'org-agenda-custom-commands
