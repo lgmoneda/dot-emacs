@@ -303,8 +303,8 @@ Asks whether to commit and push to GitHub after export."
          (is-node node)
          (tags (when is-node (org-get-tags)))
          (date (org-entry-get (point) "DATE"))
-		 (author (org-entry-get (point) "AUTHOR"))
-		 (collection (org-entry-get (point) "COLLECTION"))
+         (author (org-entry-get (point) "AUTHOR"))
+         (collection (org-entry-get (point) "COLLECTION"))
          (custom-title (org-entry-get (point) "TITLE"))
          (export-html-file nil)
          (basename nil)
@@ -322,15 +322,28 @@ Asks whether to commit and push to GitHub after export."
 
     ;; Sanitize title to be used in filename (remove accents, symbols)
     (defun lgm/sanitize-filename (s)
-  "Sanitize string S to be used in a filename: remove accents and special chars."
-  (let* ((decomposed (ucs-normalize-NFD-string s))
-         ;; Remove diacritics (Unicode marks)
-         (no-diacritics (replace-regexp-in-string "[\u0300-\u036f]" "" decomposed))
-         ;; Replace anything not a-z, A-Z, 0-9, hyphen or underscore with hyphen
-         (ascii-only (replace-regexp-in-string "[^a-zA-Z0-9_-]" "-" no-diacritics))
-         ;; Collapse multiple hyphens
-         (clean (replace-regexp-in-string "--+" "-" ascii-only)))
-    (downcase (string-trim clean "-+" "-+"))))
+      "Sanitize string S to be used in a filename: remove accents and special chars."
+      (let* ((decomposed (ucs-normalize-NFD-string s))
+             ;; Remove diacritics (Unicode marks)
+             (no-diacritics (replace-regexp-in-string "[\u0300-\u036f]" "" decomposed))
+             ;; Replace anything not a-z, A-Z, 0-9, hyphen or underscore with hyphen
+             (ascii-only (replace-regexp-in-string "[^a-zA-Z0-9_-]" "-" no-diacritics))
+             ;; Collapse multiple hyphens
+             (clean (replace-regexp-in-string "--+" "-" ascii-only)))
+        (downcase (string-trim clean "-+" "-+"))))
+
+    ;; Helper function to check if a heading should be excluded
+    (defun lgm/heading-has-noexport-p (element)
+      "Check if ELEMENT or any of its parent headings has :noexport: tag."
+      (let ((current element)
+            (has-noexport nil))
+        (while (and current (not has-noexport))
+          (when (eq (org-element-type current) 'headline)
+            (let ((tags (org-element-property :tags current)))
+              (when (member "noexport" tags)
+                (setq has-noexport t))))
+          (setq current (org-element-property :parent current)))
+        has-noexport))
 
     (setq basename
           (if is-node
@@ -361,37 +374,48 @@ Asks whether to commit and push to GitHub after export."
                 (org-export-to-file 'html (make-temp-file "attic" nil ".html") nil t))
             (org-html-export-to-html)))
 
-;; Handle images
-(let ((link-parser
-       (if is-node
-           ;; Parse only the content of the current node (subtree)
-           (let* ((beg (save-excursion
-                         (org-back-to-heading t)
-                         (point)))
-                  (end (save-excursion
-                         (org-end-of-subtree t t)
-                         (point)))
-                  (content (buffer-substring-no-properties beg end)))
-             (with-temp-buffer
-               (insert content)
-               (org-mode)
-               (org-element-parse-buffer)))
-         ;; Else parse the whole buffer
-         (org-element-parse-buffer))))
-  (org-element-map link-parser 'link
-    (lambda (link)
-      (when (string= (org-element-property :type link) "file")
-        (let* ((image-path (org-element-property :path link))
-               (absolute-image-path (expand-file-name image-path (file-name-directory org-file)))
-               (relative-image-path (file-relative-name absolute-image-path (file-name-directory org-file)))
-               (image-filename (file-name-nondirectory image-path))
-               (destination-image-path (expand-file-name image-filename image-dir)))
-          (when (file-exists-p absolute-image-path)
-            (copy-file absolute-image-path destination-image-path t)
-            (puthash relative-image-path
-                     (concat "../images/the-attic/" image-filename)
-                     image-paths)))))))
-
+    ;; Handle images
+    (let ((link-parser
+           (if is-node
+               ;; Parse only the content of the current node (subtree)
+               (let* ((beg (save-excursion
+                             (org-back-to-heading t)
+                             (point)))
+                      (end (save-excursion
+                             (org-end-of-subtree t t)
+                             (point)))
+                      (content (buffer-substring-no-properties beg end)))
+                 (with-temp-buffer
+                   (insert content)
+                   (org-mode)
+                   (org-element-parse-buffer)))
+             ;; Else parse the whole buffer
+             (org-element-parse-buffer))))
+      (org-element-map link-parser 'link
+        (lambda (link)
+          ;; Check if this link is inside a :noexport: heading
+          (unless (lgm/heading-has-noexport-p link)
+            (when (string= (org-element-property :type link) "file")
+              (let* ((image-path (org-element-property :path link))
+                     (absolute-image-path (expand-file-name image-path (file-name-directory org-file)))
+                     (relative-image-path (file-relative-name absolute-image-path (file-name-directory org-file)))
+                     (image-filename (file-name-nondirectory image-path))
+                     (destination-image-path (expand-file-name image-filename image-dir)))
+                (when (file-exists-p absolute-image-path)
+                  ;; Copy the image
+                  (copy-file absolute-image-path destination-image-path t)
+                  ;; Apply mogrify -strip to fix Chrome issues
+                  (when (or (string-match-p "\\.png$" destination-image-path)
+                            (string-match-p "\\.jpg$" destination-image-path)
+                            (string-match-p "\\.jpeg$" destination-image-path))
+                    (let ((mogrify-result (shell-command-to-string
+                                           (format "mogrify -strip %s 2>&1"
+                                                   (shell-quote-argument destination-image-path)))))
+                      (when (string-match-p "error\\|Error" mogrify-result)
+                        (message "Warning: mogrify failed for %s: %s" image-filename mogrify-result))))
+                  (puthash relative-image-path
+                           (concat "../images/the-attic/" image-filename)
+                           image-paths))))))))
 
     ;; Clean and finalize HTML
     (let ((final-output-file (expand-file-name basename output-path)))
@@ -399,18 +423,18 @@ Asks whether to commit and push to GitHub after export."
       (with-temp-buffer
         (insert-file-contents final-output-file)
 
-		;; Replace <title> in <head> with custom-title, if present
+        ;; Replace <title> in <head> with custom-title, if present
         (when (and custom-title (not (string-empty-p custom-title)))
           ;; Replace HTML <title> tag (tab title)
           (goto-char (point-min))
           (when (re-search-forward "<title>.*?</title>" nil t)
             (replace-match (format "<title>%s</title>" (org-html-encode-plain-text custom-title)) t t))
 
-		;; Replace main <h1> heading with custom-title, if present
-        (when (and custom-title (not (string-empty-p custom-title)))
-          (goto-char (point-min))
-          (when (re-search-forward "<h1[^>]*>.*?</h1>" nil t)
-            (replace-match (format "<h1 class=\"title\">%s</h1>" (org-html-encode-plain-text custom-title)) t t)))
+          ;; Replace main <h1> heading with custom-title, if present
+          (when (and custom-title (not (string-empty-p custom-title)))
+            (goto-char (point-min))
+            (when (re-search-forward "<h1[^>]*>.*?</h1>" nil t)
+              (replace-match (format "<h1 class=\"title\">%s</h1>" (org-html-encode-plain-text custom-title)) t t))))
 
         ;; Remove postamble div
         (goto-char (point-min))
@@ -426,16 +450,15 @@ Asks whether to commit and push to GitHub after export."
          image-paths)
         (write-file final-output-file)
 
-		;; Add collection title at the end if present
-		(when (and collection (not (string-empty-p collection)))
-		  (goto-char (point-max))
-		  (insert (format "<br><br><p><i>%s</i></p>" (org-html-encode-plain-text collection))))
+        ;; Add collection title at the end if present
+        (when (and collection (not (string-empty-p collection)))
+          (goto-char (point-max))
+          (insert (format "<br><br><p><i>%s</i></p>" (org-html-encode-plain-text collection))))
 
-		;; Add author at the end if present
-		(when (and author (not (string-empty-p author)))
-		  (goto-char (point-max))
-		  (insert (format "<p>- %s</p>\n" (org-html-encode-plain-text author))))
-		)
+        ;; Add author at the end if present
+        (when (and author (not (string-empty-p author)))
+          (goto-char (point-max))
+          (insert (format "<p>- %s</p>\n" (org-html-encode-plain-text author)))))
 
       (message "Exported to: %s" final-output-file)
 
@@ -480,7 +503,7 @@ Asks whether to commit and push to GitHub after export."
             (shell-command (format "git add %s" (shell-quote-argument image-dir)))
             (shell-command (format "git commit --no-gpg-sign -m 'Publish attic piece: %s'" basename))
             (shell-command (format "git push origin %s" branch))
-            (message "Changes committed and pushed to GitHub"))))))))
+            (message "Changes committed and pushed to GitHub")))))))
 
 ;; em busca das referências perdidas
 (defun lgm/org-roam-export-proust-page ()
