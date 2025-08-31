@@ -99,6 +99,25 @@
 (use-package ag
   :ensure t)
 
+;; project.el
+(require 'project)
+;; This functions let me place a .project file in a folder and have it treated
+;; like a project
+(defun my/project-try-dot-project (dir)
+  "Detect a `.project` marker and return an external project."
+  (let ((root (locate-dominating-file dir ".project")))
+    (when root
+      (list 'external root))))
+
+(cl-defmethod project-root ((project (head external)))
+  (cadr project))
+
+(add-hook 'project-find-functions #'my/project-try-dot-project)
+
+
+
+
+
 ;; Projectile
 (use-package projectile
   :ensure t
