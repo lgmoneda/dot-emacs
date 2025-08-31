@@ -137,9 +137,6 @@ Supports partial matching and returns ranked results with metadata.
 This tool helps discover org-roam nodes when you know part of the title but
 not the exact UUID. Uses SQL LIKE matching for flexible search capabilities.
 
-Parameter to call it:
-params - Alist containing roam_id and optional limit
-
 Parameters:
   title - Search pattern for node titles (string, required)
           Supports partial matching (e.g., 'project' matches 'My Project Notes')
@@ -431,12 +428,18 @@ MCP Parameters:
     (let ((result (org-agenda-mcp--add-todo-with-refile content refile_target scheduled)))
       (json-encode result))))
 
-(defun emacs-mcp--get-available-locations ()
+(defun emacs-mcp--get-available-locations (&optional level parent)
   "Get list of available locations for refiling in the personal agenda.
 
-MCP Parameters: None required"
+MCP Parameters:
+  level - Optional integer to filter by heading level (1=top-level, 2=second-level, etc.)
+  parent - Optional string to filter by parent heading (e.g., 'Life' to show Life/* sections)"
   (mcp-server-lib-with-error-handling
-    (let ((result (org-agenda-mcp--get-available-locations)))
+    (when (and level (not (integerp level)))
+      (mcp-server-lib-tool-throw "Invalid level: must be an integer or null"))
+    (when (and parent (not (stringp parent)))
+      (mcp-server-lib-tool-throw "Invalid parent: must be a string or null"))
+    (let ((result (org-agenda-mcp--get-available-locations level parent)))
       (json-encode result))))
 
 ;;; Org-agenda MCP Registration
@@ -570,45 +573,55 @@ Security: Safe operation, only adds/moves content within personal agenda file"
    :function #'emacs-mcp--get-available-locations
    :name "get-available-agenda-locations"
    :description "Get list of available locations for organizing tasks in your personal agenda.
-Discover all available sections and subsections where TODO items can be placed.
+Discover available sections and subsections where TODO items can be placed with hierarchical filtering.
 
-This tool provides a comprehensive view of your agenda structure by querying
-your org-refile-targets configuration. Essential for understanding where
-tasks can be organized and for providing context when refiling items.
+This tool provides a view of your agenda structure with optional filtering by level or parent
+heading. Essential for understanding where tasks can be organized and for providing context
+when refiling items. Now supports efficient hierarchical navigation to reduce token costs.
 
-Parameters: None required
+Parameters (all optional):
+  level - Filter by heading level (integer, optional)
+          1 = top-level headings only (Life, Study, Research, Projects, Emacs)
+          2 = second-level headings only (Life/Misc, Study/Books, etc.)
+          3 = third-level headings only
+  parent - Filter by parent heading (string, optional)
+           e.g., 'Life' shows only Life/* sections
+           e.g., 'Study' shows only Study/* sections
 
 Returns JSON object with:
   file - Path to your personal agenda file (string)
-  total_targets - Total number of available refile locations (integer)
+  total_targets - Total number of available refile locations after filtering (integer)
+  level_filter - Applied level filter (integer or null)
+  parent_filter - Applied parent filter (string or null)
   available_locations - Array of location objects, each containing:
     heading - Full heading path (string, e.g., 'Life/Financial Independence')
     file - File containing this heading (string)
     position - Character position in file (integer)
 
-Location structure reflects your agenda hierarchy:
-- Top-level: Life (main category)
-- Second-level: Major life areas (Goals, Family, Financial, House, etc.)
-- Third-level: Specific subcategories within each area
+Usage examples:
+- No parameters: Returns all available locations (may be large)
+- level=1: Returns only top-level sections (Life, Study, Research, Projects, Emacs)
+- parent='Life': Returns all Life subsections (Life/Misc, Life/House, etc.)
+- level=2, parent='Life': Returns only second-level Life sections
 
-Common available locations:
-- Life/Goals of the Season - Long-term objectives and projects
-- Life/Family Goals - Family-related tasks and planning
-- Life/Maintenance - Regular upkeep and maintenance tasks
-- Life/Financial Independence - Money, investing, and financial planning
-- Life/House - Home improvement, repairs, and household tasks
-- Life/Books - Reading goals and book-related activities
-- Life/Courses - Learning and educational content
-- Life/Articles - Articles to read or write
-- Life/Writing - Writing projects and creative work
-- Life/Misc - General tasks that don't fit other categories
+Hierarchical navigation workflow:
+1. Call with level=1 to see top-level sections
+2. Call with parent='Life' to explore Life subsections
+3. Use specific paths in refile operations
+
+Common available locations by category:
+- Life/*: Personal life areas (Misc, House, Financial Independence, etc.)
+- Study/*: Learning content (Books, Courses, Articles, Papers, Videos)
+- Research/*: Academic work (Writing Papers, Research experiments)
+- Projects/*: Personal projects (Blog, ML, Writing, Music, etc.)
+- Emacs/*: Emacs configuration and improvements
 
 Use cases:
-- Understanding your agenda structure before adding tasks
+- Efficient hierarchical browsing of agenda structure
 - Choosing appropriate location for new TODO items
-- Exploring available categories for task organization
+- Exploring available categories by parent section
+- Reducing token costs with targeted filtering
 - Getting context for refile operations
-- Auditing your current agenda organization
 
 Integration:
 - Works with your existing org-refile-targets configuration
@@ -617,6 +630,14 @@ Integration:
 - Compatible with standard org-mode refile functionality
 
 Security: Read-only operation, safe for exploring agenda structure"
+   :args '((:name "level"
+            :type integer
+            :description "Filter by heading level (1=top-level, 2=second-level, etc.)"
+            :optional t)
+           (:name "parent"
+            :type string
+            :description "Filter by parent heading (e.g., 'Life' to show Life/* sections)"
+            :optional t))
    :read-only t))
 
 (defun emacs-org-agenda-mcp-disable ()

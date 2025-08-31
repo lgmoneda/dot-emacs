@@ -33,6 +33,7 @@ Note: Use proper org-mode syntax for scheduling, e.g.:
   (unless (string-match-p "\\.org$" file-path)
     (error "File must have .org extension")))
 
+
 (defun org-agenda-mcp--get-refile-targets ()
   "Get available refile targets based on org-refile-targets configuration.
 Returns a list of available headings for refiling."
@@ -41,26 +42,70 @@ Returns a list of available headings for refiling."
 
 (defun org-agenda-mcp--format-refile-targets (targets)
   "Format refile TARGETS into a readable structure for LLM.
-Each target is (heading . (file . position))."
-  (mapcar (lambda (target)
-            (let ((heading (car target))
-                  (file-info (cdr target)))
-              `((heading . ,heading)
-                (file . ,(car file-info))
-                (position . ,(cdr file-info)))))
-          targets))
+Each target is (heading . (file . position)).
+Limits output to level 3 headings and formats as 'Level1/Level2/Level3'."
+  (let ((processed-targets '()))
+    (dolist (target targets)
+      (let* ((heading (car target))
+             (file-info (cdr target))
+             ;; Split heading by "/" and limit to 3 levels
+             (heading-parts (split-string heading "/"))
+             ;; Remove file name prefix (e.g., "todo.org" from "todo.org/Life/Misc")
+             (clean-parts (if (and (> (length heading-parts) 1)
+                                  (string-match-p "\\.org$" (car heading-parts)))
+                             (cdr heading-parts)
+                           heading-parts))
+             (limited-parts (seq-take clean-parts 3)))
+        ;; Only process if we have at most 3 levels after cleaning
+        (when (<= (length clean-parts) 3)
+          (let ((formatted-heading (string-join limited-parts "/")))
+            ;; Skip empty headings and avoid duplicates
+            (unless (or (string-empty-p formatted-heading)
+                       (assoc formatted-heading processed-targets))
+              (push `((heading . ,formatted-heading)
+                      (file . ,(car file-info))
+                      (position . ,(cdr file-info)))
+                    processed-targets))))))
+    (reverse processed-targets)))
 
 (defun org-agenda-mcp--find-refile-target (targets heading-path)
   "Find refile target in TARGETS that matches HEADING-PATH.
 HEADING-PATH can be a string like 'Life/Misc' or 'Life/Financial Independence'."
   (let ((target-found nil))
     (dolist (target targets)
-      (let ((heading (car target)))
+      (let ((heading (cdar target))) ; Extract heading from formatted structure
         ;; Try exact match first, then partial match
         (when (or (string= heading-path heading)
                   (string-match-p (regexp-quote heading-path) heading))
           (setq target-found target))))
     target-found))
+
+(defun org-agenda-mcp--filter-targets-by-level-and-parent (targets level parent)
+  "Filter TARGETS by hierarchical level and/or parent heading.
+TARGETS is a list of formatted target structures.
+LEVEL is an integer (1=top-level, 2=second-level, etc.) or nil for no filtering.
+PARENT is a string heading name to filter by, or nil for no filtering."
+  (let ((filtered-targets '()))
+    (dolist (target targets)
+      (let* ((heading (cdr (assq 'heading target)))
+             (heading-parts (when heading (split-string heading "/")))
+             (heading-level (when heading-parts (length heading-parts)))
+             (parent-match (if parent
+                             (and heading-parts
+                                  (string= parent (car heading-parts)))
+                           t))
+             (level-match (if level
+                            (and heading-level
+                                 (= level heading-level))
+                          t)))
+        ;; Debug: Add some logging to understand what's happening
+        (when (and parent (string= parent "Life"))
+          (message "Debug: heading=%s, parts=%S, parent-match=%s" 
+                   heading heading-parts parent-match))
+        ;; Include target if it matches both filters (or no filters applied)
+        (when (and level-match parent-match)
+          (push target filtered-targets))))
+    (reverse filtered-targets)))
 
 ;;; MCP Tool Functions
 
@@ -224,20 +269,26 @@ MCP Parameters:
         (method . "direct insertion")
         (refiled . ,(not (string= final-location "Life/Misc")))))))
 
-(defun org-agenda-mcp--get-available-locations ()
+(defun org-agenda-mcp--get-available-locations (&optional level parent)
   "Get list of available locations for refiling in the personal agenda.
-Returns the available refile targets from todo.org."
+Returns the available refile targets from todo.org, with hierarchical filtering.
+
+Optional parameters:
+  level - Limit to specific heading level (1 for top-level, 2 for second-level, etc.)
+  parent - Show only children of this parent heading (e.g., 'Life' to show Life/* sections)"
   (mcp-server-lib-with-error-handling
     (let ((target-file (expand-file-name "~/Dropbox/Agenda/todo.org")))
       (org-agenda-mcp--validate-file-path target-file)
-
       (with-current-buffer (find-file-noselect target-file)
         (let* ((targets (org-agenda-mcp--get-refile-targets))
-               (formatted-targets (org-agenda-mcp--format-refile-targets targets)))
-
+               (formatted-targets (org-agenda-mcp--format-refile-targets targets))
+               (filtered-targets (org-agenda-mcp--filter-targets-by-level-and-parent 
+                                formatted-targets level parent)))
           `((file . ,target-file)
-            (total_targets . ,(length targets))
-            (available_locations . ,formatted-targets)))))))
+            (total_targets . ,(length filtered-targets))
+            (level_filter . ,level)
+            (parent_filter . ,parent)
+            (available_locations . ,filtered-targets)))))))
 
 (provide 'org-agenda-tools)
 ;;; org-agenda-tools.el ends here
