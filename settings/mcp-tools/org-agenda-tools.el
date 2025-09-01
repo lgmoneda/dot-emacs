@@ -33,241 +33,302 @@ Note: Use proper org-mode syntax for scheduling, e.g.:
   (unless (string-match-p "\\.org$" file-path)
     (error "File must have .org extension")))
 
+(defun org-agenda-mcp--adjust-heading-levels (content base-level)
+  "Adjust heading levels in CONTENT to be relative to BASE-LEVEL.
+For example, if BASE-LEVEL is 4 and content has '* TODO task',
+it becomes '***** TODO task' (base-level + 1)."
+  (when (and content (not (string-empty-p content)))
+    (let ((lines (split-string content "\n" t)))
+      (mapconcat
+       (lambda (line)
+         (if (string-match "^\\(\\*+\\)\\s-*\\(.*\\)" line)
+             (let* ((stars (match-string 1 line))
+                    (rest (match-string 2 line))
+                    (original-level (length stars))
+                    (new-level (+ base-level original-level))
+                    (new-stars (make-string new-level ?*)))
+               (format "%s %s" new-stars rest))
+           line))
+       lines
+       "\n"))))
 
-(defun org-agenda-mcp--get-refile-targets ()
-  "Get available refile targets based on org-refile-targets configuration.
-Returns a list of available headings for refiling."
-  (let ((org-refile-cache nil)) ; Force refresh of refile cache
+(defun build-refile-targets (&optional max-level)
+  "Build list of all possible refile targets.
+If MAX-LEVEL is specified, limit to that level."
+  (let ((org-refile-targets (if max-level
+                               `((org-agenda-files :maxlevel . ,max-level))
+                             '((org-agenda-files :maxlevel . 9))))
+        (org-refile-use-outline-path 'file))
     (org-refile-get-targets)))
 
-(defun org-agenda-mcp--format-refile-targets (targets)
-  "Format refile TARGETS into a readable structure for LLM.
-Each target is (heading . (file . position)).
-Limits output to level 3 headings and formats as 'Level1/Level2/Level3'."
-  (let ((processed-targets '()))
-    (dolist (target targets)
-      (let* ((heading (car target))
-             (file-info (cdr target))
-             ;; Split heading by "/" and limit to 3 levels
-             (heading-parts (split-string heading "/"))
-             ;; Remove file name prefix (e.g., "todo.org" from "todo.org/Life/Misc")
-             (clean-parts (if (and (> (length heading-parts) 1)
-                                  (string-match-p "\\.org$" (car heading-parts)))
-                             (cdr heading-parts)
-                           heading-parts))
-             (limited-parts (seq-take clean-parts 3)))
-        ;; Only process if we have at most 3 levels after cleaning
-        (when (<= (length clean-parts) 3)
-          (let ((formatted-heading (string-join limited-parts "/")))
-            ;; Skip empty headings and avoid duplicates
-            (unless (or (string-empty-p formatted-heading)
-                       (assoc formatted-heading processed-targets))
-              (push `((heading . ,formatted-heading)
-                      (file . ,(car file-info))
-                      (position . ,(cdr file-info)))
-                    processed-targets))))))
-    (reverse processed-targets)))
+(defun find-refile-target (target-path targets &optional default-file)
+  "Find a refile target matching TARGET-PATH from TARGETS.
+TARGET-PATH can be:
+- 'filename.org/Parent/Child'
+- 'Parent/Child'
+- 'Heading'
 
-(defun org-agenda-mcp--find-refile-target (targets heading-path)
-  "Find refile target in TARGETS that matches HEADING-PATH.
-HEADING-PATH can be a string like 'Life/Misc' or 'Life/Financial Independence'."
-  (let ((target-found nil))
-    (dolist (target targets)
-      (let ((heading (cdar target))) ; Extract heading from formatted structure
-        ;; Try exact match first, then partial match
-        (when (or (string= heading-path heading)
-                  (string-match-p (regexp-quote heading-path) heading))
-          (setq target-found target))))
-    target-found))
+If no filename is present, assume DEFAULT-FILE (defaults to todo.org)."
+  (let* ((normalized (replace-regexp-in-string "^/+" "" (string-trim (or target-path ""))))
+         (components (split-string normalized "/"))
+         ;; Check if the first part looks like a file
+         (has-file (and components (string-match-p "\\.org\\'" (car components))))
+         (default-file (or default-file
+                           (if (and (boundp 'org-directory) org-directory)
+                               (file-name-nondirectory
+                                (expand-file-name "todo.org" org-directory))
+                             "todo.org")))
+         ;; drop filename if present
+         (search-comps (if has-file (cdr components) components))
+         (raw-path (mapconcat #'identity search-comps "/"))
+         (cand-with-default (unless has-file
+                              (concat default-file "/" raw-path)))
+         (cand-raw (if has-file normalized raw-path))
+         best)
 
-(defun org-agenda-mcp--filter-targets-by-level-and-parent (targets level parent)
-  "Filter TARGETS by hierarchical level and/or parent heading.
-TARGETS is a list of formatted target structures.
-LEVEL is an integer (1=top-level, 2=second-level, etc.) or nil for no filtering.
-PARENT is a string heading name to filter by, or nil for no filtering."
-  (let ((filtered-targets '()))
-    (dolist (target targets)
-      (let* ((heading (cdr (assq 'heading target)))
-             (heading-parts (when heading (split-string heading "/")))
-             (heading-level (when heading-parts (length heading-parts)))
-             (parent-match (if parent
-                             (and heading-parts
-                                  (string= parent (car heading-parts)))
-                           t))
-             (level-match (if level
-                            (and heading-level
-                                 (= level heading-level))
-                          t)))
-        ;; Debug: Add some logging to understand what's happening
-        (when (and parent (string= parent "Life"))
-          (message "Debug: heading=%s, parts=%S, parent-match=%s" 
-                   heading heading-parts parent-match))
-        ;; Include target if it matches both filters (or no filters applied)
-        (when (and level-match parent-match)
-          (push target filtered-targets))))
-    (reverse filtered-targets)))
+    ;; First try with default file (todo.org/...)
+    (when cand-with-default
+      (catch 'found
+        (dolist (cand targets)
+          (let* ((outline-path (car cand))
+                 (path-str (mapconcat #'identity
+                                      (if (listp outline-path)
+                                          outline-path
+                                        (list outline-path))
+                                      "/")))
+            (when (string= cand-with-default path-str)
+              (setq best cand)
+              (throw 'found cand))))))
 
-;;; MCP Tool Functions
+    ;; If not found, fall back to raw path
+    (unless best
+      (catch 'found
+        (dolist (cand targets)
+          (let* ((outline-path (car cand))
+                 (path-str (mapconcat #'identity
+                                      (if (listp outline-path)
+                                          outline-path
+                                        (list outline-path))
+                                      "/")))
+            (when (string= cand-raw path-str)
+              (setq best cand)
+              (throw 'found cand))))))
 
-(defun org-agenda-mcp--add-todo-simple (content &optional scheduled)
-  "Add a TODO item to the default personal agenda location.
-Directly adds to Life/Misc section in todo.org.
+    best))
+
+(defun org-agenda-mcp--add-todo-with-refile (title refile_target &optional priority content scheduled)
+  "Add a TODO item using org-capture and optionally refile to a specific location.
+Uses org-capture-string and org-refile for robust handling of any heading level.
 
 MCP Parameters:
-  content - The TODO item content (string, required)
-            Can include embedded org syntax like 'Task\\nSCHEDULED: <2025-08-25 Sun>'
-            Support for DEADLINE:, priorities [#A], TODO states, etc.
-  scheduled - Optional scheduled date in org format like '<2025-08-25 Sun>' or '2025-08-25'"
-  (mcp-server-lib-with-error-handling
-    (unless (stringp content)
-      (error "Content must be a string"))
-    (when (string-empty-p content)
-      (error "Empty content provided"))
-
-    ;; Parse content for embedded scheduling
-    (let* ((parsed (org-agenda-mcp--parse-content-for-scheduling content))
-           (main-content (car parsed))
-           (embedded-scheduled (cdr parsed))
-           (final-scheduled (or scheduled embedded-scheduled))
-           (target-file (expand-file-name "~/Dropbox/Agenda/todo.org")))
-      ;; Validate target file
-      (org-agenda-mcp--validate-file-path target-file)
-
-      ;; Add TODO item directly to Life/Misc section
-      (with-current-buffer (find-file-noselect target-file)
-        (save-excursion
-          ;; Find Life section first, then Misc section
-          (goto-char (point-min))
-          (if (re-search-forward "^\\* Life" nil t)
-              ;; Find Misc section within Life
-              (if (re-search-forward "^\\*\\* Misc" nil t)
-              (progn
-                ;; Go to end of the Misc section
-                (forward-line 1)
-                ;; Find the end of this section (next heading at same or higher level)
-                (let ((section-end (save-excursion
-                                    (if (re-search-forward "^\\*\\{1,2\\} " nil t)
-                                        (line-beginning-position)
-                                      (point-max)))))
-                  ;; Go to the end of the section content
-                  (goto-char section-end)
-                  (forward-line -1)
-                  (end-of-line)
-                  ;; Insert the new TODO item at proper hierarchy level (*** for level 3)
-                  (let ((todo-text (format "\n*** TODO %s" main-content))
-                        (schedule-text (when (and final-scheduled (not (string-empty-p final-scheduled)))
-                                         (format "\nSCHEDULED: %s"
-                                                (if (string-match-p "^<.*>$" final-scheduled)
-                                                    final-scheduled
-                                                  (format "<%s>" final-scheduled))))))
-                    (insert (concat todo-text (or schedule-text "") "\n")))))
-                (error "Could not find section 'Misc' under 'Life'"))
-            (error "Could not find top-level section 'Life'")))
-
-        ;; Save the file
-        (save-buffer))
-
-      ;; Return success information
-      `((success . t)
-        (content . ,content)
-        (location . "Life/Misc")
-        (file . ,target-file)
-        (method . "direct insertion")))))
-
-(defun org-agenda-mcp--add-todo-with-refile (content refile_target &optional scheduled)
-  "Add a TODO item directly to a specific location in the agenda.
-Finds the target section and adds the TODO there directly.
-
-MCP Parameters:
-  content - The TODO item content (string, required)
-            Can include embedded org syntax like 'Task\\nSCHEDULED: <2025-08-25 Sun>'
-            Support for DEADLINE:, priorities [#A], TODO states, etc.
+  title - The TODO item title/heading text (string, required)
+          This becomes the heading text after '* TODO'
   refile_target - Target heading path like 'Life/Financial Independence' (string, optional)
-  scheduled - Optional scheduled date in org format like '<2025-08-25 Sun>' or '2025-08-25'"
+                  If not provided or empty, item goes to default 'Life/Misc' location
+  priority - TODO priority level (string, optional)
+             Valid values: 'A', 'B', 'C' (will be formatted as [#A], [#B], [#C])
+  content - Body content under the heading (string, optional)
+            Can contain any valid org-mode syntax including:
+            - PROPERTIES drawer: ':PROPERTIES:\\n:CUSTOM_ID: abc\\n:END:'
+            - SCHEDULED/DEADLINE: 'SCHEDULED: <2025-08-25 Sun>'
+            - Plain text content, lists, tables, code blocks
+            - Tags, links, emphasis markup
+            - Nested headings (will be adjusted to proper level)
+            - Logbook entries, clocking data
+            - Any other org-mode elements
+  scheduled - Optional scheduled date in org format (string, optional)
+              Examples: '<2025-08-25 Sun>', '2025-08-25', '<2025-08-25 Sun 10:00>'
+              This will be added to the content if not already present"
   (mcp-server-lib-with-error-handling
-    (unless (stringp content)
-      (error "Content must be a string"))
-    (when (string-empty-p content)
-      (error "Empty content provided"))
+    (unless (stringp title)
+      (error "Title must be a string"))
+    (when (string-empty-p title)
+      (error "Empty title provided"))
 
-    ;; Parse content for embedded scheduling
-    (let* ((parsed (org-agenda-mcp--parse-content-for-scheduling content))
-           (main-content (car parsed))
-           (embedded-scheduled (cdr parsed))
-           (final-scheduled (or scheduled embedded-scheduled))
+    ;; Validate priority if provided
+    (when (and priority (not (string-empty-p priority)))
+      (unless (member (upcase priority) '("A" "B" "C"))
+        (error "Priority must be A, B, or C")))
+
+    ;; Use content directly - no parsing needed since we have separate parameters
+    (let* ((body-content content)
+           (final-scheduled scheduled)
            (target-file (expand-file-name "~/Dropbox/Agenda/todo.org"))
-           (final-location "Life/Misc"))
+           (final-location "Life/Misc")
+           (refiled nil))
 
       ;; Validate target file
       (org-agenda-mcp--validate-file-path target-file)
 
-      ;; Determine target section
-      (let ((target-section (if (and refile_target (not (string-empty-p refile_target)))
-                                refile_target
-                              "Life/Misc")))
+      ;; Build the capture text with title, priority, scheduling, and content
+      (let* ((priority-str (when (and priority (not (string-empty-p priority)))
+                            (format " [#%s]" (upcase priority))))
+             (scheduled-str (when (and final-scheduled (not (string-empty-p final-scheduled)))
+                             (format "SCHEDULED: %s"
+                                    (if (string-match-p "^<.*>$" final-scheduled)
+                                        final-scheduled
+                                      (format "<%s>" final-scheduled)))))
+             ;; Build the full TODO entry structure
+             (todo-parts (list (concat title (or priority-str ""))))
+             ;; Add scheduled line if present
+             (todo-parts (if scheduled-str
+                           (append todo-parts (list scheduled-str))
+                         todo-parts))
+             ;; Add content lines if present
+             (todo-parts (if (and body-content (not (string-empty-p body-content)))
+                           (append todo-parts (list body-content))
+                         todo-parts))
+             ;; Join everything with newlines
+             (capture-text (string-join todo-parts "\n")))
 
-        ;; Add TODO item directly to the target section
+        ;; Debug: show what we're capturing
+        ;; Insert TODO item directly to avoid org-capture-string multi-line issues
         (with-current-buffer (find-file-noselect target-file)
           (save-excursion
-            ;; Parse target section (e.g., "Life/Financial Independence" -> find "Life" then "Financial Independence")
-            (let* ((sections (split-string target-section "/"))
-                   (found-section nil))
-
-              (goto-char (point-min))
-
-              ;; Handle different section formats
-              (cond
-               ;; Two-level path like "Life/Misc"
-               ((= (length sections) 2)
-                (let ((level1 (nth 0 sections))
-                      (level2 (nth 1 sections)))
-                  ;; Find level 1 section
-                  (if (re-search-forward (format "^\\* %s" (regexp-quote level1)) nil t)
-                      ;; Find level 2 section within level 1
-                      (if (re-search-forward (format "^\\*\\* %s" (regexp-quote level2)) nil t)
-                          (setq found-section t)
-                        (error "Could not find section '%s' under '%s'" level2 level1))
-                    (error "Could not find top-level section '%s'" level1))))
-
-               ;; Single level like "Misc"
-               (t
-                (if (re-search-forward (format "^\\*\\* %s" (regexp-quote target-section)) nil t)
-                    (setq found-section t)
-                  (error "Could not find section '%s'" target-section))))
-
-              ;; If we found the section, add the TODO
-              (when found-section
-                ;; Go to end of the section
-                (forward-line 1)
-                ;; Find the end of this section (next heading at same or higher level)
-                (let ((section-end (save-excursion
-                                    (if (re-search-forward "^\\*\\{1,2\\} " nil t)
-                                        (line-beginning-position)
-                                      (point-max)))))
-                  ;; Go to the end of the section content
-                  (goto-char section-end)
-                  (forward-line -1)
-                  (end-of-line)
-                  ;; Insert the new TODO item at proper hierarchy level (*** for level 3)
-                  (let ((todo-text (format "\n*** TODO %s" main-content))
-                        (schedule-text (when (and final-scheduled (not (string-empty-p final-scheduled)))
-                                         (format "\nSCHEDULED: %s"
-                                                (if (string-match-p "^<.*>$" final-scheduled)
-                                                    final-scheduled
-                                                  (format "<%s>" final-scheduled))))))
-                    (insert (concat todo-text (or schedule-text "") "\n")))
-                  (setq final-location target-section)))))
-
-          ;; Save the file
+            ;; Find the Life/Misc section (default location)
+            (goto-char (point-min))
+            (if (re-search-forward "^\\*\\*\\* Misc$" nil t)
+                (progn
+                  ;; Go to end of the Misc section
+                  (org-end-of-subtree t t)
+                  (unless (bolp) (insert "\n"))
+                  ;; Insert the main TODO item with proper format
+                  (insert (format "**** TODO%s %s\n"
+                                 (or priority-str "")
+                                 title))
+                  ;; Add scheduled line if present
+                  (when scheduled-str
+                    (insert scheduled-str "\n"))
+                  ;; Add body content with proper heading adjustment
+                  (when (and body-content (not (string-empty-p body-content)))
+                    (let ((adjusted-content (org-agenda-mcp--adjust-heading-levels body-content 4)))
+                      (insert adjusted-content "\n"))))
+              ;; If Misc section not found, add at end of file
+              (goto-char (point-max))
+              (unless (bolp) (insert "\n"))
+              (insert (format "**** TODO%s %s\n"
+                             (or priority-str "")
+                             title))
+              (when scheduled-str
+                (insert scheduled-str "\n"))
+              (when (and body-content (not (string-empty-p body-content)))
+                (let ((adjusted-content (org-agenda-mcp--adjust-heading-levels body-content 4)))
+                  (insert adjusted-content "\n"))))
           (save-buffer)))
+
+      ;; If a refile target was specified and it's not the default, refile the item
+      (when (and refile_target
+                 (not (string-empty-p refile_target))
+                 (not (string= refile_target "Life/Misc")))
+
+        ;; Get available refile targets using working function
+        (let* ((targets (build-refile-targets))
+               (target-match (find-refile-target refile_target targets)))
+
+          (if target-match
+              (progn
+                ;; Find the just-captured TODO item and refile it
+                (with-current-buffer (find-file-noselect target-file)
+                  (save-excursion
+                    ;; Go to the end of the file and work backwards to find our newly added item
+                    (goto-char (point-max))
+                    ;; Search for the TODO item, accounting for priority
+                    (let ((search-pattern (if (and priority (not (string-empty-p priority)))
+                                            (format "^\\*\\*\\*\\* TODO \\[#%s\\] %s" (upcase priority) (regexp-quote title))
+                                          (format "^\\*\\*\\*\\* TODO %s" (regexp-quote title)))))
+                      (when (re-search-backward search-pattern nil t)
+                        ;; Refile using org-refile with the found target
+                        (org-refile nil nil target-match)
+                        (setq final-location refile_target)
+                        (setq refiled t))))))
+
+            ;; If refile target not found, provide helpful error
+            (let ((available-targets (mapcar (lambda (target)
+                                              (mapconcat #'identity
+                                                        (if (listp (car target))
+                                                            (car target)
+                                                          (list (car target)))
+                                                        "/"))
+                                            targets)))
+              (error "Refile target '%s' not found. Available targets: %s"
+                     refile_target
+                     (string-join available-targets ", "))))))
 
       ;; Return success information
       `((success . t)
-        (content . ,content)
+        (title . ,title)
+        (priority . ,priority)
+        (content . ,body-content)
+        (scheduled . ,final-scheduled)
         (location . ,final-location)
         (file . ,target-file)
-        (method . "direct insertion")
-        (refiled . ,(not (string= final-location "Life/Misc")))))))
+        (template_used . "D")
+        (refiled . ,refiled))))))
+
+(defun filter-targets-by-level-and-parent (targets level parent)
+  "Filter TARGETS by optional LEVEL and PARENT heading."
+  (let ((filtered targets))
+    ;; Filter by level if specified
+    (when level
+      (setq filtered (cl-remove-if-not
+                      (lambda (target)
+                        (let* ((outline-path (car target))
+                               (path-list (if (listp outline-path) outline-path (list outline-path)))
+                               ;; Safe approach: work directly with the list, don't use "/" as delimiter
+                               ;; Remove filename (first element) and count remaining elements
+                               (heading-components (if (and (listp path-list) (> (length path-list) 1))
+                                                     (cdr path-list)  ; Remove filename, keep headings
+                                                   (if (listp path-list) path-list (list path-list))))
+                               (actual-level (length heading-components)))
+                          (= actual-level level)))
+                      filtered)))
+
+    ;; Filter by parent if specified
+    (when parent
+      (setq filtered (cl-remove-if-not
+                      (lambda (target)
+                        (let* ((outline-path (car target))
+                               (path-list (if (listp outline-path) outline-path (list outline-path)))
+                               (path-str (mapconcat #'identity path-list "/")))
+                          (string-match-p (regexp-quote parent) path-str)))
+                      filtered)))
+
+    filtered))
+
+(defun filter-targets-by-parent (targets parent)
+  "Filter TARGETS by PARENT heading."
+  (cl-remove-if-not
+   (lambda (target)
+     (let* ((outline-path (car target))
+            (path-list (if (listp outline-path) outline-path (list outline-path)))
+            ;; Join path but handle escaped slashes correctly
+            (path-str (mapconcat #'identity path-list "/")))
+       (string-match-p (regexp-quote parent) path-str)))
+   targets))
+
+(defun format-targets-for-mcp (targets)
+  "Format refile targets for MCP response."
+  (mapcar (lambda (target)
+            (let* ((outline-path (car target))
+                   (file (nth 1 target))
+                   (buffer-pos (nth 3 target))
+                   (path-list (if (listp outline-path) outline-path (list outline-path)))
+                   (heading-path (mapconcat #'identity
+                                           (if (> (length path-list) 1)
+                                               (cdr path-list)  ; Remove filename
+                                             path-list)
+                                           "/"))
+                   ;; Calculate line number from buffer position
+                   (line-number (when (and file buffer-pos)
+                                  (with-current-buffer (find-file-noselect file)
+                                    (save-excursion
+                                      (goto-char buffer-pos)
+                                      (line-number-at-pos))))))
+              `((heading . ,heading-path)
+                (file . ,file)
+                (buffer_position . ,buffer-pos)
+                (line_number . ,line-number))))
+          targets))
 
 (defun org-agenda-mcp--get-available-locations (&optional level parent)
   "Get list of available locations for refiling in the personal agenda.
@@ -280,15 +341,17 @@ Optional parameters:
     (let ((target-file (expand-file-name "~/Dropbox/Agenda/todo.org")))
       (org-agenda-mcp--validate-file-path target-file)
       (with-current-buffer (find-file-noselect target-file)
-        (let* ((targets (org-agenda-mcp--get-refile-targets))
-               (formatted-targets (org-agenda-mcp--format-refile-targets targets))
-               (filtered-targets (org-agenda-mcp--filter-targets-by-level-and-parent 
-                                formatted-targets level parent)))
+        (let* ((targets (build-refile-targets level))  ; Use org-refile's built-in level filtering
+               (filtered-targets (if parent
+                                   (filter-targets-by-parent targets parent)
+                                 targets))
+               (formatted-targets (format-targets-for-mcp filtered-targets)))
           `((file . ,target-file)
             (total_targets . ,(length filtered-targets))
             (level_filter . ,level)
             (parent_filter . ,parent)
-            (available_locations . ,filtered-targets)))))))
+            (available_locations . ,formatted-targets)))))))
+
 
 (provide 'org-agenda-tools)
 ;;; org-agenda-tools.el ends here
