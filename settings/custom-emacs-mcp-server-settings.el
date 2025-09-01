@@ -10,8 +10,8 @@
   (unload-feature 'mcp-server-lib t))
 
 ;; Explicitly load the development version with full path to avoid ELPA conflicts
-(load-file "/Users/luis.moneda/repos/mcp-server-lib.el/mcp-server-lib.el")
 (load-file "/Users/luis.moneda/repos/mcp-server-lib.el/mcp-server-lib-metrics.el")
+(load-file "/Users/luis.moneda/repos/mcp-server-lib.el/mcp-server-lib.el")
 (load-file "/Users/luis.moneda/repos/mcp-server-lib.el/mcp-server-lib-commands.el")
 
 
@@ -29,6 +29,7 @@
 (load (expand-file-name "mcp-tools/org-roam-tools.el" (file-name-directory (or load-file-name (buffer-file-name)))))
 (load (expand-file-name "mcp-tools/org-babel-tools.el" (file-name-directory (or load-file-name (buffer-file-name)))))
 (load (expand-file-name "mcp-tools/org-agenda-tools.el" (file-name-directory (or load-file-name (buffer-file-name)))))
+(load (expand-file-name "mcp-tools/org-tools.el" (file-name-directory (or load-file-name (buffer-file-name)))))
 
 ;;; Utility Functions
 
@@ -244,16 +245,24 @@ Security: Read-only operation, safe for knowledge base analysis"
 
 ;;; Org-babel MCP Tool Functions
 
-(defun emacs-mcp--org-babel-execute-src-block (file_path &optional block_name)
+(defun emacs-mcp--org-babel-execute-src-block (file_path &optional block_reference)
   "Execute a specific source block in an org file.
 MCP Parameters:
   file_path - Path to the org file
-  block_name - Optional name of the block to execute"
+  block_reference - Optional reference to the block to execute:
+                   - String: Org heading title (e.g., 'EDA') - finds first src block under that heading
+                   - Number: Line number where block starts
+                   - If nil: Execute first source block found"
   (mcp-server-lib-with-error-handling
     (emacs-mcp--validate-string file_path "file_path")
-    (when (and block_name (not (string-empty-p block_name)) (not (null block_name)))
-      (emacs-mcp--validate-string block_name "block_name"))
-    (let ((result (org-babel-mcp--execute-src-block file_path block_name)))
+    (when (and block_reference
+               (not (null block_reference))
+               (stringp block_reference)
+               (string-empty-p block_reference))
+      (mcp-server-lib-tool-throw "Empty block_reference provided"))
+    (when (and block_reference (not (or (stringp block_reference) (numberp block_reference))))
+      (mcp-server-lib-tool-throw "Invalid block_reference: must be a string (heading title) or number (line number)"))
+    (let ((result (org-babel-mcp--execute-src-block file_path block_reference)))
       (json-encode result))))
 
 (defun emacs-mcp--org-babel-execute-buffer (file_path)
@@ -272,7 +281,7 @@ MCP Parameters:
   (mcp-server-lib-register-tool
    :function #'emacs-mcp--org-babel-execute-src-block
    :name "execute_src_block"
-   :description "Execute a specific named Org Babel source block in an org file.
+   :description "Execute a specific Org Babel source block in an org file.
 Provides precise control over which block to execute with detailed results.
 
 This tool allows targeted execution of individual source blocks within org files.
@@ -282,9 +291,10 @@ particular analysis steps without executing entire documents.
 Parameters:
   file_path - Absolute path to the .org file (string, required)
              Must exist and be a valid org file
-  block_name - Name of the source block to execute (string, optional)
-              Should match a #+NAME: declaration in the file
-              If not provided, executes the first source block found
+  block_reference - Reference to the block to execute (string or number, optional)
+                   - String: Org heading title (e.g., 'EDA') - finds first src block under that heading
+                   - Number: Line number where block starts
+                   - If not provided, executes the first source block found
 
 Returns JSON object with:
   file_path - The org file that was processed (string)
@@ -316,15 +326,15 @@ Security considerations:
 Error cases:
 - File not found or not accessible
 - File is not a valid .org file
-- Named block not found in file
+- Referenced block not found (heading or line number)
 - Block execution errors (syntax, runtime issues)
 - File write permission issues"
    :args '((:name "file_path"
             :type string
             :description "Absolute path to the .org file")
-           (:name "block_name"
+           (:name "block_reference"
             :type string
-            :description "Name of the source block to execute"
+            :description "Reference to the block: heading title (string) or line number (number)"
             :optional t))
    :read-only nil)
 
@@ -405,27 +415,37 @@ Error cases:
   (mcp-server-lib-unregister-tool "execute_buffer"))
 
 
-;;; Org-agenda MCP Tool Functions
+;;; Org-tools MCP Tool Functions
 
-(defun emacs-mcp--add-todo-simple (content &optional scheduled)
-  "Add a TODO item to the default personal agenda location.
+(defun emacs-mcp--get-org-file-headings (file_path &optional level parent_heading include_content_stats)
+  "Get org headings from a file with navigation metadata.
 MCP Parameters:
-  content - The TODO item content (string, required)
-  scheduled - Optional scheduled date in org format"
+  file_path - Absolute path to the org file (string, required)
+  level - Optional level to filter (1, 2, 3, etc.)
+  parent_heading - Optional parent heading to filter under
+  include_content_stats - Whether to include content statistics (default t)"
   (mcp-server-lib-with-error-handling
-    (emacs-mcp--validate-string content "content")
-    (let ((result (org-agenda-mcp--add-todo-simple content scheduled)))
+    (emacs-mcp--validate-string file_path "file_path")
+    (when (and level (not (integerp level)))
+      (mcp-server-lib-tool-throw "Invalid level: must be an integer or null"))
+    (when (and parent_heading (not (stringp parent_heading)))
+      (mcp-server-lib-tool-throw "Invalid parent_heading: must be a string or null"))
+    (let ((result (org-mcp--get-org-file-headings file_path level parent_heading include_content_stats)))
       (json-encode result))))
 
-(defun emacs-mcp--add-todo-with-refile (content refile_target &optional scheduled)
-  "Add a TODO item and optionally refile it to a specific location.
+;;; Org-agenda MCP Tool Functions
+
+(defun emacs-mcp--add-todo-with-refile (title refile_target &optional priority content scheduled)
+  "Add a TODO item with full org-mode capabilities and optional refiling.
 MCP Parameters:
-  content - The TODO item content (string, required)
+  title - The TODO item title/heading text (string, required)
   refile_target - Target heading path like 'Life/Financial Independence' (string, optional)
-  scheduled - Optional scheduled date in org format"
+  priority - TODO priority level: 'A', 'B', or 'C' (string, optional)
+  content - Body content under the heading supporting full org-mode syntax (string, optional)
+  scheduled - Optional scheduled date in org format (string, optional)"
   (mcp-server-lib-with-error-handling
-    (emacs-mcp--validate-string content "content")
-    (let ((result (org-agenda-mcp--add-todo-with-refile content refile_target scheduled)))
+    (emacs-mcp--validate-string title "title")
+    (let ((result (org-agenda-mcp--add-todo-with-refile title refile_target priority content scheduled)))
       (json-encode result))))
 
 (defun emacs-mcp--get-available-locations (&optional level parent)
@@ -446,126 +466,122 @@ MCP Parameters:
 
 (defun emacs-org-agenda-mcp-enable ()
   "Enable the Org-agenda MCP tools."
-  (mcp-server-lib-register-tool
-   :function #'emacs-mcp--add-todo-simple
-   :name "add-todo-simple"
-   :description "Add a TODO item to your personal agenda using org-capture.
-Quickly capture TODO items to the default location (Life/Misc section) in your personal agenda.
-
-This tool provides a simple way to add TODO items to your personal org-mode agenda
-without needing to specify a location. Items are automatically placed in the
-'Life/Misc' section using the 'd' org-capture template.
-
-Parameters:
-  content - The TODO item text/description (string, required)
-           Should be a clear, actionable description of the task
-           Do not include '* TODO' prefix - this is added automatically
-
-Returns JSON object with:
-  success - Whether the capture was successful (boolean)
-  content - The captured content (string)
-  location - Where the item was placed (string, always 'Life/Misc')
-  file - Full path to the agenda file (string)
-  template_used - Which org-capture template was used (string)
-
-Behavior:
-- Uses org-capture with the 'd' template (Personal task)
-- Automatically saves the agenda file
-- Items appear under Life > Misc section
-- Includes timestamp and empty lines for readability
-
-Use cases:
-- Quick TODO capture during conversations
-- Adding simple tasks without worrying about categorization
-- Fast entry when specific location doesn't matter
-- Default option when unsure where to place an item
-
-Example content:
-- 'Buy groceries for weekend'
-- 'Call dentist to schedule appointment'
-- 'Review quarterly budget spreadsheet'
-- 'Research vacation destinations for summer'
-
-Security: Safe operation, only adds content to personal agenda file"
-   :args '((:name "content"
-            :type string
-            :description "The TODO item text/description")
-           (:name "scheduled"
-            :type string
-            :description "Optional scheduled date in org format"
-            :optional t))
-   :read-only nil)
-
-  (mcp-server-lib-register-tool
+    (mcp-server-lib-register-tool
    :function #'emacs-mcp--add-todo-with-refile
    :name "add-todo-with-refile"
-   :description "Add a TODO item to your personal agenda with optional refiling to specific location.
-Advanced capture that allows placing TODO items in specific sections of your agenda.
+   :description "Create advanced TODO items with full org-mode capabilities and hierarchical organization.
+This powerful tool enables creation of complex, structured TODO items with priorities, scheduling,
+nested sub-tasks, properties, and rich content - all properly organized in your agenda hierarchy.
 
-This tool first captures the TODO item using org-capture, then optionally refiles
-it to a specific location in your agenda hierarchy. Provides precise control over
-where items are placed while leveraging your existing org-mode workflow.
+CORE CAPABILITIES:
+- **Hierarchical Structure**: Create main TODO with nested sub-tasks
+- **Priority Management**: Set priority levels (A=urgent, B=important, C=someday)
+- **Rich Content**: Support for all org-mode syntax in content body
+- **Smart Organization**: Automatic placement in appropriate agenda sections
+- **Scheduling**: Flexible date/time scheduling with org-mode formats
 
-Parameters:
-  content - The TODO item text/description (string, required)
-           Should be a clear, actionable description of the task
-           Do not include '* TODO' prefix - this is added automatically
-  refile_target - Target location path (string, optional)
-                 Format: 'Life/Section Name' (e.g., 'Life/Financial Independence')
-                 If omitted, item stays in default 'Life/Misc' location
+PARAMETERS:
+  title - Main TODO heading text (string, required)
+          Clean, actionable description - prefix '* TODO' added automatically
+          Examples: 'Plan birthday party', 'Review quarterly finances'
 
-Returns JSON object with:
-  success - Whether the capture was successful (boolean)
-  content - The captured content (string)
-  location - Final location where item was placed (string)
-  file - Full path to the agenda file (string)
-  template_used - Which org-capture template was used (string)
-  refiled - Whether the item was moved from default location (boolean)
+  refile_target - Target agenda section (string, optional)
+                  Format: 'Life/Section Name' - if omitted, goes to 'Life/Misc'
+                  Available: Life/Family Goals, Life/House, Life/Financial Independence, etc.
 
-Refiling behavior:
-- Uses your org-refile-targets configuration (up to 3 levels deep)
-- Searches for matching heading paths in your agenda structure
-- Falls back to default location if target not found
-- Provides error message with available targets if refile fails
+  priority - Priority level (string, optional)
+             Values: 'A' (urgent), 'B' (important), 'C' (someday)
+             Displays as [#A], [#B], [#C] in org-mode
 
-Available refile targets include:
-- Life/Goals of the Season
-- Life/Family Goals
-- Life/Maintenance
-- Life/Financial Independence
-- Life/House
-- Life/Books
-- Life/Misc (default)
-- And other sections based on your current agenda structure
+  content - Body content with full org-mode support (string, optional)
+            **Nested TODOs**: Use '** TODO subtask' for hierarchical tasks
+            **Properties**: ':PROPERTIES:\n:EFFORT: 2h\n:CONTEXT: work\n:END:'
+            **Scheduling**: 'SCHEDULED: <2025-09-01 Mon>', 'DEADLINE: <2025-09-15>'
+            **Lists**: '- [ ] checklist item', '1. numbered item'
+            **Links**: '[[https://example.com][Description]]'
+            **Code**: '#+BEGIN_SRC python\nprint(\"hello\")\n#+END_SRC'
+            **Tables**: '| Column1 | Column2 |\n|---------|---------|'
+            **Text markup**: '*bold*, /italic/, =code=, ~verbatim~'
 
-Use cases:
-- Categorizing tasks by life area or project
-- Placing financial tasks under 'Life/Financial Independence'
-- Adding house-related tasks to 'Life/House'
-- Organizing reading tasks under 'Life/Books'
-- Strategic task placement for better agenda organization
+  scheduled - Main TODO scheduling (string, optional)
+              Formats: '<2025-09-01>', '<2025-09-01 Mon>', '<2025-09-01 10:00>'
+              Can also be included in content body
 
-Example usage:
-- content: 'Review investment portfolio', refile_target: 'Life/Financial Independence'
-- content: 'Fix kitchen faucet', refile_target: 'Life/House'
-- content: 'Read Clean Code book', refile_target: 'Life/Books'
+EXAMPLE USAGES:
 
-Error handling:
-- Validates refile target exists before attempting to refile
-- Provides list of available targets if specified target not found
-- Graceful fallback to default location on refile failure
+1. **Simple Task**:
+   title: \"Buy groceries\"
+   refile_target: \"Life/House\"
+   priority: \"B\"
 
-Security: Safe operation, only adds/moves content within personal agenda file"
-   :args '((:name "content"
+2. **Complex Project with Subtasks**:
+   title: \"Plan birthday party\"
+   refile_target: \"Life/Family Goals\"
+   priority: \"A\"
+   content: \"* TODO Book venue\n* TODO Send invitations\n* TODO Order cake\"
+   scheduled: \"2025-09-01\"
+
+3. **Work Task with Properties**:
+   title: \"Quarterly review preparation\"
+   refile_target: \"Life/Financial Independence\"
+   priority: \"A\"
+   content: \":PROPERTIES:\n:EFFORT: 4:00\n:CONTEXT: finance\n:END:\n\n* TODO Gather Q3 statements\n* TODO Update spreadsheet\n* TODO Schedule meeting\n\nFocus areas:\n- Investment performance\n- Budget variance analysis\"
+   scheduled: \"2025-09-15\"
+
+4. **Research Task with Links**:
+   title: \"Research vacation destinations\"
+   refile_target: \"Life/Family Goals\"
+   priority: \"C\"
+   content: \"* TODO Check [[https://booking.com][Booking.com]] prices\n* TODO Read travel blogs\n\nBudget: $3000\nDuration: 1 week\"
+
+5. **Learning Project**:
+   title: \"Master Python data analysis\"
+   refile_target: \"Study/Courses\"
+   priority: \"B\"
+   content: \":PROPERTIES:\n:COURSE: Python for Data Science\n:DEADLINE: <2025-12-31>\n:END:\n\n* TODO Complete pandas tutorial\nSCHEDULED: <2025-09-10>\n* TODO Practice with real dataset\n* TODO Build portfolio project\n\n#+BEGIN_SRC python\n# Practice code snippets\nimport pandas as pd\n#+END_SRC\"
+
+RETURNS:
+  success - Operation success status (boolean)
+  title - Main TODO title (string)
+  priority - Applied priority level (string)
+  content - Body content as processed (string)
+  scheduled - Applied scheduling (string)
+  location - Final placement location (string)
+  file - Agenda file path (string)
+  template_used - Capture template used (string)
+  refiled - Whether item was moved from default location (boolean)
+
+ORGANIZATIONAL WORKFLOW:
+1. Item initially created in 'Life/Misc' default location
+2. If refile_target specified, automatically moved to target section
+3. Nested headings properly adjusted for hierarchy (** becomes ****)
+4. All org-mode syntax preserved and functional
+
+ERROR HANDLING:
+- Validates all parameters before processing
+- Provides helpful error messages with available targets
+- Graceful fallback to default location if target not found
+- Maintains data integrity throughout process
+
+SECURITY: Safe operation - only modifies personal agenda file with validated input"
+   :args '((:name "title"
             :type string
-            :description "The TODO item text/description")
+            :description "Main TODO heading text - clear, actionable description")
            (:name "refile_target"
             :type string
-            :description "Target location path like 'Life/Financial Independence'"
+            :description "Target agenda section like 'Life/Financial Independence' - omit for default 'Life/Misc'"
+            :optional t)
+           (:name "priority"
+            :type string
+            :description "Priority level: 'A' (urgent), 'B' (important), 'C' (someday)"
+            :optional t)
+           (:name "content"
+            :type string
+            :description "Body content with full org-mode syntax: nested TODOs, properties, lists, links, etc."
             :optional t)
            (:name "scheduled"
             :type string
-            :description "Optional scheduled date in org format"
+            :description "Scheduling date in org format: '<2025-09-01>' or '<2025-09-01 Mon 10:00>'"
             :optional t))
    :read-only nil)
 
@@ -596,7 +612,8 @@ Returns JSON object with:
   available_locations - Array of location objects, each containing:
     heading - Full heading path (string, e.g., 'Life/Financial Independence')
     file - File containing this heading (string)
-    position - Character position in file (integer)
+    buffer_position - Character position in file (integer)
+    line_number - Line number where heading is located (integer, 1-based)
 
 Usage examples:
 - No parameters: Returns all available locations (may be large)
@@ -646,22 +663,121 @@ Security: Read-only operation, safe for exploring agenda structure"
   (mcp-server-lib-unregister-tool "add-todo-with-refile")
   (mcp-server-lib-unregister-tool "get-available-agenda-locations"))
 
+;;; Org-tools MCP Registration
+
+(defun emacs-org-tools-mcp-enable ()
+  "Enable the Org-tools MCP tools."
+  (mcp-server-lib-register-tool
+   :function #'emacs-mcp--get-org-file-headings
+   :name "get-org-file-headings"
+   :description "Get org headings from a file with navigation metadata for efficient file exploration.
+Enables LLMs to navigate org files without loading full content, optimizing token usage.
+
+This tool provides a hierarchical view of org file structure with rich metadata for each heading.
+Essential for understanding file organization, locating specific sections, and enabling targeted
+content access using line numbers. Supports filtering by level and parent heading for efficient
+navigation of large files.
+
+Parameters:
+  file_path - Absolute path to the org file (string, required)
+             Must exist and be a valid .org file
+  level - Filter headings by specific level (integer, optional)
+          1 = top-level headings, 2 = second-level, etc.
+          If not specified, returns all headings
+  parent_heading - Filter headings under a specific parent (string, optional)
+                  e.g., 'Research' shows only headings under Research section
+                  Supports partial matching for flexible navigation
+  include_content_stats - Include content statistics (boolean, optional, default true)
+                         When true, includes content_length and has_code_blocks metadata
+
+Returns JSON object with:
+  file_path - The org file that was analyzed (string)
+  total_headings - Number of headings found after filtering (integer)
+  level_filter - Applied level filter (integer or null)
+  parent_filter - Applied parent filter (string or null)
+  include_content_stats - Whether content statistics were included (boolean)
+  headings - Array of heading objects, each containing:
+    title - Heading text/title (string)
+    level - Org heading level (integer, 1-6)
+    line_number - Line number where heading starts (integer, 1-based)
+    parent_path - Breadcrumb path to parent headings (string, e.g., 'Research > Methods')
+    subheading_count - Number of direct child headings (integer)
+    content_length - Character count of heading content (integer, if stats enabled)
+    has_code_blocks - Whether heading contains source blocks (boolean, if stats enabled)
+
+Navigation workflow:
+1. Call without filters to get file overview
+2. Use level=1 to see top-level structure
+3. Use parent_heading to explore specific sections
+4. Use line_number from results with Read tool for targeted content access
+
+Use cases:
+- Efficient org file exploration without token overhead
+- Understanding document structure and organization
+- Locating specific sections for targeted reading/editing
+- Identifying content-rich sections (high content_length)
+- Finding code-containing sections (has_code_blocks=true)
+- Hierarchical navigation of large documents
+- Supporting context-aware content access patterns
+
+Performance benefits:
+- Parses structure without loading full content
+- Enables targeted Read tool usage with specific line numbers
+- Reduces token consumption for large files
+- Supports incremental exploration patterns
+
+Content statistics (when enabled):
+- content_length: Approximate character count of heading content
+- has_code_blocks: Indicates presence of #+BEGIN_SRC blocks
+- Helps prioritize which sections to examine in detail
+
+Error cases:
+- File not found or not accessible
+- File is not a valid .org file
+- Invalid level parameter (non-integer)
+- Invalid parent_heading parameter (non-string)
+- File parsing errors
+
+Security: Read-only operation, safe for file analysis"
+   :args '((:name "file_path"
+            :type string
+            :description "Absolute path to the org file")
+           (:name "level"
+            :type integer
+            :description "Filter headings by specific level (1=top-level, 2=second-level, etc.)"
+            :optional t)
+           (:name "parent_heading"
+            :type string
+            :description "Filter headings under a specific parent heading"
+            :optional t)
+           (:name "include_content_stats"
+            :type boolean
+            :description "Include content statistics (content_length, has_code_blocks)"
+            :optional t))
+   :read-only t))
+
+(defun emacs-org-tools-mcp-disable ()
+  "Disable the Org-tools MCP tools."
+  (mcp-server-lib-unregister-tool "get-org-file-headings"))
+
 ;;; Server Management
 
 ;;;###autoload
 (defun emacs-org-mode-mcp-enable ()
-  "Enable all Emacs MCP tools (org-roam, org-babel, and org-agenda)."
+  "Enable all Emacs MCP tools (org-roam, org-babel, org-agenda, and org-tools)."
   (emacs-org-roam-mcp-enable)
   (emacs-org-babel-mcp-enable)
   (emacs-org-agenda-mcp-enable)
+  (emacs-org-tools-mcp-enable)
   )
 
 ;;;###autoload
 (defun emacs-org-mode-mcp-disable ()
-  "Disable all Emacs MCP tools (org-roam, org-babel, and org-agenda)."
+  "Disable all Emacs MCP tools (org-roam, org-babel, org-agenda, and org-tools)."
   (emacs-org-roam-mcp-disable)
   (emacs-org-babel-mcp-disable)
-  (emacs-org-agenda-mcp-disable))
+  (emacs-org-agenda-mcp-disable)
+  (emacs-org-tools-mcp-disable))
 
 ;; Start the server with all tools enabled
 (emacs-org-mode-mcp-enable)
