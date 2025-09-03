@@ -394,7 +394,7 @@ Returns information about functions including location and docstrings."
         (when (string-match pattern line)
           (let ((func-name (match-string 1 line))
                 (docstring (org-notebook-mcp--extract-docstring-hint line)))
-            (return `((name . ,func-name)
+            (cl-return `((name . ,func-name)
                      (type . ,type)
                      (language . ,language)
                      (line_number . ,line-number)
@@ -471,74 +471,58 @@ TIMEOUT specifies how long to wait for results (default 30 seconds)."
       (error "No jupyter client found in buffer: %s" client_buffer_name))
 
     ;; Execute the code synchronously and capture results
-    (let ((execution-result nil)
-          (execution-error nil)
+    (let ((execution-error nil)
           (output-content "")
           (result-content "")
-          (error-content ""))
+          (error-content "")
+          (req nil))
 
       (jupyter-run-with-client client
-        (let* ((req (jupyter-execute-request
-                     :code code
-                     :store-history t
-                     :handlers '("execute_reply" "stream" "execute_result" "display_data" "error")))
-               (msg-id (jupyter-message-id req)))
+        (jupyter-mlet* ((completed-req (jupyter-idle (jupyter-execute-request :code code) timeout)))
+          (setq req completed-req)
 
-          ;; Set up message handlers
-          (jupyter-add-hook 'jupyter-iopub-message-hook
-                            (lambda (msg)
-                              (when (equal (jupyter-message-parent-id msg) msg-id)
-                                (pcase (jupyter-message-type msg)
-                                  ("stream"
-                                   (let ((stream-content (jupyter-message-content msg)))
-                                     (setq output-content
-                                           (concat output-content
-                                                   (plist-get stream-content :text)))))
-                                  ("execute_result"
-                                   (let* ((result-data (jupyter-message-content msg))
-                                          (data (plist-get result-data :data))
-                                          (text (plist-get data :text/plain)))
-                                     (when text
-                                       (setq result-content
-                                             (concat result-content text)))))
-                                  ("display_data"
-                                   (let* ((display-data (jupyter-message-content msg))
-                                          (data (plist-get display-data :data))
-                                          (text (plist-get data :text/plain)))
-                                     (when text
-                                       (setq result-content
-                                             (concat result-content text)))))
-                                  ("error"
-                                   (let* ((error-data (jupyter-message-content msg))
-                                          (ename (plist-get error-data :ename))
-                                          (evalue (plist-get error-data :evalue))
-                                          (traceback (plist-get error-data :traceback)))
-                                     (setq execution-error t)
-                                     (setq error-content
-                                           (format "%s: %s\n%s"
-                                                   ename evalue
-                                                   (string-join traceback "\n"))))))))
+          ;; Extract results from completed request
+          (let ((messages (oref req messages)))
+            (dolist (msg messages)
+              (pcase (jupyter-message-type msg)
+                ("stream"
+                 (let ((stream-content (jupyter-message-content msg)))
+                   (setq output-content
+                         (concat output-content
+                                 (plist-get stream-content :text)))))
+                ("execute_result"
+                 (let* ((result-data (jupyter-message-content msg))
+                        (data (plist-get result-data :data))
+                        (text (plist-get data :text/plain)))
+                   (when text
+                     (setq result-content
+                           (concat result-content text)))))
+                ("display_data"
+                 (let* ((display-data (jupyter-message-content msg))
+                        (data (plist-get display-data :data))
+                        (text (plist-get data :text/plain)))
+                   (when text
+                     (setq result-content
+                           (concat result-content text)))))
+                ("error"
+                 (let* ((error-data (jupyter-message-content msg))
+                        (ename (plist-get error-data :ename))
+                        (evalue (plist-get error-data :evalue))
+                        (traceback (plist-get error-data :traceback)))
+                   (setq execution-error t)
+                   (setq error-content
+                         (format "%s: %s\n%s"
+                                 ename evalue
+                                 (if traceback (string-join traceback "\n") "")))))))
 
-          ;; Send the request
-          (jupyter-send client req)
-
-          ;; Wait for execution to complete
-          (let ((start-time (current-time)))
-            (while (and (not execution-result)
-                        (not execution-error)
-                        (< (float-time (time-subtract (current-time) start-time)) timeout))
-              (accept-process-output nil 0.1)))
-
-          (setq execution-result t)))
-
-      ;; Return results
-      `((client_buffer . ,client_buffer_name)
-        (code . ,code)
-        (success . ,(not execution-error))
-        (output . ,output-content)
-        (result . ,result-content)
-        (error . ,(if execution-error error-content nil))
-        (execution_time . ,(format-time-string "%Y-%m-%d %H:%M:%S")))))))
+          ;; Return the result alist from within the monadic context
+          (jupyter-return `((client_buffer . ,client_buffer_name)
+                           (code . ,code)
+                           (success . ,(not execution-error))
+                           (output . ,output-content)
+                           (result . ,result-content)
+                           (error . ,(if execution-error error-content nil))
+                           (execution_time . ,(format-time-string "%Y-%m-%d %H:%M:%S"))))))))))
 
 (defun org-notebook-mcp--get-jupyter-kernel-state (client_buffer_name)
   "Get the current execution state of a Jupyter kernel.
@@ -601,7 +585,13 @@ Returns information about connection status, kernel info, and execution history.
         `((buffer_name . ,client_buffer_name)
           (connected . ,(if connected-p t :json-false))
           (kernel_name . ,(when kernel-info (plist-get kernel-info :implementation)))
-          (kernel_id . ,(when client (jupyter-session-id (oref client session))))
+          (kernel_id . ,(when client
+                           (condition-case nil
+                               (jupyter-session-id (oref client session))
+                             (error
+                               (condition-case nil
+                                   (oref client kernel-id)
+                                 (error "unknown"))))))
           (language . ,(when lang-info (plist-get lang-info :name)))
           (language_version . ,(when lang-info (plist-get lang-info :version)))
           (execution_count . ,(when connected-p (jupyter-repl-cell-count)))
@@ -629,24 +619,18 @@ This is better for long-running computations where LLMs need to poll for complet
     (unless client
       (error "No jupyter client found in buffer: %s" client_buffer_name))
 
-    ;; Note: jupyter-run-with-client is a macro, so we need to expand it directly with dependency checks
-    (org-notebook-mcp--check-jupyter-dependencies)
+    ;; Send code asynchronously using proper monadic approach
     (jupyter-run-with-client client
-      (let* ((req (jupyter-execute-request
-                    :code code
-                    :store-history t))
-             (msg-id (jupyter-message-id req)))
-
-        ;; Send the request asynchronously
-        (jupyter-send client req)
-
-        ;; Return request information
-        `((client_buffer . ,client_buffer_name)
-          (code . ,code)
-          (request_id . ,msg-id)
-          (status . "sent")
-          (timestamp . ,(format-time-string "%Y-%m-%d %H:%M:%S"))
-          (message . "Code sent asynchronously - use get-kernel-state to check completion"))))))
+      (jupyter-mlet* ((req (jupyter-sent (jupyter-execute-request :code code))))
+        (let ((msg-id (jupyter-request-id req)))
+          ;; Return request information immediately
+          (jupyter-return
+           `((client_buffer . ,client_buffer_name)
+             (code . ,code)
+             (request_id . ,msg-id)
+             (status . "sent")
+             (timestamp . ,(format-time-string "%Y-%m-%d %H:%M:%S"))
+             (message . "Code sent asynchronously - use get-kernel-state to check completion"))))))))
 
 (defun org-notebook-mcp--get-last-output (client_buffer_name &optional lines)
   "Get the last output from a Jupyter REPL buffer.
@@ -658,27 +642,15 @@ LINES specifies how many lines of output to retrieve (default 50)."
     (unless buffer
       (error "REPL buffer not found: %s" client_buffer_name))
 
-    (with-current-buffer buffer
-      (let* ((output-content "")
-             (line-count 0)
-             (pos (point-max)))
-
-        ;; Go backwards from end of buffer, collecting lines
-        (save-excursion
-          (goto-char pos)
-          (while (and (> line-count (- lines))
-                      (not (bobp)))
-            (forward-line -1)
-            (let ((line (thing-at-point 'line t)))
-              (setq output-content (concat line output-content))
-              (setq line-count (1- line-count)))))
-
-        `((buffer_name . ,client_buffer_name)
-          (lines_retrieved . ,(abs line-count))
-          (max_lines . ,lines)
-          (output . ,output-content)
-          (buffer_size . ,(buffer-size))
-          (timestamp . ,(format-time-string "%Y-%m-%d %H:%M:%S")))))))
+    ;; For now, return a safe response without reading buffer content
+    ;; This prevents server crashes while we debug the buffer access issue
+    `((buffer_name . ,client_buffer_name)
+      (lines_retrieved . 0)
+      (max_lines . ,lines)
+      (output . "Buffer reading temporarily disabled to prevent server crashes")
+      (buffer_size . ,(with-current-buffer buffer (buffer-size)))
+      (timestamp . ,(format-time-string "%Y-%m-%d %H:%M:%S"))
+      (note . "This function needs further debugging for safe buffer access"))))
 
 ;;; MCP Tool Functions
 
@@ -745,7 +717,7 @@ MCP Parameters:
 MCP Parameters: None"
   (mcp-server-lib-with-error-handling
     (let ((result (org-notebook-mcp--list-jupyter-repl-clients)))
-      result)))
+      (json-encode result))))
 
 (defun org-notebook-mcp--send-code-to-repl (client_buffer_name code &optional timeout)
   "Send code to a Jupyter REPL client and get results.
@@ -766,7 +738,7 @@ MCP Parameters:
       (signal 'wrong-type-argument (list 'integerp timeout)))
 
     (let ((result (org-notebook-mcp--send-code-to-jupyter-repl client_buffer_name code timeout)))
-      result)))
+      (json-encode result))))
 
 (defun org-notebook-mcp--get-repl-status (client_buffer_name)
   "Get the status of a Jupyter REPL client.
@@ -779,7 +751,7 @@ MCP Parameters:
       (error "Empty client_buffer_name provided"))
 
     (let ((result (org-notebook-mcp--get-jupyter-repl-status client_buffer_name)))
-      result)))
+      (json-encode result))))
 
 (defun org-notebook-mcp--get-kernel-state (client_buffer_name)
   "Get the execution state of a Jupyter kernel to check if it's busy.
@@ -792,7 +764,7 @@ MCP Parameters:
       (error "Empty client_buffer_name provided"))
 
     (let ((result (org-notebook-mcp--get-jupyter-kernel-state client_buffer_name)))
-      result)))
+      (json-encode result))))
 
 (defun org-notebook-mcp--send-code-async (client_buffer_name code)
   "Send code to Jupyter REPL asynchronously for long-running computations.
@@ -810,7 +782,7 @@ MCP Parameters:
       (error "Empty code provided"))
 
     (let ((result (org-notebook-mcp--send-code-async client_buffer_name code)))
-      result)))
+      (json-encode result))))
 
 (defun org-notebook-mcp--get-last-output (client_buffer_name &optional lines)
   "Get the last output from a Jupyter REPL buffer.
@@ -826,7 +798,7 @@ MCP Parameters:
       (signal 'wrong-type-argument (list 'integerp lines)))
 
     (let ((result (org-notebook-mcp--get-last-output client_buffer_name lines)))
-      result)))
+      (json-encode result))))
 
 (provide 'org-notebook-tools)
 ;;; org-notebook-tools.el ends here
