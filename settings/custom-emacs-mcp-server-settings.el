@@ -14,7 +14,6 @@
 (load-file "/Users/luis.moneda/repos/mcp-server-lib.el/mcp-server-lib.el")
 (load-file "/Users/luis.moneda/repos/mcp-server-lib.el/mcp-server-lib-commands.el")
 
-
 ;; Verify we have the new API
 (unless (fboundp 'mcp-server-lib-register-tool)
   (error "mcp-server-lib-register-tool not found - development version not loaded correctly"))
@@ -30,6 +29,7 @@
 (load (expand-file-name "mcp-tools/org-babel-tools.el" (file-name-directory (or load-file-name (buffer-file-name)))))
 (load (expand-file-name "mcp-tools/org-agenda-tools.el" (file-name-directory (or load-file-name (buffer-file-name)))))
 (load (expand-file-name "mcp-tools/org-tools.el" (file-name-directory (or load-file-name (buffer-file-name)))))
+(load (expand-file-name "mcp-tools/org-notebook-tools.el" (file-name-directory (or load-file-name (buffer-file-name)))))
 
 ;;; Utility Functions
 
@@ -245,24 +245,36 @@ Security: Read-only operation, safe for knowledge base analysis"
 
 ;;; Org-babel MCP Tool Functions
 
-(defun emacs-mcp--org-babel-execute-src-block (file_path &optional block_reference)
+(defun emacs-mcp--org-babel-execute-src-block (file_path &optional heading_title line_number)
   "Execute a specific source block in an org file.
 MCP Parameters:
   file_path - Path to the org file
-  block_reference - Optional reference to the block to execute:
-                   - String: Org heading title (e.g., 'EDA') - finds first src block under that heading
-                   - Number: Line number where block starts
-                   - If nil: Execute first source block found"
+  heading_title - Optional heading title (e.g., 'EDA') - finds first src block under that heading
+  line_number - Optional line number - finds first src block at or after this line
+  If both are provided, heading_title takes precedence
+  If neither is provided, executes the first source block found"
   (mcp-server-lib-with-error-handling
     (emacs-mcp--validate-string file_path "file_path")
-    (when (and block_reference
-               (not (null block_reference))
-               (stringp block_reference)
-               (string-empty-p block_reference))
-      (mcp-server-lib-tool-throw "Empty block_reference provided"))
-    (when (and block_reference (not (or (stringp block_reference) (numberp block_reference))))
-      (mcp-server-lib-tool-throw "Invalid block_reference: must be a string (heading title) or number (line number)"))
-    (let ((result (org-babel-mcp--execute-src-block file_path block_reference)))
+    (when (and heading_title
+               (stringp heading_title)
+               (string-empty-p heading_title))
+      (mcp-server-lib-tool-throw "Empty heading_title provided"))
+    (when (and heading_title (not (stringp heading_title)))
+      (mcp-server-lib-tool-throw "Invalid heading_title: must be a string"))
+    (when (and line_number (not (numberp line_number)))
+      (mcp-server-lib-tool-throw "Invalid line_number: must be a number"))
+    (let ((result (org-babel-mcp--execute-src-block file_path heading_title line_number)))
+      (json-encode result))))
+
+(defun emacs-mcp--org-babel-execute-subtree (file_path heading_title)
+  "Execute all source blocks within a specific org subtree.
+MCP Parameters:
+  file_path - Path to the org file
+  heading_title - Title of the heading whose subtree should be executed"
+  (mcp-server-lib-with-error-handling
+    (emacs-mcp--validate-string file_path "file_path")
+    (emacs-mcp--validate-string heading_title "heading_title")
+    (let ((result (org-babel-mcp--execute-subtree file_path heading_title)))
       (json-encode result))))
 
 (defun emacs-mcp--org-babel-execute-buffer (file_path)
@@ -291,10 +303,10 @@ particular analysis steps without executing entire documents.
 Parameters:
   file_path - Absolute path to the .org file (string, required)
              Must exist and be a valid org file
-  block_reference - Reference to the block to execute (string or number, optional)
-                   - String: Org heading title (e.g., 'EDA') - finds first src block under that heading
-                   - Number: Line number where block starts
-                   - If not provided, executes the first source block found
+  heading_title - Optional heading title (e.g., 'EDA') - finds first src block under that heading
+  line_number - Optional line number - finds first src block at or after this line
+  If both are provided, heading_title takes precedence
+  If neither is provided, executes the first source block found
 
 Returns JSON object with:
   file_path - The org file that was processed (string)
@@ -332,9 +344,13 @@ Error cases:
    :args '((:name "file_path"
             :type string
             :description "Absolute path to the .org file")
-           (:name "block_reference"
+           (:name "heading_title"
             :type string
-            :description "Reference to the block: heading title (string) or line number (number)"
+            :description "Optional heading title to find first src block under"
+            :optional t)
+           (:name "line_number"
+            :type integer
+            :description "Optional line number to find first src block at or after"
             :optional t))
    :read-only nil)
 
@@ -407,13 +423,202 @@ Error cases:
    :args '((:name "file_path"
             :type string
             :description "Absolute path to the .org file"))
+   :read-only nil)
+
+  (mcp-server-lib-register-tool
+   :function #'emacs-mcp--org-babel-execute-subtree
+   :name "execute_subtree"
+   :description "Execute all source blocks within a specific org subtree.
+Provides targeted execution of all code blocks under a heading and its subheadings.
+
+This tool uses org-mode's narrowing mechanism to safely execute all source blocks
+within a specified subtree without line number conflicts. Essential for executing
+logically related code sections like analysis chapters, methodology sections,
+or experimental workflows.
+
+Parameters:
+  file_path - Absolute path to the .org file (string, required)
+             Must exist and be a valid org file
+  heading_title - Title of the heading whose subtree should be executed (string, required)
+                 Uses substring matching to find the target heading
+
+Returns JSON object with:
+  file_path - The org file that was processed (string)
+  heading_title - The heading title that was targeted (string)
+  subtree_start_line - Line number where subtree begins (integer)
+  subtree_end_line - Line number where subtree ends (integer)
+  executed_blocks - Number of blocks executed successfully (integer)
+  failed_blocks - Number of blocks that failed execution (integer)
+  total_blocks - Total number of blocks found in subtree (integer)
+  execution_details - Array of per-block results, each containing:
+    line - Line number of the block within subtree (integer)
+    language - Programming language of the block (string)
+    success - Whether block executed without errors (boolean)
+    result - Output/result from successful execution (string)
+    error - Error message if execution failed (string or null)
+  file_saved - Whether file was saved with results (boolean, always true)
+
+Execution strategy:
+- Finds target heading using substring matching
+- Uses org-narrow-to-subtree to isolate the section
+- Executes all blocks sequentially within narrowed region
+- Widens back to full document immediately after execution
+- Continues execution even if individual blocks fail
+- Saves file to persist all #+RESULTS
+
+Advantages over execute_buffer:
+- Targeted execution of logical sections
+- Efficient for large documents with multiple unrelated sections
+- Respects org-mode hierarchical structure
+- Includes all nested subheadings automatically
+- No line number conflicts as results are added
+
+Use cases:
+- Execute specific analysis sections (\\\"Data Processing\\\", \\\"Results\\\")
+- Run experimental methodology sections independently
+- Process individual chapters or modules in large documents
+- Execute related code blocks as logical units
+- Iterative development of specific document sections
+
+Best practices:
+- Use descriptive heading titles for reliable matching
+- Organize related code blocks under common headings
+- Consider execution dependencies between blocks
+- Review execution_details for failed blocks
+
+Error cases:
+- File not found or not accessible
+- File is not a valid .org file
+- Heading not found in document
+- No source blocks found in subtree
+- Individual block execution errors (captured in execution_details)
+- File write permission issues
+
+Security: Code execution capability - use with trusted org files only"
+   :args '((:name "file_path"
+            :type string
+            :description "Absolute path to the .org file")
+           (:name "heading_title"
+            :type string
+            :description "Title of the heading whose subtree should be executed"))
    :read-only nil))
 
 (defun emacs-org-babel-mcp-disable ()
   "Disable the Org-babel MCP tools."
   (mcp-server-lib-unregister-tool "execute_src_block")
+  (mcp-server-lib-unregister-tool "execute_subtree")
   (mcp-server-lib-unregister-tool "execute_buffer"))
 
+
+;;; Org-notebook MCP Tool Functions
+
+(defun emacs-mcp--get-analytical-review (file_path &optional heading_titles)
+  "Extract headings, content, and results for analytical review of org notebooks.
+MCP Parameters:
+  file_path - Absolute path to the org file to analyze
+  heading_titles - Optional list of specific heading titles to extract"
+  (mcp-server-lib-with-error-handling
+    (emacs-mcp--validate-string file_path "file_path")
+    (when heading_titles
+      ;; Convert JSON array to Elisp list if needed
+      (when (vectorp heading_titles)
+        (setq heading_titles (append heading_titles nil)))
+      (unless (listp heading_titles)
+        (mcp-server-lib-tool-throw "heading_titles must be a list of strings"))
+      (dolist (title heading_titles)
+        (unless (stringp title)
+          (mcp-server-lib-tool-throw "All heading_titles must be strings"))))
+    (let ((result (org-notebook-mcp--get-analytical-review file_path heading_titles)))
+      (json-encode result))))
+
+(defun emacs-mcp--get-heading-content (file_path heading_title &optional include_content include_code include_results include_subtree)
+  "Extract content, code, and/or results from a specific org heading.
+MCP Parameters:
+  file_path - Absolute path to the org file to analyze
+  heading_title - The title of the heading to extract content from
+  include_content - Whether to include text content (boolean, optional)
+  include_code - Whether to include code blocks (boolean, optional)
+  include_results - Whether to include results blocks (boolean, optional)
+  include_subtree - Whether to include entire subtree (boolean, optional)"
+  (mcp-server-lib-with-error-handling
+    (emacs-mcp--validate-string file_path "file_path")
+    (emacs-mcp--validate-string heading_title "heading_title")
+    (let ((result (org-notebook-mcp--get-heading-content
+                   file_path heading_title include_content include_code include_results include_subtree)))
+      (json-encode result))))
+
+(defun emacs-mcp--get-functions-from-org-file (file_path)
+  "Extract all functions from code blocks in an org file.
+MCP Parameters:
+  file_path - Absolute path to the org file to analyze"
+  (mcp-server-lib-with-error-handling
+    (emacs-mcp--validate-string file_path "file_path")
+    (let ((result (org-notebook-mcp--get-functions-from-org-file file_path)))
+      (json-encode result))))
+
+;;; Jupyter REPL MCP Tool Functions
+
+(defun emacs-mcp--list-jupyter-repls ()
+  "List all available Jupyter REPL clients.
+MCP Parameters: None"
+  (mcp-server-lib-with-error-handling
+    (let ((result (org-notebook-mcp--list-jupyter-repls)))
+      (json-encode result))))
+
+(defun emacs-mcp--send-code-to-jupyter-repl (client_buffer_name code &optional timeout)
+  "Send code to a Jupyter REPL client and get execution results.
+MCP Parameters:
+  client_buffer_name - Name of the REPL buffer to send code to (string, required)
+  code - Code to execute in the REPL (string, required)
+  timeout - Maximum time to wait for execution in seconds (integer, optional)"
+  (mcp-server-lib-with-error-handling
+    (emacs-mcp--validate-string client_buffer_name "client_buffer_name")
+    (emacs-mcp--validate-string code "code")
+    (when (and timeout (not (integerp timeout)))
+      (mcp-server-lib-tool-throw "Invalid timeout: must be an integer or null"))
+    (let ((result (org-notebook-mcp--send-code-to-repl client_buffer_name code timeout)))
+      (json-encode result))))
+
+(defun emacs-mcp--get-jupyter-repl-status (client_buffer_name)
+  "Get the status of a Jupyter REPL client.
+MCP Parameters:
+  client_buffer_name - Name of the REPL buffer to check (string, required)"
+  (mcp-server-lib-with-error-handling
+    (emacs-mcp--validate-string client_buffer_name "client_buffer_name")
+    (let ((result (org-notebook-mcp--get-repl-status client_buffer_name)))
+      (json-encode result))))
+
+(defun emacs-mcp--get-jupyter-kernel-state (client_buffer_name)
+  "Get the execution state of a Jupyter kernel to check if it's busy.
+MCP Parameters:
+  client_buffer_name - Name of the REPL buffer to check (string, required)"
+  (mcp-server-lib-with-error-handling
+    (emacs-mcp--validate-string client_buffer_name "client_buffer_name")
+    (let ((result (org-notebook-mcp--get-kernel-state client_buffer_name)))
+      (json-encode result))))
+
+(defun emacs-mcp--send-code-to-jupyter-repl-async (client_buffer_name code)
+  "Send code to Jupyter REPL asynchronously for long-running computations.
+MCP Parameters:
+  client_buffer_name - Name of the REPL buffer to send code to (string, required)
+  code - Code to execute in the REPL (string, required)"
+  (mcp-server-lib-with-error-handling
+    (emacs-mcp--validate-string client_buffer_name "client_buffer_name")
+    (emacs-mcp--validate-string code "code")
+    (let ((result (org-notebook-mcp--send-code-async client_buffer_name code)))
+      (json-encode result))))
+
+(defun emacs-mcp--get-jupyter-last-output (client_buffer_name &optional lines)
+  "Get the last output from a Jupyter REPL buffer.
+MCP Parameters:
+  client_buffer_name - Name of the REPL buffer to read from (string, required)
+  lines - Number of lines to retrieve (integer, optional)"
+  (mcp-server-lib-with-error-handling
+    (emacs-mcp--validate-string client_buffer_name "client_buffer_name")
+    (when (and lines (not (integerp lines)))
+      (mcp-server-lib-tool-throw "Invalid lines: must be an integer or null"))
+    (let ((result (org-notebook-mcp--get-last-output client_buffer_name lines)))
+      (json-encode result))))
 
 ;;; Org-tools MCP Tool Functions
 
@@ -663,6 +868,624 @@ Security: Read-only operation, safe for exploring agenda structure"
   (mcp-server-lib-unregister-tool "add-todo-with-refile")
   (mcp-server-lib-unregister-tool "get-available-agenda-locations"))
 
+;;; Org-notebook MCP Registration
+
+(defun emacs-org-notebook-mcp-enable ()
+  "Enable the Org-notebook MCP tools."
+  (mcp-server-lib-register-tool
+   :function #'emacs-mcp--get-analytical-review
+   :name "get-org-analytical-review"
+   :description "Extract headings, content, and results for analytical review of org notebooks.
+Designed specifically for LLM analytical review focusing on approaches and outcomes, excluding code implementation details.
+
+This tool provides a clean, review-focused view of org notebooks by extracting heading titles, descriptive content,
+and execution results while omitting code blocks. Perfect for understanding methodology, findings, and conclusions
+without getting distracted by implementation details.
+
+Parameters:
+  file_path - Absolute path to the .org file (string, required)
+             Must exist and be a valid org file
+             Use get-org-file-headings to discover available headings first
+  heading_titles - Specific headings to extract (array of strings, optional)
+                  If omitted, extracts all headings in the notebook
+                  Uses substring matching to find headings
+                  Examples: [\"Introduction\", \"Results\", \"Conclusion\"]
+
+Returns JSON object with:
+  file_path - The org file that was analyzed (string)
+  extraction_mode - \"full_notebook\" or \"selected_headings\" (string)
+  requested_headings - List of requested heading titles (array of strings)
+  total_sections - Number of sections extracted (integer)
+  sections - Array of section objects, each containing:
+    heading - The heading title (string)
+    level - Org heading level (integer, 1-6)
+    content - Descriptive text content, excluding code blocks (string or null if truncated)
+    results - Execution results and outputs (string or null if truncated)
+    content_length - Character count of content (integer)
+    results_length - Character count of results (integer)
+    content_truncated - Whether content exceeded token limit (boolean)
+    results_truncated - Whether results exceeded token limit (boolean)
+
+Focus Areas for Analytical Review:
+- **Methodology**: Approach descriptions, experimental design, data processing steps
+- **Findings**: Analysis outcomes, statistical results, visualizations outputs
+- **Insights**: Interpretations, conclusions, recommendations
+- **Context**: Background information, assumptions, limitations
+
+Content Exclusions:
+- Source code blocks (#+BEGIN_SRC...#+END_SRC)
+- Implementation details and programming syntax
+- Technical configuration and setup code
+
+Token Management:
+- Content exceeding ~4k tokens (16,000 characters) per section is truncated
+- Length information provided even when content is truncated
+- Truncation flags indicate when content was omitted for size
+
+Use Cases:
+- High-level review of analytical workflows and findings
+- Understanding research methodology without implementation details
+- Extracting key insights and conclusions from computational notebooks
+- Generating executive summaries of data analysis projects
+- Academic review of research approaches and results
+- Quality assessment of analytical documentation
+
+Integration:
+- Use get-org-file-headings first to discover available sections
+- Combine with get-org-heading-content for detailed code inspection when needed
+- Perfect complement to function extraction tools for comprehensive review
+
+Error cases:
+- File not found or not accessible
+- File is not a valid .org file
+- Requested headings not found in the file
+- Invalid parameter types
+
+Security: Read-only operation, safe for file analysis"
+   :args '((:name "file_path"
+            :type string
+            :description "Absolute path to the .org file")
+           (:name "heading_titles"
+            :type array
+            :description "Optional list of specific heading titles to extract (uses substring matching)"
+            :optional t))
+   :read-only t)
+
+  (mcp-server-lib-register-tool
+   :function #'emacs-mcp--get-heading-content
+   :name "get-org-heading-content"
+   :description "Extract content, code, and/or results from a specific org heading with configurable options.
+Provides flexible access to different components of org headings with intelligent length management for LLM consumption.
+
+This tool allows selective extraction of text content, code blocks, and execution results from org headings,
+with options to include entire subtrees or just direct content. Features automatic truncation handling
+for large content that exceeds LLM token limits.
+
+Parameters:
+  file_path - Absolute path to the .org file (string, required)
+             Must exist and be a valid org file
+  heading_title - Title of the heading to extract from (string, required)
+                 Uses substring matching to find the heading
+                 Use get-org-file-headings to discover available headings
+  include_content - Whether to include text content (boolean, optional, default true)
+                   Text content excludes code blocks and results
+  include_code - Whether to include code blocks (boolean, optional, default true)
+                Includes #+BEGIN_SRC...#+END_SRC blocks with their content
+  include_results - Whether to include results blocks (boolean, optional, default true)
+                   Includes #+RESULTS: blocks and their output
+  include_subtree - Whether to include entire subtree (boolean, optional, default false)
+                   true: includes all sub-headings and their content
+                   false: only direct content under the heading
+
+Returns JSON object with:
+  content - Text content if requested and under token limit (string or null)
+  code - Code blocks if requested and under token limit (string or null)
+  results - Results blocks if requested and under token limit (string or null)
+  content_length - Character count of content component (integer)
+  code_length - Character count of code component (integer)
+  results_length - Character count of results component (integer)
+  content_truncated - Whether content was truncated due to size (boolean)
+  code_truncated - Whether code was truncated due to size (boolean)
+  results_truncated - Whether results were truncated due to size (boolean)
+
+Token Management:
+- Content exceeding ~4k tokens (16,000 characters) is truncated
+- Returns length information even when content is truncated
+- Allows selective inclusion of components to manage token usage
+- Provides truncation flags to indicate when content was omitted
+
+Component Definitions:
+- Content: Regular text, lists, tables, formatting - excludes code and results
+- Code: Source blocks (#+BEGIN_SRC...#+END_SRC) with all their content
+- Results: Output blocks (#+RESULTS:) and their associated data/output
+
+Use cases:
+- Selective extraction of notebook components for analysis
+- Token-aware content retrieval for LLM processing
+- Focused exploration of specific heading content
+- Code and results analysis with content separation
+- Subtree extraction for comprehensive section analysis
+
+Error cases:
+- File not found or not accessible
+- File is not a valid .org file
+- Heading not found in the file
+- Invalid parameter types
+
+Security: Read-only operation, safe for file analysis"
+   :args '((:name "file_path"
+            :type string
+            :description "Absolute path to the .org file")
+           (:name "heading_title"
+            :type string
+            :description "Title of the heading to extract content from")
+           (:name "include_content"
+            :type boolean
+            :description "Whether to include text content (default true)"
+            :optional t)
+           (:name "include_code"
+            :type boolean
+            :description "Whether to include code blocks (default true)"
+            :optional t)
+           (:name "include_results"
+            :type boolean
+            :description "Whether to include results blocks (default true)"
+            :optional t)
+           (:name "include_subtree"
+            :type boolean
+            :description "Whether to include entire subtree (default false)"
+            :optional t))
+   :read-only t)
+
+  (mcp-server-lib-register-tool
+   :function #'emacs-mcp--get-functions-from-org-file
+   :name "get-functions-from-org-file"
+   :description "Extract all functions from code blocks in an org file with location and docstring information.
+Analyzes all source blocks in an org file and identifies function definitions across multiple programming languages.
+
+This tool provides comprehensive function discovery within org notebooks, essential for code analysis,
+navigation, and understanding the structure of computational documents. Supports multiple programming
+languages and extracts metadata about each function including location and documentation hints.
+
+Parameters:
+  file_path - Absolute path to the .org file (string, required)
+             Must exist and be a valid org file with source blocks
+
+Returns JSON object with:
+  file_path - The org file that was analyzed (string)
+  total_code_blocks - Total number of source blocks found (integer)
+  total_functions - Total number of functions extracted (integer)
+  functions - Array of function objects, each containing:
+    name - Function name (string)
+    type - Function type (def, defun, function, etc.) (string)
+    language - Programming language of the source block (string)
+    line_number - Line number where function appears (integer, 1-based)
+    buffer_position - Character position in file (integer)
+    docstring_preview - Beginning of docstring if found (string)
+    source_line - The actual source line containing the function definition (string)
+
+Supported languages:
+- Python: def functions
+- Emacs Lisp: defun, defmacro, defvar, defcustom
+- JavaScript/TypeScript: function declarations, const functions, methods
+
+Analysis capabilities:
+- Detects function definitions using language-specific patterns
+- Extracts inline docstring hints where available
+- Provides precise location information for navigation
+- Handles multiple programming languages in single document
+- Processes all source blocks systematically
+
+Use cases:
+- Code navigation and exploration in org notebooks
+- Function inventory and documentation analysis
+- Understanding code structure in computational documents
+- Supporting code refactoring and maintenance
+- Generating function indices for large notebooks
+
+Performance considerations:
+- Parses entire file content for comprehensive analysis
+- Regex-based pattern matching for function detection
+- Memory usage scales with file size and function count
+
+Error cases:
+- File not found or not accessible
+- File is not a valid .org file
+- No source blocks found in file
+- Malformed source block syntax
+
+Security: Read-only operation, safe for file analysis"
+   :args '((:name "file_path"
+            :type string
+            :description "Absolute path to the .org file to analyze"))
+   :read-only t)
+
+  ;; Jupyter REPL tools
+  (mcp-server-lib-register-tool
+   :function #'emacs-mcp--list-jupyter-repls
+   :name "list-jupyter-repls"
+   :description "List all available Jupyter REPL clients with their kernel information.
+Essential for discovering active REPL connections that can be used for code execution.
+
+This tool scans all active Jupyter clients in Emacs and returns information about their
+connection status, kernel type, language, and execution state. Critical for LLMs to
+understand what computational environments are available for interaction.
+
+Parameters: None
+
+Returns JSON object with:
+  total_clients - Number of available REPL clients (integer)
+  clients - Array of client objects, each containing:
+    client_id - Unique identifier for the client (string)
+    buffer_name - Name of the REPL buffer (string) - use this for other operations
+    kernel_name - Type of kernel (e.g., 'python3', 'julia-1.8') (string)
+    language - Programming language (e.g., 'python', 'julia') (string)
+    language_version - Version of the language (string)
+    status - Connection status ('connected' or 'disconnected') (string)
+    execution_count - Number of executed cells/commands (integer)
+
+Use cases:
+- Discover available computational environments before sending code
+- Choose appropriate REPL for specific language/kernel requirements
+- Monitor active Jupyter sessions and their states
+- Provide users with list of available kernels for selection
+- Integration with org-mode notebook workflows
+
+Integration workflow:
+1. Use this tool to discover available REPLs
+2. Use send-code-to-jupyter-repl to execute code in chosen REPL
+3. Use get-jupyter-kernel-state to monitor execution progress
+4. Use get-jupyter-last-output to retrieve results
+
+Security: Read-only operation, safe for system discovery"
+   :args '()
+   :read-only t)
+
+  (mcp-server-lib-register-tool
+   :function #'emacs-mcp--send-code-to-jupyter-repl
+   :name "send-code-to-jupyter-repl"
+   :description "Send code to a Jupyter REPL client and get execution results synchronously.
+Executes code in a running Jupyter kernel and waits for completion with timeout.
+
+This tool provides synchronous code execution in Jupyter kernels with comprehensive
+result capture including output, results, and errors. Ideal for quick computations
+and interactive development workflows.
+
+Parameters:
+  client_buffer_name - Name of the REPL buffer (string, required)
+                      Use list-jupyter-repls to discover available buffer names
+  code - Code to execute in the kernel (string, required)
+        Should be valid code in the kernel's language (Python, Julia, etc.)
+  timeout - Maximum wait time in seconds (integer, optional, default 30)
+           Increase for long-running computations
+
+Returns JSON object with:
+  client_buffer - REPL buffer where code was executed (string)
+  code - The code that was executed (string)
+  success - Whether execution completed without errors (boolean)
+  output - Standard output from the execution (string)
+  result - Return value or computed result (string)
+  error - Error message if execution failed (string or null)
+  execution_time - When the execution completed (timestamp string)
+
+Execution behavior:
+- Waits synchronously for completion up to timeout
+- Captures stdout, stderr, return values, and display outputs
+- Handles both successful execution and error cases
+- Maintains kernel state and execution count
+- Supports all Jupyter-compatible languages
+
+Use cases:
+- Quick calculations and data analysis
+- Interactive code development and testing
+- Automated notebook execution workflows
+- Code validation and testing
+- Educational and demonstration purposes
+
+Best practices:
+- Use shorter timeout for quick operations
+- For long computations, consider send-code-to-jupyter-repl-async
+- Check kernel state with get-jupyter-kernel-state before sending
+- Handle both success and error cases in results
+
+Error cases:
+- REPL buffer not found or not connected
+- Code syntax errors or runtime exceptions
+- Timeout exceeded for long-running code
+- Kernel unavailable or crashed
+
+Security: Code execution capability - only use with trusted input"
+   :args '((:name "client_buffer_name"
+            :type string
+            :description "Name of the REPL buffer to send code to")
+           (:name "code"
+            :type string
+            :description "Code to execute in the REPL")
+           (:name "timeout"
+            :type integer
+            :description "Maximum time to wait for execution in seconds (default 30)"
+            :optional t))
+   :read-only nil)
+
+  (mcp-server-lib-register-tool
+   :function #'emacs-mcp--get-jupyter-kernel-state
+   :name "get-jupyter-kernel-state"
+   :description "Get the current execution state of a Jupyter kernel to check if it's busy.
+Essential for LLMs to know when kernels are ready for new code or still processing.
+
+This tool provides real-time information about kernel execution state, helping LLMs
+make intelligent decisions about when to send code and when to wait. Critical for
+handling long-running computations and avoiding race conditions.
+
+Parameters:
+  client_buffer_name - Name of the REPL buffer to check (string, required)
+                      Use list-jupyter-repls to discover available buffer names
+
+Returns JSON object with:
+  buffer_name - REPL buffer that was checked (string)
+  connected - Whether kernel is connected (boolean)
+  kernel_state - Current execution state (string):
+                'idle' - Ready for new code
+                'busy' - Currently executing code
+                'pending' - Has queued requests
+                'disconnected' - Not connected
+  busy - Whether kernel is currently executing (boolean)
+  pending_requests - Number of requests waiting in queue (integer)
+  execution_count - Total number of executed commands (integer)
+  last_check - Timestamp of this state check (string)
+  recommendations - Suggested action based on current state (string)
+
+State meanings:
+- 'idle': Kernel ready, safe to send new code immediately
+- 'busy': Kernel executing, wait before sending more code
+- 'pending': Requests queued, consider waiting for completion
+- 'disconnected': Kernel unavailable, cannot execute code
+
+LLM workflow patterns:
+1. Check kernel state before sending code
+2. If busy/pending, wait and poll until idle
+3. Send code when kernel is idle
+4. For async operations, poll state to detect completion
+5. Handle disconnected state by reconnecting or choosing different kernel
+
+Use cases:
+- Prevent sending code to busy kernels
+- Implement polling loops for async execution monitoring
+- Provide user feedback about computation progress
+- Handle long-running analysis workflows gracefully
+- Coordinate multiple code execution requests
+
+Best practices:
+- Always check state before sending code to busy kernels
+- Implement exponential backoff when polling busy kernels
+- Provide informative messages to users about wait reasons
+- Consider kernel capacity when queuing multiple requests
+
+Error cases:
+- REPL buffer not found
+- Kernel connection issues
+- Invalid buffer name provided
+
+Security: Read-only operation, safe for monitoring"
+   :args '((:name "client_buffer_name"
+            :type string
+            :description "Name of the REPL buffer to check"))
+   :read-only t)
+
+  (mcp-server-lib-register-tool
+   :function #'emacs-mcp--send-code-to-jupyter-repl-async
+   :name "send-code-to-jupyter-repl-async"
+   :description "Send code to Jupyter REPL asynchronously without waiting for results.
+Ideal for long-running computations where LLMs need to poll for completion status.
+
+This tool sends code for execution and returns immediately with request information.
+LLMs should then use get-jupyter-kernel-state to monitor progress and
+get-jupyter-last-output to retrieve results when computation completes.
+
+Parameters:
+  client_buffer_name - Name of the REPL buffer (string, required)
+                      Use list-jupyter-repls to discover available buffer names
+  code - Code to execute in the kernel (string, required)
+        Should be valid code in the kernel's language
+
+Returns JSON object with:
+  client_buffer - REPL buffer where code was sent (string)
+  code - The code that was submitted (string)
+  request_id - Unique identifier for this execution request (string)
+  status - Request status ('sent') (string)
+  timestamp - When the request was sent (string)
+  message - Instructions for monitoring completion (string)
+
+Async execution workflow for LLMs:
+1. Send code using this function
+2. Poll get-jupyter-kernel-state until kernel_state becomes 'idle'
+3. Use get-jupyter-last-output to retrieve results
+4. Handle any errors found in the output
+
+Polling strategy:
+- Start with 1-second intervals
+- Increase to 2-3 seconds for longer operations
+- Stop polling when kernel_state is 'idle'
+- Set reasonable maximum poll time based on expected computation time
+
+Use cases:
+- Long data processing and analysis tasks
+- Machine learning model training
+- Large dataset operations
+- Complex mathematical computations
+- Any operation that might take more than 30 seconds
+
+Advantages over synchronous execution:
+- No timeout limitations
+- LLM can provide progress updates to user
+- Can handle very long computations gracefully
+- Allows for better resource management
+
+Best practices:
+- Always implement polling loop after async send
+- Provide user feedback during long computations
+- Set reasonable maximum wait times
+- Handle cases where computation fails or hangs
+
+Error cases:
+- REPL buffer not found or not connected
+- Kernel unavailable
+- Code submission failure
+
+Security: Code execution capability - only use with trusted input"
+   :args '((:name "client_buffer_name"
+            :type string
+            :description "Name of the REPL buffer to send code to")
+           (:name "code"
+            :type string
+            :description "Code to execute in the REPL"))
+   :read-only nil)
+
+  (mcp-server-lib-register-tool
+   :function #'emacs-mcp--get-jupyter-last-output
+   :name "get-jupyter-last-output"
+   :description "Get the last output from a Jupyter REPL buffer.
+Essential for retrieving results after asynchronous code execution completes.
+
+This tool extracts recent output from the REPL buffer, useful for getting results
+after async execution or checking recent computation history. Provides flexible
+control over how much output to retrieve.
+
+Parameters:
+  client_buffer_name - Name of the REPL buffer (string, required)
+                      Use list-jupyter-repls to discover available buffer names
+  lines - Number of lines to retrieve (integer, optional, default 50)
+         Adjust based on expected output size
+
+Returns JSON object with:
+  buffer_name - REPL buffer that was read (string)
+  lines_retrieved - Actual number of lines found (integer)
+  max_lines - Maximum lines requested (integer)
+  output - The retrieved output text (string)
+  buffer_size - Total size of REPL buffer (integer)
+  timestamp - When output was retrieved (string)
+
+Output content:
+- Includes execution results, printed output, error messages
+- Shows prompts, execution counts, and formatted displays
+- Preserves formatting and ANSI escape sequences
+- May include rich output representations (plots, tables, etc.)
+
+Use cases:
+- Retrieve results after async code execution
+- Get recent computation history
+- Debug failed executions by examining error output
+- Extract specific results from long output streams
+- Monitor ongoing computation progress
+
+Integration with async workflow:
+1. Send code with send-code-to-jupyter-repl-async
+2. Poll get-jupyter-kernel-state until execution completes
+3. Use this function to retrieve the results
+4. Parse output for specific results or error messages
+
+Best practices:
+- Request appropriate number of lines for expected output size
+- Parse output to extract specific results when needed
+- Handle cases where output might be empty
+- Consider output size when processing large results
+
+Parsing suggestions:
+- Look for 'Out [n]:' patterns for execution results
+- Check for error tracebacks and exception messages
+- Extract specific data formats (JSON, CSV, etc.) from output
+- Handle rich display outputs appropriately
+
+Error cases:
+- REPL buffer not found
+- Empty or no recent output
+- Invalid line count parameter
+
+Security: Read-only operation, safe for output retrieval"
+   :args '((:name "client_buffer_name"
+            :type string
+            :description "Name of the REPL buffer to read from")
+           (:name "lines"
+            :type integer
+            :description "Number of lines to retrieve (default 50)"
+            :optional t))
+   :read-only t)
+
+  (mcp-server-lib-register-tool
+   :function #'emacs-mcp--get-jupyter-repl-status
+   :name "get-jupyter-repl-status"
+   :description "Get comprehensive status information about a Jupyter REPL client.
+Provides detailed information about kernel connection, configuration, and current state.
+
+This tool returns complete status information about a Jupyter REPL client including
+kernel details, connection status, language information, and execution history.
+Useful for understanding the computational environment and troubleshooting issues.
+
+Panrameters:
+  client_buffer_name - Name of the REPL buffer (string, required)
+                      Use list-jupyter-repls to discover available buffer names
+
+Returns JSON object with:
+  buffer_name - REPL buffer name (string)
+  connected - Whether kernel connection is active (boolean)
+  kernel_name - Type/name of the kernel (string)
+  kernel_id - Unique kernel identifier (string)
+  language - Programming language (string)
+  language_version - Version of the programming language (string)
+  execution_count - Total number of executed commands (integer)
+  buffer_size - Size of the REPL buffer in characters (integer)
+  last_activity - Timestamp of last activity (string)
+  kernel_alive - Whether kernel process is responsive (boolean)
+
+Status information helps with:
+- Verifying kernel connectivity before code execution
+- Understanding available language features and versions
+- Monitoring REPL session health and activity
+- Troubleshooting execution issues
+- Planning code execution strategies
+
+Use cases:
+- Pre-execution environment verification
+- Debugging connection and execution issues
+- Monitoring long-running kernel sessions
+- Collecting system information for error reporting
+- Understanding computational environment capabilities
+
+Troubleshooting guide:
+- connected=false: Kernel needs reconnection
+- kernel_alive=false: Kernel process may have crashed
+- High execution_count: Long-running session, may need restart
+- Large buffer_size: Consider clearing buffer for performance
+
+Best practices:
+- Check status before starting complex computations
+- Monitor kernel health during long-running operations
+- Use information to provide helpful error messages
+- Consider kernel capabilities when planning code execution
+
+Error cases:
+- REPL buffer not found
+- Kernel connection issues
+- Invalid buffer name
+
+Security: Read-only operation, safe for status monitoring"
+   :args '((:name "client_buffer_name"
+            :type string
+            :description "Name of the REPL buffer to check"))
+   :read-only t))
+
+(defun emacs-org-notebook-mcp-disable ()
+  "Disable the Org-notebook MCP tools."
+  (mcp-server-lib-unregister-tool "get-org-analytical-review")
+  (mcp-server-lib-unregister-tool "get-org-heading-content")
+  (mcp-server-lib-unregister-tool "get-functions-from-org-file")
+  (mcp-server-lib-unregister-tool "list-jupyter-repls")
+  (mcp-server-lib-unregister-tool "send-code-to-jupyter-repl")
+  (mcp-server-lib-unregister-tool "get-jupyter-kernel-state")
+  (mcp-server-lib-unregister-tool "send-code-to-jupyter-repl-async")
+  (mcp-server-lib-unregister-tool "get-jupyter-last-output")
+  (mcp-server-lib-unregister-tool "get-jupyter-repl-status"))
+
 ;;; Org-tools MCP Registration
 
 (defun emacs-org-tools-mcp-enable ()
@@ -764,20 +1587,22 @@ Security: Read-only operation, safe for file analysis"
 
 ;;;###autoload
 (defun emacs-org-mode-mcp-enable ()
-  "Enable all Emacs MCP tools (org-roam, org-babel, org-agenda, and org-tools)."
+  "Enable all Emacs MCP tools (org-roam, org-babel, org-agenda, org-tools, and org-notebook)."
   (emacs-org-roam-mcp-enable)
   (emacs-org-babel-mcp-enable)
   (emacs-org-agenda-mcp-enable)
   (emacs-org-tools-mcp-enable)
+  (emacs-org-notebook-mcp-enable)
   )
 
 ;;;###autoload
 (defun emacs-org-mode-mcp-disable ()
-  "Disable all Emacs MCP tools (org-roam, org-babel, org-agenda, and org-tools)."
+  "Disable all Emacs MCP tools (org-roam, org-babel, org-agenda, org-tools, and org-notebook)."
   (emacs-org-roam-mcp-disable)
   (emacs-org-babel-mcp-disable)
   (emacs-org-agenda-mcp-disable)
-  (emacs-org-tools-mcp-disable))
+  (emacs-org-tools-mcp-disable)
+  (emacs-org-notebook-mcp-disable))
 
 ;; Start the server with all tools enabled
 (emacs-org-mode-mcp-enable)
