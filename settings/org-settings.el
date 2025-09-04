@@ -203,25 +203,18 @@ menu\nmouse-2 will jump to task"))
   (setq ob-async-no-async-languages-alist '("jupyter-python" "jupyter"))
   )
 
-;; (use-package jupyter
-;;   :demand t
-;;   :after (:all org python))
+
 
 (use-package simple-httpd
   :ensure t)
 
+(add-to-list 'load-path "/Users/luis.moneda/repos/jupyter/")
+(require 'jupyter)
 
-;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/zmq-20241006.1857/")
-;; (autoload 'zmq "emacs-zmq" "" t)
-;; (load "zmq")
-
-;; (zmq-message)
-;; (zmq-load)
-
-(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/jupyter-20250402.1740/")
-(autoload 'jupyter "jupyter" "" t)
-;; (require 'jupyter)
-(load "jupyter")
+;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/jupyter-20250402.1740/")
+;; (autoload 'jupyter "jupyter" "" t)
+;; ;; (require 'jupyter)
+;; (load "jupyter")
 
 (use-package pyvenv
   :ensure t
@@ -724,6 +717,13 @@ this command to copy it"
                :empty-lines 1
                :immediate-finish t))
 
+;; Capture it for today
+(add-to-list 'org-capture-templates
+             '("td" "Personal task today (programmatic)" entry
+               (file+olp "~/Dropbox/Agenda/todo.org" "Life" "Misc")
+               "* TODO %i\nSCHEDULED: %t"
+               :empty-lines 1
+               :immediate-finish t))
 
 (add-to-list 'org-capture-templates
              '("a" "Org Roam daily" plain
