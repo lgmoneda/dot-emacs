@@ -1296,7 +1296,7 @@ Parameters:
 
 Returns JSON object with:
   request_id - The request ID that was checked (string)
-  client_buffer - REPL buffer where code was executed (string)  
+  client_buffer - REPL buffer where code was executed (string)
   code - The original code that was executed (string)
   status - Execution status: 'pending' or 'completed' (string)
 

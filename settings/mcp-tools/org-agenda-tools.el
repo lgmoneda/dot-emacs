@@ -154,7 +154,8 @@ MCP Parameters:
     (let* ((body-content content)
            (final-scheduled scheduled)
            (target-file (expand-file-name "~/Dropbox/Agenda/todo.org"))
-           (final-location "Life/Misc")
+           (actual-refile-target (or refile_target "Life/Misc"))  ; Always use refile logic
+           (final-location actual-refile-target)
            (refiled nil))
 
       ;; Validate target file
@@ -183,47 +184,50 @@ MCP Parameters:
 
         ;; Debug: show what we're capturing
         ;; Insert TODO item directly to avoid org-capture-string multi-line issues
-        (with-current-buffer (find-file-noselect target-file)
-          (save-excursion
-            ;; Find the Life/Misc section (default location)
-            (goto-char (point-min))
-            (if (re-search-forward "^\\*\\*\\* Misc$" nil t)
-                (progn
-                  ;; Go to end of the Misc section
-                  (org-end-of-subtree t t)
-                  (unless (bolp) (insert "\n"))
-                  ;; Insert the main TODO item with proper format
-                  (insert (format "**** TODO%s %s\n"
-                                 (or priority-str "")
-                                 title))
-                  ;; Add scheduled line if present
-                  (when scheduled-str
-                    (insert scheduled-str "\n"))
-                  ;; Add body content with proper heading adjustment
-                  (when (and body-content (not (string-empty-p body-content)))
-                    (let ((adjusted-content (org-agenda-mcp--adjust-heading-levels body-content 4)))
-                      (insert adjusted-content "\n"))))
-              ;; If Misc section not found, add at end of file
-              (goto-char (point-max))
-              (unless (bolp) (insert "\n"))
-              (insert (format "**** TODO%s %s\n"
-                             (or priority-str "")
-                             title))
-              (when scheduled-str
-                (insert scheduled-str "\n"))
-              (when (and body-content (not (string-empty-p body-content)))
-                (let ((adjusted-content (org-agenda-mcp--adjust-heading-levels body-content 4)))
-                  (insert adjusted-content "\n"))))
-          (save-buffer)))
+        (let ((coding-system-for-read 'utf-8-unix)
+              (coding-system-for-write 'utf-8-unix))
+          (with-current-buffer (find-file-noselect target-file)
+            ;; Ensure the buffer uses UTF-8 encoding
+            (set-buffer-file-coding-system 'utf-8-unix)
+            (save-excursion
+              ;; Find the Life/Misc section (default location)
+              (goto-char (point-min))
+              (if (re-search-forward "^\\*\\*\\* Misc$" nil t)
+                  (progn
+                    ;; Go to end of the Misc section
+                    (org-end-of-subtree t t)
+                    (unless (bolp) (insert "\n"))
+                    ;; Insert the main TODO item with proper format
+                    (insert (format "**** TODO%s %s\n"
+                                   (or priority-str "")
+                                   title))
+                    ;; Add scheduled line if present
+                    (when scheduled-str
+                      (insert scheduled-str "\n"))
+                    ;; Add body content with proper heading adjustment
+                    (when (and body-content (not (string-empty-p body-content)))
+                      (let ((adjusted-content (org-agenda-mcp--adjust-heading-levels body-content 4)))
+                        (insert adjusted-content "\n"))))
+                ;; If Misc section not found, add at end of file
+                (goto-char (point-max))
+                (unless (bolp) (insert "\n"))
+                (insert (format "**** TODO%s %s\n"
+                               (or priority-str "")
+                               title))
+                (when scheduled-str
+                  (insert scheduled-str "\n"))
+                (when (and body-content (not (string-empty-p body-content)))
+                  (let ((adjusted-content (org-agenda-mcp--adjust-heading-levels body-content 4)))
+                    (insert adjusted-content "\n")))))
+            (save-buffer)))
 
-      ;; If a refile target was specified and it's not the default, refile the item
-      (when (and refile_target
-                 (not (string-empty-p refile_target))
-                 (not (string= refile_target "Life/Misc")))
+      ;; Always refile the item to the target location (including default Life/Misc)
+      (when (and actual-refile-target
+                 (not (string-empty-p actual-refile-target)))
 
         ;; Get available refile targets using working function
         (let* ((targets (build-refile-targets))
-               (target-match (find-refile-target refile_target targets)))
+               (target-match (find-refile-target actual-refile-target targets)))
 
           (if target-match
               (progn
@@ -239,7 +243,7 @@ MCP Parameters:
                       (when (re-search-backward search-pattern nil t)
                         ;; Refile using org-refile with the found target
                         (org-refile nil nil target-match)
-                        (setq final-location refile_target)
+                        (setq final-location actual-refile-target)
                         (setq refiled t))))))
 
             ;; If refile target not found, provide helpful error
@@ -251,7 +255,7 @@ MCP Parameters:
                                                         "/"))
                                             targets)))
               (error "Refile target '%s' not found. Available targets: %s"
-                     refile_target
+                     actual-refile-target
                      (string-join available-targets ", "))))))
 
       ;; Return success information
