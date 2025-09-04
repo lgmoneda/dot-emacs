@@ -388,19 +388,20 @@ Returns information about functions including location and docstrings."
              ("^[ \t]*const[ \t]+\\([a-zA-Z_$][a-zA-Z0-9_$]*\\)[ \t]*=[ \t]*(" . "const function")
              ("^[ \t]*\\([a-zA-Z_$][a-zA-Z0-9_$]*\\)[ \t]*:[ \t]*function" . "method"))))))
 
-    (dolist (pattern-pair patterns)
-      (let ((pattern (car pattern-pair))
-            (type (cdr pattern-pair)))
-        (when (string-match pattern line)
-          (let ((func-name (match-string 1 line))
-                (docstring (org-notebook-mcp--extract-docstring-hint line)))
-            (cl-return `((name . ,func-name)
-                     (type . ,type)
-                     (language . ,language)
-                     (line_number . ,line-number)
-                     (buffer_position . ,buffer-pos)
-                     (docstring_preview . ,(or docstring ""))
-                     (source_line . ,(string-trim line))))))))))
+    (cl-block extract-function
+      (dolist (pattern-pair patterns)
+        (let ((pattern (car pattern-pair))
+              (type (cdr pattern-pair)))
+          (when (string-match pattern line)
+            (let ((func-name (match-string 1 line))
+                   (docstring (org-notebook-mcp--extract-docstring-hint line)))
+              (cl-return-from extract-function `((name . ,func-name)
+                       (type . ,type)
+                       (language . ,language)
+                       (line_number . ,line-number)
+                       (buffer_position . ,buffer-pos)
+                       (docstring_preview . ,(or docstring ""))
+                       (source_line . ,(string-trim line)))))))))))
 
 (defun org-notebook-mcp--extract-docstring-hint (line)
   "Extract a hint of docstring from the function line or return nil."
@@ -422,6 +423,220 @@ Returns information about functions including location and docstrings."
     (match-string 1 line))
    (t nil)))
 
+;;; Kernel-Direct Async Execution System
+
+(defvar org-notebook-mcp--async-requests (make-hash-table :test 'equal)
+  "Hash table to track async execution requests.
+Keys are request IDs, values are request info alists.")
+
+(defun org-notebook-mcp--generate-request-id ()
+  "Generate a unique request ID for async execution tracking."
+  (format "req-%s-%d" (format-time-string "%Y%m%d-%H%M%S") (random 10000)))
+
+(defun org-notebook-mcp--cleanup-completed-requests ()
+  "Remove completed requests older than 1 hour to prevent memory leaks."
+  (let ((cutoff-time (- (float-time) 3600))) ; 1 hour ago
+    (maphash (lambda (req-id req-info)
+               (let ((completion-time (cdr (assoc 'completion_time req-info))))
+                 (when (and completion-time (< completion-time cutoff-time))
+                   (remhash req-id org-notebook-mcp--async-requests))))
+             org-notebook-mcp--async-requests)))
+
+(defun org-notebook-mcp--send-kernel-code-async (client_buffer_name code)
+  "Send code directly to kernel asynchronously with proper request tracking.
+Returns immediately with request ID that can be used to check completion and get results."
+  (let* ((buffer (get-buffer client_buffer_name))
+         (client nil)
+         (request-id (org-notebook-mcp--generate-request-id)))
+
+    (unless buffer
+      (error "REPL buffer not found: %s" client_buffer_name))
+
+    (org-notebook-mcp--check-jupyter-dependencies)
+    (with-current-buffer buffer
+      (unless (jupyter-repl-connected-p)
+        (error "REPL client not connected: %s" client_buffer_name))
+      (setq client jupyter-current-client))
+
+    (unless client
+      (error "No jupyter client found in buffer: %s" client_buffer_name))
+
+    ;; Clean up old completed requests
+    (org-notebook-mcp--cleanup-completed-requests)
+
+    ;; Send the request and store it for tracking
+    (jupyter-run-with-client client
+      (jupyter-mlet* ((req (jupyter-sent (jupyter-execute-request :code code))))
+        (let ((req-info `((request_id . ,request-id)
+                         (client_buffer . ,client_buffer_name)
+                         (code . ,code)
+                         (status . "sent")
+                         (request_object . ,req)
+                         (client . ,client)
+                         (start_time . ,(float-time))
+                         (completion_time . nil)
+                         (results . nil))))
+
+          ;; Store request in tracking hash table
+          (puthash request-id req-info org-notebook-mcp--async-requests)
+
+          ;; Return request info immediately
+          (jupyter-return `((request_id . ,request-id)
+                           (client_buffer . ,client_buffer_name)
+                           (code . ,code)
+                           (status . "sent")
+                           (timestamp . ,(format-time-string "%Y-%m-%d %H:%M:%S"))
+                           (message . "Code sent to kernel - use check-async-execution to monitor completion"))))))
+
+    ;; Return the result from the monadic computation
+    `((request_id . ,request-id)
+      (client_buffer . ,client_buffer_name)
+      (code . ,code)
+      (status . "sent")
+      (timestamp . ,(format-time-string "%Y-%m-%d %H:%M:%S"))
+      (message . "Code sent to kernel - use check-async-execution to monitor completion"))))
+
+(defun org-notebook-mcp--check-async-execution (request_id)
+  "Check the status of an async execution request and return results if complete.
+Returns request status, and if complete, extracts and returns the execution results."
+  (let ((req-info (gethash request_id org-notebook-mcp--async-requests)))
+    (unless req-info
+      (error "Request ID not found: %s" request_id))
+
+    (let* ((req (cdr (assoc 'request_object req-info)))
+           (client (cdr (assoc 'client req-info)))
+           (client-buffer (cdr (assoc 'client_buffer req-info)))
+           (code (cdr (assoc 'code req-info)))
+           (start-time (cdr (assoc 'start_time req-info)))
+           (completion-time (cdr (assoc 'completion_time req-info)))
+           (cached-results (cdr (assoc 'results req-info))))
+
+      ;; If we already have cached results, return them
+      (if cached-results
+          cached-results
+
+        ;; Check if request is complete
+        (jupyter-run-with-client client
+          (if (jupyter-request-idle-p req)
+              ;; Request is complete - extract and cache results
+              (let* ((execution-error nil)
+                     (output-content "")
+                     (result-content "")
+                     (error-content "")
+                     (messages (oref req messages))
+                     (completion-time (float-time)))
+
+                ;; Process messages to extract results (same logic as sync version)
+                (dolist (msg messages)
+                  (pcase (jupyter-message-type msg)
+                    ("stream"
+                     (let ((stream-content (jupyter-message-content msg)))
+                       (setq output-content
+                             (concat output-content
+                                     (plist-get stream-content :text)))))
+                    ("execute_result"
+                     (let* ((result-data (jupyter-message-content msg))
+                            (data (plist-get result-data :data))
+                            (text (plist-get data :text/plain)))
+                       (when text
+                         (setq result-content
+                               (concat result-content text)))))
+                    ("display_data"
+                     (let* ((display-data (jupyter-message-content msg))
+                            (data (plist-get display-data :data))
+                            (text (plist-get data :text/plain)))
+                       (when text
+                         (setq result-content
+                               (concat result-content text)))))
+                    ("error"
+                     (let* ((error-data (jupyter-message-content msg))
+                            (ename (plist-get error-data :ename))
+                            (evalue (plist-get error-data :evalue))
+                            (traceback (plist-get error-data :traceback)))
+                       (setq execution-error t)
+                       (setq error-content
+                             (format "%s: %s\n%s"
+                                     ename evalue
+                                     (if traceback (string-join traceback "\n") "")))))))
+
+                ;; Create results object
+                (let ((results `((request_id . ,request_id)
+                                (client_buffer . ,client-buffer)
+                                (code . ,code)
+                                (status . "completed")
+                                (success . ,(if execution-error :json-false t))
+                                (output . ,output-content)
+                                (result . ,result-content)
+                                (error . ,(if execution-error error-content nil))
+                                (start_time . ,(format-time-string "%Y-%m-%d %H:%M:%S" (seconds-to-time start-time)))
+                                (completion_time . ,(format-time-string "%Y-%m-%d %H:%M:%S"))
+                                (execution_duration . ,(format "%.2f seconds" (- completion-time start-time))))))
+
+                  ;; Cache results in request info
+                  (let ((updated-req-info (copy-alist req-info)))
+                    (setf (alist-get 'results updated-req-info) results)
+                    (setf (alist-get 'completion_time updated-req-info) completion-time)
+                    (setf (alist-get 'status updated-req-info) "completed")
+                    (puthash request_id updated-req-info org-notebook-mcp--async-requests))
+
+                  ;; Return results
+                  (jupyter-return results)))
+
+            ;; Request is still pending
+            (jupyter-return `((request_id . ,request_id)
+                             (client_buffer . ,client-buffer)
+                             (code . ,code)
+                             (status . "pending")
+                             (start_time . ,(format-time-string "%Y-%m-%d %H:%M:%S" (seconds-to-time start-time)))
+                             (elapsed_time . ,(format "%.2f seconds" (- (float-time) start-time)))
+                             (message . "Execution still in progress - check again later")))))))))
+
+(defun org-notebook-mcp--get-kernel-state-direct (client_buffer_name)
+  "Get kernel state directly without relying on buffer parsing.
+Uses jupyter.el's internal request tracking to determine if kernel is busy."
+  (let* ((buffer (get-buffer client_buffer_name)))
+
+    (unless buffer
+      (error "REPL buffer not found: %s" client_buffer_name))
+
+    (org-notebook-mcp--check-jupyter-dependencies)
+    (with-current-buffer buffer
+      (let* ((client jupyter-current-client)
+             (connected-p (jupyter-repl-connected-p))
+             (pending-requests 0)
+             (has-pending-async 0))
+
+        ;; Count requests in our async tracking system for this client
+        (maphash (lambda (req-id req-info)
+                   (when (and (string= client_buffer_name (cdr (assoc 'client_buffer req-info)))
+                             (not (cdr (assoc 'results req-info))))
+                     (setq has-pending-async (1+ has-pending-async))))
+                 org-notebook-mcp--async-requests)
+
+        ;; Count pending requests in client's request queue if available
+        (when (and client (slot-exists-p client 'requests))
+          (setq pending-requests (length (oref client requests))))
+
+        (let ((kernel-state (cond
+                            ((not connected-p) "disconnected")
+                            ((> pending-requests 0) "busy")
+                            ((> has-pending-async 0) "processing_async")
+                            (t "idle"))))
+
+          `((buffer_name . ,client_buffer_name)
+            (connected . ,(if connected-p t :json-false))
+            (kernel_state . ,kernel-state)
+            (busy . ,(if (member kernel-state '("busy" "processing_async")) t :json-false))
+            (pending_requests . ,pending-requests)
+            (pending_async_requests . ,has-pending-async)
+            (execution_count . ,(when connected-p (jupyter-repl-cell-count)))
+            (last_check . ,(format-time-string "%Y-%m-%d %H:%M:%S"))
+            (recommendations . ,(cond
+                                ((not connected-p) "Kernel is disconnected - reconnect before sending code")
+                                ((string= kernel-state "busy") "Kernel is busy with synchronous execution")
+                                ((string= kernel-state "processing_async") "Kernel is processing async requests - safe to send more")
+                                (t "Kernel is ready for new code")))))))))
+
 ;;; Jupyter REPL Integration Functions
 
 (defun org-notebook-mcp--list-jupyter-repl-clients ()
@@ -437,13 +652,13 @@ Returns information about active REPL connections that can be used for code exec
             (let* ((kernel-info (jupyter-kernel-info client))
                    (lang-info (plist-get kernel-info :language_info))
                    (client-info
-                    `((client_id . ,(format "%s" client))
+                    `((client_id . ,(format "client-%s" (buffer-name)))
                       (buffer_name . ,(buffer-name))
-                      (kernel_name . ,(plist-get kernel-info :implementation))
-                      (language . ,(plist-get lang-info :name))
-                      (language_version . ,(plist-get lang-info :version))
+                      (kernel_name . ,(or (plist-get kernel-info :implementation) "unknown"))
+                      (language . ,(or (plist-get lang-info :name) "unknown"))
+                      (language_version . ,(or (plist-get lang-info :version) "unknown"))
                       (status . ,(if (jupyter-repl-connected-p) "connected" "disconnected"))
-                      (execution_count . ,(jupyter-repl-cell-count)))))
+                      (execution_count . ,(or (jupyter-repl-cell-count) 0)))))
               (push client-info clients))))))
     `((total_clients . ,(length clients))
       (clients . ,(nreverse clients)))))
@@ -525,47 +740,9 @@ TIMEOUT specifies how long to wait for results (default 30 seconds)."
                            (execution_time . ,(format-time-string "%Y-%m-%d %H:%M:%S"))))))))))
 
 (defun org-notebook-mcp--get-jupyter-kernel-state (client_buffer_name)
-  "Get the current execution state of a Jupyter kernel.
-Returns detailed information about whether the kernel is busy, idle, or has pending requests.
-This is essential for LLMs to know when to wait before sending more code."
-  (let* ((buffer (get-buffer client_buffer_name)))
-
-    (unless buffer
-      (error "REPL buffer not found: %s" client_buffer_name))
-
-    (org-notebook-mcp--check-jupyter-dependencies)
-    (with-current-buffer buffer
-      (let* ((client jupyter-current-client)
-             (connected-p (jupyter-repl-connected-p))
-             (busy-p nil)
-             (pending-requests 0))
-
-        ;; Check if kernel is busy by looking at REPL prompt state
-        (when connected-p
-          (save-excursion
-            (goto-char (point-max))
-            (setq busy-p (looking-back "In \\[\\*\\] " nil)))
-
-          ;; Count pending requests if client has request queue
-          (when (and client (slot-exists-p client 'requests))
-            (setq pending-requests (length (oref client requests)))))
-
-        `((buffer_name . ,client_buffer_name)
-          (connected . ,(if connected-p t :json-false))
-          (kernel_state . ,(cond
-                           ((not connected-p) "disconnected")
-                           (busy-p "busy")
-                           ((> pending-requests 0) "pending")
-                           (t "idle")))
-          (busy . ,(if busy-p t :json-false))
-          (pending_requests . ,pending-requests)
-          (execution_count . ,(when connected-p (jupyter-repl-cell-count)))
-          (last_check . ,(format-time-string "%Y-%m-%d %H:%M:%S"))
-          (recommendations . ,(cond
-                              ((not connected-p) "Kernel is disconnected - reconnect before sending code")
-                              (busy-p "Kernel is busy executing - wait before sending more code")
-                              ((> pending-requests 0) "Kernel has pending requests - consider waiting")
-                              (t "Kernel is ready for new code"))))))))
+  "DEPRECATED: Use org-notebook-mcp--get-kernel-state-direct instead.
+This function is kept for backward compatibility."
+  (org-notebook-mcp--get-kernel-state-direct client_buffer_name))
 
 (defun org-notebook-mcp--get-jupyter-repl-status (client_buffer_name)
   "Get comprehensive status of a Jupyter REPL client.
@@ -600,37 +777,9 @@ Returns information about connection status, kernel info, and execution history.
           (kernel_alive . ,(when client (jupyter-kernel-alive-p client))))))))
 
 (defun org-notebook-mcp--send-code-async (client_buffer_name code)
-  "Send code to Jupyter REPL asynchronously without waiting for results.
-Returns immediately with request information. Use get-kernel-state to check completion.
-This is better for long-running computations where LLMs need to poll for completion."
-  (let* ((buffer (get-buffer client_buffer_name))
-         (client nil))
-
-    (unless buffer
-      (error "REPL buffer not found: %s" client_buffer_name))
-
-    (org-notebook-mcp--check-jupyter-dependencies)
-    (with-current-buffer buffer
-      (unless (jupyter-repl-connected-p)
-        (error "REPL client not connected: %s" client_buffer_name))
-
-      (setq client jupyter-current-client))
-
-    (unless client
-      (error "No jupyter client found in buffer: %s" client_buffer_name))
-
-    ;; Send code asynchronously using proper monadic approach
-    (jupyter-run-with-client client
-      (jupyter-mlet* ((req (jupyter-sent (jupyter-execute-request :code code))))
-        (let ((msg-id (jupyter-request-id req)))
-          ;; Return request information immediately
-          (jupyter-return
-           `((client_buffer . ,client_buffer_name)
-             (code . ,code)
-             (request_id . ,msg-id)
-             (status . "sent")
-             (timestamp . ,(format-time-string "%Y-%m-%d %H:%M:%S"))
-             (message . "Code sent asynchronously - use get-kernel-state to check completion"))))))))
+  "DEPRECATED: Use org-notebook-mcp--send-kernel-code-async instead.
+This function is kept for backward compatibility."
+  (org-notebook-mcp--send-kernel-code-async client_buffer_name code))
 
 (defun org-notebook-mcp--get-last-output (client_buffer_name &optional lines)
   "Get the last output from a Jupyter REPL buffer.
@@ -653,6 +802,51 @@ LINES specifies how many lines of output to retrieve (default 50)."
       (note . "This function needs further debugging for safe buffer access"))))
 
 ;;; MCP Tool Functions
+
+;; New kernel-direct async execution tools
+(defun org-notebook-mcp--send-kernel-code-async-mcp (client_buffer_name code)
+  "Send code directly to kernel asynchronously with proper request tracking.
+MCP Parameters:
+  client_buffer_name - Name of the REPL buffer to send code to (string, required)
+  code - Code to execute in the kernel (string, required)"
+  (mcp-server-lib-with-error-handling
+    (unless (stringp client_buffer_name)
+      (signal 'wrong-type-argument (list 'stringp client_buffer_name)))
+    (when (string-empty-p client_buffer_name)
+      (error "Empty client_buffer_name provided"))
+    (unless (stringp code)
+      (signal 'wrong-type-argument (list 'stringp code)))
+    (when (string-empty-p code)
+      (error "Empty code provided"))
+
+    (let ((result (org-notebook-mcp--send-kernel-code-async client_buffer_name code)))
+      (json-encode result))))
+
+(defun org-notebook-mcp--check-async-execution-mcp (request_id)
+  "Check the status of an async execution request and return results if complete.
+MCP Parameters:
+  request_id - The request ID returned from send-kernel-code-async (string, required)"
+  (mcp-server-lib-with-error-handling
+    (unless (stringp request_id)
+      (signal 'wrong-type-argument (list 'stringp request_id)))
+    (when (string-empty-p request_id)
+      (error "Empty request_id provided"))
+
+    (let ((result (org-notebook-mcp--check-async-execution request_id)))
+      (json-encode result))))
+
+(defun org-notebook-mcp--get-kernel-state-direct-mcp (client_buffer_name)
+  "Get kernel state directly without relying on buffer parsing.
+MCP Parameters:
+  client_buffer_name - Name of the REPL buffer to check (string, required)"
+  (mcp-server-lib-with-error-handling
+    (unless (stringp client_buffer_name)
+      (signal 'wrong-type-argument (list 'stringp client_buffer_name)))
+    (when (string-empty-p client_buffer_name)
+      (error "Empty client_buffer_name provided"))
+
+    (let ((result (org-notebook-mcp--get-kernel-state-direct client_buffer_name)))
+      (json-encode result))))
 
 (defun org-notebook-mcp--get-analytical-review (file_path &optional heading_titles)
   "Extract headings, content, and results for analytical review of org notebooks.
@@ -763,14 +957,14 @@ MCP Parameters:
     (when (string-empty-p client_buffer_name)
       (error "Empty client_buffer_name provided"))
 
-    (let ((result (org-notebook-mcp--get-jupyter-kernel-state client_buffer_name)))
+    (let ((result (org-notebook-mcp--get-kernel-state-direct client_buffer_name)))
       (json-encode result))))
 
 (defun org-notebook-mcp--send-code-async (client_buffer_name code)
-  "Send code to Jupyter REPL asynchronously for long-running computations.
+  "Send code to Jupyter kernel asynchronously for long-running computations.
 MCP Parameters:
   client_buffer_name - Name of the REPL buffer to send code to (string, required)
-  code - Code to execute in the REPL (string, required)"
+  code - Code to execute in the kernel (string, required)"
   (mcp-server-lib-with-error-handling
     (unless (stringp client_buffer_name)
       (signal 'wrong-type-argument (list 'stringp client_buffer_name)))
@@ -781,24 +975,24 @@ MCP Parameters:
     (when (string-empty-p code)
       (error "Empty code provided"))
 
-    (let ((result (org-notebook-mcp--send-code-async client_buffer_name code)))
+    (let ((result (org-notebook-mcp--send-kernel-code-async client_buffer_name code)))
       (json-encode result))))
 
 (defun org-notebook-mcp--get-last-output (client_buffer_name &optional lines)
-  "Get the last output from a Jupyter REPL buffer.
+  "DEPRECATED: This function was replaced due to buffer reading crashes.
+Use check-async-execution with request IDs from send-code-async instead.
 MCP Parameters:
   client_buffer_name - Name of the REPL buffer to read from (string, required)
   lines - Number of lines to retrieve (integer, optional, default 50)"
   (mcp-server-lib-with-error-handling
     (unless (stringp client_buffer_name)
       (signal 'wrong-type-argument (list 'stringp client_buffer_name)))
-    (when (string-empty-p client_buffer_name)
-      (error "Empty client_buffer_name provided"))
-    (when (and lines (not (integerp lines)))
-      (signal 'wrong-type-argument (list 'integerp lines)))
 
-    (let ((result (org-notebook-mcp--get-last-output client_buffer_name lines)))
-      (json-encode result))))
+    `((buffer_name . ,client_buffer_name)
+      (status . "deprecated")
+      (message . "This function is deprecated due to buffer reading crashes. Use the new async execution system instead.")
+      (alternative . "Use send-code-async to get a request ID, then check-async-execution to get results")
+      (timestamp . ,(format-time-string "%Y-%m-%d %H:%M:%S")))))
 
 (provide 'org-notebook-tools)
 ;;; org-notebook-tools.el ends here

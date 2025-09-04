@@ -608,6 +608,14 @@ MCP Parameters:
     (let ((result (org-notebook-mcp--send-code-async client_buffer_name code)))
       (json-encode result))))
 
+(defun emacs-mcp--check-async-execution (request_id)
+  "Check the status of an async execution request and return results if complete.
+MCP Parameters:
+  request_id - The request ID returned from send-code-to-jupyter-repl-async (string, required)"
+  (mcp-server-lib-with-error-handling
+    (emacs-mcp--validate-string request_id "request_id")
+    (org-notebook-mcp--check-async-execution-mcp request_id)))
+
 (defun emacs-mcp--get-jupyter-last-output (client_buffer_name &optional lines)
   "Get the last output from a Jupyter REPL buffer.
 MCP Parameters:
@@ -1273,14 +1281,70 @@ Security: Read-only operation, safe for monitoring"
    :read-only t)
 
   (mcp-server-lib-register-tool
+   :function #'emacs-mcp--check-async-execution
+   :name "check-async-execution"
+   :description "Check the status of an async execution request and return results if complete.
+Essential for monitoring completion of async code execution and retrieving results.
+
+This tool checks the completion status of code submitted via send-code-to-jupyter-repl-async
+and returns results when execution completes. Uses request tracking system for reliable
+result retrieval without buffer reading issues.
+
+Parameters:
+  request_id - The request ID returned from send-code-to-jupyter-repl-async (string, required)
+             Must be a valid request ID from the async tracking system
+
+Returns JSON object with:
+  request_id - The request ID that was checked (string)
+  client_buffer - REPL buffer where code was executed (string)  
+  code - The original code that was executed (string)
+  status - Execution status: 'pending' or 'completed' (string)
+
+If status is 'pending':
+  start_time - When execution started (timestamp string)
+  elapsed_time - How long execution has been running (string)
+  message - Status message for user (string)
+
+If status is 'completed':
+  success - Whether execution completed without errors (boolean)
+  output - Standard output from execution (string)
+  result - Return value or computed result (string)
+  error - Error message if execution failed (string or null)
+  start_time - When execution started (timestamp string)
+  completion_time - When execution finished (timestamp string)
+  execution_duration - Total execution time (string)
+
+Async execution workflow:
+1. Send code with send-code-to-jupyter-repl-async to get request_id
+2. Poll this function with request_id until status becomes 'completed'
+3. Process the results from the completed execution
+4. Results are cached - subsequent calls with same request_id return cached results
+
+Use cases:
+- Monitor long-running model training or data processing
+- Check completion of complex mathematical computations
+- Handle async execution in workflows where LLM needs to continue other tasks
+- Reliable result retrieval without buffer reading crashes
+
+Error cases:
+- Invalid or unknown request_id
+- Request tracking system issues
+- Kernel connection problems during execution
+
+Security: Read-only operation for checking execution status"
+   :args '((:name "request_id"
+            :type string
+            :description "The request ID returned from send-code-to-jupyter-repl-async"))
+   :read-only t)
+
+  (mcp-server-lib-register-tool
    :function #'emacs-mcp--send-code-to-jupyter-repl-async
    :name "send-code-to-jupyter-repl-async"
    :description "Send code to Jupyter REPL asynchronously without waiting for results.
 Ideal for long-running computations where LLMs need to poll for completion status.
 
 This tool sends code for execution and returns immediately with request information.
-LLMs should then use get-jupyter-kernel-state to monitor progress and
-get-jupyter-last-output to retrieve results when computation completes.
+LLMs should then use check-async-execution to monitor progress and retrieve results when computation completes.
 
 Parameters:
   client_buffer_name - Name of the REPL buffer (string, required)
@@ -1483,6 +1547,7 @@ Security: Read-only operation, safe for status monitoring"
   (mcp-server-lib-unregister-tool "send-code-to-jupyter-repl")
   (mcp-server-lib-unregister-tool "get-jupyter-kernel-state")
   (mcp-server-lib-unregister-tool "send-code-to-jupyter-repl-async")
+  (mcp-server-lib-unregister-tool "check-async-execution")
   (mcp-server-lib-unregister-tool "get-jupyter-last-output")
   (mcp-server-lib-unregister-tool "get-jupyter-repl-status"))
 
