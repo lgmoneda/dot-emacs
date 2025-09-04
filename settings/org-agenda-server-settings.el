@@ -239,6 +239,7 @@
 function submitCapture() {
   const textarea = document.getElementById('capture-text');
   const text = textarea.value.trim();
+  const todayChecked = document.getElementById('capture-today').checked;
   const feedback = document.getElementById('feedback');
 
   if (!text) {
@@ -252,18 +253,19 @@ function submitCapture() {
   button.disabled = true;
   button.textContent = 'Sending...';
 
-  // Send POST request
+  // Send POST request with today flag
   fetch('/capture', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: 'text=' + encodeURIComponent(text)
+    body: 'text=' + encodeURIComponent(text) + '&today=' + (todayChecked ? '1' : '0')
   })
   .then(response => response.text())
   .then(data => {
-    // Clear the textarea
+    // Clear the textarea and checkbox
     textarea.value = '';
+    document.getElementById('capture-today').checked = false;
 
     // Show success feedback
     feedback.textContent = 'Captured successfully!';
@@ -306,6 +308,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <div class='capture-form'>
   <h3>Quick Capture</h3>
+  <label style=\"display:block; margin-top:0.5em;\">
+    <input type=\"checkbox\" id=\"capture-today\"> Schedule for today
+  </label>
   <textarea id='capture-text' placeholder='Enter task or note to capture...'></textarea>
   <button onclick='submitCapture()'>Send to Org Capture</button>
   <div id='feedback'></div>
@@ -352,22 +357,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
     (if (and (string= (caar req) "POST") post-data)
         (let* ((parsed-data (my/parse-post-data post-data))
-               (text (cdr (assoc "text" parsed-data))))
+               (text (cdr (assoc "text" parsed-data)))
+			   (today-flag (cdr (assoc "today" parsed-data)))
+               )
 
           (message "PARSED DATA: %S" parsed-data)
           (message "PARSED TEXT: %S" text)
+          (message "TODAY FLAG: %S" today-flag)
 
           (if text
               (progn
                 ;; Perform the capture
                 (condition-case err
                     (progn
+
+					  (if today-flag
+						  (org-capture-string text "td")
+						(org-capture-string text "D"))
                       ;; Use org-capture-string which is simpler and more reliable
-                      (org-capture-string text "D")
+
 
                       ;; Set success message
                       (setq my/capture-feedback-message
-                            (format "✓ Captured: \"%s\""
+                            (format "✓ Captured%s: \"%s\""
+                                    (if (and today-flag (string= today-flag "1"))
+                                        " (scheduled today)" "")
                                     (if (> (length text) 50)
                                         (concat (substring text 0 50) "...")
                                       text)))
