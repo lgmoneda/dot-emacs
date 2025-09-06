@@ -1446,6 +1446,14 @@ should be continued."
 ;; Increase latex preview font
 (setq org-format-latex-options (plist-put org-format-latex-options :scale 2))
 
+;; Add packages so I can preview algorithms!
+(with-eval-after-load 'org
+  ;; Add extra packages so org-latex-preview works
+  (add-to-list 'org-latex-packages-alist '("" "algorithm"))
+  (add-to-list 'org-latex-packages-alist '("" "algpseudocode"))
+  (add-to-list 'org-latex-packages-alist '("" "amsmath"))
+  (add-to-list 'org-latex-packages-alist '("" "amssymb")))
+
 ;; Olivetti
 ;; Look & Feel for long-form writing
 (use-package olivetti
