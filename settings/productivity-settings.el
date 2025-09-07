@@ -99,25 +99,6 @@
 (use-package ag
   :ensure t)
 
-;; project.el
-(require 'project)
-;; This functions let me place a .project file in a folder and have it treated
-;; like a project
-(defun my/project-try-dot-project (dir)
-  "Detect a `.project` marker and return an external project."
-  (let ((root (locate-dominating-file dir ".project")))
-    (when root
-      (list 'external root))))
-
-(cl-defmethod project-root ((project (head external)))
-  (cadr project))
-
-(add-hook 'project-find-functions #'my/project-try-dot-project)
-
-
-
-
-
 ;; Projectile
 (use-package projectile
   :ensure t
@@ -135,6 +116,22 @@
   ;; (add-to-list 'projectile-globally-ignored-directories ".cache")
   :bind (("C-c p s" . projectile-ag)
          ("C-c p g" . projectile-grep)))
+
+;; project.el
+(require 'project)
+;; This functions let me place a .project file in a folder and have it treated
+;; like a project
+(defun my/project-try-dot-project (dir)
+  "Detect a `.project` marker and return an external project."
+  (let ((root (locate-dominating-file dir ".project")))
+    (when root
+      (list 'external root))))
+
+(cl-defmethod project-root ((project (head external)))
+  (cadr project))
+
+(add-hook 'project-find-functions #'my/project-try-dot-project)
+;; (add-hook 'project-find-functions #'my/project-try-dot-project)
 
 (use-package counsel-projectile
 	     :ensure t
@@ -270,7 +267,8 @@ is called with a prefix argument."
 ;;   (require 'python)
 ;;   (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
 ;;   (setq chatgpt-repo-path (expand-file-name "chatgpt/" quelpa-build-dir))
-;;   :bind ("C-c q" . chatgpt-query))
+;;   ;; :bind ("C-c q" . chatgpt-query)
+;;   )
 
 ;; Templates from work
 (load-file "~/Dropbox/Projetos/Emacs/work-templates.el")
