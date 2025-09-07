@@ -19,7 +19,6 @@
 ;;                    :files ("*.el"))
 ;;   :after (request))
 
-;; Commentinh to try claude code ide for a while
 ;; (use-package aidermacs
 ;;   :ensure t
 ;;   :bind (("C-x a" . aidermacs-transient-menu))
@@ -51,10 +50,6 @@
 ;;   :vc (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
 ;;   :config (claude-code-mode)
 ;;   :bind-keymap ("C-c c" . claude-code-command-map))
-
-(add-to-list 'load-path "~/.emacs.d/elpa/mcp-server-lib-20250728.457/")
-(require 'mcp-server-lib)
-
 
 ;; (org-babel-mcp-start-server)
 ;; (org-roam-mcp-start-server)
