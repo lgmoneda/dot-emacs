@@ -341,8 +341,13 @@
 ;; Improve the candidates sorting
 (straight-use-package 'prescient)
 (straight-use-package 'company-prescient)
-;; (straight-use-package 'ivy-prescient)
+(straight-use-package 'ivy-prescient)
 (straight-use-package 'vertico-prescient)
+
+;; Functions around revert to streamline working in org notebooks
+;; assisted by AI coding tools like Claude Code
+(setq auto-revert-verbose nil) ;; don’t spam minibuffer
+(setq revert-without-query '(".*")) ;; accept reverts silently for all files
 
 (provide 'editor-settings)
 ;;; editor-settings.el ends here
