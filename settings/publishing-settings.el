@@ -448,6 +448,12 @@ Asks whether to commit and push to GitHub after export."
            (while (search-forward key nil t)
              (replace-match value t t)))
          image-paths)
+
+		;; Find and replace org-roam links by removing the <a> tag, leaving only the link text
+        (goto-char (point-min))
+        (while (re-search-forward "<a\\s-+href=\"id:[^\"]*\">\\([^<]*\\)</a>" nil t)
+          (replace-match "\\1" nil nil))
+
         (write-file final-output-file)
 
         ;; Add collection title at the end if present
