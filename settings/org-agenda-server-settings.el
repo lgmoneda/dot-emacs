@@ -371,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 (condition-case err
                     (progn
 
-					  (if today-flag
+					  (if (and today-flag (string= today-flag "1"))
 						  (org-capture-string text "td")
 						(org-capture-string text "D"))
                       ;; Use org-capture-string which is simpler and more reliable
