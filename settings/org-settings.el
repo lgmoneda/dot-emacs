@@ -883,8 +883,9 @@ this command to copy it"
 	  			(
 	  			 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
 								;; (org-agenda-skip-if-scheduled-today-or-later)
-								(my-org-agenda-skip-all-scheduled)
-								(my-org-agenda-skip-if-parent-has-tag "bulk")
+												(my-org-agenda-skip-all-scheduled)
+												(org-agenda-skip-if nil '(deadline))
+												(my-org-agenda-skip-if-parent-has-tag "bulk")
 								))
 				 (org-agenda-overriding-header "Backlog\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 	  			 (org-agenda-remove-tags t)))
@@ -2269,7 +2270,9 @@ display the output in a new temporary buffer."
 ;;org-transclude
 ;; Great to create new documents with different references to share with people
 (use-package org-transclusion
-  :ensure t)
+  :ensure t
+  :config
+  (add-to-list 'org-transclusion-extensions 'org-transclusion-indent-mode))
 
 ;;Inline .eps
 (add-to-list 'image-file-name-extensions "eps")
@@ -2912,6 +2915,51 @@ Records until `org-screen-record-stop-and-insert-link' is called."
             (when (and org-screen-record-process (process-live-p org-screen-record-process))
               (kill-process org-screen-record-process)
               (setq org-screen-record-process nil))))
+
+;;; Unfold org buffers when Ediff prepares them
+(defun my/ediff-org-unfold-all ()
+  "Show all content in org-mode buffers prepared for Ediff."
+  (when (derived-mode-p 'org-mode)
+    (let ((inhibit-read-only t))
+      (cond
+       ((fboundp 'org-fold-show-all) (org-fold-show-all)) ; Org ≥ 9.6
+       ((fboundp 'org-show-all)      (org-show-all))      ; Older Org
+       (t                           (outline-show-all))))))
+
+(add-hook 'ediff-prepare-buffer-hook #'my/ediff-org-unfold-all)
+
+;;; On each hunk selection, reveal context in BOTH sides
+(defun my/ediff-org-reveal-current-diff ()
+  "Reveal around current Ediff hunk in org-mode buffers A and B."
+  (when (and (boundp 'ediff-current-difference) ediff-current-difference)
+    (dolist (side '(A B))
+      (let* ((buf (ediff-get-buffer side))
+             (pos (ediff-get-current-difference side 'beg)))
+        (when (and (buffer-live-p buf) pos)
+          (with-current-buffer buf
+            (when (derived-mode-p 'org-mode)
+              (save-excursion
+                (goto-char pos)
+                (cond
+                 ((fboundp 'org-fold-reveal) (org-fold-reveal)) ; Org ≥ 9.6
+                 ((fboundp 'org-reveal)      (org-reveal))      ; Older Org
+                 (t                         (org-show-context)))
+                (when (fboundp 'org-fold-show-entry)    (org-fold-show-entry))
+                (when (fboundp 'org-fold-show-children) (org-fold-show-children))))))))))
+
+(add-hook 'ediff-select-hook #'my/ediff-org-reveal-current-diff)
+
+;;; Optional: when quitting Ediff, refold to an overview so your files aren’t left fully expanded
+(defun my/ediff-org-refold-on-quit ()
+  (dolist (side '(A B))
+    (let ((buf (ediff-get-buffer side)))
+      (when (buffer-live-p buf)
+        (with-current-buffer buf
+          (when (derived-mode-p 'org-mode)
+            (org-overview)))))))
+
+(add-hook 'ediff-quit-hook #'my/ediff-org-refold-on-quit)
+
 
 (provide 'org-settings)
 ;;; org-settings.el ends here
