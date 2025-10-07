@@ -1,6 +1,7 @@
-;; ~/.emacs.d/settings/org-custom-agenda-settings.el
+;;; org-custom-agenda-settings.el --- Settings for org custom org-agenda views
 
 (require 'org)
+(require 'org-agenda)
 
 ;; New states to to-do
 (setq org-todo-keywords
@@ -93,7 +94,7 @@ should be continued."
   (interactive)
   (if resp
     ;;'"OK"
-    (concat "  In " (number-to-string (org-time-stamp-to-now resp)) " day(s)")
+    (concat "  " (number-to-string (org-time-stamp-to-now resp)) " day(s)")
     '"  Not Scheduled"
     )
   )
@@ -151,7 +152,7 @@ should be continued."
 				 ))
 
 		  ;; Late tasks
-		  (tags "+TODO=\"TODO\"+SCHEDULED<\"<today>\"-epic-goals-selfdevelopment-family"
+		  (tags "+TODO=\"TODO\"+SCHEDULED<\"<today>\"-epic-goals-selfdevelopment"
 				(
 				 (org-agenda-overriding-header "Late tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
 				 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) :%-8:c")
@@ -179,7 +180,7 @@ should be continued."
 	  			 (org-agenda-remove-tags t)))
 
 		  ;; Year Goals General
-		  (tags "+goals+LEVEL=3+TODO=\"TODO\"|+goals+LEVEL=3+TODO=\"DONE\""
+		  (tags "+goals-family+LEVEL=3+TODO=\"TODO\"|+goals-family+LEVEL=3+TODO=\"DONE\""
 				((org-agenda-category-filter "-Nubank")
 				 (org-agenda-prefix-format " ")
 				 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
@@ -486,3 +487,5 @@ should be continued."
 														  (0900 1200 1500 1800 2100)
 														  "      " "┈┈┈┈┈┈┈┈┈┈┈┈┈")))
 							)))))
+(provide 'org-custom-agenda-settings)
+;;; org-custom-agendasettings.el ends here
