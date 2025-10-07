@@ -82,7 +82,12 @@
       clock-string)))
 
 ;; Custom Agenda Views
-(load (expand-file-name "org-custom-agenda-settings.el" (file-name-directory (or load-file-name (buffer-file-name)))))
+;; Keep this .el file for AI agenda
+;; (load (expand-file-name "org-custom-agenda-settings.el" (file-name-directory (or load-file-name (buffer-file-name)))))
+;; (require 'org-custom-agenda-settings)
+
+(load (expand-file-name "org-custom-agenda-opt-settings.el" (file-name-directory (or load-file-name (buffer-file-name)))))
+(require 'org-custom-agenda-opt-settings)
 
 ;; It is needed to start the server
 (server-start)
@@ -425,14 +430,6 @@ This should only apply to jupyter-lang blocks."
 
 (set-display-table-slot standard-display-table
                         'selective-display (string-to-vector " ◦◦◦ ")) ; or whatever you like
-
-
-;; Agenda views / configs
-
-(setq org-agenda-custom-commands
-      '(("c" "Simple agenda view"
-         ((agenda "")
-          (alltodo "")))))
 
 ;; Journaling
 (load "~/.emacs.d/elisp/my-org-journal/org-journal.el")
