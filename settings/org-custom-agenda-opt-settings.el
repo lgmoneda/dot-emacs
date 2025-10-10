@@ -119,7 +119,7 @@ should be continued."
              (replacement "  ")
              (rest (substring item prefix-end))
              ;; Check if we need to remove the orphaned first letter
-             (new-rest (if (and first-char 
+             (new-rest (if (and first-char
                                (string-match-p "^\\(ODO\\|ONE\\)" rest))
                           (concat first-char rest)
                         rest))
@@ -213,48 +213,20 @@ should be continued."
 		   (org-agenda-skip-function '(my-org-agenda-skip-if-parent-has-tag "bulk"))
 		   (tags-todo "batch")
 		   (tags-todo "-batch")
-		   ;; (org-agenda-skip-function #'add-clock-emoji-to-agenda)
 	  	   ))
-
-          ;; ───────────────────────────────
-	  (tags "+TODO=\"TODO\"+SCHEDULED<\"<today>\"-epic-goals-selfdevelopment"
-				(
-				 (org-agenda-overriding-header "Late tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-				 (org-agenda-prefix-format "%?-16 (scheduled-or-not (org-entry-get (point) \"SCHEDULED\")) :%-8:c")
-				 (org-agenda-sorting-strategy '(scheduled-up))
-				 ;; (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-				 ;; 				(org-agenda-skip-if-scheduled-today-or-later)
-				 ;; 				;; (org-agenda-skip-entry-if 'notscheduled)
-				 ;; 				;; (my-org-agenda-skip-if-parent-has-tag "bulk")
-				 ;; 				))
-				 (org-agenda-remove-tags t)
-				 (org-agenda-todo-keyword-format "")
-				 )
-				)
-	  ;; ───────────────────────────────
-	  ;; All not scheduled things
-	  (tags "-goals+TODO=\"TODO\"-epic-family"
-			(
-			 (org-agenda-skip-function '(or (air-org-skip-subtree-if-habit)
-							(my-org-agenda-skip-all-scheduled)
-							(org-agenda-skip-if nil '(deadline))
-							(my-org-agenda-skip-if-parent-has-tag "bulk")
-							))
-			 (org-agenda-overriding-header "Backlog\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺")
-			 (org-agenda-remove-tags t)))
-	  ;;
           ;; ALL TODO items - grouped by org-super-agenda in ONE PASS
-          (tags "+goals|+epic"
+      ;; (tags "+goals|+epic"
+	  (tags "LEVEL>=1+TODO=\"TODO\"|+TODO=\"WAIT\""
 		((org-agenda-overriding-header "")
 		 (org-super-agenda-groups
 		  '((:name "Tech Epic\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"
-			   :and (:priority "A" 
+			   :and (:priority "A"
 					   :tag "epic"
            				   :todo "TODO"
 					   :not (:tag "family")
 					   :not (:tag "cult"))
 		  	   :transformer my/org-agenda-remove-todo-keyword)
-          
+
 		  (:name "Family Epic\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"
 			  :and (:priority "A" :tag "family" :tag "epic" :todo "TODO")
 			  :transformer my/org-agenda-remove-todo-keyword
@@ -263,6 +235,21 @@ should be continued."
 		  (:name "Cult Journeys\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"
 			  :and (:priority "A" :tag "cult" :tag "epic" :todo "TODO")
 			  :transformer my/org-agenda-remove-todo-keyword)
+
+		  (:name "Late tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"
+                 :and (:scheduled past
+                                  :not (:todo "DONE")
+                                  :not (:tag "epic"))
+				 :transformer my/org-agenda-add-deadline-prefix)
+
+		  (:name "Backlog\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"
+                 :and (:scheduled nil
+                                  :not (:todo "DONE")
+                                  :not (:tag "epic")
+								  :not (:deadline t)
+								  :not (:tag "goals")
+								  )
+				 :transformer my/org-agenda-remove-todo-keyword)
 
 		  ;; Season Goals
 		  (:name "Season Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"
@@ -283,7 +270,7 @@ should be continued."
 		  ;; Discard everything else
 		  (:discard (:anything t))))))
 )
-         
+
          ;; Agenda options for this view
          ((org-agenda-compact-blocks nil)))))
 
@@ -328,7 +315,7 @@ should be continued."
 				      :not (:tag "team"))
                            :transformer my/org-agenda-remove-todo-keyword
                            :order 0)
-          
+
                     (:name "📊 Team Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"
                            :and (:tag "team" :tag "epic" :tag "spinning" :todo "TODO")
                            :transformer my/org-agenda-remove-todo-keyword
@@ -375,7 +362,7 @@ should be continued."
                            :and (:tag "batch"
                                  :not (:tag "epic")
                                  :not (:tag "delegated")
-				 :scheduled past)			   
+				 :scheduled past)
                            :order 5)
 
                     ;; --- Tasks in Projects — TODO, not A, UNSCHEDULED, not epic/delegated ---
@@ -402,14 +389,14 @@ should be continued."
                                           :not (:priority "A")
                                           :scheduled nil
                                           :not (:tag "epic")
-                                          :not (:tag "cyclegoals")					  
+                                          :not (:tag "cyclegoals")
                                           :not (:tag "delegated"))
                                     :and (:todo "TODO"
                                           :tag "manager"
                                           :not (:priority "A")
                                           :scheduled past
                                           :not (:tag "epic")
-                                          :not (:tag "cyclegoals")			       					  
+                                          :not (:tag "cyclegoals")
                                           :not (:tag "delegated"))
 				    :transformer my/org-agenda-add-deadline-prefix
                                     :order 7)
@@ -420,23 +407,23 @@ should be continued."
                                           :tag "education"
                                           :scheduled nil
                                           :not (:tag "epic")
-                                          :not (:tag "cyclegoals")					  
+                                          :not (:tag "cyclegoals")
 					  )
                                     :and (:todo "TODO"
                                           :tag "manager"
                                           :scheduled past
                                           :not (:tag "epic")
-                                          :not (:tag "cyclegoals")			       					  
+                                          :not (:tag "cyclegoals")
 					  )
 
-                                    :order 8)			     
+                                    :order 8)
 
 			   ;; Season Goals
 			     (:name "🎯 Season Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"
 				    :and (:tag "cyclegoals")
 				    :transformer my/org-agenda-clean-item
 				    :order 9
-				    )			     
+				    )
 
 			     ;; --- Late (exclude epics/team) ---
 			     (:name "💀 Late, untracked or backlog \n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"
@@ -446,7 +433,7 @@ should be continued."
 				    :and (:todo "TODO"
 					  :scheduled nil
 					  )
-				    :order 10)	
+				    :order 10)
 
 		  ;; Discard everything else
 		  (:discard (:anything t))
@@ -455,7 +442,7 @@ should be continued."
          ((org-agenda-compact-blocks nil))))
 
 ;; Use when iterating to make it faster
-;; (benchmark-run (org-agenda nil "nu"))
+(benchmark-run (org-agenda nil "d"))
 
 (provide 'org-custom-agenda-opt-settings)
 ;;; org-custom-agenda-opt-settings.el ends here
