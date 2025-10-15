@@ -3,6 +3,7 @@
 (add-to-list 'load-path "~/repos/catalyst-assistant/context/")
 (require 'org-todo-diff)
 (require 'org-agenda-export-file)
+(require 'knowledge-base-diff)
 
 ;; Org todo diff
 (add-hook 'after-save-hook
@@ -30,14 +31,6 @@
                        (string= (expand-file-name (buffer-file-name))
                                 (expand-file-name my/org-agenda-todo-file)))
               (my/export-org-agenda-debounced))))
-
-;; Knowledge info module
-;; Tracks changes in my knowledge base files, which is the Org roam folder
-(defun start-kb-tracking ()
-  (interactive)
-  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/ml3")
-  (async-shell-command "fswatch --exclude '.git/' --exclude '.*\.#' --one-per-batch --latency 30 /Users/luis.moneda/Dropbox/Agenda/roam | xargs -n1 -I{} /Users/luis.moneda/repos/org-roam-ai/catalyst/dump_kb_changes.sh")
-  (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<4>"))))
 
 (start-kb-tracking)
 

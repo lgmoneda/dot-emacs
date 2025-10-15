@@ -23,9 +23,6 @@
 ;; Always hide stars
 (setq org-hide-leading-stars t)
 
-;; Fix helm-org-heading style
-(setq helm-org-headings-fontify t)
-
 ;; No blank lines between headers
 (setq org-cycle-separator-lines 0)
 
@@ -176,12 +173,10 @@ menu\nmouse-2 will jump to task"))
                 ("\\.ogg\\'" . "mpv %s")
                 )))
 
-
 ;; From cashestocashes.com
 ;; Once you've included this, activate org-columns with C-c C-x C-c while on a top-level heading, which will allow you to view the time you've spent at the different levels (you can exit the view by pressing q)
 ;; Set default column view headings: Task Total-Time Time-Stamp
 (setq org-columns-default-format "%50ITEM(Task) %10CLOCKSUM %16CLOSED")
-
 
 ;; TODO entry automatically change to done when all children are done (from orgmode.org)
 (defun org-summary-todo (n-done n-not-done)
@@ -205,17 +200,12 @@ menu\nmouse-2 will jump to task"))
 (add-to-list 'load-path "/Users/luis.moneda/repos/jupyter/")
 (require 'jupyter)
 
-;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/jupyter-20250402.1740/")
-;; (autoload 'jupyter "jupyter" "" t)
-;; ;; (require 'jupyter)
-;; (load "jupyter")
+;; (use-package pyvenv
+;;   :ensure t
+;;   :config
+;;   (pyvenv-mode t))
 
-(use-package pyvenv
-  :ensure t
-  :config
-  (pyvenv-mode t))
-
-(pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
+;; (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
 
 ;; Fix for 404 error
 (defun gm/jupyter-api-request-xsrf-cookie-error-advice (func &rest args)
@@ -246,13 +236,6 @@ menu\nmouse-2 will jump to task"))
 (add-to-list 'load-path "/opt/homebrew/share/emacs/site-lisp/lilypond")
 (require 'lilypond-mode)
 (add-to-list 'org-src-lang-modes '("lilypond" . lilypond))
-
-
-;; (setq org-babel-default-header-args:jupyter-python '((:async . "yes")
-;; 													 (:result . "both")
-;; 													 (:pandoc . "t")
-;;                                                      (:session . "py-edge")
-;;                                                      (:kernel . "edge")))
 
 ;; Copied from scimax https://github.com/jkitchin/scimax
 (setq org-babel-default-header-args:jupyter-python
@@ -381,52 +364,43 @@ This should only apply to jupyter-lang blocks."
 ;; Treat clipboard input as UTF-8 string first; compound text next, etc.
 (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING))
 
-;; use org-bullets-mode for utf8 symbols as org bullets
-(use-package org-bullets
-	:ensure t)
-
-;; make available "org-bullet-face" such that I can control the font size individually
-(setq org-bullets-face-name (quote org-bullet-face))
-(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
-(setq org-bullets-bullet-list '("◉" "○" "✸" "✿" "✙" "♱" "♰" "☥" "✞" "✟" "✝" "†" "✠" "✚" "✜" "✛" "✢" "✣" "✤" "✥"))
-
 ;; org ellipsis options, other than the default Go to Node...
 ;; not supported in common font, but supported in Symbola (my fall-back font) ⬎, ⤷, ⤵
 (setq org-ellipsis " ▼")
 
 ;; Prettify symbols
 (add-hook 'org-mode-hook (lambda ()
-						   (push '("#+TITLE: "        . "") prettify-symbols-alist)
-						   (push '("#+title: "        . "") prettify-symbols-alist)
-						   (push '("#+subtitle: "     . "") prettify-symbols-alist)
-						   (push '("#+author: "       . "- ") prettify-symbols-alist)
-						   (push '("#+AUTHOR: "       . "- ") prettify-symbols-alist)
-						   (push '("#+Authors: "       . "- ") prettify-symbols-alist)
-						   (push '(":properties:"     . "↩") prettify-symbols-alist)
-						   (push '(":PROPERTIES:"     . "↩") prettify-symbols-alist)
-						   (push '("#+begin_src"      . "λ") prettify-symbols-alist)
-						   (push '("#+roam_tags:"      . "#") prettify-symbols-alist)
-						   (push '("#+filetags:"      . "#") prettify-symbols-alist)
-						   (push '("#+end_src"        . "src") prettify-symbols-alist)
-						   (push '("#+results:"       . "»") prettify-symbols-alist)
-						   (push '("#+STARTUP:"       . "»") prettify-symbols-alist)
-						   (push '(":end:"            . "⋱") prettify-symbols-alist)
-						   (push '(":results:"        . "»»»") prettify-symbols-alist)
-						   (push '("#+name:"          . "-") prettify-symbols-alist)
-						   (push '("#+begin_example"  . "~") prettify-symbols-alist)
-						   (push '("#+begin_example"  . "~") prettify-symbols-alist)
-						   (push '("#+end_example"    . "~") prettify-symbols-alist)
-						   (push '("#+end_example"    . "~") prettify-symbols-alist)
-						   (push '("#+begin_verbatim" . "") prettify-symbols-alist)
-						   (push '("#+end_verbatim"   . "") prettify-symbols-alist)
-						   (push '("#+begin_verse"    . "") prettify-symbols-alist)
-						   (push '("#+end_verse"      . "") prettify-symbols-alist)
-						   (push '("#+begin_quote"    . "𐄚") prettify-symbols-alist)
-						   (push '("#+end_quote"      . "𐄚") prettify-symbols-alist)
-						   (push '("#+tblfm:"         . "∫") prettify-symbols-alist)
-						   (push '("[X]"              . (?\[ (Br . Bl) ?✓ (Br . Bl) ?\])) prettify-symbols-alist)
-						   (push '("\\\\"             . "↩") prettify-symbols-alist)
-						   (prettify-symbols-mode t)))
+			   (push '("#+TITLE: "        . "") prettify-symbols-alist)
+			   (push '("#+title: "        . "") prettify-symbols-alist)
+			   (push '("#+subtitle: "     . "") prettify-symbols-alist)
+			   (push '("#+author: "       . "- ") prettify-symbols-alist)
+			   (push '("#+AUTHOR: "       . "- ") prettify-symbols-alist)
+			   (push '("#+Authors: "       . "- ") prettify-symbols-alist)
+			   (push '(":properties:"     . "↩") prettify-symbols-alist)
+			   (push '(":PROPERTIES:"     . "↩") prettify-symbols-alist)
+			   (push '("#+begin_src"      . "λ") prettify-symbols-alist)
+			   (push '("#+roam_tags:"      . "#") prettify-symbols-alist)
+			   (push '("#+filetags:"      . "#") prettify-symbols-alist)
+			   (push '("#+end_src"        . "src") prettify-symbols-alist)
+			   (push '("#+results:"       . "»") prettify-symbols-alist)
+			   (push '("#+STARTUP:"       . "»") prettify-symbols-alist)
+			   (push '(":end:"            . "⋱") prettify-symbols-alist)
+			   (push '(":results:"        . "»»»") prettify-symbols-alist)
+			   (push '("#+name:"          . "-") prettify-symbols-alist)
+			   (push '("#+begin_example"  . "~") prettify-symbols-alist)
+			   (push '("#+begin_example"  . "~") prettify-symbols-alist)
+			   (push '("#+end_example"    . "~") prettify-symbols-alist)
+			   (push '("#+end_example"    . "~") prettify-symbols-alist)
+			   (push '("#+begin_verbatim" . "") prettify-symbols-alist)
+			   (push '("#+end_verbatim"   . "") prettify-symbols-alist)
+			   (push '("#+begin_verse"    . "") prettify-symbols-alist)
+			   (push '("#+end_verse"      . "") prettify-symbols-alist)
+			   (push '("#+begin_quote"    . "𐄚") prettify-symbols-alist)
+			   (push '("#+end_quote"      . "𐄚") prettify-symbols-alist)
+			   (push '("#+tblfm:"         . "∫") prettify-symbols-alist)
+			   (push '("[X]"              . (?\[ (Br . Bl) ?✓ (Br . Bl) ?\])) prettify-symbols-alist)
+			   (push '("\\\\"             . "↩") prettify-symbols-alist)
+			   (prettify-symbols-mode t)))
 
 (set-display-table-slot standard-display-table
                         'selective-display (string-to-vector " ◦◦◦ ")) ; or whatever you like
@@ -448,7 +422,6 @@ This should only apply to jupyter-lang blocks."
 	(insert
 	 (format-time-string org-journal-date-format time)))
   )
-
 
 (defun lgm/org-add-date-as-entry ()
   "Insert the selected date as a org header"
@@ -489,7 +462,6 @@ This should only apply to jupyter-lang blocks."
     (beginning-of-line)
     (let ((level (1+ (or (org-current-level) 0))))
       (insert (make-string level ?*) " "))))
-
 
 ;; Make Org Journal remember me about
 ;; writing my day thoughts like in Memento mode
@@ -719,16 +691,6 @@ this command to copy it"
 			   (file "~/Dropbox/Agenda/roam/20220619113235-my_journal.org")
                "* %<%A, %D> \n** %?"))
 
-;; I'm not using currently, but it is a way of forcing thinking on urgency and importance and use filters in the Agenda to treat them accordingly
-;; (add-to-list 'org-capture-templates
-;;              '("t" "Task with Properties" entry
-;;                (file+headline "~/Dropbox/Agenda/nu.org" "Tasks")
-;;                "* TODO %^{Task}\n:PROPERTIES:\n:IMPORTANCE:%^{Importance|low|high}\n:URGENCY:%^{Urgency|low|high}\n:END:\n%?"
-;;                :empty-lines 1))
-
-
-
-
 ;; Work settings
 (add-to-list 'org-capture-templates
              '("e" "Work Epic"  entry
@@ -753,6 +715,7 @@ this command to copy it"
   (interactive "P")
   (org-agenda arg "n"))
 
+;; The yt link type enables for easy export and opening videos in full screen
 (defvar yt-iframe-format
   ;; You may want to change your width and height.
   (concat "<iframe width=\"440\""
@@ -793,9 +756,12 @@ this command to copy it"
 (add-to-list 'org-agenda-files  "~/Dropbox/Agenda/todo.org")
 
 ;; Open agenda
-(global-set-key (kbd "<f10>") (lambda() (interactive)(org-agenda nil "d")(org-agenda-redo)))
+;; Why did I need the redo?
+;; (global-set-key (kbd "<f10>") (lambda() (interactive)(org-agenda nil "d")(org-agenda-redo)))
+(global-set-key (kbd "<f10>") (lambda() (interactive)(org-agenda nil "d")))
 ;; Work agenda
-(global-set-key (kbd "<f7>") (lambda() (interactive)(org-agenda nil "nu")(org-agenda-redo)))
+;; (global-set-key (kbd "<f7>") (lambda() (interactive)(org-agenda nil "nu")(org-agenda-redo)))
+(global-set-key (kbd "<f7>") (lambda() (interactive)(org-agenda nil "nu")))
 ;; Initialize with agenda view
 (add-hook 'after-init-hook (lambda () (org-agenda nil "d") (org-agenda-redo)))
 ;; Open day
@@ -839,9 +805,6 @@ this command to copy it"
   (backward-char 2)
   )
 
-;; (add-to-list 'load-path "~/.emacs.d/elpa/deadgrep-20241012.1511/")
-;; (require 'deadgrep)
-
 (use-package deadgrep
   :ensure t
   :bind
@@ -856,26 +819,27 @@ this command to copy it"
   :init
   (setq org-roam-completion-everywhere t)
   (setq completion-ignore-case t)
-  (add-hook 'org-mode-hook
-	    (lambda ()
-	      (set (make-local-variable 'company-backends) '(company-capf))))
-  (add-to-list 'company-backends 'company-capf)
   (setq org-roam-completion-ignore-case t)
+  (add-hook 'org-mode-hook #'corfu-mode)
   (setq org-roam-capture-templates
-	'(("d" "default" plain
-           (file "/Users/luis.moneda/Dropbox/Agenda/templates/default_org_roam.org")
-           :target
-           (file+head "%(format-time-string \"%Y%m%d%H%M%S-${slug}.org\" (current-time) t)" "#+title: ${title}
+      '(("d" "default" plain
+         (file "/Users/luis.moneda/Dropbox/Agenda/templates/default_org_roam.org")
+         :target
+         (file+head
+          "%(format-time-string \"%Y%m%d%H%M%S-${slug}.org\" (current-time) t)"
+          "#+title: ${title}
 #+STARTUP: inlineimages latexpreview
 #+filetags: ")
-           :unnarrowed t)
-	  ("r" "bibliography reference" plain
-           (file "/Users/luis.moneda/Dropbox/Agenda/templates/bib_org_roam.org")
-           :target
-           (file+head "${citekey}.org" "#+TITLE: ${title}, ${author-abbrev}\n#+ROAM_KEY: ${citekey}\n#+Source: ${ref}\n#+Authors: ${author}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n")
-	   :unnarrowed t)
-	  )
-	)
+         :unnarrowed t)
+
+        ;; ——— Citar-compatible bibliography template ———
+        ("r" "literature note" plain
+         "%?"
+         :target
+         (file+head
+          "%(expand-file-name (or citar-org-roam-subdir \"\") org-roam-directory)/${citar-citekey}.org"
+          "#+title: ${citar-title} (${citar-date}), ${citar-author}.\n#+ref: cite:${citar-citekey}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n#+created: %U\n#+last_modified: %U\n\n")
+         :unnarrowed t)))
   :custom
   (org-roam-directory (file-truename "/Users/luis.moneda/Dropbox/Agenda/roam"))
 
@@ -890,13 +854,13 @@ this command to copy it"
 	 ("C-c n i" . org-roam-node-insert)
 	 ;; ("C-c n g" . org-roam-graph)
 	 ("C-c n g" . consult-org-heading)
-	 ("C-c n b" . helm-bibtex)
+	 ("C-c n b" . citar-open)
 	 ("C-c n s" . lgm/screenshot-to-org-link)
 	 ("C-c n a" . org-roam-semantic-search-api)
 	 ("C-c n t" . org-roam-link-recommendations-api)
 	 ("C-c n y" . chunky-semantic-search)
 	 ("C-c n q" . lgm/org-roam-ai-chat-to-notes)
-	 ("C-c n p" . lgm/gpt-prompt)
+	 ("C-c n p" . chatgpt-shell-send-and-review-region)
 	 ("C-c n c" . lgm/python-org-code-block)
 	 ("C-c n e" . lgm/double-dollar-sign)
 	 ("C-c k" . lgm/double-dollar-sign)
@@ -935,14 +899,17 @@ this command to copy it"
 ;; Function inspired by https://llazarek.com/2018/10/images-in-org-mode.html
 ;; check org-download for a more complete solution of it
 (defun lgm/screenshot-to-org-link (&optional arg)
-  (interactive)
-  (unless (or arg
-              (file-directory-p (concat (file-name-directory buffer-file-name) "/resources")))
-    (make-directory (concat (file-name-directory buffer-file-name) "/resources")))
-  (let* ((default-dest
-           (format-time-string (concat (file-name-directory buffer-file-name) "/resources/screen_%Y%m%d_%H%M%S.jpg")))
+  "Take a screenshot and insert it as an Org link.
+With prefix ARG, prompt for destination filename."
+  (interactive "P")
+  (let* ((dir (concat (file-name-directory buffer-file-name) "resources/"))
+         (_ (unless (file-directory-p dir)
+              (make-directory dir t)))
+         (default-dest (expand-file-name
+                        (format-time-string "screen_%Y%m%d_%H%M%S.jpg")
+                        dir))
          (dest (if arg
-                   (helm-read-string "Save to: " default-dest)
+                   (read-file-name "Save screenshot to: " dir nil nil default-dest)
                  default-dest)))
     (start-process "screencapture" nil "screencapture" "-i" dest)
     (read-char "Taking screenshot... Press any key when done.")
@@ -971,23 +938,6 @@ this command to copy it"
 ;; Enable Olivetti for text-related mode such as Org Mode
 (add-hook 'text-mode-hook 'olivetti-mode)
 
-(add-hook 'org-mode-hook
-	    (lambda ()
-	      (make-local-variable 'company-backends)
-	      (make-local-variable 'company-idle-delay)
-	      (make-local-variable 'company-minimum-prefix-length)
-	      (setq company-backends '(company-capf))
-	      ;; (setq company-idle-delay 0.5
-	      ;; 	    company-minimum-prefix-length 3)
-	      )
-	    )
-
-;; Xunxo to disable in my todo file
-(progn
-  (switch-to-buffer "todo.org")
-  (company-mode -1)
-  )
-
 ;; Avoid org asking if I want to run code
 (setq org-confirm-babel-evaluate nil)
 
@@ -1004,7 +954,7 @@ this command to copy it"
 (use-package org-roam-bibtex
   :ensure t
   :after org-roam
-  :hook (org-roam-mode . org-roam-bibtex-mode)
+  ;; :hook (org-roam-mode . org-roam-bibtex-mode)
   :init
   (setq orb-preformat-keywords
       '("citekey" "title" "url" "author-or-editor" "keywords" "file" "author" "author-abbrev")
@@ -1023,14 +973,10 @@ this command to copy it"
 	)
   :config
   (require 'org-ref)
+  ;; Ensure ORB actually initializes once Org-roam is available
+  (require 'org-roam-bibtex)
+  (org-roam-bibtex-mode 1)
   )
-
-(defun lgm/org-ref-notes-function (candidates)
-  (let ((key (helm-marked-candidates)))
-    (funcall 'orb-edit-note (car key))))
-
-(helm-delete-action-from-source "Edit notes" helm-source-bibtex)
-(helm-add-action-to-source "Edit notes" 'lgm/org-ref-notes-function helm-source-bibtex 7)
 
 (use-package org-ql
   :ensure t)
@@ -1443,55 +1389,55 @@ and the clipboard contents as the link URL."
        (format "%s" link-title)))
    input-string))
 
-(defun lgm/gpt-prompt ()
-  "Summarize the selected text using the OpenAI API and display the
-summary in a new temporary buffer."
-  (interactive)
-  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
-  (let* ((selected-text (if (use-region-p)
-                            (buffer-substring-no-properties (region-beginning) (region-end))
-						  ""
-                          ))
-	 (filtered-text (my-exclude-org-roam-link selected-text))
-	 (input-string (read-string "Enter a prompt: "))
-		 (script-output (my-call-python-script "~/Dropbox/Projetos/Emacs/org-roam-ai/api_call.py" filtered-text input-string))
-        )
-	(with-output-to-temp-buffer "*OpenAI Output*"
-	  (with-current-buffer "*OpenAI Output*"
-        (insert script-output)))
-	))
+;; (defun lgm/gpt-prompt ()
+;;   "Summarize the selected text using the OpenAI API and display the
+;; summary in a new temporary buffer."
+;;   (interactive)
+;;   (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
+;;   (let* ((selected-text (if (use-region-p)
+;;                             (buffer-substring-no-properties (region-beginning) (region-end))
+;; 						  ""
+;;                           ))
+;; 	 (filtered-text (my-exclude-org-roam-link selected-text))
+;; 	 (input-string (read-string "Enter a prompt: "))
+;; 		 (script-output (my-call-python-script "~/Dropbox/Projetos/Emacs/org-roam-ai/api_call.py" filtered-text input-string))
+;;         )
+;; 	(with-output-to-temp-buffer "*OpenAI Output*"
+;; 	  (with-current-buffer "*OpenAI Output*"
+;;         (insert script-output)))
+;; 	))
 
-(setq open-ai-summary-prompt "\n\nTl;dr")
+;; (setq open-ai-summary-prompt "\n\nTl;dr")
 
-(defun my-openai-summarize ()
-  "Summarize the selected text using the OpenAI API and display the
-summary in a new temporary buffer."
-  (interactive)
-  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
-  (let* ((selected-text (if (use-region-p)
-                           (buffer-substring-no-properties (region-beginning) (region-end))
-                         (read-string "Enter text to summarize: ")))
-		 (filtered-text (my-exclude-org-roam-link selected-text))
-		 (script-output (my-call-python-script "~/Dropbox/Projetos/Emacs/org-roam-ai/api_call.py" filtered-text open-ai-summary-prompt))
-        )
-	(with-output-to-temp-buffer "*OpenAI Summary*"
-	  (with-current-buffer "*OpenAI Summary*"
-            (insert script-output)))
-	))
+;; (defun my-openai-summarize ()
+;;   "Summarize the selected text using the OpenAI API and display the
+;; summary in a new temporary buffer."
+;;   (interactive)
+;;   (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
+;;   (let* ((selected-text (if (use-region-p)
+;;                            (buffer-substring-no-properties (region-beginning) (region-end))
+;;                          (read-string "Enter text to summarize: ")))
+;; 		 (filtered-text (my-exclude-org-roam-link selected-text))
+;; 		 (script-output (my-call-python-script "~/Dropbox/Projetos/Emacs/org-roam-ai/api_call.py" filtered-text open-ai-summary-prompt))
+;;         )
+;; 	(with-output-to-temp-buffer "*OpenAI Summary*"
+;; 	  (with-current-buffer "*OpenAI Summary*"
+;;             (insert script-output)))
+;; 	))
 
-(defun my-openai-model-function ()
-  (interactive)
-  "Prompt the user to select an OpenAI model from a list of available models and set the `openai-model` variable to the selected model."
-  (let ((available-models '("text-davinci-002" "text-curie-001" "text-ada-001")))
-    (setq openai-model (completing-read "Select an OpenAI model: " available-models))))
+;; (defun my-openai-model-function ()
+;;   (interactive)
+;;   "Prompt the user to select an OpenAI model from a list of available models and set the `openai-model` variable to the selected model."
+;;   (let ((available-models '("text-davinci-002" "text-curie-001" "text-ada-001")))
+;;     (setq openai-model (completing-read "Select an OpenAI model: " available-models))))
 
 
-(defun my-openai-summarize-text (text)
-  "Call the OpenAI API and provide it with the given TEXT as input.
-API-KEY is the OpenAI API key to use for the request."
-  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
-  (my-call-python-script "~/Dropbox/Projetos/Emacs/org-roam-ai/api_call.py" text open-ai-summary-prompt)
-)
+;; (defun my-openai-summarize-text (text)
+;;   "Call the OpenAI API and provide it with the given TEXT as input.
+;; API-KEY is the OpenAI API key to use for the request."
+;;   (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
+;;   (my-call-python-script "~/Dropbox/Projetos/Emacs/org-roam-ai/api_call.py" text open-ai-summary-prompt)
+;; )
 
 (defun my-call-python-script (script-name text prompt)
   "Call the given Python SCRIPT-NAME with the given TEXT as input and
@@ -1519,132 +1465,6 @@ display the output in a new temporary buffer."
                  (link (format "[[org-roam:node-id:%s][Visit node]]" node-id)))
             (insert (format "%s\n\n%s\n\n%s\n\n" title (mapconcat #'identity first-lines "\n") link)))))
       (display-buffer buf))))
-
-
-;; org-roam-ai
-(defun display-org-roam-nodes (node-ids)
-  "Display the org-roam nodes with the given IDS in a temporary buffer.
-   The buffer will show the node's title, the first 5 lines of content,
-   and a link to visit the node."
-  (let ((buf (get-buffer-create "*semantic-search-results*")))
-    (with-current-buffer buf
-      (erase-buffer)
-	  (org-mode)
-      (dolist (node-id node-ids)
-        (let* ((node (org-roam-node-from-id node-id))
-               (title (org-roam-node-title node))
-			   (first-lines "")
-               ;; (first-lines (cl-subseq (split-string (cdr node) "\n") 0 5))
-               (link (format "[[id:%s][%s]]" node-id title)))
-          (insert (format "- %s\n" link))))
-      (insert "\n [[file:/Users/luis.moneda/Dropbox/Agenda/org-roam-ai/output.jpg]]")
-	  (org-display-inline-images nil t)
-      )
-    (display-buffer buf)
-    )
-  )
-
-;; Avoid error when node is nil (database fails)
-(defun display-org-roam-nodes (node-ids)
-  "Display the org-roam nodes with the given IDS in a temporary buffer.
-   The buffer will show the node's title, the first 5 lines of content,
-   and a link to visit the node."
-  (let ((buf (get-buffer-create "*semantic-search-results*")))
-    (with-current-buffer buf
-      (erase-buffer)
-	  (org-mode)
-      (dolist (node-id node-ids)
-        (let* ((node (org-roam-node-from-id node-id)))
-          (when node
-            (let* ((title (org-roam-node-title node))
-                   (first-lines "")
-                   (link (format "[[id:%s][%s]]" node-id title)))
-              (insert (format "- %s\n" link))))))
-      (insert "\n [[file:/Users/luis.moneda/Dropbox/Agenda/org-roam-ai/output.jpg]]")
-      (org-display-inline-images nil t)
-      (beginning-of-buffer)
-      )
-    (display-buffer buf)
-    )
-  )
-
-(defun replace-quotes (string)
-  "Replace quote characters in STRING with controlled version."
-  (replace-regexp-in-string "\"" "\\\\\"" string))
-
-(defun org-roam-ai-semantic-search ()
-  "Call the given Python SCRIPT-NAME with the given TEXT as input and
-display the output in a new temporary buffer."
-    (interactive)
-	(pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
-	(let* ((text (if (use-region-p)
-                           (buffer-substring-no-properties (region-beginning) (region-end))
-                         (read-string "Enter search: ")))
-		   (script-name "/Users/luis.moneda/Dropbox/Agenda/org-roam-ai/semantic_search.py")
-		   (script-output (shell-command-to-string
-				   (format "python -W ignore %s \"%s\"" script-name (replace-quotes text)))))
-	  ;; (message script-output)
-	  (display-org-roam-nodes (read script-output))
-	  )
-	)
-
-;; (add-to-list 'load-path "~/.emacs.d/elpa/consult-org-roam")
-;; (require 'consult-org-roam)
-(use-package consult-org-roam
-   :ensure t
-   :after org-roam
-   :init
-   (require 'consult-org-roam)
-   ;; Activate the minor mode
-   (consult-org-roam-mode 1)
-   :custom
-   ;; Use `ripgrep' for searching with `consult-org-roam-search'
-   (consult-org-roam-grep-func #'consult-ripgrep)
-   ;; Configure a custom narrow key for `consult-buffer'
-   (consult-org-roam-buffer-narrow-key ?r)
-   ;; Display org-roam buffers right after non-org-roam buffers
-   ;; in consult-buffer (and not down at the bottom)
-   (consult-org-roam-buffer-after-buffers t)
-   :config
-   ;; Eventually suppress previewing for certain functions
-   (consult-customize
-    consult-org-roam-forward-links
-    :preview-key (kbd "C-."))
-   :bind
-   ;; Define some convenient keybindings as an addition
-   ("C-c n h" . consult-org-roam-backlinks)
-   ("C-c n j" . consult-org-roam-forward-links))
-
-;; Org-similarity
-;; (add-to-list 'load-path "~/repos/org-similarity")
-;; (require 'org-similarity)
-
-;; (use-package org-similarity
-;;   :load-path  "~/repos/org-similarity")
-
-;; Directory to scan for possibly similar documents.
-;; org-roam users might want to change it to `org-roam-directory'.
-(setq org-similarity-directory org-roam-directory)
-
-;; The language passed to the Snowball stemmer in the `nltk' package.  The
-;; following languages are supported: Arabic, Danish, Dutch, English, Finnish,
-;; French, German, Hungarian, Italian, Norwegian, Portuguese, Romanian, Russian,
-;; Spanish and Swedish.
-(setq org-similarity-language "english")
-
-;; How many similar entries to list at the end of the buffer.
-(setq org-similarity-number-of-documents 10)
-
-;; Whether to prepend the list entries with similarity scores.
-(setq org-similarity-show-scores nil)
-
-;; Whether the resulting list of similar documents will point to ID property or
-;; filename. Default it nil.
-;; However, I recommend setting it to `t' if you use `org-roam' v2.
-(setq org-similarity-use-id-links t)
-
-;; Scan for files inside `org-similarity-directory' recursively.
-(setq org-similarity-recursive-search nil)
 
 ;; Effort functions for work
 (defun my/org-agenda-calculate-total-efforts (limit)
@@ -1782,42 +1602,6 @@ display the output in a new temporary buffer."
 
 ;;Inline .eps
 (add-to-list 'image-file-name-extensions "eps")
-
-;; ChatGPT
-
-(defun lgm/chatgpt-prompt ()
-  "Calls the ChatGPT API"
-  (interactive)
-  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
-  (let* ((selected-text (if (use-region-p)
-                            (buffer-substring-no-properties (region-beginning) (region-end))
-						  ""
-                          ))
-	 (filtered-text (my-exclude-org-roam-link selected-text))
-	 (input-string (read-string "Enter a prompt: "))
-		 (script-output (my-call-python-script "~/Dropbox/Agenda/org-roam-ai/chatgpt_api.py" filtered-text input-string))
-        )
-	(with-output-to-temp-buffer "*OpenAI Output*"
-	  (with-current-buffer "*OpenAI Output*"
-        (insert script-output)))
-	))
-
-(defun lgm/chatgpt-assistant-prompt ()
-  "Calls the ChatGPT API"
-  (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
-  (let* ((selected-text (if (use-region-p)
-                            (buffer-substring-no-properties (region-beginning) (region-end))
-						  ""
-                          ))
-	 (filtered-text (my-exclude-org-roam-link selected-text))
-	 (input-string (read-string "Enter a prompt: "))
-		 (script-output (my-call-python-script "~/Dropbox/Agenda/org-roam-ai/chatgpt_api.py" filtered-text input-string))
-        )
-	(with-output-to-temp-buffer "*OpenAI Output*"
-	  (with-current-buffer "*OpenAI Output*"
-        (insert script-output)))
-	))
-
 
 (use-package org-tree-slide
   :ensure t
@@ -2045,14 +1829,6 @@ Prompts for the output filename, defaulting to the original Org file's name."
   (let ((parts (split-string path "/")))
     (car (last parts))))
 
-;; Enable using org mode link syntax inside other modes
-;; (use-package org-link-minor-mode
-;;   :load-path  "~/.emacs.d/elisp/org-link-minor-mode")
-
-;; (add-hook 'markdown-mode-hook 'org-link-minor-mode)
-
-
-
 ;; accept broken links when exporting
 (setq org-export-with-broken-links nil)
 
@@ -2063,7 +1839,11 @@ Prompts for the output filename, defaulting to the original Org file's name."
 (use-package citar-org-roam
   :ensure t
   :after (citar org-roam)
-  :config (citar-org-roam-mode))
+  :config
+  (citar-org-roam-mode 1)
+  ;; Optional: define what happens when a note doesn’t exist yet
+  (setq citar-org-roam-capture-template-key "r")
+  )
 
 ;; This function helps me label data for fine-tuning
 (defun lgm/extract-citation-key (link)

@@ -1,14 +1,7 @@
 ;;; git-settings.el --- Settings for git utilities
 
-;; Magit
-;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/magit-20240704.2248")
-;; (load "magit")
-
 (use-package with-editor
   :ensure t)
-
-;; (use-package compat
-;;   :ensure t)
 
 ;; Magit
 (use-package magit

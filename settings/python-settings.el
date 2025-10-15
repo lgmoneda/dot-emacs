@@ -6,17 +6,19 @@
   :ensure t)
 
 (use-package conda
-  :ensure t)
-
-(custom-set-variables
- '(conda-anaconda-home "/Users/luis.moneda/miniconda3"))
+  :ensure t
+  :init
+  (setq conda-anaconda-home (expand-file-name "/Users/luis.moneda/miniconda3"))
+  ;; :config
+  ;; (conda-env-autoactivate-mode 1) ;; activates when it sees env hints
+  )
 
 ;; if you want interactive shell support, include:
 (conda-env-initialize-interactive-shells)
 ;; if you want eshell support, include:
 (conda-env-initialize-eshell)
 ;; if you want auto-activation (see below for details), include:
-(conda-env-autoactivate-mode t)
+;; (conda-env-autoactivate-mode t)
 
 (use-package pyvenv
   :ensure t)
@@ -39,39 +41,23 @@
 	     (add-hook 'python-mode-hook 'column-enforce-mode)
 	     )
 
-(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/pythonic-20230821.1733/")
-(load "pythonic")
-(add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/company-anaconda-20230821.2126/")
-(load "company-anaconda")
-;; Company-anaconda
-(use-package company-anaconda
-  :ensure t
-  :diminish
-  ;; :config
-  ;; (eval-after-load "company"
-  ;;   '(add-to-list 'company-backends '(company-anaconda company-capf)))
-  )
+;; The default pyenv I use
+;; (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
+;; (pyvenv-workon "edge")
 
-(add-hook 'python-mode-hook 'company-mode)
+(add-hook 'python-mode-hook
+          (lambda ()
+            (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")))
+
+(add-hook 'python-ts-mode-hook
+          (lambda ()
+            (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")))
 
 ;; To activate nupy environment
 (defun anupy ()
   (interactive)
   (pythonic-activate "/Users/luis.moneda/miniconda3/envs/nu")
   )
-
-;; Check if i'm at work and activate
-;; the right environment
-;; (defun activate-work-env ()
-;;   (if (string= (system-name) "rc530")
-;;       (pythonic-activate "/Users/luis.moneda/miniconda3/envs/ml3")
-;;       )
-;;   (if (string-match "luis.moneda" (system-name))
-;;       (pythonic-activate "/Users/luis.moneda/miniconda3/envs/ml3")
-;;       )
-;;   )
-
-;; (activate-work-env)
 
 ;; I don't want to see the error buffer
 (remove-hook 'anaconda-mode-response-read-fail-hook
@@ -129,37 +115,37 @@ if breakpoints are present in `python-mode' files"
 
 ;; Run python and pop-up its shell.
 ;; Kill process to solve the reload modules problem.
-(defun my-python-shell-run ()
-  (interactive)
-  (when (get-buffer-process "*Python*")
-     (set-process-query-on-exit-flag (get-buffer-process "*Python*") nil)
-     (kill-process (get-buffer-process "*Python*"))
-     ;; If you want to clean the buffer too.
-     ;;(kill-buffer "*Python*")
-     ;; Not so fast!
-     (sleep-for 0.5)
-     )
-  (run-python (python-shell-parse-command) nil nil)
-  (python-shell-send-buffer)
-  ;; Pop new window only if shell isn't visible
-  ;; in any frame.
-  (unless (get-buffer-window "*Python*" t)
-    (python-shell-switch-to-shell)
-    )
- )
+;; (defun my-python-shell-run ()
+;;   (interactive)
+;;   (when (get-buffer-process "*Python*")
+;;      (set-process-query-on-exit-flag (get-buffer-process "*Python*") nil)
+;;      (kill-process (get-buffer-process "*Python*"))
+;;      ;; If you want to clean the buffer too.
+;;      ;;(kill-buffer "*Python*")
+;;      ;; Not so fast!
+;;      (sleep-for 0.5)
+;;      )
+;;   (run-python (python-shell-parse-command) nil nil)
+;;   (python-shell-send-buffer)
+;;   ;; Pop new window only if shell isn't visible
+;;   ;; in any frame.
+;;   (unless (get-buffer-window "*Python*" t)
+;;     (python-shell-switch-to-shell)
+;;     )
+;;  )
 
-(defun my-python-shell-run-region ()
-  (interactive)
-  (python-shell-send-region (region-beginning) (region-end))
-  (python-shell-switch-to-shell)
-  )
+;; (defun my-python-shell-run-region ()
+;;   (interactive)
+;;   (python-shell-send-region (region-beginning) (region-end))
+;;   (python-shell-switch-to-shell)
+;;   )
 
-(eval-after-load "python"
-  '(progn
-     (define-key python-mode-map (kbd "C-c C-c") 'my-python-shell-run)
-     (define-key python-mode-map (kbd "C-c C-r") 'my-python-shell-run-region)
-     (define-key python-mode-map (kbd "C-h f") 'python-eldoc-at-point)
-     ))
+;; (eval-after-load "python"
+;;   '(progn
+;;      (define-key python-mode-map (kbd "C-c C-c") 'my-python-shell-run)
+;;      (define-key python-mode-map (kbd "C-c C-r") 'my-python-shell-run-region)
+;;      (define-key python-mode-map (kbd "C-h f") 'python-eldoc-at-point)
+;;      ))
 
 ;; Trying to make TAB great again
 (defun indent-or-complete ()
@@ -238,24 +224,26 @@ if breakpoints are present in `python-mode' files"
 
 (define-key python-mode-map (kbd "C-c C-i") 'pyimport-insert-missing)
 
-;; (use-package py-autopep8
-;;   :ensure t
-;;   :init (progn
-;;            (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save)
-;;            ))
+(load "~/.emacs.d/elpa/py-autopep8-20250913.2251/py-autopep8.el")
+(use-package py-autopep8
+  :ensure t
+  :after python
+  :init (progn
+           (add-hook 'python-mode-hook 'py-autopep8-mode)
+           ))
 
 (setq py-autopep8-options '("--max-line-length=120"))
 
 ; Annoying 25.2 message when running Python
-(with-eval-after-load 'python
-  (defun python-shell-completion-native-try ()
-    "Return non-nil if can trigger native completion."
-    (let ((python-shell-completion-native-enable t)
-          (python-shell-completion-native-output-timeout
-           python-shell-completion-native-try-output-timeout))
-      (python-shell-completion-native-get-completions
-       (get-buffer-process (current-buffer))
-       nil "_"))))
+;; (with-eval-after-load 'python
+;;   (defun python-shell-completion-native-try ()
+;;     "Return non-nil if can trigger native completion."
+;;     (let ((python-shell-completion-native-enable t)
+;;           (python-shell-completion-native-output-timeout
+;;            python-shell-completion-native-try-output-timeout))
+;;       (python-shell-completion-native-get-completions
+;;        (get-buffer-process (current-buffer))
+;;        nil "_"))))
 (setq python-shell-completion-native-enable nil)
 
 ;; Emacs Ipython Notebook
@@ -289,6 +277,22 @@ if breakpoints are present in `python-mode' files"
 (with-eval-after-load 'jupyter-repl
   (define-key jupyter-repl-mode-map (kbd "C-c C-p") #'jupyter-repl-backward-cell)
   (define-key jupyter-repl-mode-map (kbd "C-c C-n") #'jupyter-repl-forward-cell))
+
+(setq python-shell-interpreter "ipython")
+(setq python-shell-interpreter-args "-i --simple-prompt")
+
+;; Use Jupyter Console as the Python REPL
+(setq python-shell-interpreter "jupyter-console"
+      python-shell-interpreter-args "--simple-prompt --no-confirm-exit"
+      python-shell-prompt-detect-failure-warning nil)
+
+;; Jupyter doesn't play nice with Emacs' "native" completion—disable it for jupyter
+(add-to-list 'python-shell-completion-native-disabled-interpreters "jupyter-console")
+(add-to-list 'python-shell-completion-native-disabled-interpreters "jupyter")
+
+;; Explore it at some point
+;; (require 'dap-python)
+;; (setq dap-python-debugger 'debugpy)
 
 (provide 'python-settings)
 ;;; python-settings.el ends here

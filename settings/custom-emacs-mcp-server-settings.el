@@ -314,11 +314,18 @@ Returns JSON object with:
   language - Programming language of the executed block (string)
   line_number - Line number where the block starts (integer, 1-based)
   result - Output/result from block execution (string)
+  async_detected - Whether async execution was detected (boolean)
+  execution_time - Time spent waiting for async results in seconds (float)
+  timed_out - Whether async polling timed out (boolean)
+  still_pending - Whether result is still pending after timeout (boolean)
+  retrieval_instructions - How to get pending results if still_pending=true (string)
   file_modified - Whether the file was saved with results (boolean, always true)
 
 Execution behavior:
 - Executes source block using org-babel
-- Captures and formats output/results
+- Detects async execution (Jupyter/EIN kernels) and polls for completion up to 10 seconds
+- Captures and formats output/results with async status information
+- Provides instructions for retrieving pending results if timeout occurs
 - Automatically saves file to persist #+RESULTS
 - Maintains org-mode formatting and structure
 - Preserves existing file content and organization
@@ -1158,6 +1165,14 @@ Executes code in a running Jupyter kernel and waits for completion with timeout.
 This tool provides synchronous code execution in Jupyter kernels with comprehensive
 result capture including output, results, and errors. Ideal for quick computations
 and interactive development workflows.
+
+⚠️  IMPORTANT WORKFLOW NOTE:
+- Use REPL for interactive development, testing, and validation ONLY
+- Once code is working, ALWAYS persist it to the org notebook or .py files
+- REPL execution is temporary - code will be lost when kernel restarts
+- Consider this a sandbox for experimentation, not final code storage
+- This is useful to checking how the data looks like before persisting an analysis in the org notebook
+- After successful execution, save important code to source blocks in the notebook
 
 Parameters:
   client_buffer_name - Name of the REPL buffer (string, required)

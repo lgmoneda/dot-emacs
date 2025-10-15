@@ -216,7 +216,7 @@ should be continued."
 	  	   ))
           ;; ALL TODO items - grouped by org-super-agenda in ONE PASS
       ;; (tags "+goals|+epic"
-	  (tags "LEVEL>=1+TODO=\"TODO\"|+TODO=\"WAIT\""
+	  (tags "LEVEL>=1+TODO=\"TODO\"|+TODO=\"WAIT\"|+TODO=\"DONE\""
 		((org-agenda-overriding-header "")
 		 (org-super-agenda-groups
 		  '((:name "Tech Epic\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"

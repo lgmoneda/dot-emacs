@@ -449,10 +449,15 @@ Asks whether to commit and push to GitHub after export."
              (replace-match value t t)))
          image-paths)
 
-		;; Find and replace org-roam links by removing the <a> tag, leaving only the link text
-        (goto-char (point-min))
-        (while (re-search-forward "<a\\s-+href=\"id:[^\"]*\">\\([^<]*\\)</a>" nil t)
-          (replace-match "\\1" nil nil))
+		;; Case A: strip <a href="id:...">text</a>
+		(goto-char (point-min))
+		(while (re-search-forward "<a\\s-+href=\"id:[^\"]*\">\\([^<]*\\)</a>" nil t)
+		  (replace-match "\\1" nil nil))
+
+		;; Case B: strip <a href="something.html#ID-...">text</a>
+		(goto-char (point-min))
+		(while (re-search-forward "<a\\s-+href=\"[^\"]*#ID-[^\"]*\">\\([^<]*\\)</a>" nil t)
+		  (replace-match "\\1" nil nil))
 
         (write-file final-output-file)
 

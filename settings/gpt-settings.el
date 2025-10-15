@@ -479,7 +479,7 @@ Provides a selection from a predefined list, but also allows custom input."
   (deactivate-mark))
 
 ;; Using consult as the interface
-(require 'consult)
+;; (require 'consult)
 
 ;; This function keeps the menu. It is flaky due to the re-openning
 (defun my/display-popup-at-point ()
@@ -606,12 +606,12 @@ Provides a selection from a predefined list, but also allows custom input."
 
 
 ;;gpt.el
-(use-package gptel
-  :ensure t
-  :init
-  (setq gptel-api-key (getenv "OPENAI_API_KEY"))
-  (gptel-make-anthropic "Claude" :stream t :key (getenv "ANTHROPIC_API_KEY"))
-  )
+;; (use-package gptel
+;;   :ensure t
+;;   :init
+;;   (setq gptel-api-key (getenv "OPENAI_API_KEY"))
+;;   (gptel-make-anthropic "Claude" :stream t :key (getenv "ANTHROPIC_API_KEY"))
+;;   )
 
 (provide 'gpt-settings)
 ;;; gpt-settings.el ends here

@@ -30,6 +30,77 @@ Assumes we're at a source block."
             (forward-line 1))
           (string-trim (buffer-substring-no-properties result-start (point))))))))
 
+(defun org-babel-mcp--is-async-result-p (result)
+  "Check if RESULT appears to be an async execution ID.
+Returns t if the result looks like a Jupyter request ID or similar async identifier."
+  (and (stringp result)
+       (not (string-empty-p result))
+       (or
+        ;; Jupyter/EIN request IDs (common patterns)
+        (string-match-p "^[a-f0-9-]\\{8,\\}$" result)
+        (string-match-p "^request_[a-zA-Z0-9_-]+$" result)
+        (string-match-p "^exec_[0-9]+$" result)
+        ;; Other async patterns
+        (string-match-p "^[0-9a-f]\\{8\\}-[0-9a-f]\\{4\\}-[0-9a-f]\\{4\\}-[0-9a-f]\\{4\\}-[0-9a-f]\\{12\\}$" result)
+        (string-match-p "^async_[a-zA-Z0-9_-]+$" result))))
+
+(defun org-babel-mcp--wait-for-async-result (buffer initial-result max-wait-seconds)
+  "Wait for async result to be replaced with actual output.
+BUFFER is the org buffer, INITIAL-RESULT is the async ID, MAX-WAIT-SECONDS is timeout.
+Returns plist with result details."
+  (let ((start-time (current-time))
+        (check-interval 1.5) ; Check every 1.5 seconds
+        (current-result initial-result)
+        (iteration 0))
+    
+    (while (and (< (float-time (time-subtract (current-time) start-time)) max-wait-seconds)
+                (org-babel-mcp--is-async-result-p current-result))
+      (sit-for check-interval)
+      (setq iteration (1+ iteration))
+      (setq current-result (or (org-babel-mcp--get-block-result buffer) ""))
+      
+      ;; Refresh buffer from file in case external process updated it
+      (with-current-buffer buffer
+        (revert-buffer t t t)))
+    
+    (let ((elapsed (float-time (time-subtract (current-time) start-time)))
+          (timed-out (>= (float-time (time-subtract (current-time) start-time)) max-wait-seconds))
+          (still-async (org-babel-mcp--is-async-result-p current-result)))
+      
+      `(:result ,current-result
+        :elapsed-time ,elapsed
+        :timed-out ,timed-out
+        :still-pending ,still-async
+        :iterations ,iteration
+        :retrieval-instructions
+        ,(when still-async
+           (format "Result still pending (ID: %s). To retrieve when ready, use get-org-heading-content or check-async-execution with request ID %s"
+                   current-result current-result))))))
+
+(defun org-babel-mcp--get-block-result-with-async-polling (buffer &optional max-wait-seconds)
+  "Get block result with optional async polling for better AI agent feedback.
+BUFFER is the org buffer. MAX-WAIT-SECONDS defaults to 10.
+Returns plist with comprehensive result information."
+  (let ((initial-result (or (org-babel-mcp--get-block-result buffer) ""))
+        (max-wait (or max-wait-seconds 10)))
+    
+    (if (org-babel-mcp--is-async-result-p initial-result)
+        ;; Async result detected - poll for completion
+        (let ((async-info (org-babel-mcp--wait-for-async-result buffer initial-result max-wait)))
+          `(:result ,(plist-get async-info :result)
+            :async-detected t
+            :elapsed-time ,(plist-get async-info :elapsed-time)
+            :timed-out ,(plist-get async-info :timed-out)
+            :still-pending ,(plist-get async-info :still-pending)
+            :iterations ,(plist-get async-info :iterations)
+            :retrieval-instructions ,(plist-get async-info :retrieval-instructions)))
+      ;; Immediate/sync result
+      `(:result ,initial-result
+        :async-detected nil
+        :elapsed-time 0
+        :timed-out nil
+        :still-pending nil))))
+
 ;;; MCP Tool Functions
 
 (defun org-babel-mcp--execute-src-block (file_path &optional heading_title line_number)
@@ -107,13 +178,13 @@ MCP Parameters:
           ;; Execute the block
           (org-babel-execute-src-block)
           
-          ;; Get the result
-          (setq result (or (org-babel-mcp--get-block-result buffer) ""))
+          ;; Get the result with async polling
+          (setq result (org-babel-mcp--get-block-result-with-async-polling buffer 10))
           
           ;; Save the buffer
           (save-buffer)))
       
-      ;; Return alist format
+      ;; Return alist format with enhanced async info
       `((file_path . ,file_path)
         (block_name . ,(cond ((and heading_title (stringp heading_title) (not (string-empty-p heading_title)))
                               (format "heading-%s" heading_title))
@@ -122,7 +193,12 @@ MCP Parameters:
                              (t "(unnamed)")))
         (language . ,(nth 0 block-info))
         (line_number . ,line-number)
-        (result . ,result)
+        (result . ,(plist-get result :result))
+        (async_detected . ,(plist-get result :async-detected))
+        (execution_time . ,(plist-get result :elapsed-time))
+        (timed_out . ,(plist-get result :timed-out))
+        (still_pending . ,(plist-get result :still-pending))
+        (retrieval_instructions . ,(plist-get result :retrieval-instructions))
         (file_modified . t)))))
 
 (defun org-babel-mcp--execute-subtree (file_path heading_title)
@@ -191,7 +267,10 @@ MCP Parameters:
                         (org-babel-execute-src-block)
                         (setq success t)
                         (setq executed-count (1+ executed-count))
-                        (setq result (or (org-babel-mcp--get-block-result buffer) "")))
+                        (let ((result-info (org-babel-mcp--get-block-result-with-async-polling buffer 10)))
+                          (setq result (plist-get result-info :result))
+                          (when (plist-get result-info :still-pending)
+                            (setq error-msg (plist-get result-info :retrieval-instructions)))))
                     (error
                      (setq success nil)
                      (setq failed-count (1+ failed-count))
@@ -272,7 +351,10 @@ MCP Parameters:
                       (org-babel-execute-src-block)
                       (setq success t)
                       (setq executed-count (1+ executed-count))
-                      (setq result (or (org-babel-mcp--get-block-result buffer) "")))
+                      (let ((result-info (org-babel-mcp--get-block-result-with-async-polling buffer 10)))
+                        (setq result (plist-get result-info :result))
+                        (when (plist-get result-info :still-pending)
+                          (setq error-msg (plist-get result-info :retrieval-instructions)))))
                   (error
                    (setq success nil)
                    (setq failed-count (1+ failed-count))

@@ -5,7 +5,7 @@
 
 ;;; Code:
 
-(add-to-list 'load-path "~/.emacs.d/elpa/mcp-server-lib-20250728.457/")
+(add-to-list 'load-path "~/.emacs.d/elpa/mcp-server-lib-20250828.1124/")
 (require 'mcp-server-lib)
 (require 'json)
 (setq mcp-server-lib-log-io t)
@@ -13,6 +13,7 @@
 (load (expand-file-name "mcp-tools/org-roam-tools.el" (file-name-directory (or load-file-name (buffer-file-name)))))
 (load (expand-file-name "mcp-tools/org-babel-tools.el" (file-name-directory (or load-file-name (buffer-file-name)))))
 (load (expand-file-name "mcp-tools/org-agenda-tools.el" (file-name-directory (or load-file-name (buffer-file-name)))))
+(load (expand-file-name "mcp-tools/org-tools.el" (file-name-directory (or load-file-name (buffer-file-name)))))
 
 ;;; Utility Functions
 
@@ -53,6 +54,19 @@ MCP Parameters:
     (let ((result (org-roam-mcp--search-nodes-by-title title limit)))
       (json-encode result))))
 
+(defun emacs-mcp--org-roam-search-nodes-by-title (params)
+  "Search for org-roam nodes by title pattern.
+MCP Parameters:
+  params - Alist containing title and optional limit"
+  (mcp-server-lib-with-error-handling
+    (let ((title (alist-get 'title params))
+          (limit (alist-get 'limit params)))
+      (emacs-mcp--validate-string title "title")
+      (when (and limit (not (or (integerp limit) (null limit))))
+        (mcp-server-lib-tool-throw "Invalid limit: must be an integer or null"))
+      (let ((result (org-roam-mcp--search-nodes-by-title title limit)))
+        (json-encode result)))))
+
 (defun emacs-mcp--org-roam-get-backlinks (roam_id &optional limit)
   "Get nodes that link to a specific org-roam node.
 MCP Parameters:
@@ -64,6 +78,19 @@ MCP Parameters:
       (mcp-server-lib-tool-throw "Invalid limit: must be an integer or null"))
     (let ((result (org-roam-mcp--get-backlinks roam_id limit)))
       (json-encode result))))
+
+(defun emacs-mcp--org-roam-get-backlinks (params)
+  "Get nodes that link to a specific org-roam node.
+MCP Parameters:
+  params - Alist containing roam_id and optional limit"
+  (mcp-server-lib-with-error-handling
+    (let ((roam_id (alist-get 'roam_id params))
+          (limit (alist-get 'limit params)))
+      (emacs-mcp--validate-string roam_id "roam_id")
+      (when (and limit (not (or (integerp limit) (null limit))))
+        (mcp-server-lib-tool-throw "Invalid limit: must be an integer or null"))
+      (let ((result (org-roam-mcp--get-backlinks roam_id limit)))
+        (json-encode result)))))
 
 ;;; Org-roam MCP Registration
 
@@ -117,6 +144,9 @@ Supports partial matching and returns ranked results with metadata.
 
 This tool helps discover org-roam nodes when you know part of the title but
 not the exact UUID. Uses SQL LIKE matching for flexible search capabilities.
+
+Parameter to call it:
+params - Alist containing roam_id and optional limit
 
 Parameters:
   title - Search pattern for node titles (string, required)
@@ -212,28 +242,28 @@ Security: Read-only operation, safe for knowledge base analysis"
 
 ;;; Org-babel MCP Tool Functions
 
-(defun emacs-mcp--org-babel-execute-src-block (file_path &optional block_name)
+(defun emacs-mcp--org-babel-execute-src-block (params)
   "Execute a specific source block in an org file.
-
 MCP Parameters:
-  file_path - Absolute path to the .org file (string, required)
-  block_name - Name of the source block to execute (string, optional)"
+  params - Alist containing file_path and optional block_name"
   (mcp-server-lib-with-error-handling
-    (emacs-mcp--validate-string file_path "file_path")
-    (when (and block_name (not (string-empty-p block_name)) (not (null block_name)))
-      (emacs-mcp--validate-string block_name "block_name"))
-    (let ((result (org-babel-mcp--execute-src-block file_path block_name)))
-      (json-encode result))))
+    (let ((file_path (alist-get 'file_path params))
+          (block_name (alist-get 'block_name params)))
+      (emacs-mcp--validate-string file_path "file_path")
+      (when (and block_name (not (string-empty-p block_name)) (not (null block_name)))
+        (emacs-mcp--validate-string block_name "block_name"))
+      (let ((result (org-babel-mcp--execute-src-block file_path block_name)))
+        (json-encode result)))))
 
-(defun emacs-mcp--org-babel-execute-buffer (file_path)
+(defun emacs-mcp--org-babel-execute-buffer (params)
   "Execute all source blocks in an org file buffer.
-
 MCP Parameters:
-  file_path - Absolute path to the .org file (string, required)"
+  params - Alist containing file_path"
   (mcp-server-lib-with-error-handling
-    (emacs-mcp--validate-string file_path "file_path")
-    (let ((result (org-babel-mcp--execute-buffer file_path)))
-      (json-encode result))))
+    (let ((file_path (alist-get 'file_path params)))
+      (emacs-mcp--validate-string file_path "file_path")
+      (let ((result (org-babel-mcp--execute-buffer file_path)))
+        (json-encode result)))))
 
 ;;; Org-babel MCP Registration
 
@@ -263,6 +293,11 @@ Returns JSON object with:
   language - Programming language of the executed block (string)
   line_number - Line number where the block starts (integer, 1-based)
   result - Output/result from block execution (string)
+  async_detected - Whether async execution was detected (boolean)
+  execution_time - Time spent waiting for async results in seconds (float)
+  timed_out - Whether async polling timed out (boolean)
+  still_pending - Whether result is still pending after timeout (boolean)
+  retrieval_instructions - How to get pending results if still_pending=true (string)
   file_modified - Whether the file was saved with results (boolean, always true)
 
 Execution behavior:
@@ -369,28 +404,28 @@ Error cases:
 
 ;;; Org-agenda MCP Tool Functions
 
-(defun emacs-mcp--add-todo-simple (content &optional scheduled)
+(defun emacs-mcp--add-todo-simple (params)
   "Add a TODO item to the default personal agenda location.
-
 MCP Parameters:
-  content - The TODO item content (string, required)
-  scheduled - Optional scheduled date in org format (string, optional)"
+  params - Alist containing content and optional scheduled"
   (mcp-server-lib-with-error-handling
-    (emacs-mcp--validate-string content "content")
-    (let ((result (org-agenda-mcp--add-todo-simple content scheduled)))
-      (json-encode result))))
+    (let ((content (alist-get 'content params))
+          (scheduled (alist-get 'scheduled params)))
+      (emacs-mcp--validate-string content "content")
+      (let ((result (org-agenda-mcp--add-todo-simple content scheduled)))
+        (json-encode result)))))
 
-(defun emacs-mcp--add-todo-with-refile (content &optional refile_target scheduled)
+(defun emacs-mcp--add-todo-with-refile (params)
   "Add a TODO item and optionally refile it to a specific location.
-
 MCP Parameters:
-  content - The TODO item content (string, required)  
-  refile_target - Target heading path like 'Life/Financial Independence' (string, optional)
-  scheduled - Optional scheduled date in org format (string, optional)"
+  params - Alist containing content, optional refile_target, and optional scheduled"
   (mcp-server-lib-with-error-handling
-    (emacs-mcp--validate-string content "content")
-    (let ((result (org-agenda-mcp--add-todo-with-refile content refile_target scheduled)))
-      (json-encode result))))
+    (let ((content (alist-get 'content params))
+          (refile_target (alist-get 'refile_target params))
+          (scheduled (alist-get 'scheduled params)))
+      (emacs-mcp--validate-string content "content")
+      (let ((result (org-agenda-mcp--add-todo-with-refile content refile_target scheduled)))
+        (json-encode result)))))
 
 (defun emacs-mcp--get-available-locations ()
   "Get list of available locations for refiling in the personal agenda.
@@ -578,7 +613,8 @@ Security: Read-only operation, safe for exploring agenda structure"
   "Enable all Emacs MCP tools (org-roam, org-babel, and org-agenda)."
   (emacs-org-roam-mcp-enable)
   (emacs-org-babel-mcp-enable)
-  (emacs-org-agenda-mcp-enable))
+  (emacs-org-agenda-mcp-enable)
+  )
 
 ;;;###autoload
 (defun emacs-mcp-disable ()

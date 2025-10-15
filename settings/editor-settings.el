@@ -315,6 +315,42 @@
 ;; Save silently
 (setq super-save-silent t)
 
+(defvar my-super-save-max-size (* 2 1024 1024)
+  "Maximum buffer size (in bytes) for which `super-save' should trigger (default 2 MB).")
+
+(defvar-local my-super-save-banned nil
+  "Non-nil means this buffer is banned from `super-save' auto-saving this session.")
+
+(defun my-super-save--eligible-p (buf)
+  "Return non-nil if BUF should be saved by super-save."
+  (with-current-buffer buf
+    (and buffer-file-name
+         (buffer-modified-p)
+         (not my-super-save-banned)
+         (< (buffer-size) my-super-save-max-size))))
+
+(defun my-super-save-check-and-save ()
+  "Check all eligible buffers and save them safely."
+  (dolist (buf (buffer-list))
+    (when (my-super-save--eligible-p buf)
+      (with-current-buffer buf
+        (super-save--command)))
+    (with-current-buffer buf
+      (when (and buffer-file-name
+                 (not my-super-save-banned)
+                 (>= (buffer-size) my-super-save-max-size))
+        (setq my-super-save-banned t)
+        (message "[super-save] ⚠️ Skipping large file: %s (%.2f MB)"
+                 (file-name-nondirectory buffer-file-name)
+                 (/ (buffer-size) 1048576.0))))))
+
+;; Store original function before overriding
+(unless (fboundp 'super-save--command)
+  (defalias 'super-save--command (symbol-function 'super-save-command)))
+
+;; Override safely (no recursion)
+(advice-add 'super-save-command :override #'my-super-save-check-and-save)
+
 ;; Disable mouse
 (use-package disable-mouse
   :ensure t

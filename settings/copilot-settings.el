@@ -44,16 +44,20 @@
 ;;   (emigo-base-url "https://openrouter.ai/api/v1")
 ;;   (emigo-api-key (getenv "OPENROUTER_API_KEY")))
 
-
-;; install claude-code.el
-;; (use-package claude-code :ensure t
-;;   :vc (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
-;;   :config (claude-code-mode)
-;;   :bind-keymap ("C-c c" . claude-code-command-map))
-
 ;; (org-babel-mcp-start-server)
 ;; (org-roam-mcp-start-server)
 ;; (mcp-server-lib-start)
+
+(use-package acp
+  :vc (:url "https://github.com/xenodium/acp.el"))
+(use-package agent-shell
+  :vc (:url "https://github.com/xenodium/agent-shell"))
+(setq agent-shell-openai-authentication
+      (agent-shell-anthropic-make-authentication :login t))
+
+;; With string
+(setq agent-shell-openai-authentication
+      (agent-shell-openai-make-authentication :api-key (getenv "OPENAI_API_KEY")))
 
 (provide 'copilot-settings)
 ;;; copilot-settings.el ends here
