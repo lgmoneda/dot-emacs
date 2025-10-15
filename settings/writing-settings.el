@@ -15,11 +15,28 @@
 (list "pdflatex"
       (list "-file-line-error" "-draftmode" "-interaction=nonstopmode" file-name)))
 
-(use-package latex-preview-pane
-	     :ensure t)
+ ;; Built-in preview from AUCTeX
+(use-package tex
+    :ensure auctex
+    :hook ((LaTeX-mode . TeX-PDF-mode)          ; always work in PDF mode
+           (LaTeX-mode . LaTeX-math-mode)
+           (LaTeX-mode . LaTeX-preview-setup))  ; enable preview.el integration
+    :custom
+    (preview-image-type 'png)                   ; crisp previews
+    (preview-auto-cache-preamble t)             ; cache the preamble to speed up rerenders
+    (preview-scale-function 1.2))               ; adjust size to taste
+
+;; Optional: richer, font-aware previews without external viewers
+(use-package engrave-faces
+  :straight (:type git :host github :repo "tecosaur/engrave-faces" :branch "master")
+    :hook ((LaTeX-mode . engrave-faces-mode)))
+
+;; Exclude if the above config works fine after using it a couple of times
+;; (use-package latex-preview-pane
+;; 	     :ensure t)
+;;(add-hook 'LaTeX-mode-hook 'latex-preview-pane-mode)
 
 ;;(add-hook 'LaTeX-mode-hook 'flymake-mode)
-;;(add-hook 'LaTeX-mode-hook 'latex-preview-pane-mode)
 (add-hook 'LaTeX-mode-hook 'flyspell-mode)
 (add-hook 'LaTeX-mode-hook 'flyspell-buffer)
 
@@ -143,41 +160,23 @@
   (setq biblio-bibtex-file "~/Dropbox/Research/library.bib")
   )
 
-;; ivy-bibtex
-(use-package helm-bibtex
-  :ensure t)
-;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/helm-bibtex")
-;; (autoload 'helm-bibtex "helm-bibtex" "" t)
-(load "helm-bibtex")
-
-;; (use-package ivy-bibtex
-;;   :ensure t)
-(autoload 'ivy-bibtex "ivy-bibtex" "" t)
-;; ivy-bibtex requires ivy's `ivy--regex-ignore-order` regex builder, which
-;; ignores the order of regexp tokens when searching for matching candidates.
-;; Add something like this to your init file:
-(setq ivy-re-builders-alist
-      '((ivy-bibtex . ivy--regex-ignore-order)
-        (t . ivy--regex-plus)))
-
-;; While I try citar
-;; (global-set-key (kbd "C-c r") 'org-ref-insert-cite-link)
 (setq org-cite-global-bibliography '("/Users/luis.moneda/Dropbox/Research/library.bib"))
-(setq ivy-bibtex-default-action 'ivy-bibtex-insert-citation)
 
 ;; telling bibtex-completion where your bibliographies can be found
 (setq bibtex-completion-bibliography "~/Dropbox/Research/library.bib")
 
-;; Because of citar
-(use-package vertico
-  :ensure t)
-
-;; Yet another framework for citations I want to test
 ;; References
 ;; https://kristofferbalintona.me/posts/202206141852/
 ;; https://blog.tecosaur.com/tmio/2021-07-31-citations.html
 (use-package citar
   :ensure t
+  :after (org-roam-bibtex)
+  :config
+  ;; Integrate with Embark (actions on citations)
+  (require 'citar)
+  (require 'citar-org)
+  (require 'citar-embark)
+  (citar-embark-mode 1)
   :custom
   (citar-bibliography '("~/Dropbox/Research/library.bib"))
   (org-cite-insert-processor 'citar)
@@ -189,6 +188,13 @@
   ;; 	 (latex biblatex)                                   ; For humanities
   ;; 	 (odt . (csl "chicago-fullnote-bibliography.csl"))  ; Footnote reliant
   ;; 	 (t . (csl "modern-language-association.csl"))))      ; Fallback
+
+  (citar-org-roam-capture-template-key "r")
+  ;; Use Vertico & Orderless for completion
+  (citar-symbols
+   `((file ,(all-the-icons-faicon "file-pdf-o" :face 'all-the-icons-red) . " ")
+     (note ,(all-the-icons-faicon "sticky-note" :face 'all-the-icons-yellow) . " ")))
+  (citar-symbol-separator "  ")
   :custom-face
   ;; Have citation link faces look closer to as they were for `org-ref'
   (org-cite ((t (:foreground "DarkSeaGreen4"))))
@@ -246,7 +252,7 @@
 ;; in addition to the regular Emacs viewer with p
 (defun bibtex-completion-open-pdf-external (keys &optional fallback-action)
   (let ((bibtex-completion-pdf-open-function
-         (lambda (fpath) (start-process "zathura" "*helm-bibtex-zathura*" "/usr/bin/zathura" fpath))))
+         (lambda (fpath) (start-process "zathura" "/usr/bin/zathura" fpath))))
     (bibtex-completion-open-pdf keys fallback-action)))
 
 ;;uncomment
@@ -306,13 +312,12 @@
   (setq google-translate-backend-method 'curl)
   (setq google-translate-default-source-language "pt")
   (setq google-translate-default-target-language "en")
-  (setq google-translate-pop-up-buffer-set-focus t)
+  ;; So it doesn't jump to it
+  (setq google-translate-pop-up-buffer-set-focus nil)
   (setq google-translate-enable-ido-completion t)
   (require 'google-translate-smooth-ui)
-  (global-set-key "\C-ce" 'google-translate-smooth-translate)
-  (global-set-key "\C-ct" 'google-translate-query-translate-reverse)
-  (global-set-key "\C-cE" 'google-translate-at-point)
-  (global-set-key "\C-cT" 'google-translate-at-point-reverse)
+  ;; cycle between languages using C-n and C-p
+  (global-set-key "\C-ct" 'google-translate-smooth-translate)
   (setq google-translate-translation-directions-alist
       '(("pt" . "en") ("en" . "pt") ("pt" . "fr") ("fr" . "pt")))
   )
@@ -337,9 +342,12 @@
 (setq lsp-ui-doc-show-with-cursor t)
 
 ;; annotate-mode
-;; c-c c-a to annotate
-;; c-c c-d to exclude
-;; c-c [ to jump to next note
+;; C-c C-a to annotate
+;; C-c C-d to exclude
+;; C-c [ to jump to next note
+;; Enable annotation-mode to do it
+;; Alternatively, they can be integrated annotate-integrate-annotations as comments into the current buffer
+;; C-c C-s (function annotate-show-annotation-summary)
 (use-package annotate
   :ensure t)
 
@@ -467,11 +475,6 @@
                 (message "BibTeX entry added: %s" entry)))
 
           (error (message "Error occurred: %s" (error-message-string err))))))))
-
-(provide 'writing-settings)
-;;; writing-settings.el ends here
-
-
 
 (provide 'writing-settings)
 ;;; writing-settings.el ends here
