@@ -56,12 +56,21 @@
 ;;Beacon minor mode
 (use-package beacon
   :ensure t
-  :diminish beacon-mode
-  :init (beacon-mode 1)
-        (setq beacon-color "#e16527")
-        (setq beacon-size 25)
-	(setq beacon-blink-delay 0.3)
-	)
+  :custom
+  ;; 🌙 Smooth and subtle
+  (beacon-color "#5c3e99")
+  (beacon-blink-duration 0.15)         ;; quick fade
+  (beacon-size 30)                     ;; smaller, subtler beam
+  (beacon-blink-delay 0.2)
+  (beacon-push-mark 1)
+  (beacon-blink-when-point-moves-vertically 2)
+  (beacon-blink-when-point-moves-horizontally nil)
+  (beacon-blink-when-window-scrolls nil)
+  (beacon-blink-when-buffer-changes t)
+  (beacon-blink-when-window-changes t)
+  (beacon-blink-when-focused nil)      ;; no blink when switching apps
+  :config
+  (beacon-mode 1))
 
 ;; Mode line α
 (defvar mode-line-cleaner-alist
@@ -90,7 +99,8 @@
     (fundamental-mode . "Fund")
     (lisp-interaction-mode . "λ")
     (hi-lock-mode . "")
-    (python-mode . "Py")
+    (python-mode . "🐍")
+    (python-ts-mode . "🐍")
     (emacs-lisp-mode . "EL")
     (nxhtml-mode . "nx"))
   "Alist for `clean-mode-line'.
@@ -113,10 +123,11 @@ want to use in the modeline *in lieu of* the original.")
 
 (add-hook 'after-change-major-mode-hook 'clean-mode-line)
 
-(use-package minions
-  :ensure t
-  :init
-  (minions-mode 1))
+;; Comment and find out if I really need it
+;; (use-package minions
+;;   :ensure t
+;;   :init
+;;   (minions-mode 1))
 
 (use-package mood-line
   :ensure t
@@ -157,70 +168,49 @@ want to use in the modeline *in lieu of* the original.")
  ;; If there is more than one, they won't work right.
  '(conda-anaconda-home "/Users/luis.moneda/miniconda3")
  '(package-selected-packages
-   '(straight org-sliced-images gptel ob-mermaid aider aidermacs langtool org-modern nov shrface consult vertico citar-org-roam citar-embark citar ox-bibtex ivy-bibtex ox-gfm spacious-padding golden-ratio embark-consult embark exec-path-from-shell smex ob-chatgpt-shell quelpa-use-package copilot org-emms emms chatgpt-shell pyimport electric-operator org-present org-tree-slide org-transclusion org-mind-map consult-org-roam org-download org-remark org-ql org-roam-bibtex olivetti org-roam-ui org-roam deadgrep org-bullets virtualenvwrapper simple-httpd column-enforce-mode conda pyvenv pyenv-mode pyenv magit default-text-scale zygospore writeroom-mode with-editor which-key try smartparens smart-mode-line shell-pop restclient rebecca-theme rainbow-delimiters poet-theme pdf-tools org-ref orderless ob-async neotree multiple-cursors multi mood-line minions mindre-theme markdown-preview-mode lsp-grammarly latex-preview-pane ivy-posframe imenu-anywhere hide-mode-line helm-bibtex gscholar-bibtex goto-chg google-translate flymd expand-region engine-mode disable-mouse diminish diff-hl counsel-projectile company-posframe company-flx beacon auto-complete anzu annotate all-the-icons-ivy-rich ag))
+   '(straight org-sliced-images gptel ob-mermaid aider aidermacs langtool
+			  org-modern nov shrface consult vertico citar-org-roam
+			  citar-embark citar ox-bibtex ivy-bibtex ox-gfm
+			  spacious-padding golden-ratio embark-consult embark
+			  exec-path-from-shell smex ob-chatgpt-shell
+			  quelpa-use-package copilot org-emms emms chatgpt-shell
+			  pyimport electric-operator org-present org-tree-slide
+			  org-transclusion org-mind-map consult-org-roam
+			  org-download org-remark org-ql org-roam-bibtex olivetti
+			  org-roam-ui org-roam deadgrep org-bullets
+			  virtualenvwrapper simple-httpd column-enforce-mode conda
+			  pyvenv pyenv-mode pyenv magit default-text-scale
+			  zygospore writeroom-mode with-editor which-key try
+			  smartparens smart-mode-line shell-pop restclient
+			  rebecca-theme rainbow-delimiters poet-theme pdf-tools
+			  org-ref orderless ob-async neotree multiple-cursors
+			  multi mood-line minions mindre-theme
+			  markdown-preview-mode lsp-grammarly latex-preview-pane
+			  ivy-posframe imenu-anywhere hide-mode-line helm-bibtex
+			  gscholar-bibtex goto-chg google-translate flymd
+			  expand-region engine-mode disable-mouse diminish diff-hl
+			  counsel-projectile company-posframe company-flx beacon
+			  auto-complete anzu annotate all-the-icons-ivy-rich ag))
  '(package-vc-selected-packages
-   '((claude-code :url "https://github.com/stevemolitor/claude-code.el")))
+   '((agent-shell :url "https://github.com/xenodium/agent-shell")
+	 (acp :url "https://github.com/xenodium/acp.el")
+	 (claude-code :url
+				  "https://github.com/stevemolitor/claude-code.el")))
  '(pdf-tools-handle-upgrades nil))
-;; (custom-set-faces
-;;  ;; custom-set-faces was added by Custom.
-;;  ;; If you edit it by hand, you could mess it up, so be careful.
-;;  ;; Your init file should contain only one such instance.
-;;  ;; If there is more than one, they won't work right.
-;;  '(avy-lead-face ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
-;;  '(avy-lead-face-0 ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
-;;  '(avy-lead-face-1 ((t (:background "dark gray" :foreground "maroon4" :weight bold))))
-;;  '(avy-lead-face-2 ((t (:background "dark gray" :foreground "maroon5" :weight bold))))
-;;  '(company-tooltip-search ((t (:inherit highlight :background "steel blue"))))
-;;  '(company-tooltip-search-selection ((t (:background "steel blue"))))
-;;  '(ein:cell-input-area ((t (:background "black"))))
-;;  '(font-latex-math-face ((t (:foreground "#f8834f"))))
-;;  '(font-latex-script-char-face ((t (:foreground "dark gray"))))
-;;  '(org-agenda-date-today ((t (:foreground "#f1fa8c" :underline nil :weight extra-bold))))
-;;  '(org-block ((t (:extend t :background "black" :foreground "#6dfedf"))))
-;;  '(org-link ((t (:background "DarkOrchid4" :foreground "SteelBlue2" :underline nil))))
-;;  '(org-ref-cite-face ((t (:inherit org-link :foreground "#50fa7b"))))
-;;  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
 
-;; Ivy-posframe dependency
+;; Vertico-posframe dependency
 (use-package posframe
   :ensure t)
 
-;; Change M-x position
-(use-package ivy-posframe
-  :ensure t
-  :init
-  (setq ivy-posframe-height 11
- ivy-posframe-border-width 2
-        ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-center)))
-  (ivy-posframe-mode 1))
-
-(use-package ivy-rich
-  :ensure t
-  :init
-  (setcdr (assq t ivy-format-functions-alist) #'ivy-format-function-line)
-  (ivy-rich-mode 1))
-
-(use-package counsel
+(use-package all-the-icons
   :ensure t)
 
-(use-package all-the-icons-ivy-rich
+(use-package all-the-icons-completion
   :ensure t
+  :after (marginalia all-the-icons)
+  :hook (marginalia-mode . all-the-icons-completion-marginalia-setup)
   :init
-  (all-the-icons-ivy-rich-mode 1)
-  :config
-  ;; Whether display the icons
-  (setq all-the-icons-ivy-rich-icon t)
-  ;; Whether display the colorful icons.
-  ;; It respects `all-the-icons-color-icons'.
-  (setq all-the-icons-ivy-rich-color-icon t)
-  ;; The icon size
-  (setq all-the-icons-ivy-rich-icon-size 1.0)
-  ;; Whether support project root
-  (setq all-the-icons-ivy-rich-project t)
-  ;; Slow Rendering
-  ;; If you experience a slow down in performance when rendering multiple icons simultaneously,
-  ;; you can try setting the following variable
-  (setq inhibit-compacting-font-caches t))
+  (all-the-icons-completion-mode))
 
 ;; Poet theme change
 ;; https://explog.in/notes/poet.html
@@ -253,23 +243,8 @@ want to use in the modeline *in lieu of* the original.")
 	("STARTED" . "yellow")
 	("WAIT" . "magenta")
 	("INACTIVE" . (:foreground "grey"))
-        ("CANCELED" . (:foreground "blue" :weight bold))
-        ("FAIL" . (:foreground "blue" :weight bold))))
-  ;; (custom-set-faces
-  ;;  '(avy-lead-face ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
-  ;;  '(avy-lead-face-0 ((t (:background "dark gray" :foreground "maroon3" :weight bold))))
-  ;;  '(avy-lead-face-1 ((t (:background "dark gray" :foreground "maroon4" :weight bold))))
-  ;;  '(avy-lead-face-2 ((t (:background "dark gray" :foreground "maroon5" :weight bold))))
-  ;;  '(company-tooltip-search ((t (:inherit highlight :background "steel blue"))))
-  ;;  '(company-tooltip-search-selection ((t (:background "steel blue"))))
-  ;;  '(ein:cell-input-area ((t (:background "black"))))
-  ;;  '(font-latex-math-face ((t (:foreground "#f8834f"))))
-  ;;  '(font-latex-script-char-face ((t (:foreground "dark gray"))))
-  ;;  '(org-agenda-date-today ((t (:foreground "#f1fa8c" :underline nil :weight extra-bold))))
-  ;;  '(org-block ((t (:extend t :background "black" :foreground "#6dfedf"))))
-  ;;  '(org-link ((t (:background "DarkOrchid4" :foreground "SteelBlue2" :underline nil))))
-  ;;  '(org-ref-cite-face ((t (:inherit org-link :foreground "#50fa7b"))))
-  ;;  '(show-paren-match ((t (:background "#5C888B" :weight bold)))))
+    ("CANCELED" . (:foreground "blue" :weight bold))
+    ("FAIL" . (:foreground "blue" :weight bold))))
   )
 
 (defun lgm/set-poet-theme ()
@@ -281,24 +256,18 @@ want to use in the modeline *in lieu of* the original.")
   (set-face-attribute 'org-indent nil :foreground "#e1d9c2" :background "#e1d9c2")
   (set-face-attribute 'org-link nil :foreground "cornflowerblue" :underline nil)
   (set-face-attribute 'org-agenda-date-today nil :box nil :background "#e1d9c2" :foreground "darkgreen" :underline nil :weight 'extra-bold)
-
-  ;; (custom-set-faces
-  ;;  '(org-hide ((t (:inherit unspecified :foreground "#e1d9c2" :background "#e1d9c2"))))
-  ;;  '(org-indent ((t (:foreground "#e1d9c2" :background "#e1d9c2"))))
-  ;;  '(org-agenda-date-today ((t (:box nil :background "#e1d9c2" :foreground "darkgreen" :underline nil :weight extra-bold))))
-  ;;  '(org-link ((t (:foreground "cornflowerblue" :underline nil)))))
   )
 
-
+;; Mindre's original main-bg color is F5F5F5
 ;; FAF9F5
 (defun lgm/set-mindre-theme ()
   "Set the mindre theme"
   (interactive)
   (load-theme 'mindre)
   (global-hl-line-mode 0)
-  (setq beacon-color "#000000")
-  (set-face-attribute 'org-hide nil :inherit 'unspecified :foreground "#F5F5F5" :background "#F5F5F5")
-  (set-face-attribute 'org-indent nil :foreground "#F5F5F5" :background "#F5F5F5")
+  ;; (setq beacon-color "#000000")
+  (set-face-attribute 'org-hide nil :inherit 'unspecified :foreground "#f8f4ed" :background "#f8f4ed")
+  (set-face-attribute 'org-indent nil :foreground "#f8f4ed" :background "#f8f4ed")
   (set-face-attribute 'org-link nil :foreground "cornflowerblue" :underline nil)
   (set-face-attribute 'org-agenda-clocking nil :inherit 'unspecified)
   (setq org-todo-keyword-faces
@@ -320,6 +289,7 @@ want to use in the modeline *in lieu of* the original.")
  '(diff-hl-change ((t (:background "#3a81c3"))))
  '(diff-hl-delete ((t (:background "#ee6363"))))
  '(diff-hl-insert ((t (:background "#7ccd7c"))))
+ '(hl-tags-face ((t (:inherit highlight))))
  '(jupyter-repl-input-prompt ((t (:foreground "SeaGreen4"))))
  '(org-link ((nil (:foreground "cornflowerblue" :underline nil))))
  '(org-quote ((t (:inherit mindre-default :slant italic)))))
@@ -327,16 +297,11 @@ want to use in the modeline *in lieu of* the original.")
 ;; Change font size
 ;; Iosevka
 (set-face-attribute 'default nil :height 160 :font "Iosevka")
+;; (set-face-attribute 'default nil :height 180 :font "JetBrains Mono")
 
 ;; Hide mode line
 (use-package hide-mode-line
   :ensure t)
-
-;; svg tag mode
-;; config it in the future maybe? exemple 2 in the repo has nice things.
-;; font issue: https://github.com/rougier/svg-tag-mode/issues/38
-;; (use-package svg-tag-mode
-;;   :ensure t)
 
 ;; Automatically resizes the window I'm focusing
 ;; (use-package golden-ratio
@@ -344,12 +309,6 @@ want to use in the modeline *in lieu of* the original.")
 ;;   :init
 ;;   (golden-ratio-mode 1)
 ;;   )
-
-;; Add a padding to the buffer
-;; (use-package spacious-padding
-;;   :ensure t
-;;   :hook (after-init . spacious-padding-mode))
-
 
 ;; I'm interested only in timestamps, todo keywords, and tables.
 ;; I disable the rest since I prefer my own customizations or other packages.
@@ -367,6 +326,16 @@ want to use in the modeline *in lieu of* the original.")
         ("INACTIVE" :inherit org-modern-label :foreground "grey")
         ("CANCELED" :inherit org-modern-label :foreground "blue" :weight bold)
         ("FAIL" :inherit org-modern-label :foreground "blue" :weight bold)))
+
+   (defface org-modern-bullet-face
+    '((t :inherit default :height 1.2)) ; tweak as needed
+    "Face for org-modern bullets.")
+
+  (setq org-modern-star
+        (mapcar (lambda (c)
+                  (propertize c 'face 'org-modern-bullet-face))
+                '("◉" "○" "✸" "✿" "✙" "♱" "♰" "☥" "✞" "✟" "✝" "†" "✠" "✚" "✜" "✛" "✢" "✣" "✤" "✥")))
+
    (add-hook 'org-mode-hook #'org-modern-mode)
    (add-hook 'org-agenda-finalize-hook #'org-modern-agenda)
    ;; (global-org-modern-mode)
