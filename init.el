@@ -5,12 +5,10 @@
 
 (require 'package)
 (setq package-enable-at-startup nil)
-(add-to-list 'package-archives
-     '("melpa" . "https://melpa.org/packages/"))
-(add-to-list 'package-archives
-	     '("gnu" . "http://elpa.gnu.org/packages/"))
-(add-to-list 'package-archives
-     '("melpa-stable" . "https://stable.melpa.org/packages/"))
+(setq package-archives
+      '(("gnu"   . "https://elpa.gnu.org/packages/")
+        ("melpa" . "https://melpa.org/packages/")
+	("melpa-stable" . "https://stable.melpa.org/packages/")))
 (package-initialize)
 
 ;; Bootstrap `use-package'
@@ -40,15 +38,23 @@
 ;; Install use-package via straight
 (straight-use-package 'use-package)
 
+;; Ensure Emacs doesn’t ignore Org updates from ELPA
+(setq package-install-upgrade-built-in t)
+
+;; Force ELPA Org to shadow built-in Org
+(add-to-list 'load-path "~/.emacs.d/elpa/org-9.7.34/" t)
+
 ;; Fast init.el open
 (global-set-key (kbd "<f6>") (lambda() (interactive)(find-file "~/.emacs.d/init.el")))
 
+;; Loading my setting files
 (defconst setting-dir (expand-file-name "settings" user-emacs-directory))
+(add-to-list 'load-path setting-dir)
 
 ;; Change custom file to the aesthetics one
 (setq custom-file "~/.emacs.d/settings/aesthetics-settings.el")
 
-(add-to-list 'load-path setting-dir)
+;; Add my AI assistant configs
 (add-to-list 'load-path "~/repos/catalyst-assistant/")
 
 (require 'editor-settings)
@@ -72,10 +78,9 @@
 (require 'claude-code-ide-settings)
 (require 'custom-emacs-mcp-server-settings)
 (require 'media-settings)
-
-;; (require 'processing-settings)
-;; (require 'nu-settings)
-;; (require 'email-settings)
-;; (require 'clojure-settings)
 ;; (require 'scala-settings)
+;; (require 'clojure-settings)
+;; (require 'nu-settings)
+;; (require 'processing-settings)
+;; (require 'email-settings)
 ;; (require 'elfeed-settings)
