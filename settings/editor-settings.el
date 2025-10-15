@@ -28,16 +28,18 @@
 (setq scroll-conservatively 10000)
 (setq auto-window-vscroll nil)
 
-;; Save command history
-(savehist-mode)
-
 ;; Better shell buffer behavior
 (use-package shell-pop
  :ensure t
  :init (defalias 'sp 'shell-pop))
 
+;; A package to jump to the last modification
 (use-package goto-chg
   :ensure t)
+
+;; Jump to last change
+(global-set-key (kbd "M-[") 'goto-last-change)
+(global-set-key (kbd "M-]") 'goto-last-change-reverse)
 
 (use-package smartparens
   :ensure t
@@ -52,9 +54,6 @@
  :ensure t
  :init (setq buffer-face-mode-face '(:family "dejavu sans mono" :height 150))
  (setq writeroom-width 92))
-
-(add-to-list 'load-path "~/.emacs.d/elpa/writeroom-mode-20231103.931")
-(load "writeroom-mode")
 
 ;; Expand-region
 (use-package expand-region
@@ -79,15 +78,6 @@
 (use-package anzu
 	     :ensure t
 	     :config (global-anzu-mode))
-
-;; Auto-complete
-(use-package auto-complete
-  :ensure t)
-
-;; Neotree
-(use-package neotree
-  :ensure t
-  :bind ([f8] . neotree-toggle))
 
 ;; Multiple cursors
 ;; First mark the word, then add more cursors
@@ -144,7 +134,6 @@
       (copy-region-as-kill beg end)))
   )
 
-
 (defun copy-word (&optional arg)
   "Copy words at point into kill-ring"
   (interactive "P")
@@ -175,6 +164,9 @@
 (setq set-mark-command-repeat-pop t)
 
 (global-set-key (kbd "C-=") 'er/expand-region)
+;; This is a faster option for something I do regularly in org
+;; I often copy a word in a TODO entry to paste a link
+(global-set-key (kbd "C-+") 'er/mark-word)
 
 ;; Creates a new line without breaking the current line
 (defun newline-without-break-of-line ()
@@ -188,14 +180,6 @@
 
 (global-set-key (kbd "<C-return>") 'newline-without-break-of-line)
 
-;; Some functions from EmacsWiki
-(add-to-list 'load-path "~/.emacs.d/elisp/misc/" t)
-
-;; Jump to last change
-(require 'goto-chg)
-(global-set-key (kbd "M-[") 'goto-last-change)
-(global-set-key (kbd "M-]") 'goto-last-change-reverse)
-
 (global-set-key (kbd "C-*")
     (lambda ()
       (interactive)
@@ -204,8 +188,8 @@
 ;; Add blank line at the end of a file
 (setq require-final-newline t)
 
-;; Scroll while centering
-(setq scroll-error-top-bottom 'true)
+;; Scroll while centering (for M-v and C-v)
+(setq scroll-error-top-bottom t)
 (setq scroll-preserve-screen-position t)
 
 ;; Hide your password when prompted
@@ -259,17 +243,15 @@
 (use-package dash
   :ensure t)
 
-(use-package counsel
-  :ensure t)
-
 ;; Pair parenthesis
-(add-to-list 'load-path "~/.emacs.d/elpa/smartparens-20230529.1017")
-(require 'smartparens)
 (use-package smartparens
   :ensure t
   :init (smartparens-global-mode)
   (sp-pair "'" nil :actions :rem)
   (sp-pair "`" nil :actions :rem)
+  (with-eval-after-load 'smartparens
+	(sp-local-pair 'org-mode "'" "'" :actions '(rem)))
+
   :config
   ;; Now i can express sadness in erc-mode
   (sp-local-pair 'erc-mode "(" nil :actions nil))
@@ -307,8 +289,8 @@
   :ensure t)
 
 (global-set-key (kbd "C-:") 'avy-goto-char-timer)
-(global-set-key (kbd "M-s") 'avy-goto-char)
-(global-set-key (kbd "C-x a") 'avy-goto-char-timer)
+(global-set-key (kbd "M-c") 'avy-goto-char)
+(global-set-key (kbd "C-,") 'avy-goto-char)
 (global-set-key (kbd "C-?") 'avy-goto-line)
 
 ;; To be able to easily rescale the text on the fly
@@ -322,6 +304,16 @@
 (setq auto-save-default nil)
 ;; Disable backup
 (setq backup-inhibited t)
+
+;; Use super-save
+(use-package super-save
+  :ensure t
+  :config
+  (super-save-mode +1))
+;; Save when emacs is idle
+(setq super-save-auto-save-when-idle t)
+;; Save silently
+(setq super-save-silent t)
 
 ;; Disable mouse
 (use-package disable-mouse
@@ -339,10 +331,10 @@
 (setq explicit-shell-file-name "/bin/zsh")
 
 ;; Improve the candidates sorting
-(straight-use-package 'prescient)
-(straight-use-package 'company-prescient)
-(straight-use-package 'ivy-prescient)
-(straight-use-package 'vertico-prescient)
+(use-package prescient
+  :straight t
+  :config
+  (prescient-persist-mode 1))
 
 ;; Functions around revert to streamline working in org notebooks
 ;; assisted by AI coding tools like Claude Code
