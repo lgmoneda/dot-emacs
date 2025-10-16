@@ -43,7 +43,7 @@
 
 ;; The default pyenv I use
 ;; (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
-;; (pyvenv-workon "edge")
+(pyvenv-workon "edge")
 
 (add-hook 'python-mode-hook
           (lambda ()

@@ -322,7 +322,7 @@
       '(("pt" . "en") ("en" . "pt") ("pt" . "fr") ("fr" . "pt")))
   )
 
-;; Fixes the tkk error
+;; Fixes the tkk error from google-translate
 (defun google-translate--get-b-d1 ()
     ;; TKK='427110.1469889687'
   (list 427110 1469889687))

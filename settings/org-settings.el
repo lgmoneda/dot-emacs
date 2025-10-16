@@ -197,8 +197,10 @@ menu\nmouse-2 will jump to task"))
 (use-package simple-httpd
   :ensure t)
 
-(add-to-list 'load-path "/Users/luis.moneda/repos/jupyter/")
-(require 'jupyter)
+(use-package jupyter
+  :ensure t
+  :config
+  (pyvenv-mode t))
 
 ;; (use-package pyvenv
 ;;   :ensure t
@@ -602,9 +604,7 @@ this command to copy it"
 	 "* TODO %?\n%u\n%a\n" :clock-in t :clock-resume t)
 	("b" "Blank" entry (file org-default-notes-file)
 	 "* %?\n%u")
-	("m" "Meeting" entry (file org-default-notes-file)
-	 "* MEETING with %? :MEETING:\n%t" :clock-in t :clock-resume t)
-	("d" "Diary" entry (file+datetree "~/org/diary.org")
+        ("d" "Diary" entry (file+datetree "~/org/diary.org")
 	 "* %?\n%U\n" :clock-in t :clock-resume t)
 	("D" "Daily Log" entry (file "~/org/daily-log.org")
 	 "* %u %?\n*Summary*: \n\n*Problem*: \n\n*Insight*: \n\n*Tomorrow*: " :clock-in t :clock-resume t)
@@ -658,6 +658,13 @@ this command to copy it"
                :empty-lines 1
                :immediate-finish t))
 
+(add-to-list 'org-capture-templates
+             '("W" "Work task (programmatic)" entry
+               (file+olp "~/Dropbox/Agenda/nu.org" "Manager" "Misc")
+               "* TODO %i"
+               :empty-lines 1
+               :immediate-finish t))
+
 ;; Capture it for today
 (add-to-list 'org-capture-templates
              '("td" "Personal task today (programmatic)" entry
@@ -672,7 +679,7 @@ this command to copy it"
                (function org-roam-dailies-capture-date)))
 
 (add-to-list 'org-capture-templates
-             '("m" "Fleeting memory" entry
+             '("y" "Fleeting memory" entry
 			   (file "~/Dropbox/Agenda/roam/20220619110953-fleeting_memories.org")
                "* %t \n** %?"))
 
@@ -706,6 +713,141 @@ this command to copy it"
 :IMPACT-STATEMENT:
 :IMPACT:   Low
 :END:" :empty-lines 1))
+
+(defun lgm/org-capture-meeting-template ()
+  "Return a formatted string for a new meeting note with structured headings and properties."
+  (let* ((now (current-time))
+         (time (format-time-string "%H:%M" now))
+         (date (format-time-string "%m/%d/%y" now))
+         (full-timestamp (format "%s, %s, %s"
+                                 (read-string "Meeting title: ")
+                                 time date))
+         )
+    (format
+     "* %s  :meeting:\n:PROPERTIES:\n:Date: %s\n:Attendees: \n:Project: \n:END:\n** Pre-meeting\n%%?\n** Notes\n** Action items\n"
+     full-timestamp
+     (format-time-string "%Y-%m-%d %H:%M" now))))
+
+(add-to-list 'org-capture-templates
+             '("m" "Meeting" entry
+         (file+olp+datetree
+          "/Users/luis.moneda/Dropbox/Agenda/roam/20211123125642-nu_meeting_notes.org"
+          "Meeting Notes")
+         (function lgm/org-capture-meeting-template)
+         :jump-to-captured t))
+
+;; to run in the meeting file
+(defun lgm/org-archive-old-meetings (&optional days)
+  "Archive meeting entries older than DAYS (default 90) based on :Date: property."
+  (interactive "P")
+  (let* ((days (or days 90))
+         (seconds (* days 24 3600))
+         (now (current-time))
+         (count 0))
+    (org-map-entries
+     (lambda ()
+       (let ((date-prop (org-entry-get (point) "Date")))
+         (when (and date-prop
+                    (string-match
+                     "\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\)" date-prop))
+           (let* ((date (match-string 1 date-prop))
+                  (time (org-time-string-to-time date)))
+             (when (> (float-time (time-subtract now time)) seconds)
+               (org-archive-subtree)
+               (setq count (1+ count)))))))
+     "+meeting"  ;; only scan headings tagged :meeting:
+     'file)
+    (message "Archived %d meeting(s) older than %d days" count days)))
+
+(org-link-set-parameters
+ "archive-old-meetings"
+ :follow (lambda (_path)
+           (lgm/org-archive-old-meetings))
+ :face '(:foreground "orange" :weight bold)
+ :help-echo "Archive meeting entries older than 90 days")
+
+;; Capture to-dos from meetings automatically
+;; It extract after the org-capture
+;; Or I can call lgm/org-extract-todos-from-subtree-at-point with the cursor in the meeting note
+;; Or I can call lgm/org-extract-todos-from-all-meetings to extract from all the notes
+(defvar lgm/nu-target-file "~/Dropbox/Agenda/nu.org")
+
+(defun lgm/org-extract-todos-from-subtree-at-point ()
+  "Extract TODOs from current meeting subtree and re-capture them into nu.org.
+Uses the headless capture template “W”.
+Links back to the meeting using `org-store-link`, without creating an Org-roam ID."
+  (interactive)
+  (org-back-to-heading t)
+  (org-show-subtree)
+  (let ((copied 0))
+    (let* ((meeting-title (nth 4 (org-heading-components)))
+           ;; create a regular stored Org link to this heading
+           (link-info (save-excursion
+                        (org-store-link nil)))
+           (link (or (car-safe link-info)
+                     (org-link-make-string
+                      (concat "file:" (buffer-file-name)
+                              "::" meeting-title)
+                      meeting-title))))
+      (save-restriction
+        (org-narrow-to-subtree)
+        (org-map-entries
+         (lambda ()
+           (let ((todo (org-get-todo-state)))
+             (when todo
+               (setq copied (1+ copied))
+               (let* ((task-title (nth 4 (org-heading-components)))
+                      (start (save-excursion
+                               (org-end-of-meta-data t)
+                               (forward-line 0)
+                               (point)))
+                      (end (save-excursion
+                             (org-end-of-subtree t t)
+                             (point)))
+                      (body (string-trim
+                             (buffer-substring-no-properties start end)))
+                      (entry (concat task-title
+                                     " — " link
+                                     (unless (string-empty-p body)
+                                       (concat "\n" body "\n")))))
+                 ;; Headless capture via template W
+                 (org-capture-string entry "W")
+                 ;; clear TODO in the meeting
+                 (org-todo 'none)
+                 (message "[lgm] recaptured: %s" task-title)))))
+         t 'tree)))
+    (save-buffer)
+    (message "[lgm] Extracted %d TODO(s) from '%s' via capture template W"
+             copied (nth 4 (org-heading-components)))))
+
+(defun lgm/org-extract-todos-after-meeting-capture ()
+  "After capture, extract TODOs only from the captured meeting subtree."
+  (when (and (markerp (bound-and-true-p org-capture-last-stored-marker)))
+    (with-current-buffer (marker-buffer org-capture-last-stored-marker)
+      (save-excursion
+        (goto-char org-capture-last-stored-marker)
+        (org-back-to-heading t)
+        (let* ((buf-file (or (buffer-file-name) ""))
+               (meeting-file-p (string-match-p "nu_meeting_notes\\.org$" buf-file))
+               (tags (org-get-tags)))
+          (when (or meeting-file-p (member "meeting" tags))
+            (lgm/org-extract-todos-from-subtree-at-point)))))))
+
+(defun lgm/org-extract-todos-from-all-meetings ()
+  "Scan the entire meeting-notes file and extract all TODOs from every meeting subtree."
+  (interactive)
+  (let ((count 0))
+    (org-map-entries
+     (lambda ()
+       (setq count (1+ count))
+       (save-excursion
+         (lgm/org-extract-todos-from-subtree-at-point)))
+     "meeting"  ;; only process headings tagged :meeting:
+     'file)
+    (message "[lgm] Extracted TODOs from %d meeting(s)" count)))
+
+(add-hook 'org-capture-after-finalize-hook
+          #'lgm/org-extract-todos-after-meeting-capture)
 
 ;; Enable the usage of two agenda views at the same time
 (org-toggle-sticky-agenda)
@@ -915,6 +1057,27 @@ With prefix ARG, prompt for destination filename."
     (read-char "Taking screenshot... Press any key when done.")
     (org-insert-link t (concat "file:" dest) "")
     (org-remove-inline-images)
+    (org-display-inline-images)))
+
+
+;; This is an experimental version of the above function that works in org capture
+(setq lgm/screenshot-dir "~/Dropbox/Agenda/roam/screenshots")
+
+(defun lgm/screenshot-to-org-link (&optional arg)
+  "Take a screenshot and insert it as an Org link, safe for capture buffers."
+  (interactive "P")
+  (let* ((dir (expand-file-name lgm/screenshot-dir))
+         (_ (unless (file-directory-p dir)
+              (make-directory dir t)))
+         (default-dest (expand-file-name
+                        (format-time-string "screen_%Y%m%d_%H%M%S.jpg")
+                        dir))
+         (dest (if arg
+                   (read-file-name "Save screenshot to: " dir nil nil default-dest)
+                 default-dest)))
+    (start-process "screencapture" nil "screencapture" "-i" dest)
+    (read-char "Taking screenshot... Press any key when done.")
+    (org-insert-link t (concat "file:" dest) "")
     (org-display-inline-images)))
 
 ;; Increase latex preview font

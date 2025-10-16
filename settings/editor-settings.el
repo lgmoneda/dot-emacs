@@ -2,12 +2,26 @@
 
 ;; Save place
 ;; Start from the last place you were in a file the next time you visit it
-;; It's a emacs24.5 or older way to do it
-;; (require 'saveplace)
-;; (setq-default save-place t)
-;; For emacs 25+
-(save-place-mode 1)
-(setq save-place-file "~/.emacs.d/saveplace.log")
+(use-package saveplace
+  :defer 3
+  :init
+  ;; Always resolve symlinks (avoids duplicate entries)
+  (setq find-file-visit-truename t
+        vc-follow-symlinks t)
+  (save-place-mode 1)
+  :custom
+  (save-place-file (expand-file-name ".my-saved-places" user-emacs-directory))
+  (save-place-ignore-files-regexp
+   "\\(?:COMMIT_EDITMSG\\|hg-editor-[[:alnum:]]+\\.txt\\|elpa\\|svn-commit\\.tmp\\|bzr_log\\.[[:alnum:]]+\\)$")
+  (save-place-forget-unreadable-files t)
+  ;; :hook
+  ;; ;; Make sure Org buffers also track their place
+  ;; (org-mode . (lambda () (setq-local save-place t)))
+  )
+
+
+;; Optional: periodic save every 10 minutes (safe & async)
+(run-with-idle-timer 600 600 #'save-place-kill-emacs-hook)
 
 ;; Garbage Collector teste
 (setq gc-cons-threshold 20000000)
@@ -315,7 +329,8 @@
 ;; Save silently
 (setq super-save-silent t)
 
-(defvar my-super-save-max-size (* 2 1024 1024)
+;; 100kb is enough to skip auto-saving
+(defvar my-super-save-max-size (* 0.1 1024 1024)
   "Maximum buffer size (in bytes) for which `super-save' should trigger (default 2 MB).")
 
 (defvar-local my-super-save-banned nil
