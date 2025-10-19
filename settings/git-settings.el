@@ -5,7 +5,7 @@
 
 ;; Magit
 (use-package magit
-  ;; :quelpa ((magit :fetcher git :url "https://github.com/magit/magit") :upgrade t)
+  :quelpa ((magit :fetcher git :url "https://github.com/magit/magit") :upgrade t)
   :ensure t
   :init
   ;; Auto revert buffers when change branches

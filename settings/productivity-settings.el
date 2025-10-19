@@ -161,6 +161,7 @@
 ;; project.el
 (use-package project
   :ensure nil
+  :straight (:type built-in)
   :bind-keymap ("C-c p" . project-prefix-map)
   :init
   (setq project-mode-line '(:eval
@@ -275,15 +276,15 @@
   :custom
   (consult-preview-key "M-.")
   (consult-project-function
-      (lambda (_)
-        (or
-         (when-let ((root (locate-dominating-file default-directory ".git")))
-           root)
-         (when-let ((project (project-current)))
-           (car (project-roots project)))
-         default-directory)))
+   (lambda (_)
+     (or
+      (when-let ((root (locate-dominating-file default-directory ".git")))
+        root)
+      (when-let ((project (project-current)))
+        (car (project-roots project)))
+      default-directory)))
   (consult-ripgrep-args
-      "rg --null --line-buffered --color=never --max-columns=1000 \
+   "rg --null --line-buffered --color=never --max-columns=1000 \
 --path-separator / --smart-case --no-heading --line-number")
   (consult-async-min-input 2)
   (consult-async-refresh-delay 0.1)
@@ -319,7 +320,7 @@
   :config
   (define-key project-prefix-map (kbd "f") #'consult-project-extra-find)
   (define-key project-prefix-map (kbd "o") #'consult-project-extra-find-other-window)
-)
+  )
 
 ;; Which-key minor mode
 (use-package which-key

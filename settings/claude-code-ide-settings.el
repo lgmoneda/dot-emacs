@@ -9,7 +9,9 @@
 (claude-code-ide-emacs-tools-setup)
 
 ;; for eat terminal backend:
-;; (use-package eat :ensure t)
+(use-package eat
+  :ensure t)
+(setq eat-term-name "xterm-256color")
 
 ;; for vterm terminal backend:
 (use-package vterm :ensure t)

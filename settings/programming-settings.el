@@ -51,6 +51,12 @@
   (eglot-extend-to-xref nil) ;; cover files found through xref (M-.)
   )
 
+;; cargo install emacs-lsp-booster
+(use-package eglot-booster
+	:straight ( eglot-booster :type git :host nil :repo "https://github.com/jdtsmith/eglot-booster")
+	:after eglot
+	:config (eglot-booster-mode))
+
 ;; Corfu — popup completion in buffer
 ;; corfu-insert-separator is M-SPC, use it to filter candidates
 (use-package corfu
@@ -99,7 +105,7 @@
              (org-roam-file-p))              ;; ← true only for Roam files
     ;; timing: calmer in Roam notes
     (setq-local corfu-auto t)
-    (setq-local corfu-auto-delay 0.7)
+    (setq-local corfu-auto-delay 1.0)
     (setq-local corfu-auto-prefix 4)
 ))
 
@@ -153,8 +159,9 @@
              '((css . ("https://github.com/tree-sitter/tree-sitter-css" "v0.20.0"))
                (go . ("https://github.com/tree-sitter/tree-sitter-go" "v0.20.0"))
                (html . ("https://github.com/tree-sitter/tree-sitter-html" "v0.20.1"))
-	       (elisp . ("https://github.com/Wilfred/tree-sitter-elisp" "v0.3.0"))
-               (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.20.1" "src"))
+			   (elisp . ("https://github.com/Wilfred/tree-sitter-elisp" "main"))
+			   (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.20.1" "src"))
+			   (bash . ("https://github.com/tree-sitter/tree-sitter-bash" "v0.20.4"))
                (json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
                (markdown . ("https://github.com/ikatyang/tree-sitter-markdown" "v0.7.1"))
                (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
@@ -179,7 +186,7 @@
              (typescript-mode . typescript-ts-mode)
              (js2-mode . js-ts-mode)
              (bash-mode . bash-ts-mode)
-	     (elisp-mode . elisp-ts-mode)
+			 (elisp-mode . elisp-ts-mode)
              (conf-toml-mode . toml-ts-mode)
              (go-mode . go-ts-mode)
              (css-mode . css-ts-mode)
@@ -188,7 +195,7 @@
     (add-to-list 'major-mode-remap-alist mapping))
   :config
   (mp-setup-install-grammars)
-)
+  )
 
 ;; Try later
 ;; (use-package dap-mode

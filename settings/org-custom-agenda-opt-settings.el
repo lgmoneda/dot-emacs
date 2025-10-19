@@ -185,6 +185,18 @@ should be continued."
                           new-item)
       new-item)))
 
+(defun lgm/org-skip-when-parent-scheduled ()
+  "Skip entries whose parent has a SCHEDULED property."
+  (save-restriction
+    (widen)
+    (let ((should-skip nil))
+      (save-excursion
+        (while (and (not should-skip) (org-up-heading-safe))
+          (when (org-get-scheduled-time (point))
+            (setq should-skip t))))
+      (when should-skip
+        (or (outline-next-heading) (point-max))))))
+
 (setq org-agenda-custom-commands
       '(("d" "Personal Agenda"
          (
@@ -307,6 +319,7 @@ should be continued."
           (tags "LEVEL>=1+TODO=\"TODO\"|+TODO=\"WAIT\""
 		((org-agenda-overriding-header "")
 		 (org-agenda-sorting-strategy '(priority-down))
+		 (org-agenda-skip-function #'lgm/org-skip-when-parent-scheduled)
 		 (org-super-agenda-groups
 		  '(
                     (:name "🌋 My Epics\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"

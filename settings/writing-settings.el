@@ -169,41 +169,28 @@
 ;; https://kristofferbalintona.me/posts/202206141852/
 ;; https://blog.tecosaur.com/tmio/2021-07-31-citations.html
 (use-package citar
+  ;; :straight t
   :ensure t
-  :after (org-roam-bibtex)
-  :config
-  ;; Integrate with Embark (actions on citations)
-  (require 'citar)
-  (require 'citar-org)
-  (require 'citar-embark)
-  (citar-embark-mode 1)
+  :after (org-roam-bibtex org)
+  :init
+  ;; Set it early, so citar sees it even before :config
+  (setq citar-bibliography '("~/Dropbox/Research/library.bib"))
   :custom
-  (citar-bibliography '("~/Dropbox/Research/library.bib"))
   (org-cite-insert-processor 'citar)
   (org-cite-follow-processor 'citar)
   (org-cite-activate-processor 'citar)
-  ;; Not relevant right now
-  ;; (org-cite-export-processors
-  ;;  '((md . (csl "chicago-fullnote-bibliography.csl"))   ; Footnote reliant
-  ;; 	 (latex biblatex)                                   ; For humanities
-  ;; 	 (odt . (csl "chicago-fullnote-bibliography.csl"))  ; Footnote reliant
-  ;; 	 (t . (csl "modern-language-association.csl"))))      ; Fallback
-
   (citar-org-roam-capture-template-key "r")
-  ;; Use Vertico & Orderless for completion
   (citar-symbols
    `((file ,(all-the-icons-faicon "file-pdf-o" :face 'all-the-icons-red) . " ")
      (note ,(all-the-icons-faicon "sticky-note" :face 'all-the-icons-yellow) . " ")))
   (citar-symbol-separator "  ")
-  :custom-face
-  ;; Have citation link faces look closer to as they were for `org-ref'
-  (org-cite ((t (:foreground "DarkSeaGreen4"))))
-  (org-cite-key ((t (:foreground "forest green" :slant italic))))
-  :init
-  (global-set-key (kbd "C-c r") 'org-cite-insert)
   :hook
-  (LaTeX-mode . citar-capf-setup)
-  (org-mode . citar-capf-setup))
+  ((LaTeX-mode . citar-capf-setup)
+   (org-mode . citar-capf-setup))
+  :config
+  (require 'citar-embark)
+  (citar-embark-mode 1)
+  (global-set-key (kbd "C-c r") 'org-cite-insert))
 
 (use-package citar-embark
   :ensure t
@@ -274,14 +261,16 @@
 
 ;; use org-ref
 (use-package org-ref
-  :ensure t)
+  :ensure t
+  :after org
+  :hook (org-mode . (lambda () (require 'org-ref))))
+
 ;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/org-ref-20230131.1743")
 ;; (autoload 'org-ref "org-ref" "" t)
 
 (setq org-ref-bibliography-notes "~/Dropbox/Agenda/roam"
       org-ref-default-bibliography '("~/Dropbox/Research/library.bib")
       org-ref-pdf-directory "~/Dropbox/Research/Literature/"
-      org-ref-completion-library 'org-ref-ivy-cite
 	  org-ref-default-citation-link 'citet
       )
 

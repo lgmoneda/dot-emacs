@@ -1096,7 +1096,7 @@ With prefix ARG, prompt for destination filename."
 (use-package olivetti
   :ensure t
   :config
-  (setq-default olivetti-body-width 120))
+  (setq-default olivetti-body-width 140))
 
 ;; Enable Olivetti for text-related mode such as Org Mode
 (add-hook 'text-mode-hook 'olivetti-mode)
@@ -1134,8 +1134,8 @@ With prefix ARG, prompt for destination filename."
 	 :unnarrowed t)
 	  )
 	)
-  :config
-  (require 'org-ref)
+  ;; :config
+  ;; (require 'org-ref)
   ;; Ensure ORB actually initializes once Org-roam is available
   (require 'org-roam-bibtex)
   (org-roam-bibtex-mode 1)
@@ -2423,6 +2423,9 @@ Records until `org-screen-record-stop-and-insert-link' is called."
 ;;     (apply orig-fn args)
 ;;     (save-buffer))
 ;;   (advice-add 'ob-async-async-callback :around #'my/ob-async-save))
+
+;; Interesting packages
+;; https://github.com/isamert/corg.el
 
 
 (provide 'org-settings)

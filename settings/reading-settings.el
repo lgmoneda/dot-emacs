@@ -10,7 +10,7 @@
 (require 'shr)
 (require 'cl-lib)
 
-(defun url-to-epub (url title)
+(defun lgm/url-to-epub (url title)
   "Download the webpage at URL and export it as a valid EPUB book with TITLE."
   (interactive "sEnter URL: \nsEnter EPUB title: ")
   (unless (stringp url)
@@ -74,18 +74,18 @@
                             ((string-prefix-p "/" src) (concat (url-type parsed-url) "://" (url-host parsed-url) src))
                             (t (url-expand-file-name src base-url))))
              (image-id (format "img%d" (cl-incf image-counter)))
-             (image-filename (and absolute-src (replace-regexp-in-string "[^a-zA-Z0-9_.-]" "_" 
+             (image-filename (and absolute-src (replace-regexp-in-string "[^a-zA-Z0-9_.-]" "_"
                                                                          (file-name-nondirectory absolute-src))))
              (local-filename (and image-filename (concat epub-images-dir "/" image-filename))))
-        
+
         (when (and absolute-src local-filename)
           (condition-case err
               (progn
                 (message "Downloading image: %s" absolute-src)
                 (url-copy-file absolute-src local-filename t)
                 ;; Add to manifest
-                (setq image-items 
-                      (concat image-items 
+                (setq image-items
+                      (concat image-items
                               (format "<item id=\"%s\" href=\"images/%s\" media-type=\"image/%s\"/>\n"
                                       image-id
                                       image-filename
@@ -149,7 +149,7 @@
                            epub-dir output-epub output-epub))
     (message "EPUB saved as %s" output-epub)))
 
-(defun url-to-epub-clean (url title)
+(defun lgm/ngurl-to-epub-clean (url title)
   "Download the webpage at URL, extract the main content, and export it as a valid EPUB book with TITLE."
   (interactive "sEnter URL: \nsEnter EPUB title: ")
   (unless (stringp url)
@@ -180,14 +180,14 @@
         (re-search-forward "\r?\n\r?\n" nil t)
         (setq content (buffer-substring-no-properties (point) (point-max)))
         (setq dom (libxml-parse-html-region (point) (point-max)))
-        
+
         ;; Extract page title if available
         (let ((title-element (car (dom-by-tag dom 'title))))
           (when title-element
             (setq page-title (dom-text title-element))))
-        
+
         ;; Extract meaningful content using various content selectors
-        (setq main-content 
+        (setq main-content
               (or
                ;; Try to find article element
                (car (dom-by-tag dom 'article))
@@ -206,46 +206,46 @@
                (car (dom-by-class dom "post-content"))
                ;; Fallback to body if no content identifiers found
                (car (dom-by-tag dom 'body))))
-        
+
         ;; If no main content was found, use the body
         (unless main-content
           (setq main-content (car (dom-by-tag dom 'body))))
-        
+
         ;; Make a deep copy of main-content to prevent modifying original DOM
         (setq main-content (copy-tree main-content))
-        
+
         ;; Remove unwanted elements from main content
         (when main-content
           ;; Remove navigation elements (nav tags)
           (let ((navs (dom-by-tag main-content 'nav)))
             (dolist (nav navs)
               (dom-remove-node main-content nav)))
-          
+
           ;; Remove headers
           (let ((headers (dom-by-tag main-content 'header)))
             (dolist (header headers)
               (dom-remove-node main-content header)))
-          
+
           ;; Remove footers
           (let ((footers (dom-by-tag main-content 'footer)))
             (dolist (footer footers)
               (dom-remove-node main-content footer)))
-          
+
           ;; Remove asides
           (let ((asides (dom-by-tag main-content 'aside)))
             (dolist (aside asides)
               (dom-remove-node main-content aside)))
-          
+
           ;; Remove elements by common class names
-          (dolist (class '("nav" "navigation" "menu" "sidebar" "widget" "footer" "header" 
+          (dolist (class '("nav" "navigation" "menu" "sidebar" "widget" "footer" "header"
                            "comments" "social" "related" "meta" "tags" "author-info"))
             (let ((elements (dom-by-class main-content class)))
               (dolist (el elements)
                 (dom-remove-node main-content el))))
-          
+
           ;; Extract all remaining images for processing
           (setq images (dom-by-tag main-content 'img))
-          
+
           ;; Extract all images before converting to HTML
           (setq images (dom-by-tag main-content 'img))))
       (kill-buffer temp-buffer))
@@ -285,29 +285,29 @@
 
           ;; Generate a safe filename for the image
           (when absolute-src
-            (setq image-filename 
+            (setq image-filename
                   (if (string-match "/\\([^/]*\\)$" absolute-src)
-                      (replace-regexp-in-string "[^a-zA-Z0-9_.-]" "_" 
+                      (replace-regexp-in-string "[^a-zA-Z0-9_.-]" "_"
                                                (match-string 1 absolute-src))
                     (format "image_%d.png" image-counter)))
-            
+
             ;; Ensure we have a file extension
             (unless (string-match "\\.[a-zA-Z0-9]+$" image-filename)
               (setq image-filename (concat image-filename ".png")))
-            
+
             (setq local-filename (concat epub-images-dir "/" image-filename))
-            
+
             (condition-case err
                 (progn
                   (message "Downloading image: %s" absolute-src)
                   ;; Create a safe URL for downloading
                   (let ((encoded-url (url-encode-url absolute-src)))
                     (url-copy-file encoded-url local-filename t))
-                  
+
                   ;; Add to manifest if file exists
                   (when (file-exists-p local-filename)
-                    (setq image-items 
-                          (concat image-items 
+                    (setq image-items
+                          (concat image-items
                                   (format "<item id=\"%s\" href=\"images/%s\" media-type=\"image/%s\"/>\n"
                                           image-id
                                           image-filename
@@ -322,14 +322,14 @@
                     ;; Update src attribute to point to the local file
                     (setf (dom-attr img 'src) (concat "images/" image-filename))))
               (error (message "Error downloading image %s: %s" absolute-src (error-message-string err)))))))
-      
+
       ;; Convert main content to HTML after updating all image src attributes
       (setq html-content (shr-dom-to-xml main-content)))
 
     ;; Preserve original title if found, otherwise use the provided title
     (unless page-title
       (setq page-title title))
-    
+
     ;; Add the page title as an H1 heading at the beginning of the content
     (setq html-content (concat "<h1>" page-title "</h1>" html-content))
 
@@ -344,7 +344,7 @@
       (insert "<style type=\"text/css\">\n")
       (insert "body { font-family: serif; margin: 1em; line-height: 1.4; }\n")
       (insert "h1, h2, h3, h4, h5, h6 { font-family: sans-serif; }\n")
-      (insert "img { max-width: 100%; height: auto; display: block; margin: 1em 0; }\n") 
+      (insert "img { max-width: 100%; height: auto; display: block; margin: 1em 0; }\n")
       (insert "a { color: #0066cc; text-decoration: none; }\n")
       (insert "p { margin: 0.5em 0; }\n")
       (insert "</style>\n")
