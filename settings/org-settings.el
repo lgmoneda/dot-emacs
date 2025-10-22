@@ -330,6 +330,31 @@ This should only apply to jupyter-lang blocks."
 (venv-initialize-eshell) ;; if you want eshell support
 (setq venv-location "/Users/luis.moneda/miniconda3/envs/edge")
 
+;; To enable editing python code with eglot
+(defun my/org-src-setup-python-ts ()
+  "Enable python-ts-mode + eglot and completions inside Org src blocks."
+  (when (and (eq major-mode 'org-mode)
+             (org-in-src-block-p 'inside))
+    (let ((lang (nth 0 (org-babel-get-src-block-info t))))
+      (when (string= lang "python")
+        ;; Force the edit buffer to use python-ts-mode
+        (setq org-src-lang-modes (append '(("python" . python-ts)) org-src-lang-modes))
+        ;; After opening the edit buffer, apply settings
+        (add-hook 'org-src-mode-hook #'my/activate-eglot-in-org-src nil 'local)))))
+
+(defun my/activate-eglot-in-org-src ()
+  "Activate eglot and completions if editing a Python block."
+  (when (derived-mode-p 'python-ts-mode)
+    ;; Start Eglot
+    (unless (eglot-managed-p)
+      (eglot-ensure))
+    ;; Enable your completion tools
+    (when (fboundp 'corfu-mode)
+      (corfu-mode 1))
+    ;; Optionally reuse flycheck or flymake
+    (flymake-mode 1)))
+
+(add-hook 'org-src-mode-hook #'my/org-src-setup-python-ts)
 
 ;Sunday, December 10, 2017
 ;============================
@@ -2544,26 +2569,98 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
 ;; -----------------------------------------------------------------------------
 ;; Main command
 ;; -----------------------------------------------------------------------------
+(require 'all-the-icons)
+
+(defun lgm/arc--domain-icon (domain)
+  "Return an icon for DOMAIN using all-the-icons."
+  (if (not domain)
+      (all-the-icons-faicon "globe" :height 0.9 :v-adjust 0.0)
+    (cond
+     ;; Dev & Code
+     ((string-match-p "github\\.com" domain)
+      (all-the-icons-octicon "mark-github" :height 0.9 :v-adjust 0.0))
+     ((string-match-p "stackoverflow\\.com\\|stackexchange\\.com" domain)
+      (all-the-icons-faicon "stack-overflow" :height 0.9 :v-adjust 0.0))
+     ((string-match-p "gitlab\\.com" domain)
+      (all-the-icons-faicon "gitlab" :height 0.9 :v-adjust 0.0))
+
+     ;; Google Services
+     ((string-match-p "google\\.com" domain)
+      (all-the-icons-faicon "google" :height 0.9 :v-adjust 0.0))
+     ((string-match-p "docs\\.google\\.com" domain)
+      (all-the-icons-faicon "file-text" :height 0.9 :v-adjust 0.0))
+     ((string-match-p "drive\\.google\\.com" domain)
+      (all-the-icons-faicon "google-drive" :height 0.9 :v-adjust 0.0))
+     ((string-match-p "mail\\.google\\.com\\|gmail\\.com" domain)
+      (all-the-icons-faicon "envelope" :height 0.9 :v-adjust 0.0))
+     ((string-match-p "sheets\\.google\\.com" domain)
+      (all-the-icons-faicon "table" :height 0.9 :v-adjust 0.0))
+
+     ;; Social & Media
+     ((string-match-p "youtube\\.com\\|youtu\\.be" domain)
+      (all-the-icons-faicon "youtube-play" :height 0.9 :v-adjust 0.0 :face '(:foreground "#FF0000")))
+     ((string-match-p "twitter\\.com\\|x\\.com" domain)
+      (all-the-icons-faicon "twitter" :height 0.9 :v-adjust 0.0))
+     ((string-match-p "reddit\\.com" domain)
+      (all-the-icons-faicon "reddit-alien" :height 0.9 :v-adjust 0.0))
+     ((string-match-p "linkedin\\.com" domain)
+      (all-the-icons-faicon "linkedin" :height 0.9 :v-adjust 0.0))
+     ((string-match-p "facebook\\.com" domain)
+      (all-the-icons-faicon "facebook" :height 0.9 :v-adjust 0.0))
+     ((string-match-p "instagram\\.com" domain)
+      (all-the-icons-faicon "instagram" :height 0.9 :v-adjust 0.0))
+
+     ;; AI & Tech
+     ((string-match-p "claude\\.ai" domain)
+      (all-the-icons-faicon "comment-o" :height 0.9 :v-adjust 0.0 :face '(:foreground "#D97757")))
+     ((string-match-p "openai\\.com\\|chat\\.openai\\.com\\|chatgpt\\.com" domain)
+      (all-the-icons-faicon "comments" :height 0.9 :v-adjust 0.0 :face '(:foreground "#10A37F")))
+     ((string-match-p "perplexity\\.ai" domain)
+      (all-the-icons-faicon "search" :height 0.9 :v-adjust 0.0))
+
+     ;; Documentation & Learning
+     ((string-match-p "wikipedia\\.org" domain)
+      (all-the-icons-faicon "wikipedia-w" :height 0.9 :v-adjust 0.0))
+     ((string-match-p "medium\\.com" domain)
+      (all-the-icons-faicon "medium" :height 0.9 :v-adjust 0.0))
+     ((string-match-p "arxiv\\.org" domain)
+      (all-the-icons-faicon "graduation-cap" :height 0.9 :v-adjust 0.0))
+
+     ;; Shopping
+     ((string-match-p "amazon\\.com\\|amazon\\.com\\.br" domain)
+      (all-the-icons-faicon "amazon" :height 0.9 :v-adjust 0.0))
+
+     ;; News
+     ((string-match-p "news\\.ycombinator\\.com" domain)
+      (all-the-icons-faicon "hacker-news" :height 0.9 :v-adjust 0.0))
+
+     ;; Default
+     (t (all-the-icons-faicon "globe" :height 0.9 :v-adjust 0.0)))))
+
+;; Updated main function with icons
 (defun lgm/consult-arc-history-insert-link ()
-  "Pick from Arc history; RET inserts; C-o opens; Embark works."
+  "Pick from Arc history with icons; RET inserts; C-o opens; Embark works."
   (interactive)
   (let* ((entries (my/arc--fetch-history))
-         ;; Fixed widths for perfect alignment
-         (title-width 65)
+         ;; Adjust title width to account for icon + space
+         (title-width 63)  ; reduced by 2 for icon
          (domain-width 28)
          (time-width   10)
-         ;; Build display strings with proper width handling
          (cands
           (mapcar
            (lambda (e)
              (let* ((raw (plist-get e :title))
-                    ;; First truncate if needed - use "..." not "…"
+                    (dom (plist-get e :domain))
+                    (icon (lgm/arc--domain-icon dom))
+                    ;; Truncate if needed
                     (truncated (if (> (string-width raw) title-width)
                                    (concat (truncate-string-to-width raw (- title-width 3) nil nil) "...")
                                  raw))
-                    ;; Then pad to exact width
-                    (padded (concat truncated
-                                   (make-string (max 0 (- title-width (string-width truncated))) ?\s))))
+                    ;; Add icon and pad to exact width
+                    (with-icon (concat icon " " truncated))
+                    (padded (concat with-icon
+                                   (make-string (max 0 (- (+ title-width 2)
+                                                          (string-width with-icon))) ?\s))))
                (cons padded e)))
            entries))
          (annot
@@ -2571,13 +2668,10 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
             (when-let* ((e   (cdr (assoc disp cands)))
                         (ago (my/arc--ago-string (plist-get e :time)))
                         (dom (plist-get e :domain)))
-              ;; Properly pad domain and time with width-aware truncation
-              (let ((dom-padded (truncate-string-to-width
-                                 (concat (or dom "") (make-string domain-width ?\s))
-                                 domain-width nil ?\s))
-                    (ago-padded (truncate-string-to-width
-                                 (concat (or ago "") (make-string time-width ?\s))
-                                 time-width nil ?\s)))
+              (let ((dom-padded (concat (or dom "")
+                                       (make-string (max 0 (- domain-width (string-width (or dom "")))) ?\s)))
+                    (ago-padded (concat (or ago "")
+                                       (make-string (max 0 (- time-width (string-width (or ago "")))) ?\s))))
                 (if (fboundp 'marginalia--fields)
                     (marginalia--fields
                      (dom-padded :face 'font-lock-comment-face)
@@ -2585,7 +2679,6 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
                   (format "  %s %s"
                           (propertize dom-padded 'face 'font-lock-comment-face)
                           (propertize ago-padded 'face 'marginalia-date))))))))
-    ;; make mapping visible to Embark/C-o handlers
     (setq lgm/arc--cands cands)
     (let* ((selection (consult--read
                        (mapcar #'car cands)
