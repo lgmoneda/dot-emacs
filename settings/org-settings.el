@@ -980,7 +980,7 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
          :target
          (file+head
           "%(expand-file-name (or citar-org-roam-subdir \"\") org-roam-directory)/${citar-citekey}.org"
-          "#+title: ${citar-title} (${citar-date}), ${citar-author}.\n#+ref: cite:${citar-citekey}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n#+created: %U\n#+last_modified: %U\n\n")
+          "#+title: ${citar-title} (${citar-date}), ${citar-author}.\n#+ref: cite:${citar-citekey}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n#+created: %U\n#+last_modified: %U\n\n%?")
          :unnarrowed t)))
   :custom
   (org-roam-directory (file-truename "/Users/luis.moneda/Dropbox/Agenda/roam"))
@@ -2427,6 +2427,179 @@ Records until `org-screen-record-stop-and-insert-link' is called."
 ;; Interesting packages
 ;; https://github.com/isamert/corg.el
 
+;; move to elsewhere later
+;;; Arc → Consult/Vertico picker with fixed columns + open actions
+(require 'subr-x)
+(require 'cl-lib)
+
+(defvar my/arc-history-db
+  (expand-file-name
+   "/Users/luis.moneda/Library/Application Support/Arc/User Data/Default/History")
+  "Path to Arc browser history SQLite database.")
+
+(defun my/arc--copy-db ()
+  (let ((tmp "/tmp/arc-history.db"))
+    (when (file-exists-p tmp) (delete-file tmp))
+    (copy-file my/arc-history-db tmp)
+    tmp))
+
+(defun my/arc--chrome-to-seconds (chrome-time)
+  (- (/ chrome-time 1e6) 11644473600.0))
+
+(defun my/arc--ago-string (chrome-time)
+  (let* ((tsec (my/arc--chrome-to-seconds chrome-time))
+         (delta (- (float-time) tsec)))
+    (cond
+     ((< delta 60) (format "%.0fs ago" delta))
+     ((< delta 3600) (format "%.0fm ago" (/ delta 60)))
+     ((< delta 86400) (format "%.0fh ago" (/ delta 3600)))
+     ((< delta 604800) (format "%.0fd ago" (/ delta 86400)))
+     (t (format-time-string "%Y-%m-%d %H:%M" tsec)))))
+
+(defun my/arc--domain (url)
+  (when (string-match "\\`https?://\\([^/]+\\)" url)
+    (match-string 1 url)))
+
+(defun my/arc--clean-title (title domain)
+  (if (and domain (string-match-p (regexp-quote domain) title))
+      (string-trim (replace-regexp-in-string (regexp-quote domain) "" title))
+    title))
+
+(defun my/arc--fetch-history (&optional limit)
+  (let* ((db (my/arc--copy-db))
+         (cmd (format
+               "sqlite3 -readonly -separator '\t' %S \
+\"SELECT title, last_visit_time, url FROM urls \
+ORDER BY last_visit_time DESC LIMIT %d;\""
+               db (or limit 400)))
+         (raw (shell-command-to-string cmd)))
+    (cl-loop for line in (split-string raw "\n" t)
+             when (string-match "\\(.*\\)\t\\([0-9]+\\)\t\\(https?://.*\\)" line)
+             collect (let* ((title (string-trim (match-string 1 line)))
+                            (time  (string-to-number (match-string 2 line)))
+                            (url   (match-string 3 line))
+                            (dom   (my/arc--domain url))
+                            (title* (my/arc--clean-title title dom)))
+                       (list :title (if (string-empty-p title*) url title*)
+                             :url url
+                             :time time
+                             :domain dom)))))
+
+;; -----------------------------------------------------------------------------
+;; Global mapping: displayed string → entry plist
+;; -----------------------------------------------------------------------------
+(defvar lgm/arc--cands nil
+  "Alist of (DISPLAY . ENTRY) for the current Arc history session.")
+
+;; -----------------------------------------------------------------------------
+;; Embark actions (tolerate 0/1/2 args; fall back to current vertico candidate)
+;; -----------------------------------------------------------------------------
+(defun lgm/arc--current-candidate ()
+  (when (bound-and-true-p vertico--running) (vertico--candidate)))
+
+(defun lgm/arc--url-for (disp)
+  (let ((entry (cdr (assoc disp lgm/arc--cands))))
+    (plist-get entry :url)))
+
+(defun lgm/arc-embark-open (&rest args)
+  "Open URL for the current/selected candidate (Embark action)."
+  (let* ((cand (or (car args) (lgm/arc--current-candidate)))
+         (url  (and cand (lgm/arc--url-for cand))))
+    (if url (browse-url url) (message "No URL for candidate"))))
+
+(defun lgm/arc-embark-copy (&rest args)
+  "Copy URL for the current/selected candidate (Embark action)."
+  (let* ((cand (or (car args) (lgm/arc--current-candidate)))
+         (url  (and cand (lgm/arc--url-for cand))))
+    (if url (progn (kill-new url) (message "Copied: %s" url))
+      (message "No URL for candidate"))))
+
+(defvar lgm/arc-history-embark-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "o") #'lgm/arc-embark-open)
+    (define-key map (kbd "b") #'lgm/arc-embark-copy)
+    map)
+  "Embark keymap for Arc history candidates.")
+
+(add-to-list 'embark-keymap-alist '(arc-history . lgm/arc-history-embark-map))
+
+;; -----------------------------------------------------------------------------
+;; C-o opens current candidate (bound in Vertico map)
+;; -----------------------------------------------------------------------------
+;; Alternative: Use vertico's built-in candidate getter
+(defun lgm/arc-open-current ()
+  "Open the currently selected candidate (alternative implementation)."
+  (interactive)
+  (when-let* ((cand (and (minibufferp)
+                         (bound-and-true-p vertico--input)
+                         vertico--candidates
+                         (>= vertico--index 0)
+                         (< vertico--index (length vertico--candidates))
+                         (nth vertico--index vertico--candidates))))
+    (lgm/arc-embark-open cand)))
+
+(with-eval-after-load 'vertico
+  (define-key vertico-map (kbd "C-o") #'lgm/arc-open-current))
+
+;; -----------------------------------------------------------------------------
+;; Main command
+;; -----------------------------------------------------------------------------
+(defun lgm/consult-arc-history-insert-link ()
+  "Pick from Arc history; RET inserts; C-o opens; Embark works."
+  (interactive)
+  (let* ((entries (my/arc--fetch-history))
+         ;; Fixed widths for perfect alignment
+         (title-width 65)
+         (domain-width 28)
+         (time-width   10)
+         ;; Build display strings with proper width handling
+         (cands
+          (mapcar
+           (lambda (e)
+             (let* ((raw (plist-get e :title))
+                    ;; First truncate if needed - use "..." not "…"
+                    (truncated (if (> (string-width raw) title-width)
+                                   (concat (truncate-string-to-width raw (- title-width 3) nil nil) "...")
+                                 raw))
+                    ;; Then pad to exact width
+                    (padded (concat truncated
+                                   (make-string (max 0 (- title-width (string-width truncated))) ?\s))))
+               (cons padded e)))
+           entries))
+         (annot
+          (lambda (disp)
+            (when-let* ((e   (cdr (assoc disp cands)))
+                        (ago (my/arc--ago-string (plist-get e :time)))
+                        (dom (plist-get e :domain)))
+              ;; Properly pad domain and time with width-aware truncation
+              (let ((dom-padded (truncate-string-to-width
+                                 (concat (or dom "") (make-string domain-width ?\s))
+                                 domain-width nil ?\s))
+                    (ago-padded (truncate-string-to-width
+                                 (concat (or ago "") (make-string time-width ?\s))
+                                 time-width nil ?\s)))
+                (if (fboundp 'marginalia--fields)
+                    (marginalia--fields
+                     (dom-padded :face 'font-lock-comment-face)
+                     (ago-padded :face 'marginalia-date))
+                  (format "  %s %s"
+                          (propertize dom-padded 'face 'font-lock-comment-face)
+                          (propertize ago-padded 'face 'marginalia-date))))))))
+    ;; make mapping visible to Embark/C-o handlers
+    (setq lgm/arc--cands cands)
+    (let* ((selection (consult--read
+                       (mapcar #'car cands)
+                       :prompt   "Arc History: "
+                       :annotate annot
+                       :category 'arc-history
+                       :sort     nil))
+           (entry (cdr (assoc selection cands)))
+           (url   (plist-get entry :url))
+           (desc  (read-string "Description: " (plist-get entry :title))))
+      (insert (format "[[%s][%s]]" url desc))
+      (message "Inserted link: %s" url))))
+
+(global-set-key (kbd "C-c w") (quote lgm/consult-arc-history-insert-link))
 
 (provide 'org-settings)
 ;;; org-settings.el ends here
