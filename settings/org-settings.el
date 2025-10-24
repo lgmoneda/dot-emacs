@@ -330,31 +330,41 @@ This should only apply to jupyter-lang blocks."
 (venv-initialize-eshell) ;; if you want eshell support
 (setq venv-location "/Users/luis.moneda/miniconda3/envs/edge")
 
-;; To enable editing python code with eglot
-(defun my/org-src-setup-python-ts ()
-  "Enable python-ts-mode + eglot and completions inside Org src blocks."
-  (when (and (eq major-mode 'org-mode)
-             (org-in-src-block-p 'inside))
-    (let ((lang (nth 0 (org-babel-get-src-block-info t))))
-      (when (string= lang "python")
-        ;; Force the edit buffer to use python-ts-mode
-        (setq org-src-lang-modes (append '(("python" . python-ts)) org-src-lang-modes))
-        ;; After opening the edit buffer, apply settings
-        (add-hook 'org-src-mode-hook #'my/activate-eglot-in-org-src nil 'local)))))
+;; ;; To enable editing python code with eglot
+;; (defun my/org-src-setup-python-ts ()
+;;   "Enable python-ts-mode + eglot and completions inside Org src blocks."
+;;   (when (and (eq major-mode 'org-mode)
+;;              (org-in-src-block-p 'inside))
+;;     (let ((lang (nth 0 (org-babel-get-src-block-info t))))
+;;       (when (string= lang "python")
+;;         ;; Force the edit buffer to use python-ts-mode
+;;         (setq org-src-lang-modes (append '(("python" . python-ts)) org-src-lang-modes))
+;;         ;; After opening the edit buffer, apply settings
+;;         (add-hook 'org-src-mode-hook #'my/activate-eglot-in-org-src nil 'local)))))
 
-(defun my/activate-eglot-in-org-src ()
-  "Activate eglot and completions if editing a Python block."
-  (when (derived-mode-p 'python-ts-mode)
-    ;; Start Eglot
-    (unless (eglot-managed-p)
-      (eglot-ensure))
-    ;; Enable your completion tools
-    (when (fboundp 'corfu-mode)
-      (corfu-mode 1))
-    ;; Optionally reuse flycheck or flymake
-    (flymake-mode 1)))
+;; (defun my/activate-eglot-in-org-src ()
+;;   "Activate eglot and completions if editing a Python block."
+;;   (when (derived-mode-p 'python-ts-mode)
+;;     ;; Start Eglot
+;;     (unless (eglot-managed-p)
+;;       (eglot-ensure))
+;;     ;; Enable your completion tools
+;;     (when (fboundp 'corfu-mode)
+;;       (corfu-mode 1))
+;;     ;; Optionally reuse flycheck or flymake
+;;     (flymake-mode 1)))
 
-(add-hook 'org-src-mode-hook #'my/org-src-setup-python-ts)
+;; (add-hook 'org-src-mode-hook #'my/org-src-setup-python-ts)
+
+(setq org-src-lang-modes
+      (append '(("python" . python-ts)) org-src-lang-modes))
+
+(add-hook 'org-src-mode-hook
+          (lambda ()
+            (when (derived-mode-p 'python-ts-mode)
+              (eglot-ensure)
+              (corfu-mode 1)
+              (flymake-mode 1))))
 
 ;Sunday, December 10, 2017
 ;============================
@@ -639,10 +649,11 @@ this command to copy it"
 	 "** NEXT %? \nDEADLINE: %t") ))
 
 (add-to-list 'org-capture-templates
-             '("w" "Work task"  entry
-               (file+headline "~/Dropbox/Agenda/nu.org" "Tasks")
-               "* TODO %?"
-	       :empty-lines 1))
+             '("W" "Work task (programmatic)" entry
+               (file+olp "~/Dropbox/Agenda/nu.org" "Manager" "Misc")
+               "%i"
+               :empty-lines 1
+               :immediate-finish t))
 
 (add-to-list 'org-capture-templates
              '("b" "Batch work task"  entry
@@ -799,14 +810,13 @@ this command to copy it"
 
 (defun lgm/org-extract-todos-from-subtree-at-point ()
   "Extract TODOs from current meeting subtree and re-capture them into nu.org.
-Uses the headless capture template “W”.
+Uses the headless capture template \"W\".
 Links back to the meeting using `org-store-link`, without creating an Org-roam ID."
   (interactive)
   (org-back-to-heading t)
   (org-show-subtree)
   (let ((copied 0))
     (let* ((meeting-title (nth 4 (org-heading-components)))
-           ;; create a regular stored Org link to this heading
            (link-info (save-excursion
                         (org-store-link nil)))
            (link (or (car-safe link-info)
@@ -822,19 +832,19 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
              (when todo
                (setq copied (1+ copied))
                (let* ((task-title (nth 4 (org-heading-components)))
+                      ;; Start right after the heading line
                       (start (save-excursion
-                               (org-end-of-meta-data t)
-                               (forward-line 0)
+                               (forward-line 1)
                                (point)))
                       (end (save-excursion
                              (org-end-of-subtree t t)
                              (point)))
                       (body (string-trim
                              (buffer-substring-no-properties start end)))
-                      (entry (concat task-title
-                                     " — " link
+                      ;; Build entry as a complete Org heading
+                      (entry (concat "* TODO " task-title " — " link "\n"
                                      (unless (string-empty-p body)
-                                       (concat "\n" body "\n")))))
+                                       (concat body "\n")))))
                  ;; Headless capture via template W
                  (org-capture-string entry "W")
                  ;; clear TODO in the meeting
@@ -870,6 +880,13 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
      "meeting"  ;; only process headings tagged :meeting:
      'file)
     (message "[lgm] Extracted TODOs from %d meeting(s)" count)))
+
+(org-link-set-parameters
+ "extract-todos-from-all-meetings"
+ :follow (lambda (_path)
+           (lgm/org-extract-todos-from-all-meetings))
+ :face '(:foreground "purple" :weight bold)
+ :help-echo "Extracts the TODO items to nu.org")
 
 (add-hook 'org-capture-after-finalize-hook
           #'lgm/org-extract-todos-after-meeting-capture)
@@ -1005,7 +1022,7 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
          :target
          (file+head
           "%(expand-file-name (or citar-org-roam-subdir \"\") org-roam-directory)/${citar-citekey}.org"
-          "#+title: ${citar-title} (${citar-date}), ${citar-author}.\n#+ref: cite:${citar-citekey}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n#+created: %U\n#+last_modified: %U\n\n%?")
+          "#+title: ${citar-title} (${citar-date}), ${citar-author}.\n#+ref: cite:${citar-citekey}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n#+created: %U\n#+last_modified: %U\n\n %?")
          :unnarrowed t)))
   :custom
   (org-roam-directory (file-truename "/Users/luis.moneda/Dropbox/Agenda/roam"))
