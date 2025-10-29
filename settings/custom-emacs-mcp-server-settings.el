@@ -245,7 +245,7 @@ Security: Read-only operation, safe for knowledge base analysis"
 
 ;;; Org-babel MCP Tool Functions
 
-(defun emacs-mcp--org-babel-execute-src-block (file_path &optional heading_title line_number)
+(defun org-babel-mcp-execute-src-block (file_path &optional heading_title line_number)
   "Execute a specific source block in an org file.
 MCP Parameters:
   file_path - Path to the org file
@@ -266,7 +266,7 @@ MCP Parameters:
     (let ((result (org-babel-mcp--execute-src-block file_path heading_title line_number)))
       (json-encode result))))
 
-(defun emacs-mcp--org-babel-execute-subtree (file_path heading_title)
+(defun org-babel-mcp-execute-subtree (file_path heading_title)
   "Execute all source blocks within a specific org subtree.
 MCP Parameters:
   file_path - Path to the org file
@@ -277,7 +277,7 @@ MCP Parameters:
     (let ((result (org-babel-mcp--execute-subtree file_path heading_title)))
       (json-encode result))))
 
-(defun emacs-mcp--org-babel-execute-buffer (file_path)
+(defun org-babel-mcp-execute-buffer (file_path)
   "Execute all source blocks in an org file buffer.
 MCP Parameters:
   file_path - Path to the org file"
@@ -291,8 +291,8 @@ MCP Parameters:
 (defun emacs-org-babel-mcp-enable ()
   "Enable the Org-babel MCP tools."
   (mcp-server-lib-register-tool
-   :function #'emacs-mcp--org-babel-execute-src-block
-   :name "execute_src_block"
+   :function #'org-babel-mcp-execute-src-block
+   :name "org-babel-execute-src-block"
    :description "Execute a specific Org Babel source block in an org file.
 Provides precise control over which block to execute with detailed results.
 
@@ -326,6 +326,10 @@ Execution behavior:
 - Detects async execution (Jupyter/EIN kernels) and polls for completion up to 10 seconds
 - Captures and formats output/results with async status information
 - Provides instructions for retrieving pending results if timeout occurs
+- When async execution is detected, the `result` field will typically contain the kernel
+  message ID rather than the final stdout. Inspect the updated `#+RESULTS` block in the
+  org file (open it directly or call `get-org-heading-content` with `include_results`)
+  to confirm the actual output persisted by org-babel.
 - Automatically saves file to persist #+RESULTS
 - Maintains org-mode formatting and structure
 - Preserves existing file content and organization
@@ -362,8 +366,8 @@ Error cases:
    :read-only nil)
 
   (mcp-server-lib-register-tool
-   :function #'emacs-mcp--org-babel-execute-buffer
-   :name "execute_buffer"
+   :function #'org-babel-mcp-execute-buffer
+   :name "org-babel-execute-buffer"
    :description "Execute ALL Org Babel source blocks in an org file sequentially.
 Comprehensive batch execution with detailed per-block results and error handling.
 
@@ -433,8 +437,8 @@ Error cases:
    :read-only nil)
 
   (mcp-server-lib-register-tool
-   :function #'emacs-mcp--org-babel-execute-subtree
-   :name "execute_subtree"
+   :function #'org-babel-mcp-execute-subtree
+   :name "org-babel-execute-subtree"
    :description "Execute all source blocks within a specific org subtree.
 Provides targeted execution of all code blocks under a heading and its subheadings.
 
@@ -512,14 +516,14 @@ Security: Code execution capability - use with trusted org files only"
 
 (defun emacs-org-babel-mcp-disable ()
   "Disable the Org-babel MCP tools."
-  (mcp-server-lib-unregister-tool "execute_src_block")
-  (mcp-server-lib-unregister-tool "execute_subtree")
-  (mcp-server-lib-unregister-tool "execute_buffer"))
+  (mcp-server-lib-unregister-tool "org-babel-execute-src-block")
+  (mcp-server-lib-unregister-tool "org-babel-execute-subtree")
+  (mcp-server-lib-unregister-tool "org-babel-execute-buffer"))
 
 
 ;;; Org-notebook MCP Tool Functions
 
-(defun emacs-mcp--get-analytical-review (file_path &optional heading_titles)
+(defun org-notebook-mcp-get-analytical-review (file_path &optional heading_titles)
   "Extract headings, content, and results for analytical review of org notebooks.
 MCP Parameters:
   file_path - Absolute path to the org file to analyze
@@ -538,7 +542,7 @@ MCP Parameters:
     (let ((result (org-notebook-mcp--get-analytical-review file_path heading_titles)))
       (json-encode result))))
 
-(defun emacs-mcp--get-heading-content (file_path heading_title &optional include_content include_code include_results include_subtree)
+(defun org-notebook-mcp-get-heading-content (file_path heading_title &optional include_content include_code include_results include_subtree)
   "Extract content, code, and/or results from a specific org heading.
 MCP Parameters:
   file_path - Absolute path to the org file to analyze
@@ -554,7 +558,7 @@ MCP Parameters:
                    file_path heading_title include_content include_code include_results include_subtree)))
       (json-encode result))))
 
-(defun emacs-mcp--get-functions-from-org-file (file_path)
+(defun org-notebook-mcp-get-functions-from-org-file (file_path)
   "Extract all functions from code blocks in an org file.
 MCP Parameters:
   file_path - Absolute path to the org file to analyze"
@@ -565,14 +569,14 @@ MCP Parameters:
 
 ;;; Jupyter REPL MCP Tool Functions
 
-(defun emacs-mcp--list-jupyter-repls ()
+(defun org-notebook-mcp-list-jupyter-repls ()
   "List all available Jupyter REPL clients.
 MCP Parameters: None"
   (mcp-server-lib-with-error-handling
     (let ((result (org-notebook-mcp--list-jupyter-repls)))
       (json-encode result))))
 
-(defun emacs-mcp--send-code-to-jupyter-repl (client_buffer_name code &optional timeout)
+(defun org-notebook-mcp-send-code-to-repl (client_buffer_name code &optional timeout)
   "Send code to a Jupyter REPL client and get execution results.
 MCP Parameters:
   client_buffer_name - Name of the REPL buffer to send code to (string, required)
@@ -586,7 +590,7 @@ MCP Parameters:
     (let ((result (org-notebook-mcp--send-code-to-repl client_buffer_name code timeout)))
       (json-encode result))))
 
-(defun emacs-mcp--get-jupyter-repl-status (client_buffer_name)
+(defun org-notebook-mcp-get-repl-status (client_buffer_name)
   "Get the status of a Jupyter REPL client.
 MCP Parameters:
   client_buffer_name - Name of the REPL buffer to check (string, required)"
@@ -595,7 +599,7 @@ MCP Parameters:
     (let ((result (org-notebook-mcp--get-repl-status client_buffer_name)))
       (json-encode result))))
 
-(defun emacs-mcp--get-jupyter-kernel-state (client_buffer_name)
+(defun org-notebook-mcp-get-kernel-state (client_buffer_name)
   "Get the execution state of a Jupyter kernel to check if it's busy.
 MCP Parameters:
   client_buffer_name - Name of the REPL buffer to check (string, required)"
@@ -604,26 +608,33 @@ MCP Parameters:
     (let ((result (org-notebook-mcp--get-kernel-state client_buffer_name)))
       (json-encode result))))
 
-(defun emacs-mcp--send-code-to-jupyter-repl-async (client_buffer_name code)
+(defun org-notebook-mcp-send-code-async (client_buffer_name code &optional metadata)
   "Send code to Jupyter REPL asynchronously for long-running computations.
 MCP Parameters:
   client_buffer_name - Name of the REPL buffer to send code to (string, required)
-  code - Code to execute in the REPL (string, required)"
+  code - Code to execute in the REPL (string, required)
+  metadata - Optional object (alist/hash) describing origin context (e.g. file path, heading, bd id)."
   (mcp-server-lib-with-error-handling
     (emacs-mcp--validate-string client_buffer_name "client_buffer_name")
     (emacs-mcp--validate-string code "code")
-    (let ((result (org-notebook-mcp--send-code-async client_buffer_name code)))
+    (let ((result (org-notebook-mcp--send-code-async client_buffer_name code metadata)))
       (json-encode result))))
 
-(defun emacs-mcp--check-async-execution (request_id)
+(defun org-notebook-mcp-check-async-execution (request_identifier)
   "Check the status of an async execution request and return results if complete.
 MCP Parameters:
-  request_id - The request ID returned from send-code-to-jupyter-repl-async (string, required)"
+  request_id - The request ID returned from send-code-to-jupyter-repl-async (string, required).
+You can also pass the kernel message id if previously stored."
   (mcp-server-lib-with-error-handling
-    (emacs-mcp--validate-string request_id "request_id")
-    (org-notebook-mcp--check-async-execution-mcp request_id)))
+    (emacs-mcp--validate-string request_identifier "request_id")
+    (org-notebook-mcp--check-async-execution-mcp request_identifier)))
 
-(defun emacs-mcp--get-jupyter-last-output (client_buffer_name &optional lines)
+(defun org-notebook-mcp-list-async-executions ()
+  "List tracked async execution requests with their status."
+  (mcp-server-lib-with-error-handling
+    (json-encode (org-notebook-mcp--list-async-requests-mcp))))
+
+(defun org-notebook-mcp-get-last-output (client_buffer_name &optional lines)
   "Get the last output from a Jupyter REPL buffer.
 MCP Parameters:
   client_buffer_name - Name of the REPL buffer to read from (string, required)
@@ -888,8 +899,8 @@ Security: Read-only operation, safe for exploring agenda structure"
 (defun emacs-org-notebook-mcp-enable ()
   "Enable the Org-notebook MCP tools."
   (mcp-server-lib-register-tool
-   :function #'emacs-mcp--get-analytical-review
-   :name "get-org-analytical-review"
+   :function #'org-notebook-mcp-get-analytical-review
+   :name "org-notebook-get-analytical-review"
    :description "Extract headings, content, and results for analytical review of org notebooks.
 Designed specifically for LLM analytical review focusing on approaches and outcomes, excluding code implementation details.
 
@@ -967,8 +978,8 @@ Security: Read-only operation, safe for file analysis"
    :read-only t)
 
   (mcp-server-lib-register-tool
-   :function #'emacs-mcp--get-heading-content
-   :name "get-org-heading-content"
+   :function #'org-notebook-mcp-get-heading-content
+   :name "org-notebook-get-heading-content"
    :description "Extract content, code, and/or results from a specific org heading with configurable options.
 Provides flexible access to different components of org headings with intelligent length management for LLM consumption.
 
@@ -1053,8 +1064,8 @@ Security: Read-only operation, safe for file analysis"
    :read-only t)
 
   (mcp-server-lib-register-tool
-   :function #'emacs-mcp--get-functions-from-org-file
-   :name "get-functions-from-org-file"
+   :function #'org-notebook-mcp-get-functions-from-org-file
+   :name "org-notebook-get-functions-from-org-file"
    :description "Extract all functions from code blocks in an org file with location and docstring information.
 Analyzes all source blocks in an org file and identifies function definitions across multiple programming languages.
 
@@ -1117,8 +1128,8 @@ Security: Read-only operation, safe for file analysis"
 
   ;; Jupyter REPL tools
   (mcp-server-lib-register-tool
-   :function #'emacs-mcp--list-jupyter-repls
-   :name "list-jupyter-repls"
+   :function #'org-notebook-mcp-list-jupyter-repls
+   :name "org-notebook-list-jupyter-repls"
    :description "List all available Jupyter REPL clients with their kernel information.
 Essential for discovering active REPL connections that can be used for code execution.
 
@@ -1157,8 +1168,8 @@ Security: Read-only operation, safe for system discovery"
    :read-only t)
 
   (mcp-server-lib-register-tool
-   :function #'emacs-mcp--send-code-to-jupyter-repl
-   :name "send-code-to-jupyter-repl"
+   :function #'org-notebook-mcp-send-code-to-repl
+   :name "org-notebook-send-code-to-repl"
    :description "Send code to a Jupyter REPL client and get execution results synchronously.
 Executes code in a running Jupyter kernel and waits for completion with timeout.
 
@@ -1231,8 +1242,8 @@ Security: Code execution capability - only use with trusted input"
    :read-only nil)
 
   (mcp-server-lib-register-tool
-   :function #'emacs-mcp--get-jupyter-kernel-state
-   :name "get-jupyter-kernel-state"
+   :function #'org-notebook-mcp-get-kernel-state
+   :name "org-notebook-get-kernel-state"
    :description "Get the current execution state of a Jupyter kernel to check if it's busy.
 Essential for LLMs to know when kernels are ready for new code or still processing.
 
@@ -1296,133 +1307,136 @@ Security: Read-only operation, safe for monitoring"
    :read-only t)
 
   (mcp-server-lib-register-tool
-   :function #'emacs-mcp--check-async-execution
-   :name "check-async-execution"
-   :description "Check the status of an async execution request and return results if complete.
-Essential for monitoring completion of async code execution and retrieving results.
+   :function #'org-notebook-mcp-check-async-execution
+   :name "org-notebook-check-async-execution"
+   :description "Check the status of an async execution request and retrieve results.
+Pairs with send-code-to-jupyter-repl-async to give agents reliable progress snapshots and final outputs.
 
-This tool checks the completion status of code submitted via send-code-to-jupyter-repl-async
-and returns results when execution completes. Uses request tracking system for reliable
-result retrieval without buffer reading issues.
+This tool inspects the async tracker using either the MCP request id or the underlying kernel message id. It can be
+called while execution is still running (returns 'pending' with live output previews) or after completion (returns
+success flag, outputs, results, metadata, timing, and recommendations).
 
 Parameters:
-  request_id - The request ID returned from send-code-to-jupyter-repl-async (string, required)
-             Must be a valid request ID from the async tracking system
+  request_id - String identifier. Accepts the request_id returned by send-code-to-jupyter-repl-async **or** the
+               kernel_msg_id supplied in the same response.
 
 Returns JSON object with:
-  request_id - The request ID that was checked (string)
-  client_buffer - REPL buffer where code was executed (string)
-  code - The original code that was executed (string)
-  status - Execution status: 'pending' or 'completed' (string)
+  request_id - MCP tracking id (string)
+  kernel_msg_id - Kernel message id (string)
+  client_buffer - REPL buffer where the code is running (string)
+  code - Original code (string)
+  metadata - Stored context (object or null)
+  status - 'pending' or 'completed'
 
-If status is 'pending':
+If status is 'pending', extra fields include:
   start_time - When execution started (timestamp string)
-  elapsed_time - How long execution has been running (string)
-  message - Status message for user (string)
+  elapsed_time - Time in seconds since start (string)
+  output_preview / result_preview - Latest stdout/result snippets (string)
+  messages_seen - Number of kernel messages processed (integer)
+  recommendations - Next-step guidance (string)
 
-If status is 'completed':
-  success - Whether execution completed without errors (boolean)
-  output - Standard output from execution (string)
-  result - Return value or computed result (string)
-  error - Error message if execution failed (string or null)
-  start_time - When execution started (timestamp string)
-  completion_time - When execution finished (timestamp string)
-  execution_duration - Total execution time (string)
+If status is 'completed', extra fields include:
+  success - Whether execution succeeded (boolean)
+  output - Full stdout (string)
+  result - Returned value (string)
+  error - Error summary if failed (string or null)
+  execution_count - Kernel execution counter (integer or null)
+  messages_seen - Total messages processed (integer)
+  start_time / completion_time - ISO timestamps (string)
+  execution_duration - Human readable duration (string)
+  recommendations - Guidance on persisting results or handling failures (string)
 
-Async execution workflow:
-1. Send code with send-code-to-jupyter-repl-async to get request_id
-2. Poll this function with request_id until status becomes 'completed'
-3. Process the results from the completed execution
-4. Results are cached - subsequent calls with same request_id return cached results
+Workflow reminder:
+1. Capture both request_id and kernel_msg_id when scheduling async work.
+2. Poll this tool with exponential backoff until status='completed'.
+3. Persist outputs back into the notebook, then close any associated bd reminder.
 
-Use cases:
-- Monitor long-running model training or data processing
-- Check completion of complex mathematical computations
-- Handle async execution in workflows where LLM needs to continue other tasks
-- Reliable result retrieval without buffer reading crashes
-
-Error cases:
-- Invalid or unknown request_id
-- Request tracking system issues
-- Kernel connection problems during execution
-
-Security: Read-only operation for checking execution status"
+Security: Read-only introspection on async queue."
    :args '((:name "request_id"
             :type string
-            :description "The request ID returned from send-code-to-jupyter-repl-async"))
+            :description "MCP request_id or kernel_msg_id returned from send-code-to-jupyter-repl-async"))
    :read-only t)
 
   (mcp-server-lib-register-tool
-   :function #'emacs-mcp--send-code-to-jupyter-repl-async
-   :name "send-code-to-jupyter-repl-async"
-   :description "Send code to Jupyter REPL asynchronously without waiting for results.
-Ideal for long-running computations where LLMs need to poll for completion status.
+   :function #'org-notebook-mcp-send-code-async
+   :name "org-notebook-send-code-async"
+   :description "Send code to a Jupyter REPL asynchronously without blocking Emacs.
+Designed for long-running cells where the agent must continue other work while keeping reliable execution breadcrumbs.
 
-This tool sends code for execution and returns immediately with request information.
-LLMs should then use check-async-execution to monitor progress and retrieve results when computation completes.
+This tool submits code to the kernel and immediately returns a tracking record. Use check-async-execution to poll the
+status. Every response includes both the MCP request id and the underlying kernel message id so you can recover
+progress even if tooling reloads.
 
 Parameters:
-  client_buffer_name - Name of the REPL buffer (string, required)
-                      Use list-jupyter-repls to discover available buffer names
-  code - Code to execute in the kernel (string, required)
-        Should be valid code in the kernel's language
+  client_buffer_name - Name of the REPL buffer (string, required). Use list-jupyter-repls to discover buffers.
+  code - Code to execute in the kernel (string, required). Must be valid for the active kernel.
+  metadata - Optional context map (object) such as file_path, heading_title, bd_id, or notebook_uuid. This is stored with
+             the async tracker so humans (and future agents) understand where to persist the results.
 
 Returns JSON object with:
-  client_buffer - REPL buffer where code was sent (string)
-  code - The code that was submitted (string)
-  request_id - Unique identifier for this execution request (string)
-  status - Request status ('sent') (string)
-  timestamp - When the request was sent (string)
+  client_buffer - Buffer receiving the code (string)
+  code - Submitted code (string)
+  request_id - MCP tracking identifier (string)
+  kernel_msg_id - Kernel level message id (string) for recovery when request ids are lost
+  status - Request status ('sent')
+  timestamp - Submission time (string)
+  metadata - Normalized metadata map (object or null)
+  follow_up - Recommended next action (string)
   message - Instructions for monitoring completion (string)
 
-Async execution workflow for LLMs:
-1. Send code using this function
-2. Poll get-jupyter-kernel-state until kernel_state becomes 'idle'
-3. Use get-jupyter-last-output to retrieve results
-4. Handle any errors found in the output
+Async execution workflow:
+1. Call this tool (always pass metadata with at least file_path + heading_title when running from org-mode).
+2. Record the returned request_id or kernel_msg_id in your reasoning, and consider creating a bd reminder if runtime exceeds a few minutes.
+3. Poll check-async-execution using request_id or kernel_msg_id until the status is 'completed'.
+4. Persist results back into the notebook and close any reminders when finished.
 
 Polling strategy:
-- Start with 1-second intervals
-- Increase to 2-3 seconds for longer operations
-- Stop polling when kernel_state is 'idle'
-- Set reasonable maximum poll time based on expected computation time
+- Back off between polls (start at 2s, extend to 15s+ for hour-long jobs).
+- Use get-jupyter-kernel-state to ensure the kernel is still alive when polls show 'pending'.
+- If you lose local context, list-async-executions exposes all tracked requests.
 
 Use cases:
-- Long data processing and analysis tasks
-- Machine learning model training
-- Large dataset operations
-- Complex mathematical computations
-- Any operation that might take more than 30 seconds
+- Numerical experiments, data loads, or model training that can take minutes or hours.
+- Async report generation where agents must switch tasks while code runs.
+- Multi-step workflows that trigger dependent cells via kernel_msg_id.
 
-Advantages over synchronous execution:
-- No timeout limitations
-- LLM can provide progress updates to user
-- Can handle very long computations gracefully
-- Allows for better resource management
-
-Best practices:
-- Always implement polling loop after async send
-- Provide user feedback during long computations
-- Set reasonable maximum wait times
-- Handle cases where computation fails or hangs
-
-Error cases:
-- REPL buffer not found or not connected
-- Kernel unavailable
-- Code submission failure
-
-Security: Code execution capability - only use with trusted input"
+Security: Code execution capability - only use with trusted input."
    :args '((:name "client_buffer_name"
             :type string
             :description "Name of the REPL buffer to send code to")
            (:name "code"
             :type string
-            :description "Code to execute in the REPL"))
+            :description "Code to execute in the REPL")
+           (:name "metadata"
+            :type object
+            :description "Optional map describing origin context (file_path, heading_title, bd_id, etc.)"
+            :optional t))
    :read-only nil)
 
   (mcp-server-lib-register-tool
-   :function #'emacs-mcp--get-jupyter-last-output
-   :name "get-jupyter-last-output"
+   :function #'org-notebook-mcp-list-async-executions
+   :name "org-notebook-list-async-executions"
+   :description "Summarize all tracked async execution requests and their state.
+Useful when reconnecting after a restart, auditing stuck work, or handing off between agents.
+
+Returns JSON object with:
+  total_requests - Number of tracked requests (integer)
+  pending - Count currently pending (integer)
+  completed - Count completed and cached (integer)
+  requests - Array of request snapshots (same shape as check-async-execution summary fields)
+
+Use cases:
+- Recover context if you lose the original request_id
+- Spot long-running jobs that may need investigation
+- Clean up completed entries once results are archived
+
+Security: Read-only introspection."
+   :args '()
+   :read-only t)
+
+  (mcp-server-lib-register-tool
+   :function #'org-notebook-mcp-get-last-output
+   :name "org-notebook-get-last-output"
    :description "Get the last output from a Jupyter REPL buffer.
 Essential for retrieving results after asynchronous code execution completes.
 
@@ -1491,8 +1505,8 @@ Security: Read-only operation, safe for output retrieval"
    :read-only t)
 
   (mcp-server-lib-register-tool
-   :function #'emacs-mcp--get-jupyter-repl-status
-   :name "get-jupyter-repl-status"
+   :function #'org-notebook-mcp-get-repl-status
+   :name "org-notebook-get-repl-status"
    :description "Get comprehensive status information about a Jupyter REPL client.
 Provides detailed information about kernel connection, configuration, and current state.
 
@@ -1555,16 +1569,17 @@ Security: Read-only operation, safe for status monitoring"
 
 (defun emacs-org-notebook-mcp-disable ()
   "Disable the Org-notebook MCP tools."
-  (mcp-server-lib-unregister-tool "get-org-analytical-review")
-  (mcp-server-lib-unregister-tool "get-org-heading-content")
-  (mcp-server-lib-unregister-tool "get-functions-from-org-file")
-  (mcp-server-lib-unregister-tool "list-jupyter-repls")
-  (mcp-server-lib-unregister-tool "send-code-to-jupyter-repl")
-  (mcp-server-lib-unregister-tool "get-jupyter-kernel-state")
-  (mcp-server-lib-unregister-tool "send-code-to-jupyter-repl-async")
-  (mcp-server-lib-unregister-tool "check-async-execution")
-  (mcp-server-lib-unregister-tool "get-jupyter-last-output")
-  (mcp-server-lib-unregister-tool "get-jupyter-repl-status"))
+  (mcp-server-lib-unregister-tool "org-notebook-get-analytical-review")
+  (mcp-server-lib-unregister-tool "org-notebook-get-heading-content")
+  (mcp-server-lib-unregister-tool "org-notebook-get-functions-from-org-file")
+  (mcp-server-lib-unregister-tool "org-notebook-list-jupyter-repls")
+  (mcp-server-lib-unregister-tool "org-notebook-send-code-to-repl")
+  (mcp-server-lib-unregister-tool "org-notebook-get-kernel-state")
+  (mcp-server-lib-unregister-tool "org-notebook-send-code-async")
+  (mcp-server-lib-unregister-tool "org-notebook-list-async-executions")
+  (mcp-server-lib-unregister-tool "org-notebook-check-async-execution")
+  (mcp-server-lib-unregister-tool "org-notebook-get-last-output")
+  (mcp-server-lib-unregister-tool "org-notebook-get-repl-status"))
 
 ;;; Org-tools MCP Registration
 

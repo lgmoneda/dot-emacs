@@ -3,6 +3,8 @@
 
 ;;; Dependency Detection Functions
 (require 'jupyter)
+(require 'cl-lib)
+(require 'subr-x)
 
 (defun org-notebook-mcp--jupyter-available-p ()
   "Check if jupyter.el package is available and loaded."
@@ -429,6 +431,116 @@ Returns information about functions including location and docstrings."
   "Hash table to track async execution requests.
 Keys are request IDs, values are request info alists.")
 
+(defun org-notebook-mcp--stringify (value)
+  "Convert VALUE to a string suitable for JSON serialization."
+  (cond
+   ((null value) nil)
+    ((stringp value) value)
+    ((symbolp value) (symbol-name value))
+    ((numberp value) (format "%s" value))
+    ((and (listp value) (cl-every #'stringp value))
+     (mapconcat #'identity value ", "))
+    ((listp value)
+     (mapconcat (lambda (item) (org-notebook-mcp--stringify item)) value ", "))
+    ((vectorp value)
+     (org-notebook-mcp--stringify (append value nil)))
+    (t (format "%s" value))))
+
+(defun org-notebook-mcp--normalize-request-metadata (metadata)
+  "Normalize METADATA into an alist of string keys and values."
+  (cond
+   ((null metadata) nil)
+   ((hash-table-p metadata)
+    (let (acc)
+      (maphash (lambda (key val)
+                 (push (cons (org-notebook-mcp--stringify key)
+                             (org-notebook-mcp--stringify val))
+                       acc))
+               metadata)
+      (nreverse acc)))
+   ((and (listp metadata) (cl-every #'consp metadata))
+    (mapcar (lambda (cell)
+              (cons (org-notebook-mcp--stringify (car cell))
+                    (org-notebook-mcp--stringify (cdr cell))))
+            metadata))
+   ((vectorp metadata)
+    (cl-loop for idx from 0
+             for item across metadata
+             collect (cons (format "index-%d" idx)
+                           (org-notebook-mcp--stringify item))))
+   ((stringp metadata)
+    `(("info" . ,metadata)))
+   (t `(("info" . ,(org-notebook-mcp--stringify metadata))))))
+
+(defun org-notebook-mcp--lookup-request (identifier)
+  "Return async request info matching IDENTIFIER (request id or kernel message id)."
+  (or (gethash identifier org-notebook-mcp--async-requests)
+      (let (found)
+        (maphash
+         (lambda (_req-id req-info)
+           (when (and (not found)
+                      (string= identifier (or (cdr (assoc 'kernel_msg_id req-info)) "")))
+             (setq found req-info)))
+         org-notebook-mcp--async-requests)
+        found)))
+
+(defun org-notebook-mcp--collect-request-messages (req)
+  "Collect output, result, error, and execution metadata from REQ."
+  (let ((output-content "")
+        (result-content "")
+        (error-content nil)
+        (execution-count nil)
+        (messages (ignore-errors (jupyter-request-messages req))))
+    (when messages
+      (dolist (msg messages)
+        (pcase (jupyter-message-type msg)
+          ("stream"
+           (let ((stream (jupyter-message-content msg)))
+             (setq output-content
+                   (concat output-content
+                           (or (plist-get stream :text) "")))))
+          ((or "execute_result" "display_data")
+           (let* ((msg-content (jupyter-message-content msg))
+                  (data (plist-get msg-content :data))
+                  (text (plist-get data :text/plain)))
+             (when text
+               (setq result-content (concat result-content text))))
+           (let ((content (plist-get (jupyter-message-content msg) :content)))
+             (when (and (null execution-count) (plist-get content :execution_count))
+               (setq execution-count (plist-get content :execution_count)))))
+          ("execute_reply"
+           (let ((content (plist-get (jupyter-message-content msg) :content)))
+             (when (and content (plist-get content :execution_count))
+               (setq execution-count (plist-get content :execution_count)))))
+          ("error"
+           (let* ((err (jupyter-message-content msg))
+                  (ename (plist-get err :ename))
+                  (evalue (plist-get err :evalue))
+                  (traceback (plist-get err :traceback)))
+             (setq error-content
+                   (format "%s: %s\n%s"
+                           ename evalue
+                           (if traceback (string-join traceback "\n") ""))))))))
+    `((output . ,output-content)
+      (result . ,result-content)
+      (error . ,error-content)
+      (messages_seen . ,(if (listp messages) (length messages) 0))
+      (execution_count . ,execution-count))))
+
+(defun org-notebook-mcp--public-request-info (req-info)
+  "Create a serializable snapshot from REQ-INFO."
+  (let* ((status (cdr (assoc 'status req-info)))
+         (start (cdr (assoc 'start_time req-info)))
+         (completion (cdr (assoc 'completion_time req-info)))
+         (metadata (cdr (assoc 'metadata req-info))))
+    `((request_id . ,(cdr (assoc 'request_id req-info)))
+      (kernel_msg_id . ,(cdr (assoc 'kernel_msg_id req-info)))
+      (client_buffer . ,(cdr (assoc 'client_buffer req-info)))
+      (status . ,status)
+      (start_time . ,(and start (format-time-string "%Y-%m-%d %H:%M:%S" (seconds-to-time start))))
+      (completion_time . ,(and completion (format-time-string "%Y-%m-%d %H:%M:%S" (seconds-to-time completion))))
+      (age_seconds . ,(when start (- (float-time) start)))
+      (metadata . ,metadata))))
 (defun org-notebook-mcp--generate-request-id ()
   "Generate a unique request ID for async execution tracking."
   (format "req-%s-%d" (format-time-string "%Y%m%d-%H%M%S") (random 10000)))
@@ -442,12 +554,13 @@ Keys are request IDs, values are request info alists.")
                    (remhash req-id org-notebook-mcp--async-requests))))
              org-notebook-mcp--async-requests)))
 
-(defun org-notebook-mcp--send-kernel-code-async (client_buffer_name code)
+(defun org-notebook-mcp--send-kernel-code-async (client_buffer_name code &optional metadata)
   "Send code directly to kernel asynchronously with proper request tracking.
 Returns immediately with request ID that can be used to check completion and get results."
   (let* ((buffer (get-buffer client_buffer_name))
          (client nil)
-         (request-id (org-notebook-mcp--generate-request-id)))
+         (request-id (org-notebook-mcp--generate-request-id))
+         (normalized-metadata (org-notebook-mcp--normalize-request-metadata metadata)))
 
     (unless buffer
       (error "REPL buffer not found: %s" client_buffer_name))
@@ -467,13 +580,16 @@ Returns immediately with request ID that can be used to check completion and get
     ;; Send the request and store it for tracking
     (jupyter-run-with-client client
       (jupyter-mlet* ((req (jupyter-sent (jupyter-execute-request :code code))))
-        (let ((req-info `((request_id . ,request-id)
+        (let* ((kernel-msg-id (ignore-errors (jupyter-request-id req)))
+               (req-info `((request_id . ,request-id)
                          (client_buffer . ,client_buffer_name)
+                         (kernel_msg_id . ,kernel-msg-id)
                          (code . ,code)
                          (status . "sent")
                          (request_object . ,req)
                          (client . ,client)
                          (start_time . ,(float-time))
+                         (metadata . ,normalized-metadata)
                          (completion_time . nil)
                          (results . nil))))
 
@@ -483,113 +599,110 @@ Returns immediately with request ID that can be used to check completion and get
           ;; Return request info immediately
           (jupyter-return `((request_id . ,request-id)
                            (client_buffer . ,client_buffer_name)
+                           (kernel_msg_id . ,kernel-msg-id)
                            (code . ,code)
+                           (metadata . ,normalized-metadata)
                            (status . "sent")
                            (timestamp . ,(format-time-string "%Y-%m-%d %H:%M:%S"))
-                           (message . "Code sent to kernel - use check-async-execution to monitor completion"))))))
+                           (message . "Code sent to kernel - use check-async-execution to monitor completion")
+                           (follow_up . "If this may take minutes, queue a bd reminder linked to this request so you remember to collect the results."))))))
 
     ;; Return the result from the monadic computation
     `((request_id . ,request-id)
       (client_buffer . ,client_buffer_name)
+      (kernel_msg_id . ,(cdr (assoc 'kernel_msg_id (gethash request-id org-notebook-mcp--async-requests))))
       (code . ,code)
+      (metadata . ,normalized-metadata)
       (status . "sent")
       (timestamp . ,(format-time-string "%Y-%m-%d %H:%M:%S"))
-      (message . "Code sent to kernel - use check-async-execution to monitor completion"))))
+      (message . "Code sent to kernel - use check-async-execution to monitor completion")
+      (follow_up . "If this may take minutes, queue a bd reminder linked to this request so you remember to collect the results."))))
 
-(defun org-notebook-mcp--check-async-execution (request_id)
+(defun org-notebook-mcp--check-async-execution (request-identifier)
   "Check the status of an async execution request and return results if complete.
-Returns request status, and if complete, extracts and returns the execution results."
-  (let ((req-info (gethash request_id org-notebook-mcp--async-requests)))
+REQUEST-IDENTIFIER can be the MCP request identifier or the kernel-level message id."
+  (let ((req-info (org-notebook-mcp--lookup-request request-identifier)))
     (unless req-info
-      (error "Request ID not found: %s" request_id))
-
-    (let* ((req (cdr (assoc 'request_object req-info)))
+      (error "Async request not found: %s" request-identifier))
+    (let* ((request-id (cdr (assoc 'request_id req-info)))
+           (kernel-msg-id (cdr (assoc 'kernel_msg_id req-info)))
+           (req (cdr (assoc 'request_object req-info)))
            (client (cdr (assoc 'client req-info)))
            (client-buffer (cdr (assoc 'client_buffer req-info)))
            (code (cdr (assoc 'code req-info)))
+           (metadata (cdr (assoc 'metadata req-info)))
            (start-time (cdr (assoc 'start_time req-info)))
-           (completion-time (cdr (assoc 'completion_time req-info)))
            (cached-results (cdr (assoc 'results req-info))))
+      (when cached-results
+        (let ((with-meta (copy-alist cached-results)))
+          (setf (alist-get 'metadata with-meta) metadata)
+          (setf (alist-get 'kernel_msg_id with-meta) kernel-msg-id)
+          (cl-return-from org-notebook-mcp--check-async-execution with-meta)))
+      (unless (and client req)
+        (error "Request %s no longer has a live client. Re-run the cell if needed." request-id))
+      (jupyter-run-with-client client
+        (if (jupyter-request-idle-p req)
+            (let* ((capture (org-notebook-mcp--collect-request-messages req))
+                   (error-content (cdr (assoc 'error capture)))
+                   (success (if error-content :json-false t))
+                   (completion-time (float-time))
+                   (duration (if start-time (- completion-time start-time) 0.0))
+                   (results
+                    `((request_id . ,request-id)
+                      (kernel_msg_id . ,kernel-msg-id)
+                      (client_buffer . ,client-buffer)
+                      (code . ,code)
+                      (status . "completed")
+                      (success . ,success)
+                      (output . ,(cdr (assoc 'output capture)))
+                      (result . ,(cdr (assoc 'result capture)))
+                      (error . ,error-content)
+                      (execution_count . ,(cdr (assoc 'execution_count capture)))
+                      (messages_seen . ,(cdr (assoc 'messages_seen capture)))
+                      (metadata . ,metadata)
+                      (start_time . ,(and start-time (format-time-string "%Y-%m-%d %H:%M:%S" (seconds-to-time start-time))))
+                      (completion_time . ,(format-time-string "%Y-%m-%d %H:%M:%S"))
+                      (execution_duration . ,(format "%.2f seconds" (max duration 0.0)))
+                      (recommendations . ,(if success
+                                              "Archive outputs or summarize in the org notebook before moving on."
+                                            "Inspect the error, fix the cell, and rerun. Consider creating a bd follow-up if this blocks other work.")))))
+              (let ((updated (copy-alist req-info)))
+                (setf (alist-get 'results updated) results)
+                (setf (alist-get 'completion_time updated) completion-time)
+                (setf (alist-get 'status updated) "completed")
+                (puthash request-id updated org-notebook-mcp--async-requests))
+              (jupyter-return results))
+          (let* ((capture (org-notebook-mcp--collect-request-messages req))
+                 (elapsed (if start-time (- (float-time) start-time) 0.0)))
+            (jupyter-return
+             `((request_id . ,request-id)
+               (kernel_msg_id . ,kernel-msg-id)
+               (client_buffer . ,client-buffer)
+               (code . ,code)
+               (status . "pending")
+               (output_preview . ,(cdr (assoc 'output capture)))
+               (result_preview . ,(cdr (assoc 'result capture)))
+               (messages_seen . ,(cdr (assoc 'messages_seen capture)))
+               (metadata . ,metadata)
+               (start_time . ,(and start-time (format-time-string "%Y-%m-%d %H:%M:%S" (seconds-to-time start-time))))
+               (elapsed_time . ,(format "%.2f seconds" (max elapsed 0.0)))
+               (recommendations . "Kernel still busy; poll again later or create a bd reminder if you need to follow up after stepping away.")))))))))
 
-      ;; If we already have cached results, return them
-      (if cached-results
-          cached-results
-
-        ;; Check if request is complete
-        (jupyter-run-with-client client
-          (if (jupyter-request-idle-p req)
-              ;; Request is complete - extract and cache results
-              (let* ((execution-error nil)
-                     (output-content "")
-                     (result-content "")
-                     (error-content "")
-                     (messages (oref req messages))
-                     (completion-time (float-time)))
-
-                ;; Process messages to extract results (same logic as sync version)
-                (dolist (msg messages)
-                  (pcase (jupyter-message-type msg)
-                    ("stream"
-                     (let ((stream-content (jupyter-message-content msg)))
-                       (setq output-content
-                             (concat output-content
-                                     (plist-get stream-content :text)))))
-                    ("execute_result"
-                     (let* ((result-data (jupyter-message-content msg))
-                            (data (plist-get result-data :data))
-                            (text (plist-get data :text/plain)))
-                       (when text
-                         (setq result-content
-                               (concat result-content text)))))
-                    ("display_data"
-                     (let* ((display-data (jupyter-message-content msg))
-                            (data (plist-get display-data :data))
-                            (text (plist-get data :text/plain)))
-                       (when text
-                         (setq result-content
-                               (concat result-content text)))))
-                    ("error"
-                     (let* ((error-data (jupyter-message-content msg))
-                            (ename (plist-get error-data :ename))
-                            (evalue (plist-get error-data :evalue))
-                            (traceback (plist-get error-data :traceback)))
-                       (setq execution-error t)
-                       (setq error-content
-                             (format "%s: %s\n%s"
-                                     ename evalue
-                                     (if traceback (string-join traceback "\n") "")))))))
-
-                ;; Create results object
-                (let ((results `((request_id . ,request_id)
-                                (client_buffer . ,client-buffer)
-                                (code . ,code)
-                                (status . "completed")
-                                (success . ,(if execution-error :json-false t))
-                                (output . ,output-content)
-                                (result . ,result-content)
-                                (error . ,(if execution-error error-content nil))
-                                (start_time . ,(format-time-string "%Y-%m-%d %H:%M:%S" (seconds-to-time start-time)))
-                                (completion_time . ,(format-time-string "%Y-%m-%d %H:%M:%S"))
-                                (execution_duration . ,(format "%.2f seconds" (- completion-time start-time))))))
-
-                  ;; Cache results in request info
-                  (let ((updated-req-info (copy-alist req-info)))
-                    (setf (alist-get 'results updated-req-info) results)
-                    (setf (alist-get 'completion_time updated-req-info) completion-time)
-                    (setf (alist-get 'status updated-req-info) "completed")
-                    (puthash request_id updated-req-info org-notebook-mcp--async-requests))
-
-                  ;; Return results
-                  (jupyter-return results)))
-
-            ;; Request is still pending
-            (jupyter-return `((request_id . ,request_id)
-                             (client_buffer . ,client-buffer)
-                             (code . ,code)
-                             (status . "pending")
-                             (start_time . ,(format-time-string "%Y-%m-%d %H:%M:%S" (seconds-to-time start-time)))
-                             (elapsed_time . ,(format "%.2f seconds" (- (float-time) start-time)))
-                             (message . "Execution still in progress - check again later")))))))))
+(defun org-notebook-mcp--list-async-requests ()
+  "Return a summary of all tracked async execution requests."
+  (let (snapshots)
+    (maphash
+     (lambda (_ req-info)
+       (push (org-notebook-mcp--public-request-info req-info) snapshots))
+     org-notebook-mcp--async-requests)
+    (let* ((entries (nreverse snapshots))
+           (pending (cl-count-if (lambda (info)
+                                   (not (string= (cdr (assoc 'status info)) "completed")))
+                                 entries)))
+      `((total_requests . ,(length entries))
+        (pending . ,pending)
+        (completed . ,(- (length entries) pending))
+        (requests . ,entries)))))
 
 (defun org-notebook-mcp--get-kernel-state-direct (client_buffer_name)
   "Get kernel state directly without relying on buffer parsing.
@@ -776,10 +889,10 @@ Returns information about connection status, kernel info, and execution history.
           (last_activity . ,(format-time-string "%Y-%m-%d %H:%M:%S"))
           (kernel_alive . ,(when client (jupyter-kernel-alive-p client))))))))
 
-(defun org-notebook-mcp--send-code-async (client_buffer_name code)
+(defun org-notebook-mcp--send-code-async-legacy (client_buffer_name code &optional metadata)
   "DEPRECATED: Use org-notebook-mcp--send-kernel-code-async instead.
 This function is kept for backward compatibility."
-  (org-notebook-mcp--send-kernel-code-async client_buffer_name code))
+  (org-notebook-mcp--send-kernel-code-async client_buffer_name code metadata))
 
 (defun org-notebook-mcp--get-last-output (client_buffer_name &optional lines)
   "Get the last output from a Jupyter REPL buffer.
@@ -960,11 +1073,12 @@ MCP Parameters:
     (let ((result (org-notebook-mcp--get-kernel-state-direct client_buffer_name)))
       (json-encode result))))
 
-(defun org-notebook-mcp--send-code-async (client_buffer_name code)
+(defun org-notebook-mcp--send-code-async (client_buffer_name code &optional metadata)
   "Send code to Jupyter kernel asynchronously for long-running computations.
 MCP Parameters:
   client_buffer_name - Name of the REPL buffer to send code to (string, required)
-  code - Code to execute in the kernel (string, required)"
+  code - Code to execute in the kernel (string, required)
+  metadata - Optional context map for tracking (alist/hash/object)."
   (mcp-server-lib-with-error-handling
     (unless (stringp client_buffer_name)
       (signal 'wrong-type-argument (list 'stringp client_buffer_name)))
@@ -975,8 +1089,13 @@ MCP Parameters:
     (when (string-empty-p code)
       (error "Empty code provided"))
 
-    (let ((result (org-notebook-mcp--send-kernel-code-async client_buffer_name code)))
+    (let ((result (org-notebook-mcp--send-kernel-code-async client_buffer_name code metadata)))
       (json-encode result))))
+
+(defun org-notebook-mcp--list-async-requests-mcp ()
+  "List tracked async execution requests and their status."
+  (mcp-server-lib-with-error-handling
+    (json-encode (org-notebook-mcp--list-async-requests))))
 
 (defun org-notebook-mcp--get-last-output (client_buffer_name &optional lines)
   "DEPRECATED: This function was replaced due to buffer reading crashes.
