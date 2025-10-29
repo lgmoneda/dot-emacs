@@ -1,15 +1,31 @@
 ;;; org-roam-tools.el --- MCP tools for org-roam
 ;;; Code:
 
-(require 'org-roam)
-(require 'org-roam-node)
-(require 'org-roam-db)
+(require 'cl-lib)
+
+(eval-when-compile
+  (require 'org-roam nil 'noerror)
+  (require 'org-roam-node nil 'noerror)
+  (require 'org-roam-db nil 'noerror))
+
+(defun org-roam-mcp--ensure-dependencies ()
+  "Ensure org-roam libraries are available before executing a tool."
+  (unless (featurep 'org-roam)
+    (unless (require 'org-roam nil 'noerror)
+      (mcp-server-lib-tool-throw "Org-roam not available. Install org-roam and load Emacs configuration.")))
+  (unless (featurep 'org-roam-node)
+    (unless (require 'org-roam-node nil 'noerror)
+      (mcp-server-lib-tool-throw "org-roam-node library missing. Ensure org-roam is properly installed.")))
+  (unless (featurep 'org-roam-db)
+    (unless (require 'org-roam-db nil 'noerror)
+      (mcp-server-lib-tool-throw "org-roam-db library missing. Ensure org-roam is properly installed."))))
 
 ;;; Utility Functions
 
 (defun org-roam-mcp--get-node-content (node)
   "Extract the content of a NODE from its file.
 Returns the content between start and end positions."
+  (org-roam-mcp--ensure-dependencies)
   (let ((file (org-roam-node-file node))
         (point (org-roam-node-point node)))
     (when (and file (file-exists-p file))
@@ -46,6 +62,7 @@ Returns the content between start and end positions."
 MCP Parameters:
   roam_id - The org-roam node ID to retrieve"
   (mcp-server-lib-with-error-handling
+    (org-roam-mcp--ensure-dependencies)
     (unless (stringp roam_id)
       (signal 'wrong-type-argument (list 'stringp roam_id)))
     (when (string-empty-p roam_id)
@@ -78,6 +95,7 @@ MCP Parameters:
   title - The title pattern to search for
   limit - Optional maximum number of results (default 10)"
   (mcp-server-lib-with-error-handling
+    (org-roam-mcp--ensure-dependencies)
     (require 'subr-x)
     (unless (stringp title)
       (signal 'wrong-type-argument (list 'stringp title)))
@@ -122,6 +140,7 @@ MCP Parameters:
   roam_id - The node ID to find backlinks for
   limit - Optional maximum number of backlinks (default 10)"
   (mcp-server-lib-with-error-handling
+    (org-roam-mcp--ensure-dependencies)
     (unless (stringp roam_id)
       (signal 'wrong-type-argument (list 'stringp roam_id)))
     (when (string-empty-p roam_id)

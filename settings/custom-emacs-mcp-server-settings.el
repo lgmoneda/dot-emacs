@@ -245,14 +245,18 @@ Security: Read-only operation, safe for knowledge base analysis"
 
 ;;; Org-babel MCP Tool Functions
 
-(defun org-babel-mcp-execute-src-block (file_path &optional heading_title line_number)
+(defun org-babel-mcp-execute-src-block (file_path &optional heading_title line_number wait_mode)
   "Execute a specific source block in an org file.
 MCP Parameters:
   file_path - Path to the org file
   heading_title - Optional heading title (e.g., 'EDA') - finds first src block under that heading
   line_number - Optional line number - finds first src block at or after this line
   If both are provided, heading_title takes precedence
-  If neither is provided, executes the first source block found"
+  If neither is provided, executes the first source block found
+  wait_mode - Optional string controlling async handling behavior. Accepts:
+              \"no_wait\" (default; returns immediately and surfaces the async id),
+              \"block\" (waits for completion for up to 120 seconds),
+              \"wait_or_id\" (waits ~3 seconds, then returns the async id if still pending)."
   (mcp-server-lib-with-error-handling
     (emacs-mcp--validate-string file_path "file_path")
     (when (and heading_title
@@ -263,7 +267,25 @@ MCP Parameters:
       (mcp-server-lib-tool-throw "Invalid heading_title: must be a string"))
     (when (and line_number (not (numberp line_number)))
       (mcp-server-lib-tool-throw "Invalid line_number: must be a number"))
-    (let ((result (org-babel-mcp--execute-src-block file_path heading_title line_number)))
+    (when (and wait_mode (not (stringp wait_mode)))
+      (mcp-server-lib-tool-throw "Invalid wait_mode: must be a string"))
+    (let* ((normalized-wait
+            (cond
+             ((null wait_mode) 'no-wait)
+             ((string-empty-p wait_mode) 'no-wait)
+             (t
+              (pcase (downcase wait_mode)
+                ("no_wait" 'no-wait)
+                ("no-wait" 'no-wait)
+                ("immediate" 'no-wait)
+                ("block" 'block)
+                ("wait" 'block)
+                ("wait_or_id" 'wait-or-id)
+                ("wait-or-id" 'wait-or-id)
+                ("wait3" 'wait-or-id)
+                (_ (mcp-server-lib-tool-throw
+                    (format "Unsupported wait_mode value: %s" wait_mode)))))))
+           (result (org-babel-mcp--execute-src-block file_path heading_title line_number normalized-wait)))
       (json-encode result))))
 
 (defun org-babel-mcp-execute-subtree (file_path heading_title)
@@ -305,6 +327,10 @@ Parameters:
              Must exist and be a valid org file
   heading_title - Optional heading title (e.g., 'EDA') - finds first src block under that heading
   line_number - Optional line number - finds first src block at or after this line
+  wait_mode - Optional async handling strategy:
+              \"no_wait\" returns immediately (the async id appears in result/pending_request_id),
+              \"block\" waits for completion (up to 120 seconds),
+              \"wait_or_id\" waits ~3 seconds, then returns the async id if still pending
   If both are provided, heading_title takes precedence
   If neither is provided, executes the first source block found
 
@@ -318,12 +344,15 @@ Returns JSON object with:
   execution_time - Time spent waiting for async results in seconds (float)
   timed_out - Whether async polling timed out (boolean)
   still_pending - Whether result is still pending after timeout (boolean)
+  pending_request_id - Request identifier to poll when still_pending=true (string or null)
   retrieval_instructions - How to get pending results if still_pending=true (string)
   file_modified - Whether the file was saved with results (boolean, always true)
 
 Execution behavior:
 - Executes source block using org-babel
-- Detects async execution (Jupyter/EIN kernels) and polls for completion up to 10 seconds
+- Detects async execution (Jupyter/EIN kernels) and polls based on wait_mode (0s for no_wait, 3s for wait_or_id, 120s for block)
+- If the selected wait window expires before stdout lands, timed_out/still_pending become true,
+  result/pending_request_id carry the async token, and retrieval_instructions tells you how to poll later
 - Captures and formats output/results with async status information
 - Provides instructions for retrieving pending results if timeout occurs
 - When async execution is detected, the `result` field will typically contain the kernel
@@ -362,6 +391,10 @@ Error cases:
            (:name "line_number"
             :type integer
             :description "Optional line number to find first src block at or after"
+            :optional t)
+           (:name "wait_mode"
+            :type string
+            :description "Async behavior: no_wait (default), block, wait_or_id"
             :optional t))
    :read-only nil)
 

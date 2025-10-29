@@ -6,6 +6,12 @@
 
 ;;; Utility Functions
 
+(defconst org-babel-mcp--default-block-timeout 120
+  "Maximum seconds to wait for async replacement when blocking.")
+
+(defconst org-babel-mcp--default-poll-interval 0.75
+  "Seconds between polls while waiting for async results.")
+
 (defun org-babel-mcp--get-org-buffer (file-path)
   "Get or create buffer for FILE-PATH.
 Returns the buffer object."
@@ -28,7 +34,23 @@ Assumes we're at a source block."
                           (looking-at "^[ \t]*|")
                           (looking-at "^[ \t]*$")))
             (forward-line 1))
-          (string-trim (buffer-substring-no-properties result-start (point))))))))
+          (org-babel-mcp--normalize-result-string
+           (buffer-substring-no-properties result-start (point))))))))
+
+(defun org-babel-mcp--normalize-result-string (result)
+  "Normalize RESULT text by removing Org result prefixes like ': '.
+Preserves multi-line outputs while stripping leading colon markers."
+  (let* ((text (string-trim-right (or result "")))
+         (lines (split-string text "\n")))
+    (string-join
+     (mapcar (lambda (line)
+               (let* ((trimmed (string-trim-right line))
+                      (stripped (if (string-match "\\`:[ \t]*" trimmed)
+                                    (substring trimmed (match-end 0))
+                                  trimmed)))
+                 (string-trim-right stripped)))
+             lines)
+     "\n")))
 
 (defun org-babel-mcp--is-async-result-p (result)
   "Check if RESULT appears to be an async execution ID.
@@ -44,30 +66,30 @@ Returns t if the result looks like a Jupyter request ID or similar async identif
         (string-match-p "^[0-9a-f]\\{8\\}-[0-9a-f]\\{4\\}-[0-9a-f]\\{4\\}-[0-9a-f]\\{4\\}-[0-9a-f]\\{12\\}$" result)
         (string-match-p "^async_[a-zA-Z0-9_-]+$" result))))
 
-(defun org-babel-mcp--wait-for-async-result (buffer initial-result max-wait-seconds)
+(defun org-babel-mcp--wait-for-async-result (buffer initial-result max-wait-seconds &optional poll-interval)
   "Wait for async result to be replaced with actual output.
 BUFFER is the org buffer, INITIAL-RESULT is the async ID, MAX-WAIT-SECONDS is timeout.
 Returns plist with result details."
   (let ((start-time (current-time))
-        (check-interval 1.5) ; Check every 1.5 seconds
+        (poll-interval (or poll-interval org-babel-mcp--default-poll-interval))
         (current-result initial-result)
         (iteration 0))
-    
-    (while (and (< (float-time (time-subtract (current-time) start-time)) max-wait-seconds)
+
+    (while (and (> max-wait-seconds 0)
+                (< (float-time (time-subtract (current-time) start-time)) max-wait-seconds)
                 (org-babel-mcp--is-async-result-p current-result))
-      (sit-for check-interval)
+      (sit-for poll-interval)
       (setq iteration (1+ iteration))
-      (setq current-result (or (org-babel-mcp--get-block-result buffer) ""))
-      
-      ;; Refresh buffer from file in case external process updated it
-      (with-current-buffer buffer
-        (revert-buffer t t t)))
-    
-    (let ((elapsed (float-time (time-subtract (current-time) start-time)))
-          (timed-out (>= (float-time (time-subtract (current-time) start-time)) max-wait-seconds))
-          (still-async (org-babel-mcp--is-async-result-p current-result)))
-      
+      (setq current-result (or (org-babel-mcp--get-block-result buffer) "")))
+
+    (let* ((elapsed (float-time (time-subtract (current-time) start-time)))
+           (timed-out (and (> max-wait-seconds 0)
+                           (>= elapsed max-wait-seconds)
+                           (org-babel-mcp--is-async-result-p current-result)))
+           (still-async (org-babel-mcp--is-async-result-p current-result)))
+
       `(:result ,current-result
+        :initial-result ,initial-result
         :elapsed-time ,elapsed
         :timed-out ,timed-out
         :still-pending ,still-async
@@ -77,17 +99,19 @@ Returns plist with result details."
            (format "Result still pending (ID: %s). To retrieve when ready, use get-org-heading-content or check-async-execution with request ID %s"
                    current-result current-result))))))
 
-(defun org-babel-mcp--get-block-result-with-async-polling (buffer &optional max-wait-seconds)
+(defun org-babel-mcp--get-block-result-with-async-polling (buffer &optional max-wait-seconds poll-interval)
   "Get block result with optional async polling for better AI agent feedback.
 BUFFER is the org buffer. MAX-WAIT-SECONDS defaults to 10.
 Returns plist with comprehensive result information."
   (let ((initial-result (or (org-babel-mcp--get-block-result buffer) ""))
-        (max-wait (or max-wait-seconds 10)))
-    
+        (max-wait (or max-wait-seconds 10))
+        (poll-interval (or poll-interval org-babel-mcp--default-poll-interval)))
+
     (if (org-babel-mcp--is-async-result-p initial-result)
         ;; Async result detected - poll for completion
-        (let ((async-info (org-babel-mcp--wait-for-async-result buffer initial-result max-wait)))
+        (let ((async-info (org-babel-mcp--wait-for-async-result buffer initial-result max-wait poll-interval)))
           `(:result ,(plist-get async-info :result)
+            :initial-result ,(plist-get async-info :initial-result)
             :async-detected t
             :elapsed-time ,(plist-get async-info :elapsed-time)
             :timed-out ,(plist-get async-info :timed-out)
@@ -96,6 +120,7 @@ Returns plist with comprehensive result information."
             :retrieval-instructions ,(plist-get async-info :retrieval-instructions)))
       ;; Immediate/sync result
       `(:result ,initial-result
+        :initial-result ,initial-result
         :async-detected nil
         :elapsed-time 0
         :timed-out nil
@@ -103,14 +128,17 @@ Returns plist with comprehensive result information."
 
 ;;; MCP Tool Functions
 
-(defun org-babel-mcp--execute-src-block (file_path &optional heading_title line_number)
+(defun org-babel-mcp--execute-src-block (file_path &optional heading_title line_number wait-mode)
   "Execute a specific source block in an org file.
 MCP Parameters:
   file_path - Path to the org file
   heading_title - Optional heading title (e.g., 'EDA') - finds first src block under that heading
   line_number - Optional line number - finds first src block at or after this line
   If both are provided, heading_title takes precedence
-  If neither is provided, executes the first source block found"
+  If neither is provided, executes the first source block found
+  WAIT-MODE controls async handling: nil or 'no-wait for immediate return,
+  'block to wait until completion (up to timeout), or 'wait-or-id to wait a short
+  period before returning the request id."
   (mcp-server-lib-with-error-handling
     (unless (stringp file_path)
       (signal 'wrong-type-argument (list 'stringp file_path)))
@@ -124,8 +152,23 @@ MCP Parameters:
     (let ((buffer (org-babel-mcp--get-org-buffer file_path))
           (block-info nil)
           (line-number nil)
-          (result nil))
-      
+          (result nil)
+          (wait-mode (or wait-mode 'no-wait)))
+
+      (unless (memq wait-mode '(no-wait block wait-or-id))
+        (error "Unsupported wait_mode: %s" wait-mode))
+
+      (let* ((wait-config (pcase wait-mode
+                            ('no-wait
+                             (list :max 0 :poll org-babel-mcp--default-poll-interval))
+                            ('block
+                             (list :max org-babel-mcp--default-block-timeout
+                                   :poll org-babel-mcp--default-poll-interval))
+                            ('wait-or-id
+                             (list :max 3 :poll org-babel-mcp--default-poll-interval))))
+             (max-wait (plist-get wait-config :max))
+             (poll-interval (plist-get wait-config :poll)))
+
       (with-current-buffer buffer
         (save-excursion
           (goto-char (point-min))
@@ -179,11 +222,11 @@ MCP Parameters:
           (org-babel-execute-src-block)
           
           ;; Get the result with async polling
-          (setq result (org-babel-mcp--get-block-result-with-async-polling buffer 10))
+          (setq result (org-babel-mcp--get-block-result-with-async-polling buffer max-wait poll-interval))
           
           ;; Save the buffer
           (save-buffer)))
-      
+
       ;; Return alist format with enhanced async info
       `((file_path . ,file_path)
         (block_name . ,(cond ((and heading_title (stringp heading_title) (not (string-empty-p heading_title)))
@@ -195,11 +238,14 @@ MCP Parameters:
         (line_number . ,line-number)
         (result . ,(plist-get result :result))
         (async_detected . ,(plist-get result :async-detected))
+        (wait_mode . ,(symbol-name wait-mode))
         (execution_time . ,(plist-get result :elapsed-time))
         (timed_out . ,(plist-get result :timed-out))
         (still_pending . ,(plist-get result :still-pending))
+        (pending_request_id . ,(when (plist-get result :still-pending)
+                                 (plist-get result :initial-result)))
         (retrieval_instructions . ,(plist-get result :retrieval-instructions))
-        (file_modified . t)))))
+        (file_modified . t))))))
 
 (defun org-babel-mcp--execute-subtree (file_path heading_title)
   "Execute all source blocks within a specific org subtree.
