@@ -591,6 +591,17 @@ MCP Parameters:
                    file_path heading_title include_content include_code include_results include_subtree)))
       (json-encode result))))
 
+(defun org-notebook-mcp-diff-heading-results (file_path heading_title)
+  "Compute diff between current and previously cached #+RESULTS for a heading.
+MCP Parameters:
+  file_path - Absolute path to the org file
+  heading_title - Title of the heading containing the source block."
+  (mcp-server-lib-with-error-handling
+    (emacs-mcp--validate-string file_path "file_path")
+    (emacs-mcp--validate-string heading_title "heading_title")
+    (let ((result (org-notebook-mcp--diff-heading-results file_path heading_title)))
+      (json-encode result))))
+
 (defun org-notebook-mcp-get-functions-from-org-file (file_path)
   "Extract all functions from code blocks in an org file.
 MCP Parameters:
@@ -1094,6 +1105,39 @@ Security: Read-only operation, safe for file analysis"
             :type boolean
             :description "Whether to include entire subtree (default false)"
             :optional t))
+   :read-only t)
+
+  (mcp-server-lib-register-tool
+   :function #'org-notebook-mcp-diff-heading-results
+   :name "org-notebook-diff-heading-results"
+   :description "Highlight how #+RESULTS changed between executions.
+Caches the previous results for a heading and returns a unified diff when updates occur.
+
+Parameters:
+  file_path - Absolute path to the .org file (string, required)
+  heading_title - Title of the heading containing the #+RESULTS block (string, required)
+
+Returns JSON object with:
+  file_path - The org file that was analyzed (string)
+  heading_title - Heading used for comparison (string)
+  has_previous - Whether a prior snapshot existed (boolean)
+  changed - Whether the current results differ from the cached snapshot (boolean)
+  diff - Unified diff between previous and current results (string or null when unchanged)
+  previous_result - Snapshot of the previous results (string or null when none)
+  current_result - Current results text (string)
+  history_cached - Indicates the current results were stored for future comparisons (boolean)
+  note - Human-readable status summary (string)
+
+Behavior notes:
+- First invocation seeds the cache and returns without a diff.
+- Subsequent calls compare against the cached snapshot and refresh it after each comparison.
+- Diff output uses unified format with \"previous\"/\"current\" labels for easy review."
+   :args '((:name "file_path"
+            :type string
+            :description "Absolute path to the org file containing the heading")
+           (:name "heading_title"
+            :type string
+            :description "Title of the heading to diff"))
    :read-only t)
 
   (mcp-server-lib-register-tool
@@ -1604,6 +1648,7 @@ Security: Read-only operation, safe for status monitoring"
   "Disable the Org-notebook MCP tools."
   (mcp-server-lib-unregister-tool "org-notebook-get-analytical-review")
   (mcp-server-lib-unregister-tool "org-notebook-get-heading-content")
+  (mcp-server-lib-unregister-tool "org-notebook-diff-heading-results")
   (mcp-server-lib-unregister-tool "org-notebook-get-functions-from-org-file")
   (mcp-server-lib-unregister-tool "org-notebook-list-jupyter-repls")
   (mcp-server-lib-unregister-tool "org-notebook-send-code-to-repl")

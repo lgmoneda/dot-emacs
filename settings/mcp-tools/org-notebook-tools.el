@@ -45,6 +45,85 @@ implementation requires jupyter.el specifically.")))
 (defconst org-notebook-mcp--token-limit 16000
   "Approximate character limit equivalent to 4k tokens (4 chars per token).")
 
+(defvar org-notebook-mcp--results-history (make-hash-table :test 'equal)
+  "Cache of previous #+RESULTS text keyed by file path and heading title.")
+
+(defun org-notebook-mcp--results-history-key (file-path heading-title)
+  "Create a canonical key for FILE-PATH and HEADING-TITLE."
+  (list (expand-file-name file-path) heading-title))
+
+(defun org-notebook-mcp--normalize-results-text (text)
+  "Normalize result TEXT for diffing.
+Ensures consistent trailing newline and trims surrounding whitespace."
+  (let* ((normalized (string-trim-right (or text ""))))
+    (if (string-suffix-p "\n" normalized)
+        normalized
+      (concat normalized "\n"))))
+
+(defun org-notebook-mcp--split-lines-preserve-empty (text)
+  "Split TEXT into lines while preserving empty lines."
+  (let ((lines '())
+        (start 0)
+        (len (length text)))
+    (while (< start len)
+      (let ((end (string-match "\n" text start)))
+        (if end
+            (progn
+              (push (substring text start end) lines)
+              (setq start (1+ end)))
+          (push (substring text start) lines)
+          (setq start len))))
+    (nreverse lines)))
+
+(defun org-notebook-mcp--compute-results-diff (previous current)
+  "Return simple diff string between PREVIOUS and CURRENT result strings."
+  (if (string= previous current)
+      ""
+    (let* ((prev-lines (org-notebook-mcp--split-lines-preserve-empty (string-trim-right previous)))
+           (curr-lines (org-notebook-mcp--split-lines-preserve-empty (string-trim-right current)))
+           (header '("--- previous" "+++ current"))
+           (removed (mapcar (lambda (line) (concat "- " line)) prev-lines))
+           (added (mapcar (lambda (line) (concat "+ " line)) curr-lines))
+           (diff-lines (append header removed added)))
+      (string-join diff-lines "\n"))))
+
+(defun org-notebook-mcp--diff-heading-results (file-path heading-title)
+  "Compute diff for #+RESULTS under HEADING-TITLE in FILE-PATH.
+Returns alist with diff metadata and caches the current result snapshot."
+  (unless (file-exists-p file-path)
+    (error "File does not exist: %s" file-path))
+  (let* ((content (org-notebook-mcp--extract-heading-content
+                   file-path heading-title nil nil t nil))
+         (raw-results (alist-get 'results content))
+         (current (org-notebook-mcp--normalize-results-text raw-results))
+         (key (org-notebook-mcp--results-history-key file-path heading-title))
+         (previous (gethash key org-notebook-mcp--results-history))
+         (has-previous (and previous t))
+         (changed nil)
+         (diff-string ""))
+    (setq changed (and has-previous (not (string= previous current))))
+    (when changed
+      (setq diff-string (org-notebook-mcp--compute-results-diff previous current)))
+    ;; Update cache with current snapshot
+    (puthash key current org-notebook-mcp--results-history)
+    (let* ((current-display (string-trim-right current))
+           (previous-display (when has-previous (string-trim-right previous))))
+      `((file_path . ,file-path)
+        (heading_title . ,heading-title)
+        (has_previous . ,(if has-previous t :json-false))
+        (changed . ,(if changed t :json-false))
+        (diff . ,(if (string-empty-p diff-string) nil diff-string))
+        (previous_result . ,previous-display)
+        (current_result . ,current-display)
+        (history_cached . t)
+        (note . ,(cond
+                  ((not has-previous)
+                   "No previous result cached; stored current snapshot for future comparisons.")
+                  (changed
+                   "Differences detected between previous and current results.")
+                  (t
+                   "No differences detected; cache refreshed with current result.")))))))
+
 (defun org-notebook-mcp--extract-heading-content (file-path heading-title include-content include-code include-results include-subtree)
   "Extract content, code, and/or results from a specific org heading.
 Returns the requested components based on flags, with length management for LLM consumption."
