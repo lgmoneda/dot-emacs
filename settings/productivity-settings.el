@@ -6,27 +6,70 @@
 
 (use-package orderless
   :ensure t
+  :init
+  ;; Enhanced dispatcher - only activates with special prefixes
+  (defun my/orderless-dispatch-ivy-like (pattern index _total)
+    "Custom dispatcher for orderless:
+- `!word` → exclude candidates containing `word`
+- `#word` → fuzzy/flex match `word`
+- `=word` → match exactly `word`
+- `^word` → match beginning
+- `~word` → match end
+- `%word` → character folding"
+    (cond
+     ;; !word  → negate match (exclude)
+     ((string-prefix-p "!" pattern)
+      `(orderless-without-literal . ,(substring pattern 1)))
+     ;; #word → flex (fuzzy subsequence)
+     ((string-prefix-p "#" pattern)
+      `(orderless-flex . ,(substring pattern 1)))
+     ;; =word → literal match
+     ((string-prefix-p "=" pattern)
+      `(orderless-literal . ,(substring pattern 1)))
+     ;; ^word → beginning
+     ((string-prefix-p "^" pattern)
+      `(orderless-prefixes . ,(substring pattern 1)))
+     ;; ~word → end
+     ((string-prefix-p "~" pattern)
+      `(orderless-suffixes . ,(substring pattern 1)))
+     ;; %word → character folding
+     ((string-prefix-p "%" pattern)
+      `(char-fold-to-regexp . ,(substring pattern 1)))
+     ;; Return nil if no prefix matches - use default styles
+     (t nil)))
+  
+  ;; Let spaces split components, but allow escaping with \
+  (setq orderless-component-separator #'orderless-escapable-split-on-space
+        ;; Use your custom dispatcher
+        orderless-style-dispatchers
+        '(my/orderless-dispatch-ivy-like))
+  
   :custom
-  ;; Matching style
+  ;; Global styles
   (completion-styles '(orderless basic))
   (completion-category-defaults nil)
+  
+  ;; Category overrides
   (completion-category-overrides
-   '((file (styles partial-completion))
-     (command (styles orderless))
-     (symbol (styles orderless))
-     (variable (styles orderless))
-     (buffer (styles orderless))))
-
-  ;; Always ignore case — no “smart” switching
-  (orderless-smart-case nil)
+   '((file         (styles partial-completion))
+     (project-file (styles orderless partial-completion))
+     (buffer       (styles orderless))
+     (command      (styles orderless))
+     (symbol       (styles orderless))
+     (variable     (styles orderless))
+     (eglot        (styles orderless))
+     (org-roam-node (styles orderless))))
+  
+  ;; Matching styles - added initialism for matching initials
+  (orderless-matching-styles '(orderless-literal 
+                                orderless-regexp 
+                                orderless-initialism))
+  
+  ;; Case behavior - SMART CASE ENABLED
+  (orderless-smart-case t)
   (completion-ignore-case t)
   (read-buffer-completion-ignore-case t)
   (read-file-name-completion-ignore-case t))
-
-;; But use plain/basic matching for Consult’s async results (ripgrep, grep, line, etc.)
-(with-eval-after-load 'consult
-  (add-to-list 'completion-category-overrides
-               '(consult-location (styles . (basic)))))
 
 ;; Vertico replaces Ivy
 (use-package vertico
@@ -195,6 +238,7 @@
 (global-set-key (kbd "M-s") 'my-M-s-map)
 (global-set-key (kbd "M-s d") 'consult-dir)
 
+(global-set-key (kbd "M-s s") 'avy-goto-char)
 ;; Free it for Consult
 (global-unset-key (kbd "M-."))
 
@@ -373,7 +417,7 @@
   (define-key comint-mode-map (kbd "C-r") #'consult-comint-history))
 
 ;; Easily copy file path
-(defun lgm/file-path-to-clipboard ()
+(defun lgm/copy-file-path-to-clipboard ()
   "Put the current file name on the clipboard"
   (interactive)
   (let ((filename (if (equal major-mode 'dired-mode)
