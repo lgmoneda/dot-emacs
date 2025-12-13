@@ -177,10 +177,11 @@
 ;; C-x C-<space> global jump to last mark
 (setq set-mark-command-repeat-pop t)
 
-(global-set-key (kbd "C-=") 'er/expand-region)
+;; I'm switching expand-region and mark-word commands
+(global-set-key (kbd "C-+") 'er/expand-region)
 ;; This is a faster option for something I do regularly in org
 ;; I often copy a word in a TODO entry to paste a link
-(global-set-key (kbd "C-+") 'er/mark-word)
+(global-set-key (kbd "C-=") 'er/mark-word)
 
 ;; Creates a new line without breaking the current line
 (defun newline-without-break-of-line ()
@@ -304,7 +305,7 @@
 
 (global-set-key (kbd "C-:") 'avy-goto-char-timer)
 (global-set-key (kbd "M-z") 'avy-goto-char)
-(global-set-key (kbd "C-,") 'avy-goto-char)
+(global-set-key (kbd "M-s s") 'avy-goto-char)
 (global-set-key (kbd "C-?") 'avy-goto-line)
 
 ;; To be able to easily rescale the text on the fly
@@ -391,6 +392,19 @@
 ;; assisted by AI coding tools like Claude Code
 (setq auto-revert-verbose nil) ;; don’t spam minibuffer
 (setq revert-without-query '(".*")) ;; accept reverts silently for all files
+
+;; I'm setting it because of the hardlinks between org-roam files and
+;; notebooks in git repositories
+(setq backup-by-copying-when-linked t)  ;; keep hard links intact on backup
+(setq backup-by-copying t)              ;; (optional) prefer copy for backups
+
+;; I'm constantly using it, so instead of C-x b + typing scra
+(defun jump-to-scratch ()
+  "Switch to the *scratch* buffer."
+  (interactive)
+  (switch-to-buffer "*scratch*"))
+
+(global-set-key (kbd "C-c s") 'jump-to-scratch)
 
 (provide 'editor-settings)
 ;;; editor-settings.el ends here

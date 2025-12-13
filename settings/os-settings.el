@@ -44,5 +44,51 @@
 (setenv "PATH" (concat (getenv "PATH") ":/Users/luis.moneda/.npm-global/bin"))
 (setq exec-path (append exec-path '("/Users/luis.moneda/.npm-global/bin")))
 
+;; --- caffeinate helpers ----------------------------------------------------
+
+(defvar my/caffeinate-process nil
+  "Process object for the running `caffeinate` session, if any.")
+
+(defun my/caffeinate-start ()
+  "Start a `caffeinate` process tied to this Emacs instance."
+  (interactive)
+  (unless (eq system-type 'darwin)
+    (user-error "`caffeinate` only exists on macOS"))
+  (unless (and my/caffeinate-process
+               (process-live-p my/caffeinate-process))
+    (setq my/caffeinate-process
+          (start-process
+           "caffeinate-emacs" "*caffeinate-emacs*"
+           "caffeinate" "-dims" "-w" (number-to-string (emacs-pid))))
+    (message "☕ caffeinate: sleep protection ENABLED")))
+
+(defun my/caffeinate-stop ()
+  "Stop the running `caffeinate` process, if any."
+  (interactive)
+  (when (and my/caffeinate-process
+             (process-live-p my/caffeinate-process))
+    (kill-process my/caffeinate-process)
+    (setq my/caffeinate-process nil)
+    (message "😴 caffeinate: sleep protection DISABLED")))
+
+(defun my/caffeinate-enabled-p ()
+  "Return non-nil if a `caffeinate` process is running."
+  (and my/caffeinate-process
+       (process-live-p my/caffeinate-process)))
+
+(add-hook 'kill-emacs-hook #'my/caffeinate-stop)
+
+;; --- main toggle command ---------------------------------------------------
+
+(defun caffeinate-emacs ()
+  "Toggle macOS sleep protection for this Emacs using `caffeinate`.
+
+When enabled, a background `caffeinate -dims -w <emacs-pid>` process
+prevents the Mac from going to sleep while Emacs is running."
+  (interactive)
+  (if (my/caffeinate-enabled-p)
+      (my/caffeinate-stop)
+    (my/caffeinate-start)))
+
 (provide 'os-settings)
 ;;; os-settings.el ends here
