@@ -516,7 +516,7 @@ Provides a selection from a predefined list, but also allows custom input."
                     ;; Exit the menu if no selection is made
                     (throw 'exit nil)))))))))))
 
-(global-set-key (kbd "C-c s") 'my/display-popup-at-point)
+(global-set-key (kbd "C-c e") 'my/display-popup-at-point)
 
 ;; To clean the faces if I'm writing
 (defun chunky-semantic-search/clear-faces (&optional start end)
