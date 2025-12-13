@@ -45,13 +45,31 @@
 ;; (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
 (pyvenv-workon "edge")
 
-(add-hook 'python-mode-hook
-          (lambda ()
-            (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")))
+(defun lgm/org-src-python-buffer-p ()
+  "Return non-nil if this Python buffer is an Org src edit buffer."
+  (string-prefix-p "*Org Src" (buffer-name)))
 
-(add-hook 'python-ts-mode-hook
-          (lambda ()
-            (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")))
+(defun lgm/python-mode-setup ()
+  ;; This is cheap, ok to do always
+  (setq indent-tabs-mode t
+        tab-width 4
+        py-indent-tabs-mode t)
+  (add-to-list 'write-file-functions 'delete-trailing-whitespace)
+  ;; Skip heavy stuff in Org src temp buffers
+  (unless (lgm/org-src-python-buffer-p)
+    (column-enforce-mode 1)
+    (electric-operator-mode 1)
+    (py-autopep8-mode 1)
+    (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")))
+
+(add-hook 'python-mode-hook #'lgm/python-mode-setup)
+
+(defun lgm/python-ts-mode-setup ()
+  ;; Only activate venv in real buffers, not Org’s temp ones
+  (unless (lgm/org-src-python-buffer-p)
+    (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")))
+
+(add-hook 'python-ts-mode-hook #'lgm/python-ts-mode-setup)
 
 ;; To activate nupy environment
 (defun anupy ()
@@ -224,7 +242,7 @@ if breakpoints are present in `python-mode' files"
 
 (define-key python-mode-map (kbd "C-c C-i") 'pyimport-insert-missing)
 
-(load "~/.emacs.d/elpa/py-autopep8-20250913.2251/py-autopep8.el")
+;; (load "~/.emacs.d/elpa/py-autopep8-20250913.2251/py-autopep8.el")
 (use-package py-autopep8
   :ensure t
   :after python
@@ -293,6 +311,18 @@ if breakpoints are present in `python-mode' files"
 ;; Explore it at some point
 ;; (require 'dap-python)
 ;; (setq dap-python-debugger 'debugpy)
+
+;; Because of the constant failures in org-babel
+(with-eval-after-load 'python
+  (setq python-indent-guess-indent-offset nil
+        python-indent-guess-indent-offset-verbose nil))
+
+(use-package ein
+  :ensure t
+  :config
+  (setq ein:completion-backend 'corfu)
+  :init
+  (setq ein:polymode nil))
 
 (provide 'python-settings)
 ;;; python-settings.el ends here

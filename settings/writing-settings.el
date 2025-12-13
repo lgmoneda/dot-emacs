@@ -184,6 +184,9 @@
    `((file ,(all-the-icons-faicon "file-pdf-o" :face 'all-the-icons-red) . " ")
      (note ,(all-the-icons-faicon "sticky-note" :face 'all-the-icons-yellow) . " ")))
   (citar-symbol-separator "  ")
+  ;; Have citation link faces look closer to as they were for `org-ref'
+  (org-cite ((t (:foreground "DarkSeaGreen4"))))
+  (org-cite-key ((t (:foreground "forest green" :slant italic))))
   :hook
   ((LaTeX-mode . citar-capf-setup)
    (org-mode . citar-capf-setup))
@@ -191,6 +194,18 @@
   (require 'citar-embark)
   (citar-embark-mode 1)
   (global-set-key (kbd "C-c r") 'org-cite-insert))
+
+;; This removes visually the [] from org official cite syntax
+;; It is important to not actually remove to keep functionality
+(add-hook 'org-mode-hook
+          (lambda ()
+            (font-lock-add-keywords
+             nil
+             '(("\\(\\[\\)\\([a-zA-Z0-9]+\\(?:/[a-zA-Z0-9]+\\)*:[^]]+\\)\\(\\]\\)"
+                (1 (prog1 () (compose-region (match-beginning 1) (match-end 1) "")))
+                (3 (prog1 () (compose-region (match-beginning 3) (match-end 3) "")))))
+             'append)))
+
 
 (use-package citar-embark
   :ensure t
@@ -464,6 +479,8 @@
                 (message "BibTeX entry added: %s" entry)))
 
           (error (message "Error occurred: %s" (error-message-string err))))))))
+
+;; Check it in the future: https://github.com/bradmont/page-view/
 
 (provide 'writing-settings)
 ;;; writing-settings.el ends here

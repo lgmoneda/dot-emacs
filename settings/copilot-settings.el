@@ -48,16 +48,75 @@
 ;; (org-roam-mcp-start-server)
 ;; (mcp-server-lib-start)
 
-(use-package acp
-  :vc (:url "https://github.com/xenodium/acp.el"))
 (use-package agent-shell
-  :vc (:url "https://github.com/xenodium/agent-shell"))
+  :ensure t)
+
+(setq agent-shell-file-completion-enabled t)
+(setq agent-shell-show-welcome-message nil)
+
+;; Graphic interacts poorly
+;; (setq agent-shell-header-style 'text)
+
+(add-hook 'agent-shell-mode-hook #'corfu-mode)
+
 (setq agent-shell-openai-authentication
       (agent-shell-anthropic-make-authentication :login t))
 
+(setq agent-shell-openai-codex-environment
+      (agent-shell-make-environment-variables :inherit-env t))
+
 ;; With string
-(setq agent-shell-openai-authentication
-      (agent-shell-openai-make-authentication :api-key (getenv "OPENAI_API_KEY")))
+;; (setq agent-shell-openai-authentication
+;;       (agent-shell-openai-make-authentication :api-key (getenv "OPENAI_API_KEY")))
+(setq agent-shell-anthropic-authentication
+      (agent-shell-anthropic-make-authentication :api-key (getenv "ANTHROPIC_API_KEY")))
+
+;; (with-eval-after-load 'agent-shell
+;;   ;; Codex (default profile from ~/.codex/config.toml)
+;;   (add-to-list 'agent-shell-agent-configs
+;;                (list
+;;                 (cons :id "codex-default")
+;;                 (cons :display-name "Codex (default)")
+;;                 (cons :program "codex-acp")))
+;;   ;; Codex (work profile)
+;;   (add-to-list 'agent-shell-agent-configs
+;;                (list
+;;                 (cons :id "codex-work")
+;;                 (cons :display-name "Codex (work)")
+;;                 (cons :program "codex-acp")
+;;                 ;; Some ACP adapters need a `--` before forward args; if your build
+;;                 ;; doesn’t, try '("--profile" "work") instead.
+;;                 (cons :args '("--" "--profile" "work")))))
+
+;; Management for agent shell
+(add-to-list 'load-path "~/repos/agent-shell-manager/")
+;; (require 'agent-shell-manager)
+(require 'agent-shell-manager)
+
+(use-package agent-shell-manager
+  :config
+  (setq agent-shell-manager-display-buffer-alist
+        '((display-buffer-in-side-window)
+          (side . bottom)
+          (window-height . 8)  ; 25% of frame height
+          (slot . 0)
+          (dedicated . t))))
+
+;; (use-package agent-shell-sidebar
+;;   :after agent-shell
+;;   ;; :vc (:url "https://github.com/cmacrae/agent-shell-sidebar")
+;;   :custom
+;;   (agent-shell-sidebar-width "25%")
+;;   (agent-shell-sidebar-minimum-width 80)
+;;   (agent-shell-sidebar-maximum-width "50%")
+;;   (agent-shell-sidebar-position 'right)
+;;   (agent-shell-sidebar-locked t)
+;;   (agent-shell-sidebar-default-config
+;;    (agent-shell-anthropic-make-claude-code-config))
+;;   ;; :bind
+;;   ;; (("C-c a s" . agent-shell-sidebar-toggle)
+;;   ;;  ("C-c a f" . agent-shell-sidebar-toggle-focus))
+;;   )
 
 (provide 'copilot-settings)
 ;;; copilot-settings.el ends here

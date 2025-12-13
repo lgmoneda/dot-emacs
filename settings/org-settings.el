@@ -253,6 +253,12 @@ menu\nmouse-2 will jump to task"))
 		(:tangle . "no")
 		(:eval . "never-export")))
 
+;; Trying to fix tab in the code block
+(with-eval-after-load 'org
+  (add-to-list 'org-src-lang-modes '("jupyter-python" . python)))
+
+(setq org-src-tab-acts-natively t)
+
 ;; * Handling ansi codes
 
 (defun scimax-jupyter-ansi ()
@@ -318,7 +324,7 @@ This should only apply to jupyter-lang blocks."
 (eval-after-load "preview"
   '(add-to-list 'preview-default-preamble "\\PreviewEnvironment{tikzpicture}" t))
 
-(setq org-latex-create-formula-image-program 'imagemagick)
+;; (setq org-latex-create-formula-image-program 'imagemagick)
 ;; (add-to-list ' org-preview-latex-process-alist
 ;;              'imagemagick)
 
@@ -649,11 +655,10 @@ this command to copy it"
 	 "** NEXT %? \nDEADLINE: %t") ))
 
 (add-to-list 'org-capture-templates
-             '("W" "Work task (programmatic)" entry
-               (file+olp "~/Dropbox/Agenda/nu.org" "Manager" "Misc")
-               "%i"
-               :empty-lines 1
-               :immediate-finish t))
+             '("w" "Work task"  entry
+               (file+headline "~/Dropbox/Agenda/nu.org" "Tasks")
+               "* TODO %?"
+	       :empty-lines 1))
 
 (add-to-list 'org-capture-templates
              '("b" "Batch work task"  entry
@@ -697,7 +702,7 @@ this command to copy it"
 (add-to-list 'org-capture-templates
              '("W" "Work task (programmatic)" entry
                (file+olp "~/Dropbox/Agenda/nu.org" "Manager" "Misc")
-               "* TODO %i"
+               "%i"
                :empty-lines 1
                :immediate-finish t))
 
@@ -1022,7 +1027,7 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
          :target
          (file+head
           "%(expand-file-name (or citar-org-roam-subdir \"\") org-roam-directory)/${citar-citekey}.org"
-          "#+title: ${citar-title} (${citar-date}), ${citar-author}.\n#+ref: cite:${citar-citekey}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n#+created: %U\n#+last_modified: %U\n\n %?")
+          "#+title: ${citar-title} (${citar-date}), ${citar-author}.\n#+ref: cite:${citar-citekey}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n#+created: %U\n\n")
          :unnarrowed t)))
   :custom
   (org-roam-directory (file-truename "/Users/luis.moneda/Dropbox/Agenda/roam"))
@@ -1959,7 +1964,7 @@ display the output in a new temporary buffer."
   (when (org-in-regexp org-link-bracket-re 1)
     (message "Target: %s" (org-link-unescape (match-string 1)))))
 
-(global-set-key (kbd "C-c s") 'show-org-link-target)
+(global-set-key (kbd "C-c u") 'show-org-link-target)
 
 ;; It selects a header from the same org file I'm in and link it
 ;; It is useful when I want to refer other parts of the file, but they are not org roam nodes.
@@ -2469,20 +2474,70 @@ Records until `org-screen-record-stop-and-insert-link' is called."
 ;; Interesting packages
 ;; https://github.com/isamert/corg.el
 
+
+;; ------ Insert link from browser history
 ;; move to elsewhere later
 ;;; Arc → Consult/Vertico picker with fixed columns + open actions
 (require 'subr-x)
 (require 'cl-lib)
 
-(defvar my/arc-history-db
-  (expand-file-name
-   "/Users/luis.moneda/Library/Application Support/Arc/User Data/Default/History")
-  "Path to Arc browser history SQLite database.")
+;; -------------------------------------------------------------------
+;; Config: which browser + where to read history from
+;; -------------------------------------------------------------------
+
+(defcustom lgm/browser-history-backend 'dia
+  "Which browser history backend to use.
+Supported values: `arc', `dia', or a custom plist."
+  :type '(choice (const :tag "Arc" arc)
+                 (const :tag "Dia" dia)
+                 (sexp  :tag "Custom plist"))
+  :group 'lgm/browser-history)
+
+(defcustom lgm/browser-history-path-arc
+  "/Users/luis.moneda/Library/Application Support/Arc/User Data/Default/History"
+  "Path to Arc browser history SQLite database."
+  :type 'file
+  :group 'lgm/browser-history)
+
+(defcustom lgm/browser-history-path-dia
+  "/Users/luis.moneda/Library/Application Support/Dia/User Data/Default/History"
+  "Path to Dia browser history SQLite database.
+
+⚠️ Check this path on your machine. In a shell:
+  ls \"~/Library/Application Support/Dia/User Data/Default/History\"
+If it exists, this default is correct; otherwise adjust accordingly."
+  :type 'file
+  :group 'lgm/browser-history)
+
+(defun lgm/browser-history-db ()
+  "Return the active browser history DB path as a string."
+  (pcase lgm/browser-history-backend
+    ('arc lgm/browser-history-path-arc)
+    ('dia lgm/browser-history-path-dia)
+    ;; Allow passing a plist like (:db \"/some/path/History\")
+    ((and (pred listp) (app (plist-get it :db) db))
+     db)
+    (_ lgm/browser-history-path-dia)))
+
+(defun lgm/toggle-browser-history-backend ()
+  "Toggle `lgm/browser-history-backend' between Arc and Dia."
+  (interactive)
+  (setq lgm/browser-history-backend
+        (pcase lgm/browser-history-backend
+          ('arc 'dia)
+          (_    'arc)))
+  (message "Browser history backend: %s" lgm/browser-history-backend))
 
 (defun my/arc--copy-db ()
-  (let ((tmp "/tmp/arc-history.db"))
+  "Copy current browser history DB to /tmp and return that path.
+Respects `lgm/browser-history-backend'."
+  (let* ((src (lgm/browser-history-db))
+         (tmp "/tmp/arc-history.db"))
+    (unless (and src (file-exists-p src))
+      (user-error "History DB not found at %S (backend: %s)"
+                  src lgm/browser-history-backend))
     (when (file-exists-p tmp) (delete-file tmp))
-    (copy-file my/arc-history-db tmp)
+    (copy-file src tmp)
     tmp))
 
 (defun my/arc--chrome-to-seconds (chrome-time)
@@ -2699,7 +2754,7 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
     (setq lgm/arc--cands cands)
     (let* ((selection (consult--read
                        (mapcar #'car cands)
-                       :prompt   "Arc History: "
+                       :prompt   "Browser History: "
                        :annotate annot
                        :category 'arc-history
                        :sort     nil))
@@ -2710,6 +2765,80 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
       (message "Inserted link: %s" url))))
 
 (global-set-key (kbd "C-c w") (quote lgm/consult-arc-history-insert-link))
+
+;; eglot in org src
+;; this is a bad solution
+(defun lgm/org-src-force-file ()
+  "Give org-src edit buffers a temporary filename so Eglot can work."
+  (when (and (derived-mode-p 'python-base-mode)
+             (not buffer-file-name))
+    ;; Keep temp file under your project or ~/.emacs.d/.cache/
+    (setq-local buffer-file-name
+                (expand-file-name
+                 (format "org-src-%s.py"
+                         (substring (md5 (buffer-name)) 0 8))
+                 (locate-dominating-file default-directory ".git")))))
+
+(add-hook 'org-src-mode-hook #'lgm/org-src-force-file)
+
+;; Make TAB and S-TAB behave nicely in org-babel
+(require 'org)
+(require 'ob-core) ;; for org-babel-do-in-edit-buffer
+
+(defun my/org-backtab-dwim (&optional arg)
+  "Inside src blocks, use the language mode's S-TAB behavior.
+Outside src blocks, fall back to `org-shifttab'."
+  (interactive "P")
+  (if (org-in-src-block-p)
+      (org-babel-do-in-edit-buffer
+        ;; In the temporary edit buffer, find what <backtab> does and run it.
+        (let ((cmd (key-binding (kbd "<backtab>"))))
+          (when (commandp cmd)
+            (call-interactively cmd))))
+    ;; Normal org behavior when not in a src block
+    (org-shifttab arg)))
+
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "<backtab>") #'my/org-backtab-dwim))
+
+(defun my/org-tab-dwim (arg)
+  "In Org src blocks:
+- At indentation: indent line (like normal code TAB).
+- At end of word: dabbrev completion.
+Elsewhere: behave like `org-cycle`."
+  (interactive "P")
+  (if (and (derived-mode-p 'org-mode)
+           (org-in-src-block-p))
+      ;; We are inside a #+begin_src ... #+end_src block
+      (let* ((pos (point))
+             (indent-pos (save-excursion
+                           (back-to-indentation)
+                           (point))))
+        (cond
+         ;; Case 1: at or before the first non-whitespace char → indent
+         ((<= pos indent-pos)
+          (indent-for-tab-command))
+
+         ;; Case 2: at the end of a word/symbol → dabbrev-expand
+         ((and (looking-back "\\(?:\\sw\\|\\s_\\)" 1) ; just after word char or _
+               (or (eolp)                             ; end of line
+                   (looking-at "\\_>")))              ; or end of symbol
+          ;; Fresh dabbrev cycle if last command wasn't this function
+          (unless (eq last-command 'my/org-tab-dwim)
+            (setq dabbrev--last-abbrev-location nil
+                  dabbrev--last-abbrev nil))
+          (dabbrev-expand arg))
+
+         ;; Fallback inside src block → indent
+         (t
+          (indent-for-tab-command))))
+    ;; Not in src block → keep full Org TAB behavior
+    (org-cycle arg)))
+
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "TAB") #'my/org-tab-dwim))
+
+
 
 (provide 'org-settings)
 ;;; org-settings.el ends here

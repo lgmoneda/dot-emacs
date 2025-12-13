@@ -169,33 +169,34 @@ want to use in the modeline *in lieu of* the original.")
  '(conda-anaconda-home "/Users/luis.moneda/miniconda3")
  '(package-selected-packages
    '(straight org-sliced-images gptel ob-mermaid aider aidermacs langtool
-			  org-modern nov shrface consult vertico citar-org-roam
-			  citar-embark citar ox-bibtex ivy-bibtex ox-gfm
-			  spacious-padding golden-ratio embark-consult embark
-			  exec-path-from-shell smex ob-chatgpt-shell
-			  quelpa-use-package copilot org-emms emms chatgpt-shell
-			  pyimport electric-operator org-present org-tree-slide
-			  org-transclusion org-mind-map consult-org-roam
-			  org-download org-remark org-ql org-roam-bibtex olivetti
-			  org-roam-ui org-roam deadgrep org-bullets
-			  virtualenvwrapper simple-httpd column-enforce-mode conda
-			  pyvenv pyenv-mode pyenv magit default-text-scale
-			  zygospore writeroom-mode with-editor which-key try
-			  smartparens smart-mode-line shell-pop restclient
-			  rebecca-theme rainbow-delimiters poet-theme pdf-tools
-			  org-ref orderless ob-async neotree multiple-cursors
-			  multi mood-line minions mindre-theme
-			  markdown-preview-mode lsp-grammarly latex-preview-pane
-			  ivy-posframe imenu-anywhere hide-mode-line helm-bibtex
-			  gscholar-bibtex goto-chg google-translate flymd
-			  expand-region engine-mode disable-mouse diminish diff-hl
-			  counsel-projectile company-posframe company-flx beacon
-			  auto-complete anzu annotate all-the-icons-ivy-rich ag))
+	      org-modern nov shrface consult vertico citar-org-roam
+	      citar-embark citar ox-bibtex ivy-bibtex ox-gfm
+	      spacious-padding golden-ratio embark-consult embark
+	      exec-path-from-shell smex ob-chatgpt-shell
+	      quelpa-use-package copilot org-emms emms chatgpt-shell
+	      pyimport electric-operator org-present org-tree-slide
+	      org-transclusion org-mind-map consult-org-roam
+	      org-download org-remark org-ql org-roam-bibtex olivetti
+	      org-roam-ui org-roam deadgrep org-bullets
+	      virtualenvwrapper simple-httpd column-enforce-mode conda
+	      pyvenv pyenv-mode pyenv magit default-text-scale
+	      zygospore writeroom-mode with-editor which-key try
+	      smartparens smart-mode-line shell-pop restclient
+	      rebecca-theme rainbow-delimiters poet-theme pdf-tools
+	      org-ref orderless ob-async neotree multiple-cursors
+	      multi mood-line minions mindre-theme
+	      markdown-preview-mode lsp-grammarly latex-preview-pane
+	      ivy-posframe imenu-anywhere hide-mode-line helm-bibtex
+	      gscholar-bibtex goto-chg google-translate flymd
+	      expand-region engine-mode disable-mouse diminish diff-hl
+	      counsel-projectile company-posframe company-flx beacon
+	      auto-complete anzu annotate all-the-icons-ivy-rich ag))
  '(package-vc-selected-packages
-   '((agent-shell :url "https://github.com/xenodium/agent-shell")
-	 (acp :url "https://github.com/xenodium/acp.el")
-	 (claude-code :url
-				  "https://github.com/stevemolitor/claude-code.el")))
+   '((wasabi :url "https://github.com/xenodium/wasabi" :branch "main")
+     (agent-shell :url "https://github.com/xenodium/agent-shell")
+     (acp :url "https://github.com/xenodium/acp.el")
+     (claude-code :url
+		  "https://github.com/stevemolitor/claude-code.el")))
  '(pdf-tools-handle-upgrades nil))
 
 ;; Vertico-posframe dependency
@@ -286,13 +287,19 @@ want to use in the modeline *in lieu of* the original.")
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(avy-lead-face ((t (:background "SeaGreen" :foreground "white"))))
+ '(avy-lead-face-0 ((t (:background "VioletRed3" :foreground "white"))))
+ '(avy-lead-face-2 ((t (:background "MediumPurple4" :foreground "white"))))
  '(diff-hl-change ((t (:background "#3a81c3"))))
  '(diff-hl-delete ((t (:background "#ee6363"))))
  '(diff-hl-insert ((t (:background "#7ccd7c"))))
  '(hl-tags-face ((t (:inherit highlight))))
  '(jupyter-repl-input-prompt ((t (:foreground "SeaGreen4"))))
+ '(org-cite ((t (:foreground "forest green"))))
+ '(org-cite-key ((t (:foreground "forest green"))))
  '(org-link ((nil (:foreground "cornflowerblue" :underline nil))))
- '(org-quote ((t (:inherit mindre-default :slant italic)))))
+ '(org-quote ((t (:inherit mindre-default :slant italic))))
+ '(org-ref-cite-face ((t (:foreground "forest green")))))
 
 ;; Change font size
 ;; Iosevka
