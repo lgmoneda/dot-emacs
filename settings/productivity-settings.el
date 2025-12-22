@@ -441,5 +441,204 @@
 ;; This is great and I should explore it in the future
 ;; (load-file "~/Dropbox/Projetos/Emacs/work-templates.el")
 
+;; for vterm terminal backend:
+(use-package vterm
+  :ensure t
+  :config
+  (defun my/vterm-here ()
+    "Open a new vterm buffer."
+    (interactive)
+    (vterm (generate-new-buffer-name "*vterm*")))
+  )
+
+;; multi-vterm
+(use-package multi-vterm
+  :ensure t
+  :after vterm
+  :config
+
+  ;; Dispatcher
+  (defun my/multi-vterm-dispatch (arg)
+    "Terminal dispatcher:
+- C-c e        → dedicated toggle
+- C-u C-c e    → project vterm
+- C-u 1 C-c e  → consult vterm switcher
+- C-u 2 C-c e  → new regular vterm"
+    (interactive "P")
+    (cond
+     ;; C-u 1 C-c e
+     ((equal arg 1)
+      (call-interactively #'my/vterm-consult-switch))
+
+     ;; C-u 2 C-c e
+     ((equal arg 2)
+      (call-interactively #'multi-vterm))
+
+     ;; plain C-u C-c e  => raw prefix
+     ((equal arg '(4))
+      (call-interactively #'multi-vterm-project))
+
+     ;; no prefix
+     (t
+      (call-interactively #'multi-vterm-dedicated-toggle))))
+
+  ;; Bind dispatcher
+  (global-set-key (kbd "C-c e") #'my/multi-vterm-dispatch)
+
+  ;; ⌘[ / ⌘] only inside vterm buffers
+  (with-eval-after-load 'vterm
+    (define-key vterm-mode-map (kbd "s-[") #'multi-vterm-prev)
+    (define-key vterm-mode-map (kbd "s-]") #'multi-vterm-next)))
+
+
+;; dedicated terminal height of 30%
+(setq multi-vterm-dedicated-window-height-percent 30)
+
+;; Decide if C-c e dedicated toggle or last/new vterm after using it
+
+(defvar my/vterm-last-buffer nil
+  "Most recent non-vterm buffer we toggled from.")
+
+(defun my/vterm--any-vterm-window ()
+  "Return a live window currently displaying a vterm buffer, or nil."
+  (cl-find-if
+   (lambda (w)
+     (with-current-buffer (window-buffer w)
+       (eq major-mode 'vterm-mode)))
+   (window-list nil 'no-minibuffer)))
+
+(defun my/vterm--last-vterm-buffer ()
+  "Return the most recently used vterm buffer, or nil."
+  (cl-find-if
+   (lambda (buf)
+     (buffer-live-p buf))
+   (cl-remove-if-not
+    (lambda (buf)
+      (with-current-buffer buf (eq major-mode 'vterm-mode)))
+    (buffer-list))))
+
+(defun my/vterm-toggle ()
+  "Toggle to vterm: prefer selecting an existing visible vterm window.
+If in vterm, return to the last non-vterm buffer (or previous-buffer)."
+  (interactive)
+  (cond
+   ;; If we're already in vterm, go back.
+   ((eq major-mode 'vterm-mode)
+    (if (buffer-live-p my/vterm-last-buffer)
+        (switch-to-buffer my/vterm-last-buffer)
+      (previous-buffer)))
+
+   ;; If any vterm is visible, just jump to that window.
+   ((let ((w (my/vterm--any-vterm-window)))
+      (when (window-live-p w)
+        (setq my/vterm-last-buffer (current-buffer))
+        (select-window w)
+        t)))
+
+   ;; Otherwise, switch to last vterm buffer (or create one).
+   (t
+    (setq my/vterm-last-buffer (current-buffer))
+    (if-let ((buf (my/vterm--last-vterm-buffer)))
+        (switch-to-buffer buf)
+      (vterm (generate-new-buffer-name "*vterm*"))))))
+
+(global-set-key (kbd "C-c g") #'my/vterm-toggle)
+
+(setq vterm-shell "/bin/zsh") ;; adjust if needed
+(setq vterm-max-scrollback 50000)
+
+;; Make sure Command = Super on macOS
+(setq mac-command-modifier 'super)
+
+(with-eval-after-load 'vterm
+  ;; ⌘D → split right (horizontal panes)
+  (defun my/vterm-split-right-new ()
+    "Split window right and open a new vterm."
+    (interactive)
+    (let ((win (split-window-right)))
+      (select-window win)
+      (vterm (generate-new-buffer-name "*vterm*"))))
+
+  ;; ⇧⌘D → split below (vertical panes)
+  (defun my/vterm-split-below-new ()
+    "Split window below and open a new vterm."
+    (interactive)
+    (let ((win (split-window-below)))
+      (select-window win)
+      (vterm (generate-new-buffer-name "*vterm*"))))
+
+  ;; Keybindings (only in vterm)
+  (define-key vterm-mode-map (kbd "s-d") #'my/vterm-split-right-new)
+  (define-key vterm-mode-map (kbd "s-D") #'my/vterm-split-below-new))
+
+(require 'cl-lib)
+(require 'subr-x)
+
+(defun my/vterm--buffers ()
+  "Return a list of live vterm buffers (most-recent first)."
+  (cl-remove-if-not
+   (lambda (buf)
+     (with-current-buffer buf (eq major-mode 'vterm-mode)))
+   (buffer-list)))
+
+(defun my/vterm--annotate (cand)
+  "Annotate vterm candidate CAND with its default-directory."
+  (let* ((buf (get-buffer cand))
+         (dir (and buf (with-current-buffer buf (abbreviate-file-name default-directory)))))
+    (when dir
+      (format "  [%s]" dir))))
+
+(defun my/vterm--current-candidate ()
+  "Return current minibuffer completion candidate."
+  (cond
+   ((fboundp 'consult--candidate) (consult--candidate))
+   ((fboundp 'vertico--candidate) (vertico--candidate))
+   (t (minibuffer-contents-no-properties))))
+
+(defun my/vterm--display-candidate (&optional other-side)
+  "Display current completion candidate buffer in another window."
+  (interactive)
+  (let* ((cand (my/vterm--current-candidate))
+         (buf (and cand (get-buffer cand))))
+    (when (buffer-live-p buf)
+      (let ((display-buffer-overriding-action
+             (if other-side
+                 '(display-buffer-in-direction
+                   (direction . right)
+                   (window-width . 0.5))
+               '(display-buffer-pop-up-window))))
+        (display-buffer buf)))))
+
+
+(defun my/vterm-consult-switch ()
+  "Consult list of vterm buffers.
+RET switches to it.
+TAB displays it in another window without leaving the minibuffer."
+  (interactive)
+  (let* ((bufs (my/vterm--buffers))
+         (cands (mapcar #'buffer-name bufs)))
+    (unless cands
+      (user-error "No vterm buffers"))
+
+    (let ((map (make-composed-keymap
+                (let ((m (make-sparse-keymap)))
+                  (define-key m (kbd "TAB") #'my/vterm--display-candidate)
+                  (define-key m (kbd "<backtab>")
+                    (lambda () (interactive)
+                      (my/vterm--display-candidate t)))
+                  m)
+                minibuffer-local-completion-map)))
+
+      (switch-to-buffer
+       (consult--read
+        cands
+        :prompt "VTerm: "
+        :require-match t
+        :sort nil
+        :annotate #'my/vterm--annotate
+        :keymap map)))))
+
+
+
 (provide 'productivity-settings)
 ;;; productivity-settings.el ends here
