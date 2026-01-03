@@ -638,7 +638,10 @@ TAB displays it in another window without leaving the minibuffer."
         :annotate #'my/vterm--annotate
         :keymap map)))))
 
-
+(defun my/embark-project-vterm (project)
+  "Open vterm at PROJECT root."
+  (let ((default-directory (project-root project)))
+    (vterm)))
 
 (provide 'productivity-settings)
 ;;; productivity-settings.el ends here

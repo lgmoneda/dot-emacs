@@ -39,6 +39,8 @@
   (exec-path-from-shell-copy-env "GOOGLE_API_KEY")
   (exec-path-from-shell-copy-env "OPENROUTER_API_KEY")
   (exec-path-from-shell-copy-env "BRAVESEARCH_API_KEY")
+  (exec-path-from-shell-copy-env "SMUDGE_CLIENT_ID")
+  (exec-path-from-shell-copy-env "SMUDGE_CLIENT_SECRET")
   )
 
 (setenv "PATH" (concat (getenv "PATH") ":/Users/luis.moneda/.npm-global/bin"))

@@ -481,6 +481,7 @@
           (error (message "Error occurred: %s" (error-message-string err))))))))
 
 ;; Check it in the future: https://github.com/bradmont/page-view/
+;; https://github.com/agzam/wiktionary-bro.el
 
 (provide 'writing-settings)
 ;;; writing-settings.el ends here

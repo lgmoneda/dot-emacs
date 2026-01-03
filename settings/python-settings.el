@@ -324,5 +324,62 @@ if breakpoints are present in `python-mode' files"
   :init
   (setq ein:polymode nil))
 
+;;;; EIN (Emacs IPython Notebook) — vanilla Emacs 29/30 + eglot-friendly
+
+(use-package ein
+  :ensure t
+  :commands (ein:notebooklist-open ein:notebook-open ein:run)
+  :init
+  ;; Modern Jupyter often prefers the "server" subcommand.
+  ;; If your setup only works with "notebook", change this to "notebook".
+  (setq ein:jupyter-server-use-subcommand "server")
+
+  ;; If you use a specific python env, you can point to a jupyter executable:
+  ;; (setq ein:jupyter-server-command (expand-file-name "~/.venvs/jupyter/bin/jupyter"))
+  (setq ein:jupyter-server-command "jupyter")
+
+  :custom
+  ;; Inline images in output area (your old config)
+  (ein:output-area-inlined-images t)
+
+  ;; Prefer pretty text when possible
+  (ein:output-type-prefer-pretty-text-over-html t)
+
+  ;; Optional: explicit preference list (fine to remove)
+  (ein:output-type-preference
+   '(emacs-lisp
+     image image/png svg image/svg image/png jpeg image/jpeg
+     text html text/html latex text/latex javascript))
+
+  :config
+  ;; If you keep seeing polymode-related crashes (like pm--visible-buffer-name),
+  ;; forcing python-only notebooks avoids the multilang polymode path.
+  ;; If you DO want poly notebooks, keep the multilang line instead.
+  (setq ein:notebook-modes '(ein:notebook-python-mode))
+  ;; (setq ein:notebook-modes '(ein:notebook-multilang-mode ein:notebook-python-mode))
+
+  ;; Keep eglot away from EIN buffers (EIN buffers are not normal file buffers;
+  ;; eglot tends to cause conflicts / noise here).
+  (add-hook 'ein:notebook-mode-hook
+            (lambda ()
+              (when (bound-and-true-p eglot--managed-mode)
+                (ignore-errors (eglot-shutdown)))))
+
+  ;; Your “distraction-free notebook” hook (optional)
+  (add-hook 'ein:notebook-mode-hook
+            (lambda ()
+              (when (fboundp 'writeroom-mode)
+                (writeroom-mode 1)
+                (when (fboundp 'writeroom-adjust-width)
+                  (writeroom-adjust-width 30))))))
+
+;; Optional: Org-babel integration (lets you do #+begin_src ein-python ...)
+(with-eval-after-load 'org
+  (require 'ob-ein nil t)
+  (when (featurep 'ob-ein)
+    (add-to-list 'org-babel-load-languages '(ein . t))
+    (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)))
+
+
 (provide 'python-settings)
 ;;; python-settings.el ends here
