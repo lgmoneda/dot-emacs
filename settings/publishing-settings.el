@@ -669,5 +669,65 @@ Asks whether to commit and push to GitHub after export."
         (delete-file bib-html-file)
         (message "✅ Exported Proust HTML with bibliography to: %s" output-file)))))
 
+;; epub settings
+(require 'subr-x)
+
+(defun my/org-pandoc--collect-args ()
+  "Collect pandoc CLI args from all '#+pandoc:' lines in current buffer.
+Returns a flat list of strings."
+  (save-excursion
+    (goto-char (point-min))
+    (let (args)
+      (while (re-search-forward "^#\\+pandoc:\\s-*\\(.*\\)$" nil t)
+        (let ((line (string-trim (match-string 1))))
+          (when (and line (not (string-empty-p line)))
+            (setq args (nconc args (split-string-and-unquote line))))))
+      args)))
+
+(defun my/org-pandoc-export-epub-to-downloads (&optional output)
+  "Export current Org buffer to EPUB using pandoc, writing to ~/Downloads/ by default.
+Collects CLI args from '#+pandoc:' lines in the file.
+
+With prefix arg (C-u), prompt for OUTPUT path."
+  (interactive
+   (list (when current-prefix-arg
+           (read-file-name "Output EPUB: "
+                           (expand-file-name "~/Downloads/")
+                           nil nil
+                           (concat (file-name-base (or (buffer-file-name) "book"))
+                                   ".epub")))))
+  (unless (buffer-file-name)
+    (user-error "Buffer is not visiting a file. Save it first."))
+  (when (buffer-modified-p) (save-buffer))
+
+  (let* ((infile (buffer-file-name))
+         (base   (file-name-base infile))
+         (default-out (expand-file-name (concat base ".epub") "~/Downloads/"))
+         (outfile (or output default-out))
+         (extra-args (my/org-pandoc--collect-args))
+         ;; Make sure resources resolve relative to the org file directory:
+         (default-directory (file-name-directory infile))
+         (args (append (list "-f" "org")
+                       extra-args
+                       (list "-o" outfile infile)))
+         (buf (get-buffer-create "*Pandoc EPUB Export*")))
+    (with-current-buffer buf
+      (setq buffer-read-only nil)
+      (erase-buffer)
+      (insert (format "Working dir: %s\nRunning:\n  pandoc %s\n\n"
+                      default-directory
+                      (mapconcat #'shell-quote-argument args " ")))
+      (setq buffer-read-only t))
+    (let ((exit-code (apply #'call-process "pandoc" nil buf t args)))
+      (if (and (integerp exit-code) (= exit-code 0))
+          (message "EPUB exported: %s" outfile)
+        (progn
+          (display-buffer buf)
+          (error "Pandoc failed (exit %s). See *Pandoc EPUB Export* buffer."
+                 exit-code))))))
+
+;; Optional keybinding:
+;; (define-key org-mode-map (kbd "C-c C-e D") #'my/org-pandoc-export-epub-to-downloads)
+
 (provide 'publishing-settings)
 ;;; publishing-settings.el ends here
