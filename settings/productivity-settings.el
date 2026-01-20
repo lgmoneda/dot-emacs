@@ -37,18 +37,18 @@
       `(char-fold-to-regexp . ,(substring pattern 1)))
      ;; Return nil if no prefix matches - use default styles
      (t nil)))
-  
+
   ;; Let spaces split components, but allow escaping with \
   (setq orderless-component-separator #'orderless-escapable-split-on-space
         ;; Use your custom dispatcher
         orderless-style-dispatchers
         '(my/orderless-dispatch-ivy-like))
-  
+
   :custom
   ;; Global styles
   (completion-styles '(orderless basic))
   (completion-category-defaults nil)
-  
+
   ;; Category overrides
   (completion-category-overrides
    '((file         (styles partial-completion))
@@ -59,12 +59,12 @@
      (variable     (styles orderless))
      (eglot        (styles orderless))
      (org-roam-node (styles orderless))))
-  
+
   ;; Matching styles - added initialism for matching initials
-  (orderless-matching-styles '(orderless-literal 
-                                orderless-regexp 
+  (orderless-matching-styles '(orderless-literal
+                                orderless-regexp
                                 orderless-initialism))
-  
+
   ;; Case behavior - SMART CASE ENABLED
   (orderless-smart-case t)
   (completion-ignore-case t)
@@ -131,7 +131,7 @@
      (right-fringe . 8)
      (internal-border-width . 2)
      ))
-  :config
+  :init
   (vertico-posframe-mode 1))
 
 ;; Enable rich annotations using the Marginalia package
@@ -441,24 +441,9 @@
 ;; This is great and I should explore it in the future
 ;; (load-file "~/Dropbox/Projetos/Emacs/work-templates.el")
 
-;; for vterm terminal backend:
-(use-package vterm
-  :ensure t
-  :config
-  (defun my/vterm-here ()
-    "Open a new vterm buffer."
-    (interactive)
-    (vterm (generate-new-buffer-name "*vterm*")))
-  )
-
-;; multi-vterm
-(use-package multi-vterm
-  :ensure t
-  :after vterm
-  :config
-
-  ;; Dispatcher
-  (defun my/multi-vterm-dispatch (arg)
+;; vterm
+;; Dispatcher
+(defun my/multi-vterm-dispatch (arg)
     "Terminal dispatcher:
 - C-c e        → dedicated toggle
 - C-u C-c e    → project vterm
@@ -482,9 +467,31 @@
      (t
       (call-interactively #'multi-vterm-dedicated-toggle))))
 
-  ;; Bind dispatcher
-  (global-set-key (kbd "C-c e") #'my/multi-vterm-dispatch)
+;; Bind dispatcher
+(global-set-key (kbd "C-c e") #'my/multi-vterm-dispatch)
 
+;; for vterm terminal backend:
+(use-package vterm
+  :ensure t
+  :commands (vterm my/vterm-here)  
+  :config
+  (defun my/vterm-here ()
+    "Open a new vterm buffer."
+    (interactive)
+    (vterm (generate-new-buffer-name "*vterm*")))
+  )
+
+;; multi-vterm
+(use-package multi-vterm
+  :ensure t
+  :commands (multi-vterm
+             multi-vterm-project
+             multi-vterm-dedicated-toggle
+             multi-vterm-prev
+             multi-vterm-next)  
+  :after vterm
+  
+  :config
   ;; ⌘[ / ⌘] only inside vterm buffers
   (with-eval-after-load 'vterm
     (define-key vterm-mode-map (kbd "s-[") #'multi-vterm-prev)
@@ -642,6 +649,21 @@ TAB displays it in another window without leaving the minibuffer."
   "Open vterm at PROJECT root."
   (let ((default-directory (project-root project)))
     (vterm)))
+
+(defun lgm/open-mobile-inbox ()
+  "Open the mobile inbox Org file and go to the end."
+  (interactive)
+  (let ((file (expand-file-name "~/Dropbox/Agenda/mobile/inbox.org")))
+    (find-file file)
+    (goto-char (point-max))))
+
+(defun lgm/open-mobile-todo ()
+  "Open the mobile inbox Org file and go to the end."
+  (interactive)
+  (let ((file (expand-file-name "~/Dropbox/Agenda/mobile/mobile-todo.org")))
+    (find-file file)
+    (goto-char (point-max))))
+
 
 (provide 'productivity-settings)
 ;;; productivity-settings.el ends here
