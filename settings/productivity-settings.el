@@ -580,6 +580,7 @@ If in vterm, return to the last non-vterm buffer (or previous-buffer)."
 
 (require 'cl-lib)
 (require 'subr-x)
+(require 'org)
 
 (defun my/vterm--buffers ()
   "Return a list of live vterm buffers (most-recent first)."
@@ -645,15 +646,115 @@ TAB displays it in another window without leaving the minibuffer."
         :annotate #'my/vterm--annotate
         :keymap map)))))
 
-(defun my/embark-project-vterm (project)
-  "Open vterm at PROJECT root."
-  (let ((default-directory (project-root project)))
+(defun my/vterm-project-root (dir)
+  "Open vterm in DIR (project root directory)."
+  (interactive "D")
+  (let ((default-directory dir))
     (vterm)))
+
+(with-eval-after-load 'embark
+  (define-key embark-file-map (kbd "E") #'my/vterm-project-root))
+
+(defvar lgm/mobile-inbox-file
+  (expand-file-name "~/Dropbox/Agenda/mobile/inbox.org")
+  "Path to the Org file used for capturing mobile inbox items.")
+
+(defvar lgm/mobile-agenda-file
+  (expand-file-name "~/Dropbox/Agenda/todo.org")
+  "Path to the main Org agenda file for mobile inbox entries.")
+
+(defconst lgm/mobile-inbox-target-path '("Life" "Inbox")
+  "Outline path for mobile inbox entries in the agenda file.")
+
+(defun lgm--org-collect-top-level-markers ()
+  "Return a list of markers for top-level headings."
+  (let (min-level markers)
+    (org-map-entries
+     (lambda ()
+       (let ((level (org-current-level)))
+         (when (or (null min-level) (< level min-level))
+           (setq min-level level))
+         (push (cons (copy-marker (point)) level) markers)))
+     nil 'file)
+    (when min-level
+      (setq markers
+            (cl-remove-if-not
+             (lambda (item) (= (cdr item) min-level))
+             markers))
+      (mapcar #'car (nreverse markers)))))
+
+(defun lgm--org-find-or-create-path (path)
+  "Ensure PATH exists and return the point of the last heading."
+  (let ((level 1)
+        (parent-position nil)
+        (current-position nil))
+    (dolist (heading path)
+      (save-restriction
+        (when parent-position
+          (goto-char parent-position)
+          (org-narrow-to-subtree)
+          (goto-char (point-min)))
+        (setq current-position (org-find-exact-headline-in-buffer heading))
+        (unless current-position
+          (goto-char (point-max))
+          (unless (bolp) (insert "\n"))
+          (insert (make-string level ?*) " " heading "\n")
+          (setq current-position (line-beginning-position))))
+      (setq parent-position current-position)
+      (setq level (1+ level)))
+    (goto-char parent-position)
+    parent-position))
+
+(defun lgm/extract-mobile-inbox-to-agenda ()
+  "Move mobile inbox entries into the main agenda via refile."
+  (interactive)
+  (let ((interactive-call (called-interactively-p 'any)))
+    (unless (file-exists-p lgm/mobile-inbox-file)
+      (user-error "Mobile inbox file not found: %s" lgm/mobile-inbox-file))
+    (unless (file-exists-p lgm/mobile-agenda-file)
+      (user-error "Agenda file not found: %s" lgm/mobile-agenda-file))
+    (let (markers)
+      (with-current-buffer (find-file-noselect lgm/mobile-inbox-file)
+        (org-with-wide-buffer
+          (setq markers (lgm--org-collect-top-level-markers))))
+      (if (null markers)
+          (when interactive-call
+            (message "No mobile inbox items to extract."))
+        (let ((moved-count 0)
+              (target-buffer (find-file-noselect lgm/mobile-agenda-file))
+              (target-location nil))
+          (with-current-buffer target-buffer
+            (org-with-wide-buffer
+              (let ((target-position
+                     (lgm--org-find-or-create-path lgm/mobile-inbox-target-path)))
+                (setq target-location
+                      (list (mapconcat #'identity lgm/mobile-inbox-target-path "/")
+                            lgm/mobile-agenda-file
+                            nil
+                            (copy-marker target-position))))))
+          (let ((org-refile-use-outline-path 'file)
+                (org-outline-path-complete-in-steps nil))
+            (with-current-buffer (find-file-noselect lgm/mobile-inbox-file)
+              (org-with-wide-buffer
+                (dolist (marker (reverse markers))
+                  (goto-char marker)
+                  (org-back-to-heading t)
+                  (org-toggle-tag "mobile" 'on)
+                  (org-refile nil nil target-location)
+                  (setq moved-count (1+ moved-count))))
+              (save-buffer)))
+          (with-current-buffer target-buffer
+            (save-buffer))
+          (message "Moved %d mobile inbox item%s."
+                   moved-count
+                   (if (= moved-count 1) "" "s")))))))
+
+(add-hook 'emacs-startup-hook #'lgm/extract-mobile-inbox-to-agenda)
 
 (defun lgm/open-mobile-inbox ()
   "Open the mobile inbox Org file and go to the end."
   (interactive)
-  (let ((file (expand-file-name "~/Dropbox/Agenda/mobile/inbox.org")))
+  (let ((file lgm/mobile-inbox-file))
     (find-file file)
     (goto-char (point-max))))
 

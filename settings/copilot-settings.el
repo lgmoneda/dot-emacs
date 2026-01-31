@@ -49,27 +49,50 @@
 ;; (mcp-server-lib-start)
 
 (use-package agent-shell
-  :ensure t)
+  :commands (agent-shell)
+  :hook (agent-shell-mode . corfu-mode)
+  :init
+  (setq agent-shell-file-completion-enabled t
+        agent-shell-show-welcome-message nil)
+  :config
+  (setq agent-shell-anthropic-authentication
+        (agent-shell-anthropic-make-authentication
+         :api-key (getenv "ANTHROPIC_API_KEY")))
+  (setq agent-shell-openai-authentication
+      (agent-shell-openai-make-authentication :login t))
 
-(setq agent-shell-file-completion-enabled t)
-(setq agent-shell-show-welcome-message nil)
+  ;; Environment variables for Codex/OpenAI subprocesses
+  (setq agent-shell-openai-codex-environment
+        (agent-shell-make-environment-variables :inherit-env t))
+  )
+
+(defvar my/agent-shell-codex-profile 'personal
+  "Current Codex profile for agent-shell. Either 'personal or 'work.")
+
+(defun my/agent-shell--set-codex-command ()
+  "Update `agent-shell-openai-codex-command` based on current profile."
+  (setq agent-shell-openai-codex-command
+        (list "codex-acp"
+              "--profile"
+              (symbol-name my/agent-shell-codex-profile))))
+
+(defun lgm/agent-shell-toggle-codex-profile ()
+  "Toggle Codex profile between personal and work for agent-shell."
+  (interactive)
+  (setq my/agent-shell-codex-profile
+        (if (eq my/agent-shell-codex-profile 'personal)
+            'work
+          'personal))
+  (my/agent-shell--set-codex-command)
+  (message "Agent-shell Codex profile set to: %s"
+           my/agent-shell-codex-profile))
 
 ;; Graphic interacts poorly
 ;; (setq agent-shell-header-style 'text)
 
-(add-hook 'agent-shell-mode-hook #'corfu-mode)
-
-(setq agent-shell-openai-authentication
-      (agent-shell-anthropic-make-authentication :login t))
-
-(setq agent-shell-openai-codex-environment
-      (agent-shell-make-environment-variables :inherit-env t))
-
 ;; With string
 ;; (setq agent-shell-openai-authentication
 ;;       (agent-shell-openai-make-authentication :api-key (getenv "OPENAI_API_KEY")))
-(setq agent-shell-anthropic-authentication
-      (agent-shell-anthropic-make-authentication :api-key (getenv "ANTHROPIC_API_KEY")))
 
 ;; (with-eval-after-load 'agent-shell
 ;;   ;; Codex (default profile from ~/.codex/config.toml)
@@ -89,18 +112,33 @@
 ;;                 (cons :args '("--" "--profile" "work")))))
 
 ;; Management for agent shell
-(add-to-list 'load-path "~/repos/agent-shell-manager/")
-;; (require 'agent-shell-manager)
-(require 'agent-shell-manager)
-
 (use-package agent-shell-manager
-  :config
-  (setq agent-shell-manager-display-buffer-alist
-        '((display-buffer-in-side-window)
-          (side . bottom)
-          (window-height . 8)  ; 25% of frame height
-          (slot . 0)
-          (dedicated . t))))
+  :vc (:url "https://github.com/jethrokuan/agent-shell-manager")
+  :commands (agent-shell-manager-toggle)
+  )
+
+(with-eval-after-load 'agent-shell-manager
+  ;; Let *your* display-buffer-alist decide placement/size.
+  (setq agent-shell-manager-side nil)
+
+  ;; Show the manager in a bottom side window, 18% of frame height.
+  (add-to-list
+   'display-buffer-alist
+   '("\\*Agent-Shell Buffers\\*"
+     (display-buffer-reuse-window display-buffer-in-side-window)
+     (side . bottom)
+     (slot . 0)
+     (window-height . 0.15)
+     (preserve-size . (nil . t)))))
+
+(defun my/agent-shell-project-root (dir)
+  "Run agent-shell in DIR (project root directory)."
+  (interactive "D")
+  (let ((default-directory dir))
+    (call-interactively #'agent-shell)))
+
+(with-eval-after-load 'embark
+  (define-key embark-file-map (kbd "a") #'my/agent-shell-project-root))
 
 ;; (use-package agent-shell-sidebar
 ;;   :after agent-shell
