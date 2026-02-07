@@ -87,6 +87,13 @@
   (message "Agent-shell Codex profile set to: %s"
            my/agent-shell-codex-profile))
 
+
+;; Ensure claude-code-acp runs with env from ~/.nurc
+;; This will make using work settings in all claude code sessions via agent-shell
+(with-eval-after-load 'agent-shell
+  (setopt agent-shell-anthropic-claude-command
+          '("bash" "-lc" "source ~/.nurc >/dev/null 2>&1; exec claude-code-acp")))
+
 ;; Graphic interacts poorly
 ;; (setq agent-shell-header-style 'text)
 
@@ -128,7 +135,7 @@
      (display-buffer-reuse-window display-buffer-in-side-window)
      (side . bottom)
      (slot . 0)
-     (window-height . 0.15)
+     (window-height . 0.08)
      (preserve-size . (nil . t)))))
 
 (defun my/agent-shell-project-root (dir)
@@ -136,6 +143,23 @@
   (interactive "D")
   (let ((default-directory dir))
     (call-interactively #'agent-shell)))
+
+(defun my/agent-shell-project-root (dir)
+  "Open or switch to agent-shell for project at DIR."
+  (interactive (list default-directory))
+  (let* ((default-directory dir)
+         ;; Look for existing agent-shell buffers in this project
+         (existing-buffer 
+          (cl-find-if
+           (lambda (buf)
+             (with-current-buffer buf
+               (and (derived-mode-p 'agent-shell-mode)
+                    (equal default-directory dir))))
+           (buffer-list))))
+    (if existing-buffer
+        (switch-to-buffer existing-buffer)
+      (let ((default-directory dir))
+        (call-interactively #'agent-shell)))))
 
 (with-eval-after-load 'embark
   (define-key embark-file-map (kbd "a") #'my/agent-shell-project-root))
