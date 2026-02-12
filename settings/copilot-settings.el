@@ -87,12 +87,13 @@
   (message "Agent-shell Codex profile set to: %s"
            my/agent-shell-codex-profile))
 
-
-;; Ensure claude-code-acp runs with env from ~/.nurc
-;; This will make using work settings in all claude code sessions via agent-shell
 (with-eval-after-load 'agent-shell
-  (setopt agent-shell-anthropic-claude-command
-          '("bash" "-lc" "source ~/.nurc >/dev/null 2>&1; exec claude-code-acp")))
+  ;; Make sure the agent sees your normal Emacs environment (PATH, HOME, etc.)
+  (setq agent-shell-anthropic-claude-environment
+        (agent-shell-make-environment-variables
+         :inherit-env t
+         :load-env (expand-file-name "~/.nurc.env")))
+  )
 
 ;; Graphic interacts poorly
 ;; (setq agent-shell-header-style 'text)
@@ -137,6 +138,28 @@
      (slot . 0)
      (window-height . 0.08)
      (preserve-size . (nil . t)))))
+
+(defun my/switch-to-agent-shell-buffers ()
+  "Jump to *Agent-Shell Buffers*.
+If missing, call `agent-shell-manager-toggle`.
+If already visible, move point to that window instead of replacing the
+current buffer."
+  (interactive)
+  (let ((buf (get-buffer "*Agent-Shell Buffers*")))
+    (unless buf
+      (agent-shell-manager-toggle)
+      (setq buf (get-buffer "*Agent-Shell Buffers*")))
+    (when buf
+      (pop-to-buffer buf))))
+
+(global-set-key (kbd "C-c m") #'my/switch-to-agent-shell-buffers)
+
+(with-eval-after-load 'agent-shell
+  (when (boundp 'agent-shell-mode-map)
+    (define-key agent-shell-mode-map (kbd "C-<tab>")
+      (lambda ()
+        (interactive)
+        (other-window 1)))))
 
 (defun my/agent-shell-project-root (dir)
   "Run agent-shell in DIR (project root directory)."
