@@ -139,27 +139,29 @@
      (window-height . 0.08)
      (preserve-size . (nil . t)))))
 
-(defun my/switch-to-agent-shell-buffers ()
-  "Jump to *Agent-Shell Buffers*.
-If missing, call `agent-shell-manager-toggle`.
-If already visible, move point to that window instead of replacing the
-current buffer."
+(defun my/agent-shell-manager-smart-toggle ()
+  "If already in the Agent-Shell manager, toggle it.
+Otherwise, jump to *Agent-Shell Buffers* (creating it if needed)."
   (interactive)
-  (let ((buf (get-buffer "*Agent-Shell Buffers*")))
-    (unless buf
+  (if (derived-mode-p 'agent-shell-manager-mode)
       (agent-shell-manager-toggle)
-      (setq buf (get-buffer "*Agent-Shell Buffers*")))
-    (when buf
-      (pop-to-buffer buf))))
+    (let ((buf (get-buffer "*Agent-Shell Buffers*")))
+      (unless (buffer-live-p buf)
+        (agent-shell-manager-toggle)
+        (setq buf (get-buffer "*Agent-Shell Buffers*")))
+      (when (buffer-live-p buf)
+        ;; If it's already visible somewhere, just focus that window.
+        (let ((win (get-buffer-window buf t)))
+          (if (window-live-p win)
+              (select-window win)
+            (pop-to-buffer buf)))))))
 
-(global-set-key (kbd "C-c m") #'my/switch-to-agent-shell-buffers)
+(global-set-key (kbd "C-c m") #'my/agent-shell-manager-smart-toggle)
+
 
 (with-eval-after-load 'agent-shell
   (when (boundp 'agent-shell-mode-map)
-    (define-key agent-shell-mode-map (kbd "C-<tab>")
-      (lambda ()
-        (interactive)
-        (other-window 1)))))
+    (define-key agent-shell-mode-map (kbd "C-<tab>") #'my/window-next)))
 
 (defun my/agent-shell-project-root (dir)
   "Run agent-shell in DIR (project root directory)."
@@ -168,11 +170,10 @@ current buffer."
     (call-interactively #'agent-shell)))
 
 (defun my/agent-shell-project-root (dir)
-  "Open or switch to agent-shell for project at DIR."
+  "Open or switch to agent-shell for project at DIR in another window."
   (interactive (list default-directory))
   (let* ((default-directory dir)
-         ;; Look for existing agent-shell buffers in this project
-         (existing-buffer 
+         (existing-buffer
           (cl-find-if
            (lambda (buf)
              (with-current-buffer buf
@@ -180,7 +181,7 @@ current buffer."
                     (equal default-directory dir))))
            (buffer-list))))
     (if existing-buffer
-        (switch-to-buffer existing-buffer)
+        (pop-to-buffer existing-buffer)   ;; <- new window
       (let ((default-directory dir))
         (call-interactively #'agent-shell)))))
 
