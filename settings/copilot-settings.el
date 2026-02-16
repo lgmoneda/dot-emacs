@@ -163,12 +163,42 @@ Otherwise, jump to *Agent-Shell Buffers* (creating it if needed)."
   (when (boundp 'agent-shell-mode-map)
     (define-key agent-shell-mode-map (kbd "C-<tab>") #'my/window-next)))
 
-(defun my/agent-shell-project-root (dir)
-  "Run agent-shell in DIR (project root directory)."
-  (interactive "D")
-  (let ((default-directory dir))
-    (call-interactively #'agent-shell)))
+;; (defun my/project-root (path)
+;;   "Return project root for PATH (file/dir). Fallback to directory of PATH."
+;;   (let* ((dir (cond
+;;                ((null path) default-directory)
+;;                ((file-directory-p path) path)
+;;                (t (file-name-directory path))))
+;;          (pr (project-current nil dir)))
+;;     (file-name-as-directory
+;;      (file-truename (if pr (project-root pr) dir)))))
 
+;; (defun my/agent-shell--buffer-for-root (root)
+;;   "Find an agent-shell buffer whose `default-directory` matches ROOT."
+;;   (setq root (file-name-as-directory (file-truename root)))
+;;   (cl-find-if
+;;    (lambda (buf)
+;;      (with-current-buffer buf
+;;        (and (derived-mode-p 'agent-shell-mode)
+;;             (file-equal-p
+;;              (file-name-as-directory (file-truename default-directory))
+;;              root))))
+;;    (buffer-list)))
+
+;; (defun my/agent-shell-for (path)
+;;   "Open or switch to agent-shell for PATH's project root.
+;; If none exists, force-create one."
+;;   (interactive (list default-directory))
+;;   (let* ((root (my/project-root path))
+;;          (existing (my/agent-shell--buffer-for-root root)))
+;;     (if existing
+;;         (pop-to-buffer existing)
+;;       (let ((default-directory root))
+;;         ;; Force-create a new agent shell (common convention: C-u)
+;;         (let ((current-prefix-arg '(4)))
+;;           (call-interactively #'agent-shell))))))
+
+;; project.el
 (defun my/agent-shell-project-root (dir)
   "Open or switch to agent-shell for project at DIR in another window."
   (interactive (list default-directory))
@@ -185,8 +215,17 @@ Otherwise, jump to *Agent-Shell Buffers* (creating it if needed)."
       (let ((default-directory dir))
         (call-interactively #'agent-shell)))))
 
+;; embark
+(defun my/project-agent-shell (dir)
+  "Run agent-shell in DIR (project root directory)."
+  (interactive "D")
+  (let ((default-directory dir))
+    (call-interactively #'agent-shell)))
+
 (with-eval-after-load 'embark
-  (define-key embark-file-map (kbd "a") #'my/agent-shell-project-root))
+  (define-key embark-file-map (kbd "a") #'my/project-agent-shell)
+  )
+
 
 ;; (use-package agent-shell-sidebar
 ;;   :after agent-shell

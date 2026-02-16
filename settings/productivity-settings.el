@@ -219,6 +219,8 @@
   (define-key project-prefix-map (kbd "b") #'consult-project-buffer)
   (define-key project-prefix-map (kbd "f") #'project-find-file)
   (define-key project-prefix-map (kbd "k") #'project-kill-buffers)
+  (define-key project-prefix-map (kbd "e") #'multi-vterm-project)
+  (define-key project-prefix-map (kbd "a") #'my/agent-shell-project-root)
   )
 
 ;; This functions let me place a .project file in a folder and have it treated
@@ -647,13 +649,13 @@ TAB displays it in another window without leaving the minibuffer."
         :keymap map)))))
 
 (defun my/vterm-project-root (dir)
-  "Open vterm in DIR (project root directory)."
+  "Open or switch to vterm for project at DIR."
   (interactive "D")
   (let ((default-directory dir))
-    (vterm)))
+    (multi-vterm-project)))
 
 (with-eval-after-load 'embark
-  (define-key embark-file-map (kbd "E") #'my/vterm-project-root))
+  (define-key embark-file-map (kbd "C-e") #'my/vterm-project-root))
 
 (defvar lgm/mobile-inbox-file
   (expand-file-name "~/Dropbox/Agenda/mobile/inbox.org")
@@ -764,6 +766,35 @@ TAB displays it in another window without leaving the minibuffer."
   (let ((file (expand-file-name "~/Dropbox/Agenda/mobile/mobile-todo.org")))
     (find-file file)
     (goto-char (point-max))))
+
+;; (use-package winpulse
+;;   :vc (:url "https://github.com/xenodium/winpulse"
+;; 	    :rev :newest)
+;;   :demand t
+;;   :custom
+;;     (winpulse-duration 0.5)
+;;   :config
+;;   (winpulse-mode +1))
+
+(use-package pulsar
+  :ensure t
+  :bind
+  ( :map global-map
+    ("C-x l" . pulsar-pulse-line) ; overrides `count-lines-page'
+    ("C-x L" . pulsar-highlight-permanently-dwim)) ; or use `pulsar-highlight-temporarily-dwim'
+  :init
+  (pulsar-global-mode 1)
+  :config
+  (setq pulsar-delay 0.055)
+  (setq pulsar-iterations 5)
+  (setq pulsar-face 'pulsar-green)
+  (setq pulsar-region-face 'pulsar-yellow)
+  (setq pulsar-highlight-face 'pulsar-magenta))
+
+(with-eval-after-load 'pulsar
+  (dolist (fn '(my/window-next my/window-prev))
+    (add-to-list 'pulsar-pulse-functions fn)))
+
 
 
 (provide 'productivity-settings)
