@@ -19,35 +19,27 @@
 ;;                    :files ("*.el"))
 ;;   :after (request))
 
-;; (use-package aidermacs
-;;   :ensure t
-;;   :bind (("C-x a" . aidermacs-transient-menu))
-;;   :config
-;;   ; Set API_KEY in .bashrc, that will automatically picked up by aider or in elisp
-;;   (setenv "ANTHROPIC_API_KEY" (getenv "ANTHROPIC_API_KEY"))
-;;   (setenv "OPENROUTER_API_KEY" (getenv "OPENROUTER_API_KEY"))
-;;   (setq aider-model "anthropic/claude-sonnet-4-20250514")
-;;   :custom
-;;   ; See the Configuration section below
-;;   (aidermacs-use-architect-mode t)
-;;   (aidermacs-default-model "openrouter/anthropic/claude-sonnet-4")
-;;   )
-
-;; I didn't try this one
-;; (use-package emigo
-;;   :straight (:host github :repo "MatthewZMD/emigo" :files (:defaults "*.py" "*.el"))
-;;   :config
-;;   (emigo-enable) ;; Starts the background process automatically
-;;   :custom
-;;   ;; Encourage using OpenRouter with Deepseek
-;;   (emigo-model "openrouter/deepseek/deepseek-chat-v3-0324")
-;;   (emigo-base-url "https://openrouter.ai/api/v1")
-;;   (emigo-api-key (getenv "OPENROUTER_API_KEY")))
-
 ;; (org-babel-mcp-start-server)
 ;; (org-roam-mcp-start-server)
 ;; (mcp-server-lib-start)
+;; (add-to-list 'load-path "/Users/luis.moneda/repos/agent-shell")
+;; (require 'agent-shell)
 
+;; (use-package agent-shell
+;;   :load-path "/Users/luis.moneda/repos/agent-shell"
+;;   :commands (agent-shell)
+;;   :hook (agent-shell-mode . corfu-mode)
+;;   :init
+;;   (setq agent-shell-file-completion-enabled t
+;;         agent-shell-show-welcome-message nil)
+;;   :config
+;;   (setq agent-shell-anthropic-authentication
+;;         (agent-shell-anthropic-make-authentication
+;;          :api-key (getenv "ANTHROPIC_API_KEY")))
+;;   (setq agent-shell-openai-authentication
+;;         (agent-shell-openai-make-authentication :login t))
+;;   (setq agent-shell-openai-codex-environment
+;;         (agent-shell-make-environment-variables :inherit-env t)))
 (use-package agent-shell
   :commands (agent-shell)
   :hook (agent-shell-mode . corfu-mode)
@@ -65,6 +57,12 @@
   (setq agent-shell-openai-codex-environment
         (agent-shell-make-environment-variables :inherit-env t))
   )
+
+;; Custom code to enable inline images in the agent-shell
+;; (with-eval-after-load 'agent-shell
+;;   (load-file "~/.emacs.d/settings/agent-shell-inline-images.el")
+;;   (setq agent-shell-inline-image-fetch-remote t))
+
 
 (defvar my/agent-shell-codex-profile 'personal
   "Current Codex profile for agent-shell. Either 'personal or 'work.")
@@ -95,29 +93,115 @@
          :load-env (expand-file-name "~/.nurc.env")))
   )
 
-;; Graphic interacts poorly
-;; (setq agent-shell-header-style 'text)
+;; Create prefix keymap
+(define-prefix-command 'my/agent-shell-map)
 
-;; With string
-;; (setq agent-shell-openai-authentication
-;;       (agent-shell-openai-make-authentication :api-key (getenv "OPENAI_API_KEY")))
+;; Bind prefix to C-c a
+(global-set-key (kbd "C-c a") #'my/agent-shell-map)
 
-;; (with-eval-after-load 'agent-shell
-;;   ;; Codex (default profile from ~/.codex/config.toml)
-;;   (add-to-list 'agent-shell-agent-configs
-;;                (list
-;;                 (cons :id "codex-default")
-;;                 (cons :display-name "Codex (default)")
-;;                 (cons :program "codex-acp")))
-;;   ;; Codex (work profile)
-;;   (add-to-list 'agent-shell-agent-configs
-;;                (list
-;;                 (cons :id "codex-work")
-;;                 (cons :display-name "Codex (work)")
-;;                 (cons :program "codex-acp")
-;;                 ;; Some ACP adapters need a `--` before forward args; if your build
-;;                 ;; doesn’t, try '("--profile" "work") instead.
-;;                 (cons :args '("--" "--profile" "work")))))
+;; Sub-bindings
+(define-key my/agent-shell-map (kbd "f")
+  #'agent-shell-send-current-file)
+
+(define-key my/agent-shell-map (kbd "l")
+	    #'agent-shell-send-dwim)
+
+(define-key my/agent-shell-map (kbd "s")
+			#'agent-shell-send-screenshot)
+
+(define-key my/agent-shell-map (kbd "i")
+	    #'agent-shell-send-clipboard-image)
+
+(define-key my/agent-shell-map (kbd "r")
+	    #'agent-shell-send-region)
+
+(define-key my/agent-shell-map (kbd "o")
+	    #'agent-shell-send-other-file)
+
+(define-key my/agent-shell-map (kbd "c")
+	    #'agent-shell-prompt-compose)
+
+(define-key my/agent-shell-map (kbd "a")
+	    #'agent-shell)
+
+(defun my/agent-shell-setup-org-roam-links ()
+  (require 'org) ;; for org-link face
+  (font-lock-add-keywords
+   nil
+   '(("\\(\\[\\[id:[A-Za-z0-9-]+\\]\\[\\)\\([^]]+\\)\\(\\]\\]\\)"
+      ;; hide prefix and suffix
+      (1 (prog1 nil
+           (compose-region (match-beginning 1) (match-end 1) "")))
+      (3 (prog1 nil
+           (compose-region (match-beginning 3) (match-end 3) "")))
+      ;; style the visible description like org-mode
+      (2 'org-link t)))
+   'append)
+  ;; make sure it applies right away
+  (font-lock-flush))
+
+(add-hook 'agent-shell-mode-hook #'my/agent-shell-setup-org-roam-links)
+
+(defun my/org-roam-link-at-point ()
+  "Return the org-roam ID if point is inside an [[id:UUID][Description]] link, else nil."
+  (let ((pos (point)))
+    (save-excursion
+      (beginning-of-line)
+      (let ((found nil))
+        (while (and (not found)
+                    (re-search-forward
+                     "\\[\\[id:\\([A-Za-z0-9-]+\\)\\]\\[[^]]+\\]\\]"
+                     (line-end-position) t))
+          (when (and (>= pos (match-beginning 0))
+                     (<= pos (match-end 0)))
+            (setq found (match-string 1))))
+        found))))
+
+(defun my/agent-shell-setup-org-cite-face ()
+  (require 'org)
+  (font-lock-add-keywords
+   nil
+   `((,(rx "[cite:" (+ (not (any "]"))) "]")
+      (0 ,(if (facep 'org-cite) 'org-cite 'org-link) t)))
+   'append)
+  (font-lock-flush))
+
+(add-hook 'agent-shell-mode-hook #'my/agent-shell-setup-org-cite-face)
+
+(with-eval-after-load 'agent-shell
+  (define-key agent-shell-mode-map (kbd "C-c r") #'org-cite-insert))
+
+(defun my/agent-shell-org-open-at-point ()
+  "Org-like C-c C-o in agent-shell: delegate to `org-open-at-point`."
+  (interactive)
+  (require 'org)
+  (require 'oc nil t)
+
+  (let* ((offset (- (point) (line-beginning-position)))
+         (line   (buffer-substring-no-properties
+                  (line-beginning-position)
+                  (line-end-position))))
+    (with-temp-buffer
+      (org-mode)
+
+      ;; Insert a minimal org context plus the exact line text.
+      (insert "* tmp\n\n" line "\n")
+
+      ;; Move point to the same *character offset* within the copied line.
+      (goto-char (point-min))
+      (forward-line 2)
+      (let ((bol (line-beginning-position))
+            (eol (line-end-position)))
+        (goto-char (min (+ bol offset) eol)))
+
+      (condition-case nil
+          (org-open-at-point)
+        (error
+         (when (fboundp 'agent-shell-other-buffer)
+           (call-interactively #'agent-shell-other-buffer)))))))
+
+(with-eval-after-load 'agent-shell
+  (define-key agent-shell-mode-map (kbd "C-c C-o") #'my/agent-shell-org-open-at-point))
 
 ;; Management for agent shell
 (use-package agent-shell-manager
@@ -162,41 +246,6 @@ Otherwise, jump to *Agent-Shell Buffers* (creating it if needed)."
 (with-eval-after-load 'agent-shell
   (when (boundp 'agent-shell-mode-map)
     (define-key agent-shell-mode-map (kbd "C-<tab>") #'my/window-next)))
-
-;; (defun my/project-root (path)
-;;   "Return project root for PATH (file/dir). Fallback to directory of PATH."
-;;   (let* ((dir (cond
-;;                ((null path) default-directory)
-;;                ((file-directory-p path) path)
-;;                (t (file-name-directory path))))
-;;          (pr (project-current nil dir)))
-;;     (file-name-as-directory
-;;      (file-truename (if pr (project-root pr) dir)))))
-
-;; (defun my/agent-shell--buffer-for-root (root)
-;;   "Find an agent-shell buffer whose `default-directory` matches ROOT."
-;;   (setq root (file-name-as-directory (file-truename root)))
-;;   (cl-find-if
-;;    (lambda (buf)
-;;      (with-current-buffer buf
-;;        (and (derived-mode-p 'agent-shell-mode)
-;;             (file-equal-p
-;;              (file-name-as-directory (file-truename default-directory))
-;;              root))))
-;;    (buffer-list)))
-
-;; (defun my/agent-shell-for (path)
-;;   "Open or switch to agent-shell for PATH's project root.
-;; If none exists, force-create one."
-;;   (interactive (list default-directory))
-;;   (let* ((root (my/project-root path))
-;;          (existing (my/agent-shell--buffer-for-root root)))
-;;     (if existing
-;;         (pop-to-buffer existing)
-;;       (let ((default-directory root))
-;;         ;; Force-create a new agent shell (common convention: C-u)
-;;         (let ((current-prefix-arg '(4)))
-;;           (call-interactively #'agent-shell))))))
 
 ;; project.el
 (defun my/agent-shell-project-root (dir)
