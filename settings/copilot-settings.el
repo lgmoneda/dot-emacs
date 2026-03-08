@@ -128,15 +128,17 @@
   (require 'org) ;; for org-link face
   (font-lock-add-keywords
    nil
-   '(("\\(\\[\\[id:[A-Za-z0-9-]+\\]\\[\\)\\([^]]+\\)\\(\\]\\]\\)"
-      ;; hide prefix and suffix
+   '(;; Any org link: [[target][Description]] or [[target]]
+     ;; Group 1: opening brackets + target + optional ][desc  (everything to hide before desc)
+     ;; Group 2: description (or target when no desc)
+     ;; Group 3: closing ]]
+     ("\\(\\[\\[[^]]+\\]\\[\\)\\([^]]+\\)\\(\\]\\]\\)"
       (1 (prog1 nil
            (compose-region (match-beginning 1) (match-end 1) "")))
       (3 (prog1 nil
            (compose-region (match-beginning 3) (match-end 3) "")))
-      ;; style the visible description like org-mode
-      (2 'org-link t)))
-   'append)
+      (2 'org-link prepend)))
+   'prepend)  ;; prepend so we run before other font-lock rules
   ;; make sure it applies right away
   (font-lock-flush))
 
@@ -151,6 +153,22 @@
         (while (and (not found)
                     (re-search-forward
                      "\\[\\[id:\\([A-Za-z0-9-]+\\)\\]\\[[^]]+\\]\\]"
+                     (line-end-position) t))
+          (when (and (>= pos (match-beginning 0))
+                     (<= pos (match-end 0)))
+            (setq found (match-string 1))))
+        found))))
+
+(defun my/org-link-at-point ()
+  "Return the target of any org link at point, else nil.
+Handles [[id:UUID][desc]], [[target][desc]], and [[target]] forms."
+  (let ((pos (point)))
+    (save-excursion
+      (beginning-of-line)
+      (let ((found nil))
+        (while (and (not found)
+                    (re-search-forward
+                     "\\[\\[\\([^]]+\\)\\]\\(?:\\[[^]]*\\]\\)?\\]"
                      (line-end-position) t))
           (when (and (>= pos (match-beginning 0))
                      (<= pos (match-end 0)))
