@@ -225,6 +225,7 @@ menu\nmouse-2 will jump to task"))
    (latex . t)
    (python . t)
    (jupyter . t)
+   (mermaid . t)
    (emacs-lisp . t)
    ;; for music sheet
    (lilypond . t)
@@ -312,6 +313,9 @@ This should only apply to jupyter-lang blocks."
 ;; ;; to redefine images from evaluating code blocks
 ;; After executing code, it displays the image
 (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
+
+;; centralize images
+(setq org-image-align 'center)
 
 ;; Latex in org
 (setq exec-path (append exec-path '("/Library/TeX/texbin/latex")))
@@ -701,7 +705,7 @@ this command to copy it"
 
 (add-to-list 'org-capture-templates
              '("W" "Work task (programmatic)" entry
-               (file+olp "~/Dropbox/Agenda/nu.org" "Manager" "Misc")
+               (file+olp "~/Dropbox/Agenda/nu.org" "Tasks")
                "%i"
                :empty-lines 1
                :immediate-finish t))
@@ -715,7 +719,7 @@ this command to copy it"
                :immediate-finish t))
 
 (add-to-list 'org-capture-templates
-             '("a" "Org Roam daily" plain
+             '("l" "Org Roam daily" plain
                "%?"
                (function org-roam-dailies-capture-date)))
 
@@ -737,7 +741,20 @@ this command to copy it"
 (add-to-list 'org-capture-templates
              '("j" "Journal" entry
 			   (file "~/Dropbox/Agenda/roam/20220619113235-my_journal.org")
-               "* %<%A, %D> \n** %?"))
+			   "* %<%A, %D> \n** %?"))
+
+(add-to-list
+ 'org-capture-templates
+ '("a" "Attic note" entry
+   (file "~/Dropbox/Agenda/roam/20200809213233-fleeting_notes.org")
+   "*** %^{Title}                  :the_attic:\n\
+:PROPERTIES:\n\
+:TITLE: %\\1\n\
+:DATE: %<%Y-%m-%d>\n\
+:ORIGINAL_DATE: %<%Y-%m-%d>\n\
+:END:\n\n\
+%?"
+   :empty-lines 1))
 
 ;; Work settings
 (add-to-list 'org-capture-templates
@@ -962,9 +979,8 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
 (setq org-tags-column -50)
 
 ;; Change buffer functionality
-(org-defkey org-mode-map (kbd "C-<tab>") (lambda ()
-					   (interactive)
-					   (other-window 1)))
+(with-eval-after-load 'org
+  (org-defkey org-mode-map (kbd "C-<tab>") #'my/window-next))
 
 (setq org-code-block-header "jupyter-python")
 (defun lgm/set-org-code-block-header()
@@ -1000,9 +1016,10 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
   ("C-c n d" . deadgrep)
     )
 
-(setq org-roam-v2-ack t)
-(add-to-list 'load-path "~/.emacs.d/elpa/org-roam-20241007.1704/")
+
+(add-to-list 'load-path "~/.emacs.d/elpa/org-roam-20260101.2118/")
 (require 'org-roam)
+(setq org-roam-v2-ack t)
 
 (use-package org-roam
   :init
@@ -1083,8 +1100,22 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
           org-roam-ui-update-on-save t
           org-roam-ui-open-on-start t))
 
-(require 'f)
+;; org-roam-tree
+;; tree view for backlinks
+(add-to-list 'load-path "~/repos/org-roam-tree")
+(require 'org-roam-tree)
 
+;; Enable by adding org-roam-tree-backlinks-section to org-roam-mode-sections
+;; 
+;; Show only this section in the org-roam buffer:
+(setq org-roam-mode-sections '(org-roam-tree-backlinks-section))
+(setq org-roam-mode-sections '(org-roam-tree-reflinks-section))
+;;
+;; Add this section with the others in the org-roam buffer:
+(add-to-list 'org-roam-mode-sections
+             #'org-roam-tree-backlinks-section t)
+
+(require 'f)
 ;; Function inspired by https://llazarek.com/2018/10/images-in-org-mode.html
 ;; check org-download for a more complete solution of it
 (defun lgm/screenshot-to-org-link (&optional arg)
@@ -1161,32 +1192,32 @@ With prefix ARG, prompt for destination filename."
       org-src-tab-acts-natively t)
 
 ;; org-roam-bib
-(use-package org-roam-bibtex
-  :ensure t
-  :after org-roam
-  ;; :hook (org-roam-mode . org-roam-bibtex-mode)
-  :init
-  (setq orb-preformat-keywords
-      '("citekey" "title" "url" "author-or-editor" "keywords" "file" "author" "author-abbrev")
-      orb-process-file-keyword t
-      orb-file-field-extensions '("pdf"))
+;; (use-package org-roam-bibtex
+;;   :ensure t
+;;   :after org-roam
+;;   :config
+;;   (setq orb-preformat-keywords
+;;       '("citekey" "title" "url" "author-or-editor" "keywords" "file" "author" "author-abbrev")
+;;       orb-process-file-keyword t
+;;       orb-file-field-extensions '("pdf"))
 
-  (setq orb-preformat-templates t)
-  (setq orb-templates
-	'(
-	  ("r" "bibliography reference" plain
-         (file "/Users/luis.moneda/Dropbox/Agenda/templates/bib_org_roam.org")
-         :target
-         (file+head "${citekey}.org" "#+TITLE: ${title}, ${author-abbrev}\n#+ROAM_KEY: ${ref}\n#+Authors: ${author}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n")
-	 :unnarrowed t)
-	  )
-	)
-  ;; :config
-  ;; (require 'org-ref)
-  ;; Ensure ORB actually initializes once Org-roam is available
-  (require 'org-roam-bibtex)
-  (org-roam-bibtex-mode 1)
-  )
+;;   (setq orb-preformat-templates t)
+;;   (setq orb-templates
+;; 	'(
+;; 	  ("r" "bibliography reference" plain
+;;          (file "/Users/luis.moneda/Dropbox/Agenda/templates/bib_org_roam.org")
+;;          :target
+;;          (file+head "${citekey}.org" "#+TITLE: ${title}, ${author-abbrev}\n#+ROAM_KEY: ${ref}\n#+Authors: ${author}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n")
+;; 	 :unnarrowed t)
+;; 	  )
+;; 	)
+;;   ;; Ensure ORB actually initializes once Org-roam is available
+;;   (require 'org-roam-bibtex)
+;;   (org-roam-bibtex-mode 1)
+;;   )
+
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c r") #'org-cite-insert))
 
 (use-package org-ql
   :ensure t)
@@ -1210,9 +1241,9 @@ With prefix ARG, prompt for destination filename."
         :from tags
         :left-join nodes
         :on (= tags:node-id nodes:id)
-        :where (in tag $v1)] '(["nu-todo"])))))
+        :where (in tag $v1)] '(["nu_agenda"])))))
 
-(defun list-roam-files-with-tags-todo ()
+(defun list-roam-files-with-tags-agenda ()
     "Return a list of files with associated tags
      I use this to denote files with tasks for org-agenda" ;
     (seq-uniq
@@ -1223,14 +1254,15 @@ With prefix ARG, prompt for destination filename."
         :from tags
         :left-join nodes
         :on (= tags:node-id nodes:id)
-        :where (in tag $v1)] '(["todo"])))))
+        :where (in tag $v1)] '(["agenda"])))))
 
 (setq old-nu-roam-agenda-files '("~/Dropbox/Agenda/nu.org"
-				 "~/Dropbox/Agenda/roam/20211123125642-nu_meeting_notes.org"))
+				 ;; "~/Dropbox/Agenda/roam/20211123125642-nu_meeting_notes.org"
+				 ))
 
 ;; I need to call it to bring org-roam mode
 ;; (org-roam-version)
-(setq personal-dynamic-roam-agenda-files (list-roam-files-with-tags-todo))
+(setq personal-dynamic-roam-agenda-files (list-roam-files-with-tags-agenda))
 (setq personal-roam-agenda-files (append '("~/Dropbox/Agenda/todo.org")
 				   personal-dynamic-roam-agenda-files))
 
@@ -1277,19 +1309,19 @@ With prefix ARG, prompt for destination filename."
 ;; (define-key global-map (kbd "C-c n k") #'org-remark-change)
 
 ;; The rest of keybidings are done only on loading `org-remark'
-(with-eval-after-load 'org-remark
-  (define-key org-remark-mode-map (kbd "C-c n o") #'org-remark-open)
-  (define-key org-remark-mode-map (kbd "C-c n ]") #'org-remark-view-next)
-  (define-key org-remark-mode-map (kbd "C-c n [") #'org-remark-view-prev)
-  (define-key org-remark-mode-map (kbd "C-c n r") #'org-remark-remove))
+;; (with-eval-after-load 'org-remark
+;;   (define-key org-remark-mode-map (kbd "C-c n o") #'org-remark-open)
+;;   (define-key org-remark-mode-map (kbd "C-c n ]") #'org-remark-view-next)
+;;   (define-key org-remark-mode-map (kbd "C-c n [") #'org-remark-view-prev)
+;;   (define-key org-remark-mode-map (kbd "C-c n r") #'org-remark-remove))
 
-(org-remark-mode)
-(org-remark-create "red-line"
-                   '(:underline (:color "magenta" :style wave))
-                   '(CATEGORY "review" help-echo "Review this"))
-(org-remark-create "yellow"
-                   '(:underline "gold")
-                   '(CATEGORY "important"))
+;; (org-remark-mode)
+;; (org-remark-create "red-line"
+;;                    '(:underline (:color "magenta" :style wave))
+;;                    '(CATEGORY "review" help-echo "Review this"))
+;; (org-remark-create "yellow"
+;;                    '(:underline "gold")
+;;                    '(CATEGORY "important"))
 
 ;; Priority inheritance
 ;; source:
@@ -1347,16 +1379,20 @@ With prefix ARG, prompt for destination filename."
     )
   )
 
-(define-key org-mode-map (kbd "C-c m") 'lgm/inherit-parent-priority)
+(define-key org-mode-map (kbd "C-c n m") 'lgm/inherit-parent-priority)
 
 ;; Automatically gets parent priority when using org-capture + org-refile
 (add-hook 'org-after-refile-insert-hook #'lgm/inherit-parent-priority-if-no-explicit)
 
 (use-package org-download
   :ensure t
+  :after org
+  :hook (org-mode . org-download-enable)
   :init
-  (setq org-download-image-dir "/Users/luis.moneda/Dropbox/Agenda/roam/resources")
-  )
+  (setq org-download-image-dir
+        "/Users/luis.moneda/Dropbox/Agenda/roam/resources"))
+
+
 
 ;; (add-to-list 'exec-path "/opt/homebrew/bin/")
 
@@ -1799,6 +1835,14 @@ display the output in a new temporary buffer."
   ;; (setq org-mind-map-engine "circo")  ; Circular Layout
   )
 
+;; To export to .ipynb when working with .org notebooks
+;; https://github.com/jkitchin/ox-ipynb
+(use-package org-pandoc-import
+  :straight (:host github
+             :repo "tecosaur/org-pandoc-import"
+             :files ("*.el" "filters" "preprocessors")))
+
+
 ;; Imagemagick opening .eps
 (setq imagemagick-enabled-types t)
 (imagemagick-register-types)
@@ -2048,11 +2092,12 @@ Prompts for the output filename, defaulting to the original Org file's name."
 
 (use-package citar-org-roam
   :ensure t
-  :after (citar org-roam)
-  :config
-  (citar-org-roam-mode 1)
+  :after citar
   ;; Optional: define what happens when a note doesn’t exist yet
+  :init
   (setq citar-org-roam-capture-template-key "r")
+  (require 'citar-org-roam)
+  (citar-org-roam-mode 1)
   )
 
 ;; This function helps me label data for fine-tuning
@@ -2153,12 +2198,9 @@ Prompts for the output filename, defaulting to the original Org file's name."
 ;; So I can make diagrams inside emacs and generate them directly there.
 (use-package ob-mermaid
   :ensure t
-  :after org
-  :config
-  (add-to-list 'org-babel-load-languages '(mermaid . t))
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   org-babel-load-languages))
+  :init
+  ;; Set this early (before any execution)
+  (setq ob-mermaid-cli-path "/opt/homebrew/bin/mmdc"))
 
 ;; npm install -g @mermaid-js/mermaid-cli
 ;;
@@ -2591,6 +2633,8 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
 ;; -----------------------------------------------------------------------------
 ;; Embark actions (tolerate 0/1/2 args; fall back to current vertico candidate)
 ;; -----------------------------------------------------------------------------
+
+(require 'embark)
 (defun lgm/arc--current-candidate ()
   (when (bound-and-true-p vertico--running) (vertico--candidate)))
 
@@ -2838,7 +2882,9 @@ Elsewhere: behave like `org-cycle`."
 (with-eval-after-load 'org
   (define-key org-mode-map (kbd "TAB") #'my/org-tab-dwim))
 
-
+;; price tracker
+(add-to-list 'load-path "~/repos/my-life-scripts/price-tracker")
+(require 'price-tracker)
 
 (provide 'org-settings)
 ;;; org-settings.el ends here
