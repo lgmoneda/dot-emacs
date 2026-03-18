@@ -1034,7 +1034,7 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
          (file+head
           "%(format-time-string \"%Y%m%d%H%M%S-${slug}.org\" (current-time) t)"
           "#+title: ${title}
-#+STARTUP: inlineimages latexpreview
+#+STARTUP: linkpreviews latexpreview
 #+filetags: ")
          :unnarrowed t)
 
@@ -1044,7 +1044,7 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
          :target
          (file+head
           "%(expand-file-name (or citar-org-roam-subdir \"\") org-roam-directory)/${citar-citekey}.org"
-          "#+title: ${citar-title} (${citar-date}), ${citar-author}.\n#+ref: cite:${citar-citekey}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n#+created: %U\n\n")
+          "#+title: ${citar-title} (${citar-date}), ${citar-author}.\n#+ref: cite:${citar-citekey}\n#+STARTUP: linkpreviews latexpreview\n#+filetags: :bibliographical_notes: \n#+created: %U\n\n")
          :unnarrowed t)))
   :custom
   (org-roam-directory (file-truename "/Users/luis.moneda/Dropbox/Agenda/roam"))
@@ -1119,23 +1119,38 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
 ;; Function inspired by https://llazarek.com/2018/10/images-in-org-mode.html
 ;; check org-download for a more complete solution of it
 (defun lgm/screenshot-to-org-link (&optional arg)
-  "Take a screenshot and insert it as an Org link.
+  "Take a screenshot and insert it as an Org file link.
 With prefix ARG, prompt for destination filename."
   (interactive "P")
-  (let* ((dir (concat (file-name-directory buffer-file-name) "resources/"))
+  (unless buffer-file-name
+    (user-error "Current buffer is not visiting a file"))
+  (let* ((dir (expand-file-name "resources/" (file-name-directory buffer-file-name)))
          (_ (unless (file-directory-p dir)
               (make-directory dir t)))
-         (default-dest (expand-file-name
-                        (format-time-string "screen_%Y%m%d_%H%M%S.jpg")
-                        dir))
+         (default-dest
+          (expand-file-name
+           (format-time-string "screen_%Y%m%d_%H%M%S.jpg")
+           dir))
          (dest (if arg
-                   (read-file-name "Save screenshot to: " dir nil nil default-dest)
-                 default-dest)))
-    (start-process "screencapture" nil "screencapture" "-i" dest)
-    (read-char "Taking screenshot... Press any key when done.")
-    (org-insert-link t (concat "file:" dest) "")
-    (org-remove-inline-images)
-    (org-display-inline-images)))
+                   (read-file-name "Save screenshot to: " dir nil nil
+                                   (file-name-nondirectory default-dest))
+                 default-dest))
+         ;; Better for Org files shared/moved together with their resources.
+         (link-path (file-relative-name dest (file-name-directory buffer-file-name))))
+    ;; `screencapture -i` is interactive and blocks until the user finishes
+    ;; or cancels, so `call-process` is a better fit than `start-process`.
+    (let ((exit-code (call-process "screencapture" nil nil nil "-i" dest)))
+      (cond
+       ;; User canceled screenshot selection.
+       ((not (and (integerp exit-code) (zerop exit-code)))
+        (message "Screenshot canceled"))
+       ;; Defensive check in case the command exits but no file is written.
+       ((not (file-exists-p dest))
+        (message "No screenshot file was created"))
+       (t
+        (org-insert-link nil (concat "file:" link-path) "")
+        ;; Org 9.8+: refresh link previews instead of the old inline-image API.
+        (org-link-preview-refresh))))))
 
 
 ;; This is an experimental version of the above function that works in org capture
@@ -1207,7 +1222,7 @@ With prefix ARG, prompt for destination filename."
 ;; 	  ("r" "bibliography reference" plain
 ;;          (file "/Users/luis.moneda/Dropbox/Agenda/templates/bib_org_roam.org")
 ;;          :target
-;;          (file+head "${citekey}.org" "#+TITLE: ${title}, ${author-abbrev}\n#+ROAM_KEY: ${ref}\n#+Authors: ${author}\n#+STARTUP: inlineimages latexpreview\n#+filetags: :bibliographical_notes: \n")
+;;          (file+head "${citekey}.org" "#+TITLE: ${title}, ${author-abbrev}\n#+ROAM_KEY: ${ref}\n#+Authors: ${author}\n#+STARTUP: linkpreviews latexpreview\n#+filetags: :bibliographical_notes: \n")
 ;; 	 :unnarrowed t)
 ;; 	  )
 ;; 	)
