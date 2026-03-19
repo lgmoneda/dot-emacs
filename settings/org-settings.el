@@ -2811,12 +2811,18 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
                           (propertize dom-padded 'face 'font-lock-comment-face)
                           (propertize ago-padded 'face 'marginalia-date))))))))
     (setq lgm/arc--cands cands)
-    (let* ((selection (consult--read
-                       (mapcar #'car cands)
-                       :prompt   "Browser History: "
-                       :annotate annot
-                       :category 'arc-history
-                       :sort     nil))
+    (let* ((choices (mapcar #'car cands))
+           (selection
+            (if (and (require 'consult nil t)
+                     (fboundp 'consult--read))
+                (consult--read choices
+                               :prompt   "Browser History: "
+                               :annotate annot
+                               :category 'arc-history
+                               :sort     nil)
+              (let ((completion-extra-properties
+                     `(:annotation-function ,annot)))
+                (completing-read "Browser History: " choices nil t))))
            (entry (cdr (assoc selection cands)))
            (url   (plist-get entry :url))
            (desc  (read-string "Description: " (plist-get entry :title))))
