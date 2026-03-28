@@ -15,7 +15,7 @@
 
 				      ))
 	 ;; I define it differently in another place, take a look when needed
-	 (setq markdown-command "/usr/local/bin/pandoc")
+	 
 	 (setq ispell-program-name "/opt/homebrew/bin/aspell")
 	 (setenv "PATH" "/usr/local/bin:/Library/TeX/texbin/:$PATH" t)
 	 )
@@ -32,9 +32,12 @@
 
 (use-package exec-path-from-shell
   :ensure t
-  :config
+  :init
   (exec-path-from-shell-initialize)
   (exec-path-from-shell-copy-env "OPENAI_API_KEY")
+  (exec-path-from-shell-copy-env "WORK_OPENAI_API_KEY")
+  (exec-path-from-shell-copy-env "DATABRICKS_TOKEN")
+  (exec-path-from-shell-copy-env "WORK_OPENAI_BASE_URL")
   (exec-path-from-shell-copy-env "ANTHROPIC_API_KEY")
   (exec-path-from-shell-copy-env "GOOGLE_API_KEY")
   (exec-path-from-shell-copy-env "OPENROUTER_API_KEY")

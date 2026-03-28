@@ -193,6 +193,7 @@ want to use in the modeline *in lieu of* the original.")
 	      auto-complete anzu annotate all-the-icons-ivy-rich ag))
  '(package-vc-selected-packages
    '((wasabi :url "https://github.com/xenodium/wasabi" :branch "main")
+     (magit :url "https://github.com/magit/magit" :branch "master")
      (agent-shell :url "https://github.com/xenodium/agent-shell")
      (acp :url "https://github.com/xenodium/acp.el")
      (claude-code :url
@@ -299,7 +300,8 @@ want to use in the modeline *in lieu of* the original.")
  '(org-cite-key ((t (:foreground "forest green"))))
  '(org-link ((nil (:foreground "cornflowerblue" :underline nil))))
  '(org-quote ((t (:inherit mindre-default :slant italic))))
- '(org-ref-cite-face ((t (:foreground "forest green")))))
+ '(org-ref-cite-face ((t (:foreground "forest green"))))
+ '(org-transclusion-keyword ((t (:foreground "dark cyan")))))
 
 ;; Change font size
 ;; Iosevka

@@ -67,7 +67,10 @@
          ("\\.md\\'" . markdown-mode)
          ("\\.markdown\\'" . markdown-mode))
   ;; I define it differently in another place, take a look when needed
-  :init (setq markdown-command "multimarkdown"))
+  ;; :init (setq markdown-command "multimarkdown")
+  )
+
+(setq markdown-command "/opt/homebrew/bin/pandoc")
 
 ;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/markdown-preview-mode-20230707.803")
 ;; (load "markdown-preview-mode")
@@ -169,31 +172,71 @@
 ;; https://kristofferbalintona.me/posts/202206141852/
 ;; https://blog.tecosaur.com/tmio/2021-07-31-citations.html
 (use-package citar
-  ;; :straight t
   :ensure t
-  :after (org-roam-bibtex org)
+  :after org
   :init
   ;; Set it early, so citar sees it even before :config
-  (setq citar-bibliography '("~/Dropbox/Research/library.bib"))
+  (setq citar-templates
+      '((main . "${author editor:30%sn}     ${date year issued:4}     ${title:48}")
+        (suffix . "          ${=key= id:15}    ${=type=:12} ")
+        (preview . "${author editor:%etal} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
+        (note . "Notes on ${author editor:%etal}, ${title}")))
+
   :custom
+  (citar-bibliography '("~/Dropbox/Research/library.bib"))
   (org-cite-insert-processor 'citar)
   (org-cite-follow-processor 'citar)
   (org-cite-activate-processor 'citar)
   (citar-org-roam-capture-template-key "r")
-  (citar-symbols
-   `((file ,(all-the-icons-faicon "file-pdf-o" :face 'all-the-icons-red) . " ")
-     (note ,(all-the-icons-faicon "sticky-note" :face 'all-the-icons-yellow) . " ")))
-  (citar-symbol-separator "  ")
+  ;; (citar-symbols
+  ;;  `((file ,(all-the-icons-faicon "file-pdf-o" :face 'all-the-icons-red) . " ")
+  ;;    (note ,(all-the-icons-faicon "sticky-note-o" :face 'all-the-icons-yellow) . " ")))
+  ;; (citar-symbol-separator "  ")
+
   ;; Have citation link faces look closer to as they were for `org-ref'
   (org-cite ((t (:foreground "DarkSeaGreen4"))))
   (org-cite-key ((t (:foreground "forest green" :slant italic))))
+
+  ;; Tell citar where notes are, and what counts as a note file.
+  (citar-notes-paths '("~/Dropbox/Agenda/roam"))
+  (citar-file-note-extensions '("org" "md"))
+
   :hook
   ((LaTeX-mode . citar-capf-setup)
    (org-mode . citar-capf-setup))
   :config
   (require 'citar-embark)
   (citar-embark-mode 1)
-  (global-set-key (kbd "C-c r") 'org-cite-insert))
+  )
+
+(with-eval-after-load 'all-the-icons
+  (defvar my/citar-indicator-files
+    (citar-indicator-create
+     :symbol (all-the-icons-faicon "file-pdf-o" :face 'shadow)
+     :function #'citar-has-files
+     :padding " "
+     :tag "has:files"))
+
+  (defvar my/citar-indicator-notes
+    (citar-indicator-create
+     :symbol (all-the-icons-faicon "file-text"
+                                   :face 'font-lock-keyword-face)
+     :function #'citar-has-notes
+     :padding " "
+     :tag "has:notes"))
+
+  (defvar my/citar-indicator-links
+    (citar-indicator-create
+     :symbol (all-the-icons-octicon "link"
+                                    :face 'font-lock-constant-face)
+     :function #'citar-has-links
+     :padding " "
+     :tag "has:links"))
+
+  (setq citar-indicators
+        (list my/citar-indicator-files
+              my/citar-indicator-notes
+              my/citar-indicator-links)))
 
 ;; This removes visually the [] from org official cite syntax
 ;; It is important to not actually remove to keep functionality
@@ -208,8 +251,7 @@
 
 
 (use-package citar-embark
-  :ensure t
-  :after citar embark
+  :after (citar embark)
   :no-require
   :config (citar-embark-mode))
 
@@ -292,6 +334,7 @@
 (setq org-latex-pdf-process (list "latexmk -shell-escape -bibtex -f -pdf %f"))
 
 ;; Sometimes it is necessary to tell bibtex what dialect you are using to support the different bibtex entries that are possible in biblatex. You can do it like this globally.
+(require 'bibtex)
 (bibtex-set-dialect 'BibTeX)
 
 ;; open pdf

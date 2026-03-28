@@ -41,6 +41,7 @@
 ;;   (setq agent-shell-openai-codex-environment
 ;;         (agent-shell-make-environment-variables :inherit-env t)))
 (use-package agent-shell
+  :load-path "/Users/luis.moneda/repos/agent-shell"
   :commands (agent-shell)
   :hook (agent-shell-mode . corfu-mode)
   :init
@@ -123,6 +124,12 @@
 
 (define-key my/agent-shell-map (kbd "a")
 	    #'agent-shell)
+
+(define-key my/agent-shell-map (kbd "n")
+	    #'agent-shell-manager-set-annotation)
+
+(define-key my/agent-shell-map (kbd "d")
+	    #'agent-shell-send-dwim)
 
 (defun my/agent-shell-setup-org-roam-links ()
   (require 'org) ;; for org-link face
@@ -221,11 +228,19 @@ Handles [[id:UUID][desc]], [[target][desc]], and [[target]] forms."
 (with-eval-after-load 'agent-shell
   (define-key agent-shell-mode-map (kbd "C-c C-o") #'my/agent-shell-org-open-at-point))
 
+(add-to-list 'load-path "/Users/luis.moneda/repos/agent-shell-manager")
+(with-eval-after-load 'agent-shell
+  (require 'agent-shell-manager))
+
+(setq agent-shell-manager-ready-status-notification-sound t)
+(setq agent-shell-context-sources nil)
+
+
 ;; Management for agent shell
-(use-package agent-shell-manager
-  :vc (:url "https://github.com/jethrokuan/agent-shell-manager")
-  :commands (agent-shell-manager-toggle)
-  )
+;; (use-package agent-shell-manager
+;;   :vc (:url "https://github.com/jethrokuan/agent-shell-manager")
+;;   :commands (agent-shell-manager-toggle)
+;;   )
 
 (with-eval-after-load 'agent-shell-manager
   ;; Let *your* display-buffer-alist decide placement/size.
@@ -245,6 +260,7 @@ Handles [[id:UUID][desc]], [[target][desc]], and [[target]] forms."
   "If already in the Agent-Shell manager, toggle it.
 Otherwise, jump to *Agent-Shell Buffers* (creating it if needed)."
   (interactive)
+  (require 'agent-shell-manager)
   (if (derived-mode-p 'agent-shell-manager-mode)
       (agent-shell-manager-toggle)
     (let ((buf (get-buffer "*Agent-Shell Buffers*")))
@@ -309,6 +325,91 @@ Otherwise, jump to *Agent-Shell Buffers* (creating it if needed)."
 ;;   ;; (("C-c a s" . agent-shell-sidebar-toggle)
 ;;   ;;  ("C-c a f" . agent-shell-sidebar-toggle-focus))
 ;;   )
+
+;;; ─── MCP auth helper ─────────────────────────────────────────────────────
+
+(defconst lgm--mcp-needs-auth-cache
+  (expand-file-name "~/.claude/mcp-needs-auth-cache.json")
+  "Path to Claude Code's MCP needs-auth cache file.")
+
+(defun lgm/auth-mcp-claude ()
+  "Show MCP servers that need re-authentication.
+Displays a buffer listing servers needing auth, with a button to open
+a temporary terminal so you can run /mcp and complete the OAuth flow."
+  (interactive)
+  (let* ((json-object-type 'alist)
+         (cache (if (file-exists-p lgm--mcp-needs-auth-cache)
+                    (json-read-file lgm--mcp-needs-auth-cache)
+                  nil))
+         ;; 30-minute expiry window (matches Claude Code's internal constant)
+         (expiry-ms (* 30 60 1000))
+         (now-ms (* 1000 (float-time)))
+         (stale (seq-filter
+                 (lambda (entry)
+                   (let ((ts (alist-get 'timestamp (cdr entry))))
+                     (when ts (< (- now-ms ts) expiry-ms))))
+                 cache))
+         (buf (get-buffer-create "*MCP Auth Status*")))
+    (with-current-buffer buf
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (insert "# MCP Server Authentication Status\n\n")
+        (if (null stale)
+            (insert "All MCP servers appear authenticated (or none registered).\n")
+          (insert (format "%d server(s) need re-authentication:\n\n" (length stale)))
+          (dolist (entry stale)
+            (insert (format "  • %s\n" (car entry))))
+          (insert "\n")
+          (insert "To re-authenticate, open a Claude Code terminal and run /mcp\n")
+          (insert "then click the auth link for each server listed above.\n\n")
+          (insert-button "Open claude-nu → /mcp (auth all at once)"
+                         'action (lambda (_)
+                                   (lgm--open-mcp-auth-terminal))
+                         'follow-link t
+                         'face 'link))
+        (insert "\n\n")
+        (insert "To clear the auth cache and force re-auth on next session start:\n")
+        (insert-button "Clear auth cache"
+                       'action (lambda (_)
+                                 (when (yes-or-no-p "Clear MCP auth cache? ")
+                                   (delete-file lgm--mcp-needs-auth-cache)
+                                   (message "MCP auth cache cleared.")))
+                       'follow-link t
+                       'face 'link)
+        (special-mode)))
+    (display-buffer buf)))
+
+(defun lgm--open-mcp-auth-terminal ()
+  "Open a terminal buffer running claude-nu with /mcp pre-typed.
+Waits for claude to start, then automatically sends /mcp so all
+auth links appear immediately — click them in sequence in the browser."
+  (let* ((buf-name "*claude-mcp-auth*")
+         (existing (get-buffer buf-name)))
+    (when existing (kill-buffer existing))
+    (cond
+     ((fboundp 'vterm)
+      (vterm buf-name)
+      (vterm-send-string "claude-nu\n")
+      (run-with-timer 4 nil
+                      (lambda (name)
+                        (when-let ((buf (get-buffer name)))
+                          (with-current-buffer buf
+                            (vterm-send-string "/mcp\n"))))
+                      buf-name))
+     ((fboundp 'eat)
+      (eat "claude-nu" t)
+      (rename-buffer buf-name t)
+      (run-with-timer 4 nil
+                      (lambda (name)
+                        (when-let ((buf (get-buffer name)))
+                          (with-current-buffer buf
+                            (eat-term-send-string eat-terminal "/mcp\n"))))
+                      buf-name))
+     (t
+      (term "/bin/zsh")
+      (rename-buffer buf-name t)
+      (term-send-string (get-buffer-process (current-buffer)) "claude-nu\n")))
+    (message "Opening claude-nu and running /mcp — click each auth link in the browser.")))
 
 (provide 'copilot-settings)
 ;;; copilot-settings.el ends here

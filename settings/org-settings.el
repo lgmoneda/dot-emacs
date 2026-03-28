@@ -1864,10 +1864,22 @@ display the output in a new temporary buffer."
 
 ;;org-transclude
 ;; Great to create new documents with different references to share with people
-(use-package org-transclusion
-  :ensure t
-  :config
-  (add-to-list 'org-transclusion-extensions 'org-transclusion-indent-mode))
+(add-to-list 'load-path "~/.emacs.d/elpa/org-transclusion/")
+(require `org-transclusion)
+(add-to-list 'org-transclusion-extensions 'org-transclusion-indent-mode)
+;; (use-package org-transclusion
+;;   :ensure t
+;;   :config
+;;   (add-to-list 'org-transclusion-extensions 'org-transclusion-indent-mode))
+
+(with-eval-after-load 'org
+  (require `org-transclusion-font-lock)
+  (org-transclusion-font-lock-mode +1))
+
+(with-eval-after-load 'org
+  (require 'org-transclusion-font-lock)
+  (when (fboundp 'org-transclusion-font-lock-mode)
+    (org-transclusion-font-lock-mode 1)))
 
 ;;Inline .eps
 (add-to-list 'image-file-name-extensions "eps")

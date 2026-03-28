@@ -14,7 +14,7 @@
 
 ;; Enable hide definitions functions
 (add-hook 'prog-mode-hook 'hs-minor-mode)
-(global-set-key [f4] 'hs-toggle-hhiding)
+(global-set-key [f4] #'hs-toggle-hiding)
 
 ;; Test http rest webservices inside emacs
 ;; https://github.com/pashky/restclient.el
@@ -138,17 +138,15 @@
 
 (add-hook 'org-roam-mode-hook #'my/org-roam-capf-only)
 
-(add-to-list 'treesit-extra-load-path "/Users/luis.moneda/.emacs.d/tree-sitter/")
+;; (add-to-list 'treesit-extra-load-path "/Users/luis.moneda/.emacs.d/tree-sitter/")
+;; (require 'treesit)
 
 ;; treesit
-(use-package treesit-auto
-  :ensure t
-  :config
-  (setq treesit-auto-install t) ;; or 't to auto-install
-  (global-treesit-auto-mode))
-
 (use-package treesit
+  :ensure nil
   :mode (("\\.tsx\\'" . tsx-ts-mode))
+  :init
+  (add-to-list 'treesit-extra-load-path (expand-file-name "~/.emacs.d/tree-sitter/"))
   :preface
   (defun mp-setup-install-grammars ()
     "Install Tree-sitter grammars if they are absent."
@@ -196,6 +194,14 @@
   :config
   (mp-setup-install-grammars)
   )
+
+(use-package treesit-auto
+  :ensure t
+  :after treesit
+  :custom
+  (treesit-auto-install t)
+  :config
+  (global-treesit-auto-mode))
 
 ;; Try later
 ;; (use-package dap-mode

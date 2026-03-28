@@ -144,6 +144,29 @@ should be continued."
        (concat "\\(" (regexp-quote todo) "\\)[[:space:]]+")
        "" item nil nil 1))))
 
+;; I have this
+(defun my/org-agenda-remove-todo-keyword (item)
+  "Remove TODO keyword from ITEM string in org-super-agenda display."
+  (let* ((marker (org-find-text-property-in-string 'org-marker item))
+         (todo (when (and marker (marker-buffer marker))
+                 (org-with-point-at marker
+                   (org-get-todo-state)))))
+    (if (not todo)
+        item
+      (let* ((s (replace-regexp-in-string
+                 (concat "\\(" (regexp-quote todo) "\\)[[:space:]]+")
+                 ""
+                 item nil nil 1))
+             (p (string-match "\\[#"
+                              s)))
+        ;; If there's an extra space before the priority cookie, remove exactly one.
+        (when (and p (>= p 2)
+                   (eq (aref s (1- p)) ?\s)
+                   (eq (aref s (- p 2)) ?\s))
+          (setq s (concat (substring s 0 (1- p))
+                          (substring s p))))
+        s))))
+
 (defun my/org-agenda-clean-item (item)
   "Remove both category and TODO keyword from ITEM."
   (let* ((marker (org-find-text-property-in-string 'org-marker item))
@@ -228,8 +251,9 @@ should be continued."
 	  	   ))
           ;; ALL TODO items - grouped by org-super-agenda in ONE PASS
       ;; (tags "+goals|+epic"
-	  (tags "LEVEL>=1+TODO=\"TODO\"|+TODO=\"WAIT\"|+TODO=\"DONE\""
+	  (tags "LEVEL>=1+TODO=\"TODO\"|+TODO=\"WAIT\"|+TODO=\"DONE\"|LEVEL>=1+mobile"
 		((org-agenda-overriding-header "")
+		 (org-agenda-sorting-strategy '(priority-down)) ;; the change to fix projects backlog
 		 (org-super-agenda-groups
 		  '((:name "Tech Epic\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"
 			   :and (:priority "A"
@@ -249,19 +273,23 @@ should be continued."
 			  :transformer my/org-agenda-remove-todo-keyword)
 
 		  (:name "Late tasks\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"
-                 :and (:scheduled past
-                                  :not (:todo "DONE")
-                                  :not (:tag "epic"))
-				 :transformer my/org-agenda-add-deadline-prefix)
+			 :and (:scheduled past
+					  :not (:todo "DONE")
+					  :not (:tag "epic"))
+			 :transformer my/org-agenda-add-deadline-prefix)
+
+		  (:name "Mobile inbox\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"
+			 :tag "mobile"
+		  	 :transformer my/org-agenda-remove-todo-keyword)
 
 		  (:name "Backlog\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"
-                 :and (:scheduled nil
-                                  :not (:todo "DONE")
-                                  :not (:tag "epic")
-								  :not (:deadline t)
-								  :not (:tag "goals")
-								  )
-				 :transformer my/org-agenda-remove-todo-keyword)
+			 :and (:scheduled nil
+					  :not (:todo "DONE")
+					  :not (:tag "epic")
+					  :not (:deadline t)
+					  :not (:tag "goals")
+					  )
+			 :transformer my/org-agenda-remove-todo-keyword)
 
 		  ;; Season Goals
 		  (:name "Season Goals\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"

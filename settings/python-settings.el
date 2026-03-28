@@ -223,7 +223,8 @@ if breakpoints are present in `python-mode' files"
 (define-key prog-mode-map (kbd "TAB") 'my-smart-tab)
 (define-key prog-mode-map (kbd "<backtab>") 'my-smart-backtab)
 
-(define-key markdown-mode-map (kbd "TAB") 'indent-or-complete)
+(with-eval-after-load 'markdown-mode
+  (define-key markdown-mode-map (kbd "TAB") #'indent-or-complete))
 
 (define-key python-mode-map (kbd "C-c C-j") 'imenu-anywhere)
 
@@ -264,33 +265,43 @@ if breakpoints are present in `python-mode' files"
 ;;        nil "_"))))
 (setq python-shell-completion-native-enable nil)
 
-;; Emacs Ipython Notebook
-;; (use-package ein
-;;   :ensure t
-;;   :init
-  ;; (setq ein:use-auto-complete t)
-  ;;  (setq ein:use-smartrep t)
-  ;; (setq auto-complete-mode t)
-  ;; (setq ein:output-type-prefer-pretty-text-over-html t)
-  ;; (setq ein:output-type-preference
-  ;; 	'(emacs-lisp image image/png svg image/svg image/png jpeg image/jpeg text html text/html latex text/latex javascript))
-  ;; )
+(use-package ein
+  :ensure t
+  :defer t
+  :commands (ein:notebooklist-open
+             ein:notebook-open
+             ein:connect-to-notebook)
+  :init
+  ;; Always talk to an external Jupyter server
+  (setq ein:jupyter-server-use-subcommand "notebook"
+        ein:jupyter-default-server-command "jupyter"
+        ein:jupyter-default-notebook-directory "~/notebooks")
 
-;; (custom-set-variables
-;;  '(ein:output-area-inlined-images t)
-;;  )
+  :config
+  ;; Don’t hijack window layout
+  (setq ein:window-manager 'current-window
+        ein:split-direction 'horizontal)
 
-;; (add-hook 'ein:notebook-mode-hook (lambda () (progn
-;; 					       (writeroom-mode)
-;; 					       (writeroom-adjust-width 30))))
+  ;; Better completion & execution feel
+  (setq ein:completion-backend 'ein
+        ein:use-auto-complete nil
+        ein:output-area-inlined-images t)
 
-;; (require 'ein-notebook)
-;;(require 'ein-subpackages)
+  ;; Less noise
+  (setq ein:cell-auto-save-interval 30
+        ein:worksheet-enable-undo t
+        ein:polymode nil)
 
-;; (setq ein:use-auto-complete-superpack t)
-;;(setq ein:use-smartrep t)
+  ;; Respect Emacs defaults
+  (setq ein:cell-traceback-level 1))
 
-;; (setq ein:notebook-modes '(ein:notebook-multilang-mode ein:notebook-python-mode))
+(with-eval-after-load 'ein-notebook
+  (define-key ein:notebook-mode-map (kbd "C-c C-c") #'ein:worksheet-execute-cell)
+  (define-key ein:notebook-mode-map (kbd "C-c C-n") #'ein:worksheet-goto-next-input)
+  (define-key ein:notebook-mode-map (kbd "C-c C-p") #'ein:worksheet-goto-prev-input)
+  (define-key ein:notebook-mode-map (kbd "C-c C-k") #'ein:worksheet-clear-output)
+  (define-key ein:notebook-mode-map (kbd "C-c C-r") #'ein:worksheet-execute-cell-and-goto-next))
+
 
 (with-eval-after-load 'jupyter-repl
   (define-key jupyter-repl-mode-map (kbd "C-c C-p") #'jupyter-repl-backward-cell)

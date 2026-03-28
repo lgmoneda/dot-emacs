@@ -396,7 +396,7 @@
    (list (if (y-or-n-p "Convert from URL? ")
              (read-string "Enter PDF URL: ")
            (read-file-name "Choose a PDF file: "))))
-  (let ((command (format "source ~/.zshrc && conda activate ml3 && python /Users/luis.moneda/repos/my-life-scripts/pdf-to-epub/pdf_to_epub.py %s" (shell-quote-argument input))))
+  (let ((command (format "source ~/.zshrc && conda activate edge && python /Users/luis.moneda/repos/pdf-to-epub/pdf_to_epub.py %s" (shell-quote-argument input))))
     (message "Running: %s" command)
     (async-shell-command command)))
 

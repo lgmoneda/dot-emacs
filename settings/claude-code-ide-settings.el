@@ -13,8 +13,7 @@
   :ensure t)
 (setq eat-term-name "xterm-256color")
 
-;; for vterm terminal backend:
-(use-package vterm :ensure t)
+
 
 (setq claude-code-ide-window-width 100)
 

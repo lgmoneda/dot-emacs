@@ -177,6 +177,7 @@
 ;; C-x C-<space> global jump to last mark
 (setq set-mark-command-repeat-pop t)
 
+(require 'expand-region)
 ;; I'm switching expand-region and mark-word commands
 (global-set-key (kbd "C-+") 'er/expand-region)
 ;; This is a faster option for something I do regularly in org
@@ -213,23 +214,18 @@
 		    (concat comint-password-prompt-regexp
 			    "\\|^Password for .*:\\s *\\'"))
 
-;; Defining switch tabs commands
-(global-set-key [C-iso-lefttab]
-    (lambda ()
-      (interactive)
-      (other-window -1)))
+(defun my/window-next ()
+  (interactive)
+  (other-window 1))
 
+(defun my/window-prev ()
+  (interactive)
+  (other-window -1))
+
+(global-set-key [C-tab] #'my/window-next)
+(global-set-key [C-iso-lefttab] #'my/window-prev)
 ;; MacOS version
-(global-set-key (kbd "C-S-<tab>")
-    (lambda ()
-      (interactive)
-      (other-window -1)))
-
-;; Defining switch tabs commands
-(global-set-key [C-tab]
-    (lambda ()
-      (interactive)
-      (other-window 1)))
+(global-set-key (kbd "C-S-<tab>") #'my/window-prev)
 
 ;; Defining switch buffer command
 (global-set-key (kbd "C-8")

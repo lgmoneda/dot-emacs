@@ -688,43 +688,82 @@ Returns a flat list of strings."
   "Export current Org buffer to EPUB using pandoc, writing to ~/Downloads/ by default.
 Collects CLI args from '#+pandoc:' lines in the file.
 
+Default output filename is composed from #+title / #+author / #+date (fallbacks to org filename).
 With prefix arg (C-u), prompt for OUTPUT path."
   (interactive
    (list (when current-prefix-arg
            (read-file-name "Output EPUB: "
                            (expand-file-name "~/Downloads/")
                            nil nil
+                           ;; placeholder; we'll compute a better default below if OUTPUT is nil
                            (concat (file-name-base (or (buffer-file-name) "book"))
                                    ".epub")))))
+
   (unless (buffer-file-name)
     (user-error "Buffer is not visiting a file. Save it first."))
   (when (buffer-modified-p) (save-buffer))
 
-  (let* ((infile (buffer-file-name))
-         (base   (file-name-base infile))
-         (default-out (expand-file-name (concat base ".epub") "~/Downloads/"))
-         (outfile (or output default-out))
-         (extra-args (my/org-pandoc--collect-args))
-         ;; Make sure resources resolve relative to the org file directory:
-         (default-directory (file-name-directory infile))
-         (args (append (list "-f" "org")
-                       extra-args
-                       (list "-o" outfile infile)))
-         (buf (get-buffer-create "*Pandoc EPUB Export*")))
-    (with-current-buffer buf
-      (setq buffer-read-only nil)
-      (erase-buffer)
-      (insert (format "Working dir: %s\nRunning:\n  pandoc %s\n\n"
-                      default-directory
-                      (mapconcat #'shell-quote-argument args " ")))
-      (setq buffer-read-only t))
-    (let ((exit-code (apply #'call-process "pandoc" nil buf t args)))
-      (if (and (integerp exit-code) (= exit-code 0))
-          (message "EPUB exported: %s" outfile)
-        (progn
+  (cl-labels
+      ((kw (key)
+           "Return first #+KEY value in current buffer (case-insensitive), trimmed."
+           (save-excursion
+             (goto-char (point-min))
+             (when (re-search-forward
+                    (format "^#\\+%s:[ \t]*\\(.*\\)$" (upcase (regexp-quote key)))
+                    nil t)
+               (string-trim (match-string 1)))))
+       (sanitize (s)
+           "Sanitize S for filesystem usage."
+           (let* ((s (string-trim (or s "")))
+                  ;; normalize whitespace
+                  (s (replace-regexp-in-string "[ \t\n\r]+" " " s))
+                  ;; remove path separators and other annoying chars
+                  (s (replace-regexp-in-string "[/\\\\:*?\"<>|]" "" s))
+                  ;; keep it tidy
+                  (s (replace-regexp-in-string "[[:cntrl:]]" "" s)))
+             (string-trim s)))
+       (nonempty (s) (and s (not (string-empty-p (string-trim s))) s)))
+
+    (let* ((infile (buffer-file-name))
+           (fallback-base (file-name-base infile))
+
+           (title  (sanitize (kw "title")))
+           (author (sanitize (kw "author")))
+           (date   (sanitize (kw "date")))
+
+           ;; Build a nice base name: "Title - Author - Date"
+           ;; Only include parts that exist; fallback to org filename.
+           (parts (delq nil (list (nonempty title) (nonempty author) (nonempty date))))
+           (base  (if parts
+                      (mapconcat #'identity parts " - ")
+                    fallback-base))
+
+           (default-out (expand-file-name (concat base ".epub") "~/Downloads/"))
+           (outfile (or output default-out))
+
+           (extra-args (my/org-pandoc--collect-args))
+           ;; Make sure resources resolve relative to the org file directory:
+           (default-directory (file-name-directory infile))
+           (args (append (list "-f" "org")
+                         extra-args
+                         (list "-o" outfile infile)))
+           (buf (get-buffer-create "*Pandoc EPUB Export*")))
+
+      (with-current-buffer buf
+        (setq buffer-read-only nil)
+        (erase-buffer)
+        (insert (format "Working dir: %s\nRunning:\n  pandoc %s\n\n"
+                        default-directory
+                        (mapconcat #'shell-quote-argument args " ")))
+        (setq buffer-read-only t))
+
+      (let ((exit-code (apply #'call-process "pandoc" nil buf t args)))
+        (if (and (integerp exit-code) (= exit-code 0))
+            (message "EPUB exported: %s" outfile)
           (display-buffer buf)
           (error "Pandoc failed (exit %s). See *Pandoc EPUB Export* buffer."
                  exit-code))))))
+
 
 ;; Optional keybinding:
 ;; (define-key org-mode-map (kbd "C-c C-e D") #'my/org-pandoc-export-epub-to-downloads)

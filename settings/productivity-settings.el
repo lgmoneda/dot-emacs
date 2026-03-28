@@ -649,13 +649,17 @@ TAB displays it in another window without leaving the minibuffer."
         :keymap map)))))
 
 (defun my/vterm-project-root (dir)
-  "Open or switch to vterm for project at DIR."
+  "Open or switch to vterm for project at DIR.
+If DIR is not part of a project, open a vterm in DIR itself."
   (interactive "D")
   (let ((default-directory dir))
-    (multi-vterm-project)))
+    (if (project-current nil dir)
+        (multi-vterm-project)
+      (multi-vterm))))
 
 (with-eval-after-load 'embark
-  (define-key embark-file-map (kbd "C-e") #'my/vterm-project-root))
+  (define-key embark-file-map (kbd "e") #'my/vterm-project-root)
+  (define-key embark-file-map (kbd "C-e") #'project-dired))
 
 (defvar lgm/mobile-inbox-file
   (expand-file-name "~/Dropbox/Agenda/mobile/inbox.org")
@@ -766,15 +770,6 @@ TAB displays it in another window without leaving the minibuffer."
   (let ((file (expand-file-name "~/Dropbox/Agenda/mobile/mobile-todo.org")))
     (find-file file)
     (goto-char (point-max))))
-
-;; (use-package winpulse
-;;   :vc (:url "https://github.com/xenodium/winpulse"
-;; 	    :rev :newest)
-;;   :demand t
-;;   :custom
-;;     (winpulse-duration 0.5)
-;;   :config
-;;   (winpulse-mode +1))
 
 (use-package pulsar
   :ensure t
