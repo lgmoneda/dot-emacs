@@ -83,6 +83,20 @@ MCP Parameters:
     (let ((result (org-roam-mcp--get-backlinks roam_id limit)))
       (json-encode result))))
 
+(defun emacs-mcp--org-roam-semantic-search (query &optional limit)
+  "Run semantic search against the external org-roam semantic search API.
+MCP Parameters:
+  query - natural language query string
+  limit - optional integer limiting number of parsed entries"
+  (mcp-server-lib-with-error-handling
+    (emacs-mcp--validate-string query "query")
+    (when (and limit (not (integerp limit)))
+      (mcp-server-lib-tool-throw "Invalid limit: must be an integer or null"))
+    (when (and limit (< limit 1))
+      (mcp-server-lib-tool-throw "Invalid limit: must be >= 1"))
+    (let ((result (org-roam-mcp--semantic-search query limit)))
+      (json-encode result))))
+
 
 ;;; Org-roam MCP Registration
 
@@ -234,13 +248,54 @@ Security: Read-only operation, safe for knowledge base analysis"
             :type integer
             :description "Maximum number of backlinks to return"
             :optional t))
+   :read-only t)
+
+  (mcp-server-lib-register-tool
+   :function #'emacs-mcp--org-roam-semantic-search
+   :name "org-roam-semantic-search"
+   :description "Run semantic search over your org-roam knowledge base using your local semantic-search API.
+This tool is intended for AI agents that need retrieval over your notes while solving tasks.
+
+Parameters:
+  query - Natural language query to send to semantic search (string, required)
+  limit - Maximum number of parsed entries returned (integer, optional, default 10)
+
+Returns JSON object with:
+  query - Original query text (string)
+  api_base_url - Semantic search API base URL used for request (string)
+  limit - Effective limit used during response shaping (integer)
+  results_count - Number of entries returned after applying limit (integer)
+  total_results - Number of parsed entries before limit (integer)
+  results - Parsed result entries including rank, text, and when available id/title (array)
+  raw_response - Full response body returned by the semantic search service (string)
+
+Behavior:
+- Sends an HTTP request to your local semantic-search service (default: http://localhost:8800/api/)
+- URL-encodes the query for safe transport
+- Parses org-style id links like [[id:...][Title]] into structured fields
+- Use the returned id fields with org-roam-retrieve-node-by-id to fetch the full content of any result.
+- Returns both structured entries and raw response for maximum flexibility
+
+Error cases:
+- Empty query text
+- Invalid limit (must be integer >= 1)
+- Semantic search service unavailable
+- Semantic search API HTTP errors"
+   :args '((:name "query"
+            :type string
+            :description "Natural language query to send to semantic search")
+           (:name "limit"
+            :type integer
+            :description "Maximum number of parsed entries to return"
+            :optional t))
    :read-only t))
 
 (defun emacs-org-roam-mcp-disable ()
   "Disable the Org-roam MCP tools."
   (mcp-server-lib-unregister-tool "org-roam-retrieve-node-by-id")
   (mcp-server-lib-unregister-tool "org-roam-search-nodes-by-title")
-  (mcp-server-lib-unregister-tool "org-roam-get-backlinks"))
+  (mcp-server-lib-unregister-tool "org-roam-get-backlinks")
+  (mcp-server-lib-unregister-tool "org-roam-semantic-search"))
 
 
 ;;; Org-babel MCP Tool Functions
