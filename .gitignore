@@ -38,3 +38,4 @@ elisp/*
 var/*
 .agent-shell/*
 settings/.beads/
+.beads/
