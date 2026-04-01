@@ -5,9 +5,9 @@
 (defconst lgm/weight--tracker-dir "~/repos/my-life-scripts/weight-tracker/")
 (defconst lgm/weight--python "/Users/luis.moneda/miniconda3/envs/edge/bin/python3")
 (defconst lgm/weight--listen-seconds 45)
-(defconst lgm/weight--raw-file "weights_log.csv")
-(defconst lgm/weight--events-file "s200_events.log")
-(defconst lgm/weight--stable-file "stable_weights.csv")
+(defconst lgm/weight--raw-file "~/Dropbox/data-about-luis/weight-tracker/weights_log.csv")
+(defconst lgm/weight--events-file "~/Dropbox/data-about-luis/weight-tracker/s200_events.log")
+(defconst lgm/weight--stable-file "~/Dropbox/data-about-luis/weight-tracker/stable_weights.csv")
 (defconst lgm/physical-prog--script "~/repos/my-life-scripts/physical-progress-tracker/physical_progress_tracker.py")
 (defconst lgm/physical-prog--timer-seconds 10)
 
@@ -19,7 +19,7 @@
   "Return latest stable entry plist or nil.
 
 Plist keys: :timestamp, :weight, :profile."
-  (let ((stable-file (lgm/weight--path lgm/weight--stable-file)))
+  (let ((stable-file (expand-file-name lgm/weight--stable-file)))
     (when (file-exists-p stable-file)
       (with-temp-buffer
         (insert-file-contents stable-file)
@@ -65,9 +65,9 @@ Plist keys: :timestamp, :weight, :profile."
     (if (and running-process (process-live-p running-process))
         (message "Weight capture already running.")
       (let* ((tracker-script (lgm/weight--path "s200_logger.py"))
-             (raw-output (lgm/weight--path lgm/weight--raw-file))
-             (events-output (lgm/weight--path lgm/weight--events-file))
-             (stable-output (lgm/weight--path lgm/weight--stable-file))
+             (raw-output (expand-file-name lgm/weight--raw-file))
+             (events-output (expand-file-name lgm/weight--events-file))
+             (stable-output (expand-file-name lgm/weight--stable-file))
              (before-entry (lgm/weight--latest-stable-entry)))
         (cond
          ((not (file-exists-p tracker-script))
