@@ -20,32 +20,38 @@
          (base-url (if parsed-url (url-recreate-url parsed-url)
                      (error "Invalid URL: %s" url)))
          (temp-buffer (url-retrieve-synchronously url))
+         (safe-title (replace-regexp-in-string "[/\\\\]" "-" title))
+         (download-dir (expand-file-name "~/Downloads/"))
          (content "")
          (dom nil)
          (body nil)
-         (html-content "")
          (images '())
-         (epub-dir (concat (file-name-as-directory "/tmp/url-epub") title))
+         (epub-dir (concat (file-name-as-directory "/tmp/url-epub") safe-title))
          (epub-oebps-dir (concat epub-dir "/OEBPS"))
          (epub-images-dir (concat epub-oebps-dir "/images"))
          (epub-meta-dir (concat epub-dir "/META-INF"))
-         (output-epub (concat (expand-file-name "~/Downloads/") title ".epub"))
+         (output-epub (expand-file-name (concat safe-title ".epub") download-dir))
          (epub-ncx (concat epub-oebps-dir "/toc.ncx"))
          (image-items "")  ; String to collect image manifest entries
          (image-counter 0))  ; Counter for unique image IDs
 
-    (when temp-buffer
-      (with-current-buffer temp-buffer
-        (goto-char (point-min))
-        (re-search-forward "\r?\n\r?\n" nil t)
-        (setq content (buffer-substring-no-properties (point) (point-max)))
-        (setq dom (libxml-parse-html-region (point) (point-max)))
-        (setq body (dom-by-tag dom 'body))
-        (setq html-content (shr-dom-to-xml body))
-        (setq images (dom-by-tag dom 'img)))
-      (kill-buffer temp-buffer))
+    (unless temp-buffer
+      (error "Failed to retrieve URL: %s" url))
+
+    (with-current-buffer temp-buffer
+      (goto-char (point-min))
+      (re-search-forward "\r?\n\r?\n" nil t)
+      (setq content (buffer-substring-no-properties (point) (point-max)))
+      (setq dom (libxml-parse-html-region (point) (point-max)))
+      (setq body (car (dom-by-tag dom 'body)))
+      (unless body
+        (kill-buffer temp-buffer)
+        (error "Could not find a <body> element in %s" url))
+      (setq images (dom-by-tag dom 'img)))
+    (kill-buffer temp-buffer)
 
     ;; Create necessary directories
+    (mkdir download-dir t)
     (mkdir epub-dir t)
     (mkdir epub-oebps-dir t)
     (mkdir epub-images-dir t)
@@ -145,11 +151,21 @@
       (insert "</package>"))
 
     ;; Zip files into an EPUB
-    (shell-command (format "cd %s && zip -X0 %s mimetype && zip -r %s META-INF OEBPS"
-                           epub-dir output-epub output-epub))
+    (let ((default-directory epub-dir)
+          (zip-output-buffer (get-buffer-create "*lgm-url-to-epub-zip*")))
+      (with-current-buffer zip-output-buffer
+        (erase-buffer))
+      (unless (zerop (call-process "zip" nil zip-output-buffer nil "-X0" output-epub "mimetype"))
+        (error "Failed to create EPUB mimetype archive:\n%s"
+               (with-current-buffer zip-output-buffer
+                 (buffer-substring-no-properties (point-min) (point-max)))))
+      (unless (zerop (call-process "zip" nil zip-output-buffer nil "-r" output-epub "META-INF" "OEBPS"))
+        (error "Failed to add EPUB contents:\n%s"
+               (with-current-buffer zip-output-buffer
+                 (buffer-substring-no-properties (point-min) (point-max))))))
     (message "EPUB saved as %s" output-epub)))
 
-(defun lgm/ngurl-to-epub-clean (url title)
+(defun lgm/url-to-epub-clean (url title)
   "Download the webpage at URL, extract the main content, and export it as a valid EPUB book with TITLE."
   (interactive "sEnter URL: \nsEnter EPUB title: ")
   (unless (stringp url)
@@ -159,98 +175,100 @@
          (base-url (if parsed-url (url-recreate-url parsed-url)
                      (error "Invalid URL: %s" url)))
          (temp-buffer (url-retrieve-synchronously url))
+         (safe-title (replace-regexp-in-string "[/\\\\]" "-" title))
+         (download-dir (expand-file-name "~/Downloads/"))
          (content "")
          (dom nil)
          (main-content nil)
          (page-title nil)
          (html-content "")
          (images '())
-         (epub-dir (concat (file-name-as-directory "/tmp/url-epub") title))
+         (epub-dir (concat (file-name-as-directory "/tmp/url-epub") safe-title))
          (epub-oebps-dir (concat epub-dir "/OEBPS"))
          (epub-images-dir (concat epub-oebps-dir "/images"))
          (epub-meta-dir (concat epub-dir "/META-INF"))
-         (output-epub (concat (expand-file-name "~/Downloads/") title ".epub"))
+         (output-epub (expand-file-name (concat safe-title ".epub") download-dir))
          (epub-ncx (concat epub-oebps-dir "/toc.ncx"))
          (image-items "")
          (image-counter 0))
 
-    (when temp-buffer
-      (with-current-buffer temp-buffer
-        (goto-char (point-min))
-        (re-search-forward "\r?\n\r?\n" nil t)
-        (setq content (buffer-substring-no-properties (point) (point-max)))
-        (setq dom (libxml-parse-html-region (point) (point-max)))
+    (unless temp-buffer
+      (error "Failed to retrieve URL: %s" url))
 
-        ;; Extract page title if available
-        (let ((title-element (car (dom-by-tag dom 'title))))
-          (when title-element
-            (setq page-title (dom-text title-element))))
+    (with-current-buffer temp-buffer
+      (goto-char (point-min))
+      (re-search-forward "\r?\n\r?\n" nil t)
+      (setq content (buffer-substring-no-properties (point) (point-max)))
+      (setq dom (libxml-parse-html-region (point) (point-max)))
 
-        ;; Extract meaningful content using various content selectors
-        (setq main-content
-              (or
-               ;; Try to find article element
-               (car (dom-by-tag dom 'article))
-               ;; Try to find main element
-               (car (dom-by-tag dom 'main))
-               ;; Try common content container IDs
-               (car (dom-by-id dom "content"))
-               (car (dom-by-id dom "main-content"))
-               (car (dom-by-id dom "post-content"))
-               (car (dom-by-id dom "article-content"))
-               ;; Try by class names (common in many CMS)
-               (car (dom-by-class dom "content"))
-               (car (dom-by-class dom "post"))
-               (car (dom-by-class dom "article"))
-               (car (dom-by-class dom "entry-content"))
-               (car (dom-by-class dom "post-content"))
-               ;; Fallback to body if no content identifiers found
-               (car (dom-by-tag dom 'body))))
+      ;; Extract page title if available
+      (let ((title-element (car (dom-by-tag dom 'title))))
+        (when title-element
+          (setq page-title (dom-text title-element))))
 
-        ;; If no main content was found, use the body
-        (unless main-content
-          (setq main-content (car (dom-by-tag dom 'body))))
+      ;; Extract meaningful content using various content selectors
+      (setq main-content
+            (or
+             ;; Try to find article element
+             (car (dom-by-tag dom 'article))
+             ;; Try to find main element
+             (car (dom-by-tag dom 'main))
+             ;; Try common content container IDs
+             (dom-by-id dom "content")
+             (dom-by-id dom "main-content")
+             (dom-by-id dom "post-content")
+             (dom-by-id dom "article-content")
+             ;; Try by class names (common in many CMS)
+             (car (dom-by-class dom "content"))
+             (car (dom-by-class dom "post"))
+             (car (dom-by-class dom "article"))
+             (car (dom-by-class dom "entry-content"))
+             (car (dom-by-class dom "post-content"))
+             ;; Fallback to body if no content identifiers found
+             (car (dom-by-tag dom 'body))))
 
-        ;; Make a deep copy of main-content to prevent modifying original DOM
-        (setq main-content (copy-tree main-content))
+      ;; If no main content was found, use the body
+      (unless main-content
+        (setq main-content (car (dom-by-tag dom 'body))))
 
-        ;; Remove unwanted elements from main content
-        (when main-content
-          ;; Remove navigation elements (nav tags)
-          (let ((navs (dom-by-tag main-content 'nav)))
-            (dolist (nav navs)
-              (dom-remove-node main-content nav)))
+      ;; Make a deep copy of main-content to prevent modifying original DOM
+      (setq main-content (copy-tree main-content))
 
-          ;; Remove headers
-          (let ((headers (dom-by-tag main-content 'header)))
-            (dolist (header headers)
-              (dom-remove-node main-content header)))
+      ;; Remove unwanted elements from main content
+      (when main-content
+        ;; Remove navigation elements (nav tags)
+        (let ((navs (dom-by-tag main-content 'nav)))
+          (dolist (nav navs)
+            (dom-remove-node main-content nav)))
 
-          ;; Remove footers
-          (let ((footers (dom-by-tag main-content 'footer)))
-            (dolist (footer footers)
-              (dom-remove-node main-content footer)))
+        ;; Remove headers
+        (let ((headers (dom-by-tag main-content 'header)))
+          (dolist (header headers)
+            (dom-remove-node main-content header)))
 
-          ;; Remove asides
-          (let ((asides (dom-by-tag main-content 'aside)))
-            (dolist (aside asides)
-              (dom-remove-node main-content aside)))
+        ;; Remove footers
+        (let ((footers (dom-by-tag main-content 'footer)))
+          (dolist (footer footers)
+            (dom-remove-node main-content footer)))
 
-          ;; Remove elements by common class names
-          (dolist (class '("nav" "navigation" "menu" "sidebar" "widget" "footer" "header"
-                           "comments" "social" "related" "meta" "tags" "author-info"))
-            (let ((elements (dom-by-class main-content class)))
-              (dolist (el elements)
-                (dom-remove-node main-content el))))
+        ;; Remove asides
+        (let ((asides (dom-by-tag main-content 'aside)))
+          (dolist (aside asides)
+            (dom-remove-node main-content aside)))
 
-          ;; Extract all remaining images for processing
-          (setq images (dom-by-tag main-content 'img))
+        ;; Remove elements by common class names
+        (dolist (class '("nav" "navigation" "menu" "sidebar" "widget" "footer" "header"
+                         "comments" "social" "related" "meta" "tags" "author-info"))
+          (let ((elements (dom-by-class main-content class)))
+            (dolist (el elements)
+              (dom-remove-node main-content el))))
 
-          ;; Extract all images before converting to HTML
-          (setq images (dom-by-tag main-content 'img))))
-      (kill-buffer temp-buffer))
+        ;; Extract all images before converting to HTML
+        (setq images (dom-by-tag main-content 'img))))
+    (kill-buffer temp-buffer)
 
     ;; Create necessary directories
+    (mkdir download-dir t)
     (mkdir epub-dir t)
     (mkdir epub-oebps-dir t)
     (mkdir epub-images-dir t)
@@ -386,9 +404,21 @@
       (insert "</package>"))
 
     ;; Zip files into an EPUB
-    (shell-command (format "cd %s && zip -X0 %s mimetype && zip -r %s META-INF OEBPS"
-                           epub-dir output-epub output-epub))
+    (let ((default-directory epub-dir)
+          (zip-output-buffer (get-buffer-create "*lgm-url-to-epub-clean-zip*")))
+      (with-current-buffer zip-output-buffer
+        (erase-buffer))
+      (unless (zerop (call-process "zip" nil zip-output-buffer nil "-X0" output-epub "mimetype"))
+        (error "Failed to create EPUB mimetype archive:\n%s"
+               (with-current-buffer zip-output-buffer
+                 (buffer-substring-no-properties (point-min) (point-max)))))
+      (unless (zerop (call-process "zip" nil zip-output-buffer nil "-r" output-epub "META-INF" "OEBPS"))
+        (error "Failed to add EPUB contents:\n%s"
+               (with-current-buffer zip-output-buffer
+                 (buffer-substring-no-properties (point-min) (point-max))))))
     (message "EPUB saved as %s" output-epub)))
+
+(defalias 'lgm/ngurl-to-epub-clean #'lgm/url-to-epub-clean)
 
 (defun lgm/convert-pdf-to-epub (input)
   "Convert a PDF file to EPUB using `pdf_to_epub.py`. INPUT can be a URL or a local file."
