@@ -9,6 +9,90 @@
 (require 'dom)
 (require 'shr)
 (require 'cl-lib)
+(require 'image-file)
+
+(defconst lgm/url-to-epub--image-accept-header
+  "image/png,image/jpeg,image/gif,image/svg+xml;q=0.9,*/*;q=0.8")
+
+(defun lgm/url-to-epub--image-media-type (image-type)
+  "Return EPUB media-type string for IMAGE-TYPE."
+  (pcase image-type
+    ('jpeg "image/jpeg")
+    ('png "image/png")
+    ('gif "image/gif")
+    ('svg "image/svg+xml")
+    (_ nil)))
+
+(defun lgm/url-to-epub--image-extension (image-type)
+  "Return normalized filename extension for IMAGE-TYPE."
+  (pcase image-type
+    ('jpeg "jpg")
+    ('png "png")
+    ('gif "gif")
+    ('svg "svg")
+    (_ nil)))
+
+(defun lgm/url-to-epub--convert-webp-to-png (source-file output-file)
+  "Convert SOURCE-FILE (WEBP) to OUTPUT-FILE (PNG).
+Return non-nil when conversion succeeds."
+  (cond
+   ((executable-find "dwebp")
+    (zerop (call-process "dwebp" nil nil nil source-file "-o" output-file)))
+   ((executable-find "magick")
+    (zerop (call-process "magick" nil nil nil source-file output-file)))
+   ((executable-find "sips")
+    (zerop (call-process "sips" nil nil nil "-s" "format" "png" source-file "--out" output-file)))
+   (t nil)))
+
+(defun lgm/url-to-epub--file-is-webp-p (local-file)
+  "Return non-nil when LOCAL-FILE contains WEBP data."
+  (when (file-exists-p local-file)
+    (with-temp-buffer
+      (set-buffer-multibyte nil)
+      (insert-file-contents-literally local-file nil 0 12)
+      (and (= (buffer-size) 12)
+           (string= (buffer-substring-no-properties 1 5) "RIFF")
+           (string= (buffer-substring-no-properties 9 13) "WEBP")))))
+
+(defun lgm/url-to-epub--normalize-image-file (local-file)
+  "Normalize LOCAL-FILE to a Kindle-friendly EPUB image.
+Return cons cell of (RELATIVE-NAME . MEDIA-TYPE), or nil when unsupported."
+  (when (file-exists-p local-file)
+    (let* ((image-type (or (and (lgm/url-to-epub--file-is-webp-p local-file) 'webp)
+                           (image-type-from-file-header local-file)
+                           (pcase (downcase (or (file-name-extension local-file) ""))
+                             ("jpg" 'jpeg)
+                             ("jpeg" 'jpeg)
+                             ("png" 'png)
+                             ("gif" 'gif)
+                             ("svg" 'svg)
+                             ("webp" 'webp)
+                             (_ nil))))
+           (final-file local-file))
+      (when (eq image-type 'webp)
+        (let ((png-file (concat (file-name-sans-extension local-file) ".png")))
+          (if (lgm/url-to-epub--convert-webp-to-png local-file png-file)
+              (progn
+                (unless (string= local-file png-file)
+                  (delete-file local-file))
+                (setq final-file png-file
+                      image-type 'png))
+            (message "Skipping image, WEBP conversion unavailable: %s" local-file)
+            (delete-file local-file)
+            (setq final-file nil
+                  image-type nil))))
+      (when (and final-file image-type)
+        (let* ((target-ext (lgm/url-to-epub--image-extension image-type))
+               (media-type (lgm/url-to-epub--image-media-type image-type)))
+          (when (and target-ext media-type)
+            (let ((current-ext (downcase (or (file-name-extension final-file) ""))))
+              (unless (string= current-ext target-ext)
+                (let ((renamed-file (concat (file-name-sans-extension final-file)
+                                            "."
+                                            target-ext)))
+                  (rename-file final-file renamed-file t)
+                  (setq final-file renamed-file))))
+            (cons (file-name-nondirectory final-file) media-type)))))))
 
 (defun lgm/url-to-epub (url title)
   "Download the webpage at URL and export it as a valid EPUB book with TITLE."
@@ -51,6 +135,8 @@
     (kill-buffer temp-buffer)
 
     ;; Create necessary directories
+    (when (file-directory-p epub-dir)
+      (delete-directory epub-dir t))
     (mkdir download-dir t)
     (mkdir epub-dir t)
     (mkdir epub-oebps-dir t)
@@ -80,30 +166,32 @@
                             ((string-prefix-p "/" src) (concat (url-type parsed-url) "://" (url-host parsed-url) src))
                             (t (url-expand-file-name src base-url))))
              (image-id (format "img%d" (cl-incf image-counter)))
-             (image-filename (and absolute-src (replace-regexp-in-string "[^a-zA-Z0-9_.-]" "_"
-                                                                         (file-name-nondirectory absolute-src))))
+             (image-filename (and absolute-src
+                                  (replace-regexp-in-string
+                                   "[^a-zA-Z0-9_.-]"
+                                   "_"
+                                   (file-name-nondirectory absolute-src))))
              (local-filename (and image-filename (concat epub-images-dir "/" image-filename))))
 
         (when (and absolute-src local-filename)
           (condition-case err
               (progn
                 (message "Downloading image: %s" absolute-src)
-                (url-copy-file absolute-src local-filename t)
-                ;; Add to manifest
-                (setq image-items
-                      (concat image-items
-                              (format "<item id=\"%s\" href=\"images/%s\" media-type=\"image/%s\"/>\n"
-                                      image-id
-                                      image-filename
-                                      (cond
-                                       ((string-match-p "\\.jpe?g$" image-filename) "jpeg")
-                                       ((string-match-p "\\.png$" image-filename) "png")
-                                       ((string-match-p "\\.gif$" image-filename) "gif")
-                                       ((string-match-p "\\.svg$" image-filename) "svg+xml")
-                                       (t "png")))))
-                ;; Update src attribute to point to the local file
-                (setf (dom-attr img 'src) (concat "images/" image-filename)))
-            (error (message "Error downloading image %s: %s" absolute-src (error-message-string err)))))))
+                (let ((url-mime-accept-string lgm/url-to-epub--image-accept-header))
+                  (url-copy-file absolute-src local-filename t))
+                (let* ((normalized-image (lgm/url-to-epub--normalize-image-file local-filename))
+                       (final-image-filename (car-safe normalized-image))
+                       (media-type (cdr-safe normalized-image)))
+                  (when (and final-image-filename media-type)
+                    (setq image-items
+                          (concat image-items
+                                  (format "<item id=\"%s\" href=\"images/%s\" media-type=\"%s\"/>\n"
+                                          image-id
+                                          final-image-filename
+                                          media-type)))
+                    (setf (dom-attr img 'src) (concat "images/" final-image-filename)))))
+            (error
+             (message "Error downloading image %s: %s" absolute-src (error-message-string err)))))))
 
     ;; Save XHTML content
     (with-temp-file (concat epub-oebps-dir "/index.xhtml")
@@ -151,6 +239,8 @@
       (insert "</package>"))
 
     ;; Zip files into an EPUB
+    (when (file-exists-p output-epub)
+      (delete-file output-epub))
     (let ((default-directory epub-dir)
           (zip-output-buffer (get-buffer-create "*lgm-url-to-epub-zip*")))
       (with-current-buffer zip-output-buffer
@@ -268,6 +358,8 @@
     (kill-buffer temp-buffer)
 
     ;; Create necessary directories
+    (when (file-directory-p epub-dir)
+      (delete-directory epub-dir t))
     (mkdir download-dir t)
     (mkdir epub-dir t)
     (mkdir epub-oebps-dir t)
@@ -288,61 +380,54 @@
               "</container>"))
 
     ;; Download and prepare images
-    (let ((image-map (make-hash-table :test 'equal)))
-      (dolist (img images)
-        (let* ((src (dom-attr img 'src))
-               (absolute-src (cond
-                              ((not src) nil)
-                              ((string-match-p "\\`https?://" src) src)
-                              ((string-prefix-p "//" src) (concat (url-type parsed-url) ":" src))
-                              ((string-prefix-p "/" src) (concat (url-type parsed-url) "://" (url-host parsed-url) src))
-                              (t (url-expand-file-name src base-url))))
-               (image-id (format "img%d" (cl-incf image-counter)))
-               (image-filename nil)
-               (local-filename nil))
+    (dolist (img images)
+      (let* ((src (dom-attr img 'src))
+             (absolute-src (cond
+                            ((not src) nil)
+                            ((string-match-p "\\`https?://" src) src)
+                            ((string-prefix-p "//" src) (concat (url-type parsed-url) ":" src))
+                            ((string-prefix-p "/" src) (concat (url-type parsed-url) "://" (url-host parsed-url) src))
+                            (t (url-expand-file-name src base-url))))
+             (image-id (format "img%d" (cl-incf image-counter)))
+             (image-filename nil)
+             (local-filename nil))
 
-          ;; Generate a safe filename for the image
-          (when absolute-src
-            (setq image-filename
-                  (if (string-match "/\\([^/]*\\)$" absolute-src)
-                      (replace-regexp-in-string "[^a-zA-Z0-9_.-]" "_"
-                                               (match-string 1 absolute-src))
-                    (format "image_%d.png" image-counter)))
+        ;; Generate a safe filename for the image
+        (when absolute-src
+          (setq image-filename
+                (if (string-match "/\\([^/]*\\)$" absolute-src)
+                    (replace-regexp-in-string "[^a-zA-Z0-9_.-]" "_"
+                                              (match-string 1 absolute-src))
+                  (format "image_%d.png" image-counter)))
 
-            ;; Ensure we have a file extension
-            (unless (string-match "\\.[a-zA-Z0-9]+$" image-filename)
-              (setq image-filename (concat image-filename ".png")))
+          ;; Ensure we have a file extension
+          (unless (string-match "\\.[a-zA-Z0-9]+$" image-filename)
+            (setq image-filename (concat image-filename ".png")))
 
-            (setq local-filename (concat epub-images-dir "/" image-filename))
+          (setq local-filename (concat epub-images-dir "/" image-filename))
 
-            (condition-case err
-                (progn
-                  (message "Downloading image: %s" absolute-src)
-                  ;; Create a safe URL for downloading
-                  (let ((encoded-url (url-encode-url absolute-src)))
-                    (url-copy-file encoded-url local-filename t))
+          (condition-case err
+              (progn
+                (message "Downloading image: %s" absolute-src)
+                (let ((url-mime-accept-string lgm/url-to-epub--image-accept-header))
+                  (url-copy-file absolute-src local-filename t))
 
-                  ;; Add to manifest if file exists
-                  (when (file-exists-p local-filename)
+                (let* ((normalized-image (lgm/url-to-epub--normalize-image-file local-filename))
+                       (final-image-filename (car-safe normalized-image))
+                       (media-type (cdr-safe normalized-image)))
+                  (when (and final-image-filename media-type)
                     (setq image-items
                           (concat image-items
-                                  (format "<item id=\"%s\" href=\"images/%s\" media-type=\"image/%s\"/>\n"
+                                  (format "<item id=\"%s\" href=\"images/%s\" media-type=\"%s\"/>\n"
                                           image-id
-                                          image-filename
-                                          (cond
-                                           ((string-match-p "\\.jpe?g$" image-filename) "jpeg")
-                                           ((string-match-p "\\.png$" image-filename) "png")
-                                           ((string-match-p "\\.gif$" image-filename) "gif")
-                                           ((string-match-p "\\.svg$" image-filename) "svg+xml")
-                                           (t "png")))))
-                    ;; Store the mapping between original src and local filename
-                    (puthash src (concat "images/" image-filename) image-map)
+                                          final-image-filename
+                                          media-type)))
                     ;; Update src attribute to point to the local file
-                    (setf (dom-attr img 'src) (concat "images/" image-filename))))
-              (error (message "Error downloading image %s: %s" absolute-src (error-message-string err)))))))
+                    (setf (dom-attr img 'src) (concat "images/" final-image-filename)))))
+            (error (message "Error downloading image %s: %s" absolute-src (error-message-string err)))))))
 
-      ;; Convert main content to HTML after updating all image src attributes
-      (setq html-content (shr-dom-to-xml main-content)))
+    ;; Convert main content to HTML after updating all image src attributes
+    (setq html-content (shr-dom-to-xml main-content))
 
     ;; Preserve original title if found, otherwise use the provided title
     (unless page-title
@@ -404,6 +489,8 @@
       (insert "</package>"))
 
     ;; Zip files into an EPUB
+    (when (file-exists-p output-epub)
+      (delete-file output-epub))
     (let ((default-directory epub-dir)
           (zip-output-buffer (get-buffer-create "*lgm-url-to-epub-clean-zip*")))
       (with-current-buffer zip-output-buffer
