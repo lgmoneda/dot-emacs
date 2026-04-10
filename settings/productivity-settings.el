@@ -475,13 +475,29 @@
 ;; for vterm terminal backend:
 (use-package vterm
   :ensure t
-  :commands (vterm my/vterm-here)  
+  :commands (vterm my/vterm-here)
   :config
   (defun my/vterm-here ()
     "Open a new vterm buffer."
     (interactive)
     (vterm (generate-new-buffer-name "*vterm*")))
-  )
+
+  (defun my/vterm-sync-hl-line ()
+    "Enable `hl-line-mode' only while `vterm-copy-mode' is active."
+    (when (derived-mode-p 'vterm-mode)
+      (if (bound-and-true-p vterm-copy-mode)
+          (hl-line-mode 1)
+        (hl-line-mode -1)
+        (when (fboundp 'global-hl-line-unhighlight)
+          (global-hl-line-unhighlight)))))
+
+  (defun my/vterm-disable-global-hl-line ()
+    "Disable `global-hl-line-mode' locally in `vterm-mode' buffers."
+    (setq-local global-hl-line-mode nil)
+    (my/vterm-sync-hl-line))
+
+  (add-hook 'vterm-mode-hook #'my/vterm-disable-global-hl-line)
+  (add-hook 'vterm-copy-mode-hook #'my/vterm-sync-hl-line))
 
 ;; multi-vterm
 (use-package multi-vterm
