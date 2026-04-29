@@ -431,6 +431,194 @@
         (clipboard-kill-region (point-min) (point-max)))
       (message filename))))
 
+(defconst lgm/image-clipboard-mime-types
+  '(("png" . "image/png")
+    ("jpg" . "image/jpeg")
+    ("jpeg" . "image/jpeg")
+    ("gif" . "image/gif")
+    ("tif" . "image/tiff")
+    ("tiff" . "image/tiff")
+    ("bmp" . "image/bmp"))
+  "Supported image mime types for `lgm/copy-image-at-point-to-clipboard'.")
+
+(defconst lgm/image-clipboard-extensions
+  '("png" "jpg" "jpeg" "gif" "tif" "tiff" "bmp")
+  "Supported image file extensions for image clipboard helpers.")
+
+(defconst lgm/macos-image-clipboard-types
+  '(("png" . "«class PNGf»")
+    ("jpg" . "«class JPEG»")
+    ("jpeg" . "«class JPEG»")
+    ("gif" . "«class GIFf»")
+    ("tif" . "«class TIFF»")
+    ("tiff" . "«class TIFF»")
+    ("bmp" . "«class BMPf»"))
+  "AppleScript image classes for clipboard image copying on macOS.")
+
+(defun lgm--image-mime-type (file)
+  "Return the clipboard mime type for FILE, or nil if unsupported."
+  (when-let* ((extension (file-name-extension file))
+              (mime-type
+               (alist-get (downcase extension)
+                          lgm/image-clipboard-mime-types
+                          nil nil #'string=)))
+    mime-type))
+
+(defun lgm--resolve-local-file-path (path)
+  "Expand PATH into a local file name relative to the current buffer."
+  (when path
+    (let* ((trimmed (string-trim path "[[:space:]\"'(<]+" "[[:space:]\"')>]+"))
+           (raw-path
+            (cond
+             ((string-match-p "\\`[a-zA-Z][a-zA-Z0-9+.-]*://" trimmed)
+              (when (string-prefix-p "file://" trimmed)
+                (url-unhex-string (string-remove-prefix "file://" trimmed))))
+             (t trimmed))))
+      (when raw-path
+        (let ((expanded
+               (expand-file-name
+                (substitute-in-file-name raw-path)
+                (if-let ((buffer-path (buffer-file-name)))
+                    (file-name-directory buffer-path)
+                  default-directory))))
+          (unless (file-remote-p expanded)
+            expanded))))))
+
+(defun lgm--existing-image-file-p (file)
+  "Return non-nil if FILE exists and is a supported image."
+  (and file
+       (file-exists-p file)
+       (not (file-directory-p file))
+       (lgm--image-mime-type file)))
+
+(defun lgm--image-path-on-current-line ()
+  "Return an image path found on the current line, preferring the one nearest point."
+  (save-excursion
+    (let* ((point-pos (point))
+           (line-start (line-beginning-position))
+           (line-end (line-end-position))
+           (extensions (regexp-opt lgm/image-clipboard-extensions t))
+           (path-regexp
+            (concat
+             "\\(?:file://\\)?\\(?:~/\\|/\\|\\.\\.?/\\)"
+             "[^][()<>\"\n]+?\\."
+             extensions))
+           best-file
+           best-distance)
+      (goto-char line-start)
+      (while (re-search-forward path-regexp line-end t)
+        (let* ((candidate (string-trim (match-string-no-properties 0)))
+               (file (lgm--resolve-local-file-path candidate)))
+          (when (lgm--existing-image-file-p file)
+            (let* ((start (match-beginning 0))
+                   (end (match-end 0))
+                   (distance
+                    (cond
+                     ((<= start point-pos end) 0)
+                     ((< point-pos start) (- start point-pos))
+                     (t (- point-pos end)))))
+              (when (or (null best-distance)
+                        (< distance best-distance))
+                (setq best-distance distance
+                      best-file file))))))
+      best-file)))
+
+(defun lgm--markdown-link-target-at-point ()
+  "Return the Markdown link target at point, or nil."
+  (save-excursion
+    (let ((point-pos (point))
+          (line-end (line-end-position))
+          target)
+      (beginning-of-line)
+      (while (and (not target)
+                  (re-search-forward "!?\\[[^]\n]*\\](\\([^)\n]+\\))" line-end t))
+        (when (<= (match-beginning 0) point-pos (match-end 0))
+          (setq target (string-trim (match-string-no-properties 1)))
+          (when (string-match
+                 "\\`\\(?:<\\([^>]+\\)>\\|\\([^[:space:]]+\\)\\)\\(?:[[:space:]].*\\)?\\'"
+                 target)
+            (setq target (or (match-string 1 target)
+                             (match-string 2 target))))))
+      target)))
+
+(defun lgm--org-file-link-at-point ()
+  "Return the Org file link target at point, or nil."
+  (when (derived-mode-p 'org-mode)
+    (when-let* ((context (org-element-lineage (org-element-context) '(link) t))
+                (link-type (org-element-property :type context))
+                (_ (string= link-type "file"))
+                (path (org-element-property :path context)))
+      path)))
+
+(defun lgm--image-file-at-point ()
+  "Return the local image file referenced at point, or nil."
+  (or
+   (cl-loop for candidate in
+            (list (lgm--org-file-link-at-point)
+                  (lgm--markdown-link-target-at-point)
+                  (thing-at-point 'filename t)
+                  (thing-at-point 'url t))
+            for file = (lgm--resolve-local-file-path candidate)
+            when (lgm--existing-image-file-p file)
+            return file)
+   (lgm--image-path-on-current-line)))
+
+(defun lgm--call-process-or-user-error (program infile &rest args)
+  "Run PROGRAM with ARGS and signal a `user-error' if it fails.
+INFILE is passed as the input file for `call-process'."
+  (with-temp-buffer
+    (let ((status (apply #'call-process program infile (current-buffer) nil args)))
+      (unless (zerop status)
+        (user-error "%s failed: %s"
+                    program
+                    (string-trim (buffer-string)))))))
+
+(defun lgm--copy-image-file-to-clipboard-macos (file)
+  "Copy FILE to the macOS clipboard as an image."
+  (let* ((extension (downcase (or (file-name-extension file) "")))
+         (image-class
+          (alist-get extension lgm/macos-image-clipboard-types nil nil #'string=)))
+    (unless image-class
+      (user-error "Unsupported image type for macOS clipboard: %s" extension))
+    (lgm--call-process-or-user-error
+     "osascript" nil
+     "-e"
+     (format "set the clipboard to (read (POSIX file %S) as %s)"
+             file image-class))))
+
+(defun lgm--copy-image-file-to-clipboard-linux (file)
+  "Copy FILE to the clipboard on Linux."
+  (let ((mime-type (lgm--image-mime-type file)))
+    (cond
+     ((executable-find "wl-copy")
+      (lgm--call-process-or-user-error "wl-copy" file "--type" mime-type))
+     ((executable-find "xclip")
+      (lgm--call-process-or-user-error
+       "xclip" file "-selection" "clipboard" "-t" mime-type "-i"))
+     (t
+      (user-error "Install `wl-copy' or `xclip' to copy images to the clipboard")))))
+
+(defun lgm--copy-image-file-to-clipboard (file)
+  "Copy FILE to the system clipboard as an image."
+  (pcase system-type
+    ('darwin
+     (lgm--copy-image-file-to-clipboard-macos file))
+    ('gnu/linux
+     (lgm--copy-image-file-to-clipboard-linux file))
+    (_
+     (user-error "Clipboard image copying is not implemented for %s" system-type))))
+
+(defun lgm/copy-image-at-point-to-clipboard ()
+  "Copy the image referenced at point to the system clipboard.
+
+Supports Org file links, Markdown image syntax, and plain file paths."
+  (interactive)
+  (if-let ((file (lgm--image-file-at-point)))
+      (progn
+        (lgm--copy-image-file-to-clipboard file)
+        (message "Copied image to clipboard: %s" (abbreviate-file-name file)))
+    (user-error "No local image file found at point")))
+
 ;;zygospore lets you revert C-x 1 (delete-other-window) by pressing C-x 1 again
 (use-package zygospore
   :ensure t
@@ -599,6 +787,7 @@ If in vterm, return to the last non-vterm buffer (or previous-buffer)."
 (require 'cl-lib)
 (require 'subr-x)
 (require 'org)
+(require 'url-util)
 
 (defun my/vterm--buffers ()
   "Return a list of live vterm buffers (most-recent first)."
