@@ -197,10 +197,22 @@ menu\nmouse-2 will jump to task"))
 (use-package simple-httpd
   :ensure t)
 
+;; (use-package jupyter
+;;   :ensure t
+;;   :config
+;;   (pyvenv-mode t))
+
 (use-package jupyter
   :ensure t
+  :after org
   :config
-  (pyvenv-mode t))
+  (require 'ob-jupyter)
+
+  (with-eval-after-load 'org
+    (add-to-list 'org-babel-load-languages '(jupyter . t))
+    (org-babel-do-load-languages
+     'org-babel-load-languages
+     org-babel-load-languages)))
 
 ;; (use-package pyvenv
 ;;   :ensure t
@@ -1862,6 +1874,9 @@ display the output in a new temporary buffer."
 (setq imagemagick-enabled-types t)
 (imagemagick-register-types)
 
+(with-eval-after-load 'image-mode
+  (add-hook 'image-mode-hook #'image-transform-fit-to-window))
+
 ;;org-transclude
 ;; Great to create new documents with different references to share with people
 (add-to-list 'load-path "~/.emacs.d/elpa/org-transclusion/")
@@ -2546,7 +2561,7 @@ Records until `org-screen-record-stop-and-insert-link' is called."
 
 ;; ------ Insert link from browser history
 ;; move to elsewhere later
-;;; Arc → Consult/Vertico picker with fixed columns + open actions
+;;; Browser history → Consult/Vertico picker with fixed columns + open actions
 (require 'subr-x)
 (require 'cl-lib)
 
@@ -2554,11 +2569,11 @@ Records until `org-screen-record-stop-and-insert-link' is called."
 ;; Config: which browser + where to read history from
 ;; -------------------------------------------------------------------
 
-(defcustom lgm/browser-history-backend 'dia
+(defcustom lgm/browser-history-backend 'chrome
   "Which browser history backend to use.
-Supported values: `arc', `dia', or a custom plist."
+Supported values: `arc', `chrome', or a custom plist."
   :type '(choice (const :tag "Arc" arc)
-                 (const :tag "Dia" dia)
+                 (const :tag "Google Chrome" chrome)
                  (sexp  :tag "Custom plist"))
   :group 'lgm/browser-history)
 
@@ -2568,40 +2583,68 @@ Supported values: `arc', `dia', or a custom plist."
   :type 'file
   :group 'lgm/browser-history)
 
-(defcustom lgm/browser-history-path-dia
-  "/Users/luis.moneda/Library/Application Support/Dia/User Data/Default/History"
-  "Path to Dia browser history SQLite database.
-
-⚠️ Check this path on your machine. In a shell:
-  ls \"~/Library/Application Support/Dia/User Data/Default/History\"
-If it exists, this default is correct; otherwise adjust accordingly."
-  :type 'file
+(defcustom lgm/browser-history-chrome-user-data-dir
+  "/Users/luis.moneda/Library/Application Support/Google/Chrome"
+  "Path to the Google Chrome user data directory."
+  :type 'directory
   :group 'lgm/browser-history)
+
+(defcustom lgm/browser-history-chrome-profile nil
+  "Chrome profile directory to use, like \"Default\" or \"Profile 1\".
+When nil, infer the active profile from Chrome's Local State file."
+  :type '(choice (const :tag "Auto-detect active profile" nil)
+                 (string :tag "Profile directory name"))
+  :group 'lgm/browser-history)
+
+(defun lgm/browser-history-chrome-local-state-path ()
+  "Return the path to Chrome's Local State file."
+  (expand-file-name "Local State" lgm/browser-history-chrome-user-data-dir))
+
+(defun lgm/browser-history-chrome-profile-dir ()
+  "Return the Chrome profile directory name to use."
+  (or lgm/browser-history-chrome-profile
+      (when-let* ((local-state (lgm/browser-history-chrome-local-state-path))
+                  ((file-exists-p local-state))
+                  (json-object-type 'alist)
+                  (json-array-type 'list)
+                  (json-key-type 'symbol)
+                  (state (json-read-file local-state))
+                  (profile (alist-get 'profile state))
+                  (last-used (alist-get 'last_used profile))
+                  (last-active (car-safe (alist-get 'last_active_profiles profile))))
+        (or last-used last-active))
+      "Default"))
+
+(defun lgm/browser-history-chrome-db ()
+  "Return the active Chrome history DB path."
+  (expand-file-name
+   (format "%s/History" (lgm/browser-history-chrome-profile-dir))
+   lgm/browser-history-chrome-user-data-dir))
 
 (defun lgm/browser-history-db ()
   "Return the active browser history DB path as a string."
   (pcase lgm/browser-history-backend
     ('arc lgm/browser-history-path-arc)
-    ('dia lgm/browser-history-path-dia)
+    ('chrome (lgm/browser-history-chrome-db))
     ;; Allow passing a plist like (:db \"/some/path/History\")
     ((and (pred listp) (app (plist-get it :db) db))
      db)
-    (_ lgm/browser-history-path-dia)))
+    (_ (lgm/browser-history-chrome-db))))
 
 (defun lgm/toggle-browser-history-backend ()
-  "Toggle `lgm/browser-history-backend' between Arc and Dia."
+  "Toggle `lgm/browser-history-backend' between Arc and Chrome."
   (interactive)
   (setq lgm/browser-history-backend
         (pcase lgm/browser-history-backend
-          ('arc 'dia)
+          ('arc 'chrome)
           (_    'arc)))
   (message "Browser history backend: %s" lgm/browser-history-backend))
 
-(defun my/arc--copy-db ()
+(defun my/browser-history--copy-db ()
   "Copy current browser history DB to /tmp and return that path.
 Respects `lgm/browser-history-backend'."
   (let* ((src (lgm/browser-history-db))
-         (tmp "/tmp/arc-history.db"))
+         (tmp "/tmp/browser-history.db"))
     (unless (and src (file-exists-p src))
       (user-error "History DB not found at %S (backend: %s)"
                   src lgm/browser-history-backend))
@@ -2609,11 +2652,11 @@ Respects `lgm/browser-history-backend'."
     (copy-file src tmp)
     tmp))
 
-(defun my/arc--chrome-to-seconds (chrome-time)
+(defun my/browser-history--chrome-to-seconds (chrome-time)
   (- (/ chrome-time 1e6) 11644473600.0))
 
-(defun my/arc--ago-string (chrome-time)
-  (let* ((tsec (my/arc--chrome-to-seconds chrome-time))
+(defun my/browser-history--ago-string (chrome-time)
+  (let* ((tsec (my/browser-history--chrome-to-seconds chrome-time))
          (delta (- (float-time) tsec)))
     (cond
      ((< delta 60) (format "%.0fs ago" delta))
@@ -2622,17 +2665,17 @@ Respects `lgm/browser-history-backend'."
      ((< delta 604800) (format "%.0fd ago" (/ delta 86400)))
      (t (format-time-string "%Y-%m-%d %H:%M" tsec)))))
 
-(defun my/arc--domain (url)
+(defun my/browser-history--domain (url)
   (when (string-match "\\`https?://\\([^/]+\\)" url)
     (match-string 1 url)))
 
-(defun my/arc--clean-title (title domain)
+(defun my/browser-history--clean-title (title domain)
   (if (and domain (string-match-p (regexp-quote domain) title))
       (string-trim (replace-regexp-in-string (regexp-quote domain) "" title))
     title))
 
-(defun my/arc--fetch-history (&optional limit)
-  (let* ((db (my/arc--copy-db))
+(defun my/browser-history--fetch-history (&optional limit)
+  (let* ((db (my/browser-history--copy-db))
          (cmd (format
                "sqlite3 -readonly -separator '\t' %S \
 \"SELECT title, last_visit_time, url FROM urls \
@@ -2644,8 +2687,8 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
              collect (let* ((title (string-trim (match-string 1 line)))
                             (time  (string-to-number (match-string 2 line)))
                             (url   (match-string 3 line))
-                            (dom   (my/arc--domain url))
-                            (title* (my/arc--clean-title title dom)))
+                            (dom   (my/browser-history--domain url))
+                            (title* (my/browser-history--clean-title title dom)))
                        (list :title (if (string-empty-p title*) url title*)
                              :url url
                              :time time
@@ -2654,48 +2697,49 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
 ;; -----------------------------------------------------------------------------
 ;; Global mapping: displayed string → entry plist
 ;; -----------------------------------------------------------------------------
-(defvar lgm/arc--cands nil
-  "Alist of (DISPLAY . ENTRY) for the current Arc history session.")
+(defvar lgm/browser-history--cands nil
+  "Alist of (DISPLAY . ENTRY) for the current browser history session.")
 
 ;; -----------------------------------------------------------------------------
 ;; Embark actions (tolerate 0/1/2 args; fall back to current vertico candidate)
 ;; -----------------------------------------------------------------------------
 
 (require 'embark)
-(defun lgm/arc--current-candidate ()
+(defun lgm/browser-history--current-candidate ()
   (when (bound-and-true-p vertico--running) (vertico--candidate)))
 
-(defun lgm/arc--url-for (disp)
-  (let ((entry (cdr (assoc disp lgm/arc--cands))))
+(defun lgm/browser-history--url-for (disp)
+  (let ((entry (cdr (assoc disp lgm/browser-history--cands))))
     (plist-get entry :url)))
 
-(defun lgm/arc-embark-open (&rest args)
+(defun lgm/browser-history-embark-open (&rest args)
   "Open URL for the current/selected candidate (Embark action)."
-  (let* ((cand (or (car args) (lgm/arc--current-candidate)))
-         (url  (and cand (lgm/arc--url-for cand))))
+  (let* ((cand (or (car args) (lgm/browser-history--current-candidate)))
+         (url  (and cand (lgm/browser-history--url-for cand))))
     (if url (browse-url url) (message "No URL for candidate"))))
 
-(defun lgm/arc-embark-copy (&rest args)
+(defun lgm/browser-history-embark-copy (&rest args)
   "Copy URL for the current/selected candidate (Embark action)."
-  (let* ((cand (or (car args) (lgm/arc--current-candidate)))
-         (url  (and cand (lgm/arc--url-for cand))))
+  (let* ((cand (or (car args) (lgm/browser-history--current-candidate)))
+         (url  (and cand (lgm/browser-history--url-for cand))))
     (if url (progn (kill-new url) (message "Copied: %s" url))
       (message "No URL for candidate"))))
 
-(defvar lgm/arc-history-embark-map
+(defvar lgm/browser-history-embark-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "o") #'lgm/arc-embark-open)
-    (define-key map (kbd "b") #'lgm/arc-embark-copy)
+    (define-key map (kbd "o") #'lgm/browser-history-embark-open)
+    (define-key map (kbd "b") #'lgm/browser-history-embark-copy)
     map)
-  "Embark keymap for Arc history candidates.")
+  "Embark keymap for browser history candidates.")
 
-(add-to-list 'embark-keymap-alist '(arc-history . lgm/arc-history-embark-map))
+(add-to-list 'embark-keymap-alist
+             '(browser-history . lgm/browser-history-embark-map))
 
 ;; -----------------------------------------------------------------------------
 ;; C-o opens current candidate (bound in Vertico map)
 ;; -----------------------------------------------------------------------------
 ;; Alternative: Use vertico's built-in candidate getter
-(defun lgm/arc-open-current ()
+(defun lgm/browser-history-open-current ()
   "Open the currently selected candidate (alternative implementation)."
   (interactive)
   (when-let* ((cand (and (minibufferp)
@@ -2704,17 +2748,17 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
                          (>= vertico--index 0)
                          (< vertico--index (length vertico--candidates))
                          (nth vertico--index vertico--candidates))))
-    (lgm/arc-embark-open cand)))
+    (lgm/browser-history-embark-open cand)))
 
 (with-eval-after-load 'vertico
-  (define-key vertico-map (kbd "C-o") #'lgm/arc-open-current))
+  (define-key vertico-map (kbd "C-o") #'lgm/browser-history-open-current))
 
 ;; -----------------------------------------------------------------------------
 ;; Main command
 ;; -----------------------------------------------------------------------------
 (require 'all-the-icons)
 
-(defun lgm/arc--domain-icon (domain)
+(defun lgm/browser-history--domain-icon (domain)
   "Return an icon for DOMAIN using all-the-icons."
   (if (not domain)
       (all-the-icons-faicon "globe" :height 0.9 :v-adjust 0.0)
@@ -2781,10 +2825,10 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
      (t (all-the-icons-faicon "globe" :height 0.9 :v-adjust 0.0)))))
 
 ;; Updated main function with icons
-(defun lgm/consult-arc-history-insert-link ()
-  "Pick from Arc history with icons; RET inserts; C-o opens; Embark works."
+(defun lgm/consult-browser-history-insert-link ()
+  "Pick from browser history with icons; RET inserts; C-o opens; Embark works."
   (interactive)
-  (let* ((entries (my/arc--fetch-history))
+  (let* ((entries (my/browser-history--fetch-history))
          ;; Adjust title width to account for icon + space
          (title-width 63)  ; reduced by 2 for icon
          (domain-width 28)
@@ -2794,7 +2838,7 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
            (lambda (e)
              (let* ((raw (plist-get e :title))
                     (dom (plist-get e :domain))
-                    (icon (lgm/arc--domain-icon dom))
+                    (icon (lgm/browser-history--domain-icon dom))
                     ;; Truncate if needed
                     (truncated (if (> (string-width raw) title-width)
                                    (concat (truncate-string-to-width raw (- title-width 3) nil nil) "...")
@@ -2809,7 +2853,7 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
          (annot
           (lambda (disp)
             (when-let* ((e   (cdr (assoc disp cands)))
-                        (ago (my/arc--ago-string (plist-get e :time)))
+                        (ago (my/browser-history--ago-string (plist-get e :time)))
                         (dom (plist-get e :domain)))
               (let ((dom-padded (concat (or dom "")
                                        (make-string (max 0 (- domain-width (string-width (or dom "")))) ?\s)))
@@ -2822,7 +2866,7 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
                   (format "  %s %s"
                           (propertize dom-padded 'face 'font-lock-comment-face)
                           (propertize ago-padded 'face 'marginalia-date))))))))
-    (setq lgm/arc--cands cands)
+    (setq lgm/browser-history--cands cands)
     (let* ((choices (mapcar #'car cands))
            (selection
             (if (and (require 'consult nil t)
@@ -2830,7 +2874,7 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
                 (consult--read choices
                                :prompt   "Browser History: "
                                :annotate annot
-                               :category 'arc-history
+                               :category 'browser-history
                                :sort     nil)
               (let ((completion-extra-properties
                      `(:annotation-function ,annot)))
@@ -2841,7 +2885,10 @@ ORDER BY last_visit_time DESC LIMIT %d;\""
       (insert (format "[[%s][%s]]" url desc))
       (message "Inserted link: %s" url))))
 
-(global-set-key (kbd "C-c w") (quote lgm/consult-arc-history-insert-link))
+(defalias 'lgm/consult-arc-history-insert-link
+  #'lgm/consult-browser-history-insert-link)
+
+(global-set-key (kbd "C-c w") #'lgm/consult-browser-history-insert-link)
 
 ;; eglot in org src
 ;; this is a bad solution
