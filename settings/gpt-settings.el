@@ -146,7 +146,8 @@ display the output in a new temporary buffer."
 ;; ChatGPT Shell
 (use-package chatgpt-shell
   ;; :quelpa ((chatgpt-shell :fetcher git :url "https://github.com/xenodium/chatgpt-shell") :upgrade t)
-  :ensure t
+  :ensure nil
+  :straight t
   :init
   ;; (setq chatgpt-repo-path (expand-file-name "chatgpt-shell/" quelpa-build-dir))
   (setq chatgpt-shell-openai-key (getenv "OPENAI_API_KEY"))

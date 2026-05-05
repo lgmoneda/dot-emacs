@@ -219,6 +219,11 @@ want to use in the modeline *in lieu of* the original.")
 (use-package poet-theme
   :ensure t)
 
+(defun lgm/set-face-attribute-if-defined (face frame &rest args)
+  "Set FACE attributes when FACE exists."
+  (when (facep face)
+    (apply #'set-face-attribute face frame args)))
+
 (defun lgm/set-rebecca-theme ()
   "Set the rebecca theme"
   (interactive)
@@ -254,10 +259,10 @@ want to use in the modeline *in lieu of* the original.")
   (interactive)
   (load-theme 'poet)
   (global-hl-line-mode 0)
-  (set-face-attribute 'org-hide nil :inherit 'unspecified :foreground "#e1d9c2" :background "#e1d9c2")
-  (set-face-attribute 'org-indent nil :foreground "#e1d9c2" :background "#e1d9c2")
-  (set-face-attribute 'org-link nil :foreground "cornflowerblue" :underline nil)
-  (set-face-attribute 'org-agenda-date-today nil :box nil :background "#e1d9c2" :foreground "darkgreen" :underline nil :weight 'extra-bold)
+  (lgm/set-face-attribute-if-defined 'org-hide nil :inherit 'unspecified :foreground "#e1d9c2" :background "#e1d9c2")
+  (lgm/set-face-attribute-if-defined 'org-indent nil :foreground "#e1d9c2" :background "#e1d9c2")
+  (lgm/set-face-attribute-if-defined 'org-link nil :foreground "cornflowerblue" :underline nil)
+  (lgm/set-face-attribute-if-defined 'org-agenda-date-today nil :box nil :background "#e1d9c2" :foreground "darkgreen" :underline nil :weight 'extra-bold)
   )
 
 ;; Mindre's original main-bg color is F5F5F5
@@ -268,10 +273,10 @@ want to use in the modeline *in lieu of* the original.")
   (load-theme 'mindre)
   (global-hl-line-mode 0)
   ;; (setq beacon-color "#000000")
-  (set-face-attribute 'org-hide nil :inherit 'unspecified :foreground "#f8f4ed" :background "#f8f4ed")
-  (set-face-attribute 'org-indent nil :foreground "#f8f4ed" :background "#f8f4ed")
-  (set-face-attribute 'org-link nil :foreground "cornflowerblue" :underline nil)
-  (set-face-attribute 'org-agenda-clocking nil :inherit 'unspecified)
+  (lgm/set-face-attribute-if-defined 'org-hide nil :inherit 'unspecified :foreground "#f8f4ed" :background "#f8f4ed")
+  (lgm/set-face-attribute-if-defined 'org-indent nil :foreground "#f8f4ed" :background "#f8f4ed")
+  (lgm/set-face-attribute-if-defined 'org-link nil :foreground "cornflowerblue" :underline nil)
+  (lgm/set-face-attribute-if-defined 'org-agenda-clocking nil :inherit 'unspecified)
   (setq org-todo-keyword-faces
 		'(
 		  ("TODO" . (:inherit (mindre-keyword mindre-strong) :weight medium))

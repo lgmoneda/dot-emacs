@@ -136,7 +136,8 @@
 
 ;; Enable rich annotations using the Marginalia package
 (use-package marginalia
-  :ensure t
+  :ensure nil
+  :straight t
   ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
   ;; available in the *Completions* buffer, add it to the
   ;; `completion-list-mode-map'.
@@ -149,7 +150,7 @@
   ;; Marginalia must be activated in the :init section of use-package such that
   ;; the mode gets enabled right away. Note that this forces loading the
   ;; package.
-  (marginalia-mode))
+  (marginalia-mode 1))
 
 (use-package embark
   :ensure t

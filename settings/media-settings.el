@@ -13,7 +13,8 @@
 ;;   (smudge-player-use-transient-map t))
 
 (use-package smudge
-  :ensure t
+  :ensure nil
+  :load-path "/Users/luis.moneda/repos/smudge"
   :commands (smudge-command-map)
   :config
   (setq smudge-transport 'connect)
