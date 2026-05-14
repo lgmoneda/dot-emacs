@@ -1,6 +1,7 @@
 ;;; tramp-settings.el --- Settings for tramp
 
 (use-package tramp
+  :straight nil
   :init
   (setq tramp-default-method "ssh"
         tramp-backup-directory-alist backup-directory-alist

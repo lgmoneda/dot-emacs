@@ -1,8 +1,9 @@
-;;; editor-settings.el --- Settings for editing utilities
+;;; editor-settings.el --- Settings for editing utilities  -*- lexical-binding: t; -*-
 
 ;; Save place
 ;; Start from the last place you were in a file the next time you visit it
 (use-package saveplace
+  :straight nil
   :defer 3
   :init
   ;; Always resolve symlinks (avoids duplicate entries)
@@ -44,19 +45,19 @@
 
 ;; Better shell buffer behavior
 (use-package shell-pop
- :ensure t
+ :straight t
  :init (defalias 'sp 'shell-pop))
 
 ;; A package to jump to the last modification
 (use-package goto-chg
-  :ensure t)
+  :straight t)
 
 ;; Jump to last change
 (global-set-key (kbd "M-[") 'goto-last-change)
 (global-set-key (kbd "M-]") 'goto-last-change-reverse)
 
 (use-package smartparens
-  :ensure t
+  :straight t
   :init
   (with-eval-after-load 'smartparens
   (sp-local-pair 'org-mode "'" "'" :actions '(rem)))
@@ -65,13 +66,13 @@
 
 ;; Writeroom, a focus mode!
 (use-package writeroom-mode
- :ensure t
+ :straight t
  :init (setq buffer-face-mode-face '(:family "dejavu sans mono" :height 150))
  (setq writeroom-width 92))
 
 ;; Expand-region
 (use-package expand-region
-	     :ensure t)
+	     :straight t)
 
 ;; When files have the same name, it informs enough part of their path
 (require 'uniquify)
@@ -81,7 +82,7 @@
 ;; we are saying we want it to continue doing its work for us,
 ;; but we no longer want to be reminded of it.
 (use-package diminish
-    :ensure t
+    :straight t
     :config
   (eval-after-load "hideshow" '(diminish 'hs-minor-mode))
   (eval-after-load "undo-tree" '(diminish 'undo-tree-mode))
@@ -90,20 +91,24 @@
 
 ;; Anzu shows total matchs for searchs
 (use-package anzu
-	     :ensure t
+	     :straight t
 	     :config (global-anzu-mode))
 
 ;; Multiple cursors
 ;; First mark the word, then add more cursors
 ;; If you want to insert a new line in multiple cursors mode, use C-j
 (use-package multiple-cursors
-  :ensure t
+  :straight t
   :bind
   (("C->" . mc/mark-next-like-this)
    ("C-<" . mc/mark-previous-like-this)
    ("C-c C->" . mc/mark-all-like-this)
    ("C-x , m" . mc/edit-lines)
-   ("C-x , n" . mc/edit-ends-of-lines)))
+   ("C-x , n" . mc/edit-ends-of-lines))
+  :config
+  (setq mc/cmds-to-run-once
+        (delete 'org-self-insert-command mc/cmds-to-run-once))
+  (add-to-list 'mc/cmds-to-run-for-all 'org-self-insert-command))
 
 ;; Some initial confis
 ;; UTF-8 please
@@ -252,11 +257,11 @@
 
 ;; Smartparens dependency
 (use-package dash
-  :ensure t)
+  :straight t)
 
 ;; Pair parenthesis
 (use-package smartparens
-  :ensure t
+  :straight t
   :init (smartparens-global-mode)
   (sp-pair "'" nil :actions :rem)
   (sp-pair "`" nil :actions :rem)
@@ -297,7 +302,7 @@
 
 ;; avy
 (use-package avy
-  :ensure t)
+  :straight t)
 
 (global-set-key (kbd "C-:") 'avy-goto-char-timer)
 (global-set-key (kbd "M-z") 'avy-goto-char)
@@ -306,7 +311,7 @@
 
 ;; To be able to easily rescale the text on the fly
 (use-package default-text-scale
-	     :ensure t)
+	     :straight t)
 
 (global-set-key (kbd "C-M-=") 'default-text-scale-increase)
 (global-set-key (kbd "C-M--") 'default-text-scale-decrease)
@@ -318,7 +323,7 @@
 
 ;; Use super-save
 (use-package super-save
-  :ensure t
+  :straight t
   :config
   (super-save-mode +1))
 ;; Save when emacs is idle
@@ -365,7 +370,7 @@
 
 ;; Disable mouse
 (use-package disable-mouse
-  :ensure t
+  :straight t
   :init (global-disable-mouse-mode))
 
 ;; Saves clipboard to the kill ring in case

@@ -1,8 +1,8 @@
-;;; programming-settings.el --- Settings for the programming in general
+;;; programming-settings.el --- Settings for the programming in general  -*- lexical-binding: t; -*-
 
 ;; Enable eldoc in your programming modes
 (use-package eldoc
-  :ensure t
+  :straight t
   :diminish
   :commands eldoc-mode
   :init
@@ -19,10 +19,11 @@
 ;; Test http rest webservices inside emacs
 ;; https://github.com/pashky/restclient.el
 (use-package restclient
-  :ensure t)
+  :straight t)
 
 ;; From https://github.com/Automattic/harper/discussions/150
 (use-package eglot
+  :straight nil
   :defer
   :hook
   (python-mode . eglot-ensure)
@@ -60,7 +61,7 @@
 ;; Corfu — popup completion in buffer
 ;; corfu-insert-separator is M-SPC, use it to filter candidates
 (use-package corfu
-  :ensure t
+  :straight t
   :init
   (setq corfu-auto t
         corfu-auto-delay 0.5
@@ -121,6 +122,7 @@
 (setq orderless-smart-case nil)
 
 (use-package cape
+  :straight t
   :demand t
   :init
   ;; Add `completion-at-point-functions', used by `completion-at-point'.
@@ -143,7 +145,6 @@
 
 ;; treesit
 (use-package treesit
-  :ensure nil
   :mode (("\\.tsx\\'" . tsx-ts-mode))
   :init
   (add-to-list 'treesit-extra-load-path (expand-file-name "~/.emacs.d/tree-sitter/"))
@@ -175,37 +176,21 @@
       (unless (treesit-language-available-p (car grammar))
         (treesit-install-language-grammar (car grammar)))))
 
-  ;; You can remap major modes with `major-mode-remap-alist'. Note
-  ;; that this does *not* extend to hooks! Make sure you migrate them
-  ;; also
+  ;; Explicit remaps only. We keep Tree-sitter enabled for these modes
+  ;; without the global auto-detection layer.
   (dolist (mapping
            '((python-mode . python-ts-mode)
-             (css-mode . css-ts-mode)
-             (typescript-mode . typescript-ts-mode)
-             (js2-mode . js-ts-mode)
-             (bash-mode . bash-ts-mode)
-			 (elisp-mode . elisp-ts-mode)
-             (conf-toml-mode . toml-ts-mode)
-             (go-mode . go-ts-mode)
-             (css-mode . css-ts-mode)
-             (json-mode . json-ts-mode)
-             (js-json-mode . json-ts-mode)))
+             (elisp-mode . elisp-ts-mode)))
     (add-to-list 'major-mode-remap-alist mapping))
-  :config
-  (mp-setup-install-grammars)
-  )
 
-(use-package treesit-auto
-  :ensure t
-  :after treesit
-  :custom
-  (treesit-auto-install t)
   :config
-  (global-treesit-auto-mode))
+  ;; Keep `mp-setup-install-grammars' available as a manual command, but do
+  ;; not run the grammar probe/install loop on every startup.
+  )
 
 ;; Try later
 ;; (use-package dap-mode
-;;   :ensure t)
+;;   :straight t)
 ;; (dap-mode 1)
 ;; ;; The modes below are optional
 ;; (dap-ui-mode 1)

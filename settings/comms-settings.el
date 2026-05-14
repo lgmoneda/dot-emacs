@@ -1,5 +1,5 @@
 ;;; comms-settings.el --- Settings for communication software
 (use-package wasabi
-  :vc (:url "https://github.com/xenodium/wasabi" :branch "main"))
+  :straight (:type git :host github :repo "xenodium/wasabi" :branch "main"))
 
 (provide 'comms-settings)

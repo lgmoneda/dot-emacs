@@ -1,7 +1,7 @@
-;;; git-settings.el --- Settings for git utilities
+;;; git-settings.el --- Settings for git utilities  -*- lexical-binding: t; -*-
 
 (use-package with-editor
-  :ensure t)
+  :straight t)
 
 ;; Auto revert buffers when change branches
 (global-auto-revert-mode 1)
@@ -9,12 +9,13 @@
 
 ;; Magit
 (use-package magit
+  :straight t
   :commands (magit-status magit-file-dispatch)
   :bind (("C-x g" . magit-status)))
 
 ;; Show differences between local and repo
 (use-package diff-hl
-  :ensure t
+  :straight t
   :init
   (setq diff-hl-side 'left)
   :config

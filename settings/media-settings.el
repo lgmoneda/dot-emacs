@@ -1,4 +1,4 @@
-;;; media-settings.el --- Settings for media (audio, video)
+;;; media-settings.el --- Settings for media (audio, video) -*- lexical-binding: t; -*-
 
 ;; Keeps the token for an emacs session
 (setq plstore-cache-passphrase-for-symmetric-encryption t)
@@ -12,27 +12,27 @@
 ;;   (smudge-oauth2-client-secret (getenv "SMUDGE_CLIENT_SECRET"))
 ;;   (smudge-player-use-transient-map t))
 
+(use-package oauth2
+  :straight (:type git :host github :repo "emacsmirror/oauth2"))
+
 (use-package smudge
-  :ensure nil
-  :load-path "/Users/luis.moneda/repos/smudge"
+  :straight (:type git :host github :repo "danielfm/smudge")
+  :after oauth2
   :commands (smudge-command-map)
+  :bind-keymap
+  ("C-c ." . smudge-command-map)
   :config
   (setq smudge-transport 'connect)
-  ;; (define-key smudge-command-map (kbd "l") #'lgm/smudge-lyrics-popup)
-  :bind-keymap ("C-c ." . smudge-command-map)
   :custom
   (smudge-oauth2-client-id (getenv "SMUDGE_CLIENT_ID"))
   (smudge-oauth2-client-secret (getenv "SMUDGE_CLIENT_SECRET"))
   (smudge-player-use-transient-map t))
 
 (use-package emms
-  :ensure t
+  :straight (:type git :host github :repo "emacsmirror/emms")
   :config
   (emms-all)
   (emms-default-players))
-
-(use-package org-emms
-  :ensure t)
 
 ;; To record voice or when I want to play something quickly and remind it.
 (defun my/list-sounddevice-audio-devices ()
@@ -129,6 +129,33 @@ for i, d in enumerate(sd.query_devices()):
               (kill-new org-link)
               (message "Org link copied to clipboard: %s" org-link))
           (message "Recording failed or duration not found. Check the *Audio Note Recording* buffer."))))))
+
+(defcustom lgm/start-nuvoice-on-startup nil
+  "Start nu-voice automatically after Emacs finishes startup."
+  :type 'boolean
+  :group 'media)
+
+(defun start-nuvoice (&optional show-buffer)
+  (interactive "P")
+  (let ((display-buffer-alist
+         (if show-buffer
+             display-buffer-alist
+           (cons '("\\*voice-transcription\\*" (display-buffer-no-window))
+                 display-buffer-alist))))
+    (async-shell-command
+     "zsh -lc 'cd /Users/luis.moneda/repos/nu-voice && ./run.sh'"
+     "*voice-transcription*")))
+
+(defun stop-nuvoice ()
+  (interactive)
+  (if-let* ((proc (get-buffer-process "*voice-transcription*")))
+      (progn
+        (kill-process proc)
+        (message "nu-voice stopped."))
+    (message "nu-voice is not running.")))
+
+(when lgm/start-nuvoice-on-startup
+  (add-hook 'emacs-startup-hook #'start-nuvoice))
 
 (provide 'media-settings)
 ;;; media-settings.el ends here

@@ -5,8 +5,9 @@
 
 ;;; Code:
 
-(add-to-list 'load-path "~/.emacs.d/elpa/mcp-server-lib-20250828.1124/")
-(require 'mcp-server-lib)
+(use-package mcp-server-lib
+  :straight t
+  :demand t)
 (require 'json)
 (setq mcp-server-lib-log-io t)
 

@@ -1,8 +1,8 @@
-;;; elisp-settings.el --- Settings for the programming language Python
+;;; elisp-settings.el --- Settings for the programming language Python  -*- lexical-binding: t; -*-
 
 ;; Rainbow delimiters in Elisp mode
 (use-package rainbow-delimiters
-  :ensure t
+  :straight t
   :config (add-hook 'emacs-lisp-mode-hook 'rainbow-delimiters-mode))
 
 (provide 'elisp-settings)

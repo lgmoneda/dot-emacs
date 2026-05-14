@@ -1,6 +1,12 @@
+;; -*- lexical-binding: t; -*-
 (require 'org)
-(require 'org-super-agenda)
 (require 'org-agenda)
+
+(use-package org-super-agenda
+  :straight t
+  )
+
+(require 'org-super-agenda)
 
 ;; New states to to-do
 (setq org-todo-keywords
@@ -483,7 +489,5 @@ should be continued."
          ((org-agenda-compact-blocks nil))))
 
 ;; Use when iterating to make it faster
-(benchmark-run (org-agenda nil "d"))
-
 (provide 'org-custom-agenda-opt-settings)
 ;;; org-custom-agenda-opt-settings.el ends here

@@ -1,4 +1,4 @@
-;;; org-settings.el --- Settings for org utilities
+;;; org-settings.el --- Settings for org utilities  -*- lexical-binding: t; -*-
 
 ;Sunday, August 20, 2017
 ;============================
@@ -188,23 +188,29 @@ menu\nmouse-2 will jump to task"))
 
 ;; org-async to execute code blocks async
 (use-package ob-async
-  :ensure t
+  :straight t
   :config
   (require 'ob-async)
   (setq ob-async-no-async-languages-alist '("jupyter-python" "jupyter"))
   )
 
 (use-package simple-httpd
-  :ensure t)
+  :straight (:type git :host github :repo "emacsmirror/simple-httpd"))
 
 ;; (use-package jupyter
-;;   :ensure t
+;;   :straight t
 ;;   :config
 ;;   (pyvenv-mode t))
 
+(defconst lgm/org-jupyter-command
+  (expand-file-name "~/miniconda3/envs/edge/bin/jupyter"))
+
 (use-package jupyter
-  :ensure t
+  :straight t
   :after org
+  :init
+  (when (file-executable-p lgm/org-jupyter-command)
+    (setq jupyter-executable lgm/org-jupyter-command))
   :config
   (require 'ob-jupyter)
 
@@ -215,7 +221,7 @@ menu\nmouse-2 will jump to task"))
      org-babel-load-languages)))
 
 ;; (use-package pyvenv
-;;   :ensure t
+;;   :straight t
 ;;   :config
 ;;   (pyvenv-mode t))
 
@@ -227,6 +233,13 @@ menu\nmouse-2 will jump to task"))
       (apply func args)
     (jupyter-api-http-error nil)))
 (advice-add 'jupyter-api-request-xsrf-cookie :around #'gm/jupyter-api-request-xsrf-cookie-error-advice)
+
+;; So I can make diagrams inside emacs and generate them directly there.
+(use-package ob-mermaid
+  :straight t
+  :init
+  ;; Set this early (before any execution)
+  (setq ob-mermaid-cli-path "/opt/homebrew/bin/mmdc"))
 
 ;; Org-babel
 (org-babel-do-load-languages
@@ -345,7 +358,7 @@ This should only apply to jupyter-lang blocks."
 ;;              'imagemagick)
 
 (use-package virtualenvwrapper
-  :ensure t)
+  :straight t)
 
 (setq python-shell-interpreter "python3")
 (venv-initialize-interactive-shells) ;; if you want interactive shell support
@@ -610,18 +623,19 @@ Whenever a journal entry is created the
 
 (defun journal-check-when-quit ()
   (interactive)
-  (if (file-exists-p journal-file)
-      ;; Check if there was a log written today. If this is not the case, then check if it's already tonight except the night.
-      (if (and (string< (journal-get-modification-date) (format-time-string "%Y-%m-%d")) (or (string< (format-time-string "%k") " 6") (string< "20" (format-time-string "%k"))))
-          ;; Invoke Memento if the user wants to proceed.
-          (if (yes-or-no-p "Do you want to write your Journal?")
-              (progn (call-interactively 'lgm/org-journal-new-today-entry)
-		     (keyboard-quit)
-		     )
-	      ))
-    ;; If the Memento file doesn't exist yet, create a file and proceed with creating a log.
-    (write-region "" nil journal-file)
-    (progn (call-interactively 'lgm/org-journal-new-today-entry))))
+  (unless noninteractive
+    (if (file-exists-p journal-file)
+        ;; Check if there was a log written today. If this is not the case, then check if it's already tonight except the night.
+        (if (and (string< (journal-get-modification-date) (format-time-string "%Y-%m-%d")) (or (string< (format-time-string "%k") " 6") (string< "20" (format-time-string "%k"))))
+            ;; Invoke Memento if the user wants to proceed.
+            (if (yes-or-no-p "Do you want to write your Journal?")
+                (progn (call-interactively 'lgm/org-journal-new-today-entry)
+                       (keyboard-quit)
+                       )
+              ))
+      ;; If the Memento file doesn't exist yet, create a file and proceed with creating a log.
+      (write-region "" nil journal-file)
+      (progn (call-interactively 'lgm/org-journal-new-today-entry)))))
 
 (add-to-list 'kill-emacs-hook 'journal-check-when-quit)
 
@@ -648,7 +662,7 @@ this command to copy it"
             (toggle-truncate-lines 1)))
 
 ;; (use-package org-gcal
-;;   :ensure t
+;;   :straight t
 ;;   :init
 ;;   (setq org-gcal-notify-p nil)
 ;;   )
@@ -969,8 +983,6 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
 ;; The org mode file is opened with
 ;; Make org agenda open in the right
 (setq org-agenda-window-setup 'other-window)
-(find-file "~/Dropbox/Agenda/todo.org")
-(switch-to-buffer "todo.org")
 (add-to-list 'org-agenda-files  "~/Dropbox/Agenda/todo.org")
 
 ;; Open agenda
@@ -980,8 +992,16 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
 ;; Work agenda
 ;; (global-set-key (kbd "<f7>") (lambda() (interactive)(org-agenda nil "nu")(org-agenda-redo)))
 (global-set-key (kbd "<f7>") (lambda() (interactive)(org-agenda nil "nu")))
-;; Initialize with agenda view
-(add-hook 'after-init-hook (lambda () (org-agenda nil "d") (org-agenda-redo)))
+(defcustom lgm/open-org-agenda-on-startup t
+  "Open the main Org agenda automatically after Emacs startup."
+  :type 'boolean
+  :group 'lgm)
+
+(when lgm/open-org-agenda-on-startup
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (org-agenda nil "d")
+              (org-agenda-redo))))
 ;; Open day
 (setq org-agenda-span 'day)
 (global-set-key (kbd "C-c <f10>") (lambda() (interactive)(org-agenda 0 "a")))
@@ -1023,17 +1043,15 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
   )
 
 (use-package deadgrep
-  :ensure t
+  :straight t
   :bind
   ("C-c n d" . deadgrep)
     )
 
-
-(add-to-list 'load-path "~/.emacs.d/elpa/org-roam-20260101.2118/")
-(require 'org-roam)
 (setq org-roam-v2-ack t)
 
 (use-package org-roam
+  :straight t
   :init
   (setq org-roam-completion-everywhere t)
   (setq completion-ignore-case t)
@@ -1100,7 +1118,7 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
 ;; (add-to-list 'load-path "~/.emacs.d/elpa/org-roam-ui-20221105.1040/")
 ;; (require 'org-roam-ui)
 (use-package org-roam-ui
-  :ensure t
+  :straight t
   :after org-roam
 ;;         normally we'd recommend hooking orui after org-roam, but since org-roam does not have
 ;;         a hookable mode anymore, you're advised to pick something yourself
@@ -1199,7 +1217,7 @@ With prefix ARG, prompt for destination filename."
 ;; Olivetti
 ;; Look & Feel for long-form writing
 (use-package olivetti
-  :ensure t
+  :straight t
   :config
   (setq-default olivetti-body-width 140))
 
@@ -1220,7 +1238,7 @@ With prefix ARG, prompt for destination filename."
 
 ;; org-roam-bib
 ;; (use-package org-roam-bibtex
-;;   :ensure t
+;;   :straight t
 ;;   :after org-roam
 ;;   :config
 ;;   (setq orb-preformat-keywords
@@ -1247,7 +1265,7 @@ With prefix ARG, prompt for destination filename."
   (define-key org-mode-map (kbd "C-c r") #'org-cite-insert))
 
 (use-package org-ql
-  :ensure t)
+  :straight t)
 
 ;; Refile settings
 ;; from https://blog.aaronbieber.com/2017/03/19/organizing-notes-with-refile.html
@@ -1324,7 +1342,7 @@ With prefix ARG, prompt for destination filename."
 
 ;; Take notes in text files with a highlight mark
 ;; (use-package org-remark
-;;   :ensure t
+;;   :straight t
 ;;   :init (org-remark-global-tracking-mode +1)
 ;;   )
 ;; (add-to-list 'load-path "~/repos/org-remark")
@@ -1412,7 +1430,7 @@ With prefix ARG, prompt for destination filename."
 (add-hook 'org-after-refile-insert-hook #'lgm/inherit-parent-priority-if-no-explicit)
 
 (use-package org-download
-  :ensure t
+  :straight t
   :after org
   :hook (org-mode . org-download-enable)
   :init
@@ -1849,7 +1867,7 @@ display the output in a new temporary buffer."
 (use-package org-mind-map
   :init
   (require 'ox-org)
-  :ensure t
+  :straight t
   ;; Uncomment the below if 'ensure-system-packages` is installed
   ;;:ensure-system-package (gvgen . graphviz)
   :config
@@ -1879,13 +1897,10 @@ display the output in a new temporary buffer."
 
 ;;org-transclude
 ;; Great to create new documents with different references to share with people
-(add-to-list 'load-path "~/.emacs.d/elpa/org-transclusion/")
-(require `org-transclusion)
-(add-to-list 'org-transclusion-extensions 'org-transclusion-indent-mode)
-;; (use-package org-transclusion
-;;   :ensure t
-;;   :config
-;;   (add-to-list 'org-transclusion-extensions 'org-transclusion-indent-mode))
+(use-package org-transclusion
+  :straight t
+  :config
+  (add-to-list 'org-transclusion-extensions 'org-transclusion-indent-mode))
 
 (with-eval-after-load 'org
   (require `org-transclusion-font-lock)
@@ -1900,7 +1915,7 @@ display the output in a new temporary buffer."
 (add-to-list 'image-file-name-extensions "eps")
 
 (use-package org-tree-slide
-  :ensure t
+  :straight t
   :init
   ;; To start the presentation from the header the cursor is in
   (setq org-tree-slide-cursor-init nil)
@@ -1943,12 +1958,8 @@ display the output in a new temporary buffer."
 
 ;; org-present
 ;; Inspired by https://systemcrafters.net/emacs-tips/presentations-with-org-present/
-;; Install org-present if needed
-(unless (package-installed-p 'org-present)
-  (package-install 'org-present))
-
 (use-package org-present
-  :ensure t
+  :straight t
   )
 
 (defun my/org-present-prepare-slide (buffer-name heading)
@@ -2133,7 +2144,7 @@ Prompts for the output filename, defaulting to the original Org file's name."
 ;; (org-id-update-id-locations (directory-files-recursively "~/Dropbox/Agenda/roam/" "\\.org$"))
 
 (use-package citar-org-roam
-  :ensure t
+  :straight t
   :after citar
   ;; Optional: define what happens when a note doesn’t exist yet
   :init
@@ -2237,13 +2248,6 @@ Prompts for the output filename, defaulting to the original Org file's name."
 ;; I want to have italic text in org mode quote blocks
 (setq org-fontify-quote-and-verse-blocks t)
 
-;; So I can make diagrams inside emacs and generate them directly there.
-(use-package ob-mermaid
-  :ensure t
-  :init
-  ;; Set this early (before any execution)
-  (setq ob-mermaid-cli-path "/opt/homebrew/bin/mmdc"))
-
 ;; npm install -g @mermaid-js/mermaid-cli
 ;;
 (setq ob-mermaid-cli-path "/opt/homebrew/bin/mmdc") ;; Apple Silicon
@@ -2283,7 +2287,7 @@ Prompts for the output filename, defaulting to the original Org file's name."
 
 ;; Before using it I need to solve some org display images I do when saving a buffer
 ;; (use-package org-sliced-images
-;;   :ensure t
+;;   :straight t
 ;;   :config
 ;;   (org-sliced-images-mode 1))
 

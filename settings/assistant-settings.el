@@ -1,5 +1,10 @@
 ;;; assistant-settings.el --- Functions for my AI assistant
 
+(defcustom lgm/start-catalyst-server-on-startup nil
+  "Start the Catalyst assistant Python server automatically after Emacs startup."
+  :type 'boolean
+  :group 'lgm)
+
 (add-to-list 'load-path "~/repos/catalyst-assistant/context/")
 (require 'org-todo-diff)
 (require 'org-agenda-export-file)
@@ -40,7 +45,8 @@
   (async-shell-command "source ~/.zshrc && conda activate edge && python /Users/luis.moneda/repos/catalyst-assistant/src/main.py")
   (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<5>"))))
 
-(start-catalyst-server)
+(when lgm/start-catalyst-server-on-startup
+  (add-hook 'emacs-startup-hook #'start-catalyst-server))
 
 (provide 'assistant-settings)
 ;;; assistant-settings.el ends here

@@ -9,7 +9,7 @@
 ;; (cond ( (string-equal system-type "darwin")
 ;;     (progn (setq sbt:program-name "/usr/local/bin/sbt")
 ;; 	   (use-package ensime
-;;       :ensure t
+;;       :straight t
 ;;       :init
 ;;     (add-hook 'scala-mode-hook 'ensime-mode-hook)
 ;;       (setq
@@ -24,7 +24,7 @@
 ;;       ((string-equal system-type "gnu/linux")
 ;; 	(setq sbt:program-name "/usr/bin/sbt")
 ;; 	(use-package ensime
-;; 	  :ensure t
+;; 	  :straight t
 ;; 	  :init
 ;; 	(add-hook 'scala-mode-hook 'ensime-mode-hook)
 ;; 	  (setq

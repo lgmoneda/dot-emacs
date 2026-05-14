@@ -22,26 +22,10 @@
 ;; (org-babel-mcp-start-server)
 ;; (org-roam-mcp-start-server)
 ;; (mcp-server-lib-start)
-;; (add-to-list 'load-path "/Users/luis.moneda/repos/agent-shell")
-;; (require 'agent-shell)
 
-;; (use-package agent-shell
-;;   :load-path "/Users/luis.moneda/repos/agent-shell"
-;;   :commands (agent-shell)
-;;   :hook (agent-shell-mode . corfu-mode)
-;;   :init
-;;   (setq agent-shell-file-completion-enabled t
-;;         agent-shell-show-welcome-message nil)
-;;   :config
-;;   (setq agent-shell-anthropic-authentication
-;;         (agent-shell-anthropic-make-authentication
-;;          :api-key (getenv "ANTHROPIC_API_KEY")))
-;;   (setq agent-shell-openai-authentication
-;;         (agent-shell-openai-make-authentication :login t))
-;;   (setq agent-shell-openai-codex-environment
-;;         (agent-shell-make-environment-variables :inherit-env t)))
 (use-package agent-shell
-  :load-path "/Users/luis.moneda/repos/agent-shell"
+  :straight (:type git :host github :repo "xenodium/agent-shell")
+  ;; :load-path "/Users/luis.moneda/repos/agent-shell"
   :commands (agent-shell)
   :hook (agent-shell-mode . corfu-mode)
   :init
@@ -59,18 +43,16 @@
         (agent-shell-make-environment-variables :inherit-env t))
   )
 
-;; Custom code to enable inline images in the agent-shell
-;; (with-eval-after-load 'agent-shell
-;;   (load-file "~/.emacs.d/settings/agent-shell-inline-images.el")
-;;   (setq agent-shell-inline-image-fetch-remote t))
-
+(setq agent-shell-openai-codex-acp-command
+      '("/Users/luis.moneda/repos/codex-acp/target/debug/codex-acp"))
+(setq agent-shell-openai-default-model-id nil)
 
 (defvar my/agent-shell-codex-profile 'personal
   "Current Codex profile for agent-shell. Either 'personal or 'work.")
 
 (defun my/agent-shell--set-codex-command ()
   "Update `agent-shell-openai-codex-command` based on current profile."
-  (setq agent-shell-openai-codex-command
+  (setq agent-shell-openai-codex-acp-command
         (list "codex-acp"
               "--profile"
               (symbol-name my/agent-shell-codex-profile))))
@@ -125,7 +107,7 @@
 (define-key my/agent-shell-map (kbd "a")
 	    #'agent-shell)
 
-(define-key my/agent-shell-map (kbd "n")
+(define-key my/agent-shell-map (kbd "w")
 	    #'agent-shell-manager-set-annotation)
 
 (define-key my/agent-shell-map (kbd "d")
@@ -228,6 +210,22 @@ Handles [[id:UUID][desc]], [[target][desc]], and [[target]] forms."
 (with-eval-after-load 'agent-shell
   (define-key agent-shell-mode-map (kbd "C-c C-o") #'my/agent-shell-org-open-at-point))
 
+;; agent-shell-pet
+(add-to-list 'load-path "/Users/luis.moneda/repos/agent-shell-pet")
+
+(require 'agent-shell-pet)
+
+(setq agent-shell-pet-renderer 'macos-native
+      agent-shell-pet-speech-bubble-theme 'light
+      agent-shell-pet-size 'small)
+
+(setq agent-shell-pet-id "marcel-proust")
+
+(setq agent-shell-pet-completion-sound-enabled t)
+
+(add-hook 'agent-shell-pet-global-mode-enable-hook
+          #'agent-shell-manager-toggle-ready-status-notifications)
+
 (add-to-list 'load-path "/Users/luis.moneda/repos/agent-shell-manager")
 (with-eval-after-load 'agent-shell
   (require 'agent-shell-manager))
@@ -235,6 +233,8 @@ Handles [[id:UUID][desc]], [[target][desc]], and [[target]] forms."
 (setq agent-shell-manager-ready-status-notification-sound t)
 (setq agent-shell-context-sources nil)
 
+(setq agent-shell-manager-visible-columns
+      '(buffer status annotation mode model))
 
 ;; Management for agent shell
 ;; (use-package agent-shell-manager
@@ -282,28 +282,45 @@ Otherwise, jump to *Agent-Shell Buffers* (creating it if needed)."
     (define-key agent-shell-mode-map (kbd "C-<tab>") #'my/window-next)))
 
 ;; project.el
-(defun my/agent-shell-project-root (dir)
-  "Open or switch to agent-shell for project at DIR in another window."
+(defun my/agent-shell--project-root-for (path)
+  "Return the project root for PATH, falling back to PATH directory."
+  (let* ((expanded-path (expand-file-name path))
+         (target-directory
+          (file-name-as-directory
+           (if (file-directory-p expanded-path)
+               expanded-path
+             (file-name-directory expanded-path))))
+         (default-directory target-directory))
+    (if (fboundp 'agent-shell-cwd)
+        (file-name-as-directory (expand-file-name (agent-shell-cwd)))
+      target-directory)))
+
+(defun my/agent-shell-project-root (path)
+  "Open or switch to agent-shell for the project containing PATH."
   (interactive (list default-directory))
-  (let* ((default-directory dir)
+  (require 'agent-shell)
+  (let* ((project-root (my/agent-shell--project-root-for path))
          (existing-buffer
           (cl-find-if
            (lambda (buf)
              (with-current-buffer buf
                (and (derived-mode-p 'agent-shell-mode)
-                    (equal default-directory dir))))
+                    (equal (file-name-as-directory
+                            (expand-file-name default-directory))
+                           project-root))))
            (buffer-list))))
     (if existing-buffer
-        (pop-to-buffer existing-buffer)   ;; <- new window
-      (let ((default-directory dir))
-        (call-interactively #'agent-shell)))))
+        (pop-to-buffer existing-buffer)
+      (let ((default-directory project-root))
+        (if (fboundp 'agent-shell-new-shell)
+            (call-interactively #'agent-shell-new-shell)
+          (call-interactively #'agent-shell))))))
 
 ;; embark
-(defun my/project-agent-shell (dir)
-  "Run agent-shell in DIR (project root directory)."
+(defun my/project-agent-shell (path)
+  "Run or switch to an agent-shell for the project containing PATH."
   (interactive "D")
-  (let ((default-directory dir))
-    (call-interactively #'agent-shell)))
+  (my/agent-shell-project-root path))
 
 (with-eval-after-load 'embark
   (define-key embark-file-map (kbd "a") #'my/project-agent-shell)

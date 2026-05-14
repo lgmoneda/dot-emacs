@@ -1,12 +1,12 @@
-;;; python-settings.el --- Settings for the programming language Python
+;;; python-settings.el --- Settings for the programming language Python  -*- lexical-binding: t; -*-
 
 ;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/conda-20230620.1745/")
 ;; (load "conda")
 (use-package pythonic
-  :ensure t)
+  :straight t)
 
 (use-package conda
-  :ensure t
+  :straight t
   :init
   (setq conda-anaconda-home (expand-file-name "/Users/luis.moneda/miniconda3"))
   ;; :config
@@ -21,10 +21,35 @@
 ;; (conda-env-autoactivate-mode t)
 
 (use-package pyvenv
-  :ensure t)
+  :straight t)
 
 (setenv "WORKON_HOME" "/Users/luis.moneda/miniconda3/envs")
 (pyvenv-mode 1)
+
+(defconst lgm/python-default-venv "/Users/luis.moneda/miniconda3/envs/edge")
+(defconst lgm/python-default-executable
+  (expand-file-name "bin/python" lgm/python-default-venv))
+(defconst lgm/python-default-bin
+  (expand-file-name "bin" lgm/python-default-venv))
+(defconst lgm/python-default-jupyter
+  (expand-file-name "jupyter" lgm/python-default-bin))
+(defconst lgm/python-default-jupyter-console
+  (expand-file-name "jupyter-console" lgm/python-default-bin))
+
+(when (file-executable-p lgm/python-default-executable)
+  (setq pyvenv-virtualenvwrapper-python lgm/python-default-executable
+        python-shell-virtualenv-root lgm/python-default-venv))
+
+(defun lgm/pyvenv-activate-default ()
+  "Activate the default Python environment when its interpreter exists."
+  (if (file-executable-p lgm/python-default-executable)
+      (progn
+        (add-to-list 'exec-path lgm/python-default-bin)
+        (setenv "PATH" (concat lgm/python-default-bin path-separator
+                               (or (getenv "PATH") "")))
+        (pyvenv-activate lgm/python-default-venv))
+    (message "Skipping Python env activation; missing executable: %s"
+             lgm/python-default-executable)))
 
 (add-hook 'python-mode-hook
 	  (lambda ()
@@ -36,14 +61,14 @@
 
 ;; Column enforce
 (use-package column-enforce-mode
-	     :ensure t
+	     :straight t
 	     :config
 	     (add-hook 'python-mode-hook 'column-enforce-mode)
 	     )
 
 ;; The default pyenv I use
 ;; (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
-(pyvenv-workon "edge")
+(lgm/pyvenv-activate-default)
 
 (defun lgm/org-src-python-buffer-p ()
   "Return non-nil if this Python buffer is an Org src edit buffer."
@@ -60,14 +85,14 @@
     (column-enforce-mode 1)
     (electric-operator-mode 1)
     (py-autopep8-mode 1)
-    (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")))
+    (lgm/pyvenv-activate-default)))
 
 (add-hook 'python-mode-hook #'lgm/python-mode-setup)
 
 (defun lgm/python-ts-mode-setup ()
   ;; Only activate venv in real buffers, not Org’s temp ones
   (unless (lgm/org-src-python-buffer-p)
-    (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")))
+    (lgm/pyvenv-activate-default)))
 
 (add-hook 'python-ts-mode-hook #'lgm/python-ts-mode-setup)
 
@@ -230,7 +255,7 @@ if breakpoints are present in `python-mode' files"
 
 ;; Put white spaces between operators in Python
 (use-package electric-operator
-  :ensure t
+  :straight t
   :config (add-hook 'python-mode-hook 'electric-operator-mode))
 
 ;; Warning about imports in python
@@ -239,13 +264,13 @@ if breakpoints are present in `python-mode' files"
 ;; M-x pyimport-insert-missing
 ;; https://github.com/Wilfred/pyimport
 (use-package pyimport
-  :ensure t)
+  :straight t)
 
 (define-key python-mode-map (kbd "C-c C-i") 'pyimport-insert-missing)
 
 ;; (load "~/.emacs.d/elpa/py-autopep8-20250913.2251/py-autopep8.el")
 (use-package py-autopep8
-  :ensure t
+  :straight t
   :after python
   :init (progn
            (add-hook 'python-mode-hook 'py-autopep8-mode)
@@ -266,7 +291,7 @@ if breakpoints are present in `python-mode' files"
 (setq python-shell-completion-native-enable nil)
 
 (use-package ein
-  :ensure t
+  :straight t
   :defer t
   :commands (ein:notebooklist-open
              ein:notebook-open
@@ -274,7 +299,10 @@ if breakpoints are present in `python-mode' files"
   :init
   ;; Always talk to an external Jupyter server
   (setq ein:jupyter-server-use-subcommand "notebook"
-        ein:jupyter-default-server-command "jupyter"
+        ein:jupyter-default-server-command
+        (if (file-executable-p lgm/python-default-jupyter)
+            lgm/python-default-jupyter
+          "jupyter")
         ein:jupyter-default-notebook-directory "~/notebooks")
 
   :config
@@ -311,7 +339,10 @@ if breakpoints are present in `python-mode' files"
 (setq python-shell-interpreter-args "-i --simple-prompt")
 
 ;; Use Jupyter Console as the Python REPL
-(setq python-shell-interpreter "jupyter-console"
+(setq python-shell-interpreter
+      (if (file-executable-p lgm/python-default-jupyter-console)
+          lgm/python-default-jupyter-console
+        "jupyter-console")
       python-shell-interpreter-args "--simple-prompt --no-confirm-exit"
       python-shell-prompt-detect-failure-warning nil)
 
@@ -329,7 +360,7 @@ if breakpoints are present in `python-mode' files"
         python-indent-guess-indent-offset-verbose nil))
 
 (use-package ein
-  :ensure t
+  :straight t
   :config
   (setq ein:completion-backend 'corfu)
   :init
@@ -338,7 +369,7 @@ if breakpoints are present in `python-mode' files"
 ;;;; EIN (Emacs IPython Notebook) — vanilla Emacs 29/30 + eglot-friendly
 
 (use-package ein
-  :ensure t
+  :straight t
   :commands (ein:notebooklist-open ein:notebook-open ein:run)
   :init
   ;; Modern Jupyter often prefers the "server" subcommand.
@@ -347,7 +378,10 @@ if breakpoints are present in `python-mode' files"
 
   ;; If you use a specific python env, you can point to a jupyter executable:
   ;; (setq ein:jupyter-server-command (expand-file-name "~/.venvs/jupyter/bin/jupyter"))
-  (setq ein:jupyter-server-command "jupyter")
+  (setq ein:jupyter-server-command
+        (if (file-executable-p lgm/python-default-jupyter)
+            lgm/python-default-jupyter
+          "jupyter"))
 
   :custom
   ;; Inline images in output area (your old config)

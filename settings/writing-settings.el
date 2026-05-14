@@ -1,4 +1,4 @@
-;;; editor-settings.el --- Settings for writing
+;;; editor-settings.el --- Settings for writing  -*- lexical-binding: t; -*-
 
 ;; LaTeX!
 (setq TeX-auto-save t)
@@ -17,7 +17,7 @@
 
  ;; Built-in preview from AUCTeX
 (use-package tex
-    :ensure auctex
+    :straight auctex
     :hook ((LaTeX-mode . TeX-PDF-mode)          ; always work in PDF mode
            (LaTeX-mode . LaTeX-math-mode)
            (LaTeX-mode . LaTeX-preview-setup))  ; enable preview.el integration
@@ -33,7 +33,7 @@
 
 ;; Exclude if the above config works fine after using it a couple of times
 ;; (use-package latex-preview-pane
-;; 	     :ensure t)
+;; 	     :straight t)
 ;;(add-hook 'LaTeX-mode-hook 'latex-preview-pane-mode)
 
 ;;(add-hook 'LaTeX-mode-hook 'flymake-mode)
@@ -61,7 +61,7 @@
 
 ;; Markdown mode and preview
 (use-package markdown-mode
-  :ensure t
+  :straight t
   :commands (markdown-mode gfm-mode)
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . markdown-mode)
@@ -72,20 +72,113 @@
 
 (setq markdown-command "/opt/homebrew/bin/pandoc")
 
+(defun lmoneda/markdown-region-copy-rich-for-slack (beg end)
+  "Convert selected Markdown region to rich text and copy it for Slack paste."
+  (interactive "r")
+  (unless (use-region-p)
+    (user-error "Select a markdown region first"))
+  (unless (executable-find "pandoc")
+    (user-error "pandoc not found"))
+  (unless (executable-find "osascript")
+    (user-error "osascript not found"))
+  (let* ((selected-text (buffer-substring-no-properties beg end))
+         (rtf
+          (with-temp-buffer
+            (insert selected-text)
+            (let ((exit-code (call-process-region
+                              (point-min) (point-max)
+                              "pandoc" t t nil
+                              "-f" "gfm" "-t" "rtf" "-s")))
+              (unless (zerop exit-code)
+                (user-error "pandoc conversion failed")))
+            (buffer-string)))
+         (tmp-text-file (make-temp-file "markdown-slack-plain-" nil ".txt"))
+         (tmp-rtf-file (make-temp-file "markdown-slack-rich-" nil ".rtf"))
+         (jxa-script
+          "ObjC.import(\"Foundation\"); ObjC.import(\"AppKit\"); function run(argv){ const plainPath=argv[0]; const rtfPath=argv[1]; const enc=$.NSUTF8StringEncoding; const plain=$.NSString.stringWithContentsOfFileEncodingError($(plainPath), enc, null); const rtfStr=$.NSString.stringWithContentsOfFileEncodingError($(rtfPath), enc, null); const pb=$.NSPasteboard.generalPasteboard; pb.clearContents; const ok1=pb.setStringForType(plain, $.NSPasteboardTypeString); const rtfData=rtfStr.dataUsingEncoding(enc); const ok2=pb.setDataForType(rtfData, $.NSPasteboardTypeRTF); if (!(ok1 && ok2)) { throw new Error(\"pasteboard write failed\"); } return \"ok\"; }")
+         (exit-code nil))
+    (unwind-protect
+        (progn
+          (with-temp-file tmp-text-file
+            (insert selected-text))
+          (with-temp-file tmp-rtf-file
+            (insert rtf))
+          (setq exit-code
+                (call-process "osascript" nil nil nil
+                              "-l" "JavaScript"
+                              "-e" jxa-script
+                              tmp-text-file tmp-rtf-file))
+          (unless (zerop exit-code)
+            (user-error "Setting clipboard rich/plain data failed")))
+      (when (file-exists-p tmp-text-file)
+        (delete-file tmp-text-file))
+      (when (file-exists-p tmp-rtf-file)
+        (delete-file tmp-rtf-file))))
+  (deactivate-mark)
+  (message "Copied rich text to clipboard for Slack"))
+
+(defun lmoneda/kill-ring-save-or-slack-rich (beg end &optional region)
+  "Copy region normally with `M-w', or as rich text with `C-u M-w'.
+
+With a prefix argument, convert selected Markdown to RTF and copy it for
+Slack paste. Without a prefix argument, behave like `kill-ring-save'."
+  (interactive (list (mark) (point) 'region))
+  (if current-prefix-arg
+      (lmoneda/markdown-region-copy-rich-for-slack beg end)
+    (kill-ring-save beg end region)))
+
+(defalias 'lmoneda/markdown-kill-ring-save-or-slack-rich
+  #'lmoneda/kill-ring-save-or-slack-rich)
+
+(defun lmoneda/agent-shell-buffer-p ()
+  "Return non-nil when current buffer appears to be an agent-shell buffer."
+  (let ((name (downcase (buffer-name))))
+    (or (derived-mode-p 'agent-shell-mode)
+        (string-match-p "\\*agent[- ]shell" name))))
+
+(defun lmoneda/setup-agent-shell-slack-rich-copy ()
+  "Bind rich-copy shortcut locally when editing an agent-shell buffer."
+  (when (lmoneda/agent-shell-buffer-p)
+    (local-set-key (kbd "M-w") #'lmoneda/kill-ring-save-or-slack-rich)))
+
+(defun lmoneda/setup-agent-shell-slack-rich-copy-for-existing-buffers ()
+  "Apply agent-shell rich-copy bindings to already-open buffers."
+  (dolist (buffer (buffer-list))
+    (with-current-buffer buffer
+      (lmoneda/setup-agent-shell-slack-rich-copy))))
+
+(defalias 'markdown-rich-copy-region #'lmoneda/markdown-region-copy-rich-for-slack)
+
+(with-eval-after-load 'markdown-mode
+  (define-key markdown-mode-map (kbd "M-w")
+              #'lmoneda/kill-ring-save-or-slack-rich)
+  (when (boundp 'gfm-mode-map)
+    (define-key gfm-mode-map (kbd "M-w")
+                #'lmoneda/kill-ring-save-or-slack-rich))
+  (define-key markdown-mode-map (kbd "C-c C-S-w")
+              #'lmoneda/markdown-region-copy-rich-for-slack))
+
+(with-eval-after-load 'comint
+  (define-key comint-mode-map (kbd "M-w")
+              #'lmoneda/kill-ring-save-or-slack-rich))
+
+(add-hook 'after-change-major-mode-hook #'lmoneda/setup-agent-shell-slack-rich-copy)
+(lmoneda/setup-agent-shell-slack-rich-copy-for-existing-buffers)
+
 ;; (add-to-list 'load-path "/Users/luis.moneda/.emacs.d/elpa/markdown-preview-mode-20230707.803")
 ;; (load "markdown-preview-mode")
 (autoload 'markdown-preview-mode "markdown-preview-mode" "" t)
 
 (use-package websocket
-  :ensure t)
+  :straight t)
 
 ;; Use M-x markdown-preview-mode in a md buffer
 (use-package markdown-preview-mode
-  :ensure t)
+  :straight t)
 
 ;; Use flymd-flyit
 (use-package flymd
-  :ensure t)
+  :straight t)
 
 ;; PATH append
 (setenv "PATH" (concat "/Users/luis.moneda/miniconda3/bin:" (getenv "PATH")))
@@ -101,7 +194,7 @@
 ;;; up, just do 'brew uninstall pdf-tools', wipe out the elpa
 ;;; pdf-tools package and reinstall both as at the start.
 (use-package pdf-tools
-  :ensure t
+  :straight t
   :config
   (custom-set-variables
     '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
@@ -109,7 +202,7 @@
 ;; (pdf-tools-install)
 
 (use-package reftex
-             :ensure t)
+             :straight t)
 
 ;;In order to get support for many of the LaTeX packages you will use in your documents,
 ;;you should enable document parsing as well, which can be achieved by putting
@@ -158,7 +251,7 @@
 (setq reftex-plug-into-AUCTeX t)
 
 (use-package biblio-core
-  :ensure t
+  :straight t
   :init
   (setq biblio-bibtex-file "~/Dropbox/Research/library.bib")
   )
@@ -168,11 +261,16 @@
 ;; telling bibtex-completion where your bibliographies can be found
 (setq bibtex-completion-bibliography "~/Dropbox/Research/library.bib")
 
+(defun lgm/citar-capf-setup ()
+  "Enable Citar completion at point, loading the split CAPF module first."
+  (require 'citar-capf)
+  (citar-capf-setup))
+
 ;; References
 ;; https://kristofferbalintona.me/posts/202206141852/
 ;; https://blog.tecosaur.com/tmio/2021-07-31-citations.html
 (use-package citar
-  :ensure t
+  :straight t
   :after org
   :init
   ;; Set it early, so citar sees it even before :config
@@ -202,9 +300,14 @@
   (citar-file-note-extensions '("org" "md"))
 
   :hook
-  ((LaTeX-mode . citar-capf-setup)
-   (org-mode . citar-capf-setup))
+  ((LaTeX-mode . lgm/citar-capf-setup)
+   (org-mode . lgm/citar-capf-setup))
   :config
+  ;; Citar split Org and CAPF support into separate provided features.  Loading
+  ;; them here keeps `citar-major-mode-functions' and mode hooks from resolving
+  ;; stale autoloads from older package layouts.
+  (require 'citar-org)
+  (require 'citar-capf)
   (require 'citar-embark)
   (citar-embark-mode 1)
   )
@@ -251,6 +354,7 @@
 
 
 (use-package citar-embark
+  :straight t
   :after (citar embark)
   :no-require
   :config (citar-embark-mode))
@@ -259,7 +363,7 @@
 (setq citar-at-point-function 'embark-dwim)
 
 (use-package gscholar-bibtex
-  :ensure t)
+  :straight t)
 ;; Where to add bibtex from google scholar
 (setq gscholar-bibtex-database-file "~/Dropbox/Research/library.bib")
 (setq gscholar-bibtex-default-source "Google Scholar")
@@ -318,7 +422,7 @@
 
 ;; use org-ref
 (use-package org-ref
-  :ensure t
+  :straight t
   :after org
   :hook (org-mode . (lambda () (require 'org-ref))))
 
@@ -354,7 +458,7 @@
 
 ;; Google translation to support writing in another language
 (use-package google-translate
-  :ensure t
+  :straight t
   :init
   (setq google-translate-backend-method 'curl)
   (setq google-translate-default-source-language "pt")
@@ -380,7 +484,7 @@
 (global-set-key "\C-cf" 'flyspell-mode)
 
 (use-package lsp-mode
-  :ensure t)
+  :straight t)
 ;; Hide the filename when active
 (setq lsp-headerline-breadcrumb-enable nil)
 
@@ -396,11 +500,11 @@
 ;; Alternatively, they can be integrated annotate-integrate-annotations as comments into the current buffer
 ;; C-c C-s (function annotate-show-annotation-summary)
 (use-package annotate
-  :ensure t)
+  :straight t)
 
 ;; Reading epubs in Emacs
 (use-package nov
-  :ensure t
+  :straight t
   :init
   (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
 
@@ -423,7 +527,7 @@
 
 ;; I'm unsure if I will need it. Check in the future.
 ;; (use-package lsp-ltex
-;;   :ensure t
+;;   :straight t
 ;;   :hook (text-mode . (lambda ()
 ;;                        (require 'lsp-ltex)
 ;;                        (lsp)))  ; or lsp-deferred

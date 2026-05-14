@@ -1,7 +1,7 @@
 ;;; go-settings.el --- Settings for the programming language Go
 
 (use-package go-mode
-     :ensure t
+     :straight t
      :preface
 
      (defun bk/set-go-compiler ()

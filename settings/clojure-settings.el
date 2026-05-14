@@ -1,11 +1,11 @@
 ;;; clojure-settings.el --- Settings for the programming language Clojure
 
 ;; (use-package clojure-mode
-;;     :ensure t)
+;;     :straight t)
 ;; (use-package clj-refactor
-;;     :ensure t)
+;;     :straight t)
 ;; (use-package cider
-;;     :ensure t)
+;;     :straight t)
 
 ;; ;; start cider and clj-refactor when clojure-mode is enabled (by default, on .clj files)
 ;; (add-hook 'clojure-mode-hook (lambda ()
@@ -25,7 +25,7 @@
 
 ;; A little more syntax highlighting
 (use-package clojure-mode-extra-font-locking
-	     :ensure t)
+	     :straight t)
 
 ;; syntax hilighting for midje
 (add-hook 'clojure-mode-hook
@@ -41,7 +41,7 @@
             (define-clojure-indent (facts 1))))
 
 (use-package cider
-  :ensure t
+  :straight t
   :after clojure
   :mode (("\\.edn$\\'" . clojure-mode)
 	 ("\\.boot$\\'" . clojure-mode)

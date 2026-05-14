@@ -1,11 +1,11 @@
-;;; productivity-settings.el --- Settings for packages that increase emacs productivity
+;;; productivity-settings.el --- Settings for packages that increase emacs productivity  -*- lexical-binding: t; -*-
 
 ;; Try
 (use-package try
-  :ensure t)
+  :straight t)
 
 (use-package orderless
-  :ensure t
+  :straight t
   :init
   ;; Enhanced dispatcher - only activates with special prefixes
   (defun my/orderless-dispatch-ivy-like (pattern index _total)
@@ -73,6 +73,7 @@
 
 ;; Vertico replaces Ivy
 (use-package vertico
+  :straight t
   :custom
   (vertico-scroll-margin 0) ;; Different scroll margin
   (vertico-count 12) ;; Show more candidates
@@ -82,8 +83,8 @@
   (vertico-mode))
 
 (use-package vertico-directory
+  :straight nil
   :after vertico
-  :ensure nil                ;; comes bundled with Vertico
   :bind (:map vertico-map
          ("RET" . vertico-directory-enter)
          ("DEL" . vertico-directory-delete-char)
@@ -101,6 +102,7 @@
 
 ;; Emacs minibuffer configurations.
 (use-package emacs
+  :straight nil
   :custom
   ;; Enable context menu. `vertico-multiform-mode' adds a menu in the minibuffer
   ;; to switch display modes.
@@ -117,7 +119,7 @@
 
 ;; Centralize the vertico
 (use-package vertico-posframe
-  :ensure t
+  :straight t
   :after vertico
   :custom
   ;; Frame behavior
@@ -136,7 +138,6 @@
 
 ;; Enable rich annotations using the Marginalia package
 (use-package marginalia
-  :ensure nil
   :straight t
   ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
   ;; available in the *Completions* buffer, add it to the
@@ -153,7 +154,7 @@
   (marginalia-mode 1))
 
 (use-package embark
-  :ensure t
+  :straight t
 
   :bind
   (("C-." . embark-act)         ;; pick some comfortable binding
@@ -188,14 +189,14 @@
 
 ;; Consult users will also want the embark-consult package.
 (use-package embark-consult
-  :ensure t ; only need to install it, embark loads it after consult if found
+  :straight t ; only need to install it, embark loads it after consult if found
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
 ;; imenu-anywhere
 ;; Changes the C-c C-j behavior
 (use-package imenu-anywhere
-  :ensure t
+  :straight t
   :init
   )
 
@@ -204,7 +205,6 @@
 (require 'project)
 ;; project.el
 (use-package project
-  :ensure nil
   :straight (:type built-in)
   :bind-keymap ("C-c p" . project-prefix-map)
   :init
@@ -247,6 +247,7 @@
 
 ;; Example configuration for Consult
 (use-package consult
+  :straight t
   ;; Replace bindings. Lazily loaded by `use-package'.
   :bind (;; C-c bindings in `mode-specific-map'
          ("C-c M-x" . consult-mode-command)
@@ -371,7 +372,7 @@
 
 ;; Which-key minor mode
 (use-package which-key
-  :ensure t
+  :straight t
   :init
   (setq which-key-show-early-on-C-h t)
   (setq whickh-key-idle-delay 60000)
@@ -384,15 +385,15 @@
 
 ;; Add Hydra
 (use-package hydra
-  :ensure t)
+  :straight t)
 
 (use-package multi
-  :ensure t)
+  :straight t)
 
 ;; Highlight matching tags
 (setq web-mode-enable-current-element-highlight t)
 (use-package web-mode
-  :ensure t
+  :straight t
   :mode ("\\.\\(html\\|htm\\|xhtml\\|php\\|phtml\\|jsp\\|as[cp]x\\|erb\\|djhtml\\|liquid\\|vue\\|svelte\\|ejs\\)\\'" . web-mode)
   :init
   ;; General settings
@@ -431,6 +432,31 @@
         (insert filename)
         (clipboard-kill-region (point-min) (point-max)))
       (message filename))))
+
+(defun lgm/open-file-folder-in-finder (&optional file)
+  "Open FILE's containing folder in Finder.
+
+When called interactively, use the current buffer's file. In Dired, use
+`default-directory'."
+  (interactive)
+  (unless (eq system-type 'darwin)
+    (user-error "This command is only supported on macOS"))
+  (let* ((target
+          (or file
+              (if (derived-mode-p 'dired-mode)
+                  default-directory
+                (buffer-file-name)))))
+    (unless target
+      (user-error "Current buffer is not visiting a file"))
+    (let ((directory
+           (if (file-directory-p target)
+               target
+             (file-name-directory target))))
+      (unless directory
+        (user-error "Could not determine a folder for: %s" target))
+      (lgm--call-process-or-user-error
+       "open" nil directory)
+      (message "Opened in Finder: %s" (abbreviate-file-name directory)))))
 
 (defconst lgm/image-clipboard-mime-types
   '(("png" . "image/png")
@@ -622,11 +648,8 @@ Supports Org file links, Markdown image syntax, and plain file paths."
 
 ;;zygospore lets you revert C-x 1 (delete-other-window) by pressing C-x 1 again
 (use-package zygospore
-  :ensure t
+  :straight t
   :init (global-set-key (kbd "C-x 1") 'zygospore-toggle-delete-other-windows))
-
-(use-package quelpa-use-package
-  :ensure t)
 
 ;; Templates from work
 ;; This is great and I should explore it in the future
@@ -663,7 +686,7 @@ Supports Org file links, Markdown image syntax, and plain file paths."
 
 ;; for vterm terminal backend:
 (use-package vterm
-  :ensure t
+  :straight t
   :commands (vterm my/vterm-here)
   :config
   (defun my/vterm-here ()
@@ -690,7 +713,7 @@ Supports Org file links, Markdown image syntax, and plain file paths."
 
 ;; multi-vterm
 (use-package multi-vterm
-  :ensure t
+  :straight t
   :commands (multi-vterm
              multi-vterm-project
              multi-vterm-dedicated-toggle
@@ -978,7 +1001,7 @@ If DIR is not part of a project, open a vterm in DIR itself."
     (goto-char (point-max))))
 
 (use-package pulsar
-  :ensure t
+  :straight t
   :bind
   ( :map global-map
     ("C-x l" . pulsar-pulse-line) ; overrides `count-lines-page'

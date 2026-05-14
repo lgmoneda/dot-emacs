@@ -1,11 +1,10 @@
 ;;; processing-settings.el --- Settings for programming language Processing
 
 (use-package processing-mode
-  :ensure t
+  :straight t
   :config
   (define-key processing-mode-map (kbd "C-c C-c") 'processing-sketch-run))
 
-(add-to-list 'load-path "~/.emacs.d/elpa/processing-mode-20171022.2302")
 (autoload 'processing-mode "processing-mode" "Processing mode" t)
 (add-to-list 'auto-mode-alist '("\\.pde$" . processing-mode))
 
@@ -27,7 +26,7 @@
 (add-hook 'processing-mode-hook 'processing-mode-init)
 
 (use-package rainbow-mode
-  :ensure t
+  :straight t
   :config
   (add-to-list 'rainbow-html-colors-major-mode-list 'processing-mode)
   (add-to-list 'rainbow-html-rgb-colors-font-lock-keywords

@@ -1,13 +1,13 @@
-;;; aesthetics-settings.el --- Settings for the theme, custom colors and faces
+;;; aesthetics-settings.el --- Settings for the theme, custom colors and faces  -*- lexical-binding: t; -*-
 
 ;; Hides the title bar
 (setq default-frame-alist '((undecorated . t)))
 
 (use-package rebecca-theme
-  :ensure t)
+  :straight t)
 
 (use-package mindre-theme
-  ;; :ensure t
+  ;; :straight t
     :straight (:local-repo "/Users/luis.moneda/repos/mindre-theme/")
     :custom
     (mindre-use-more-bold nil)
@@ -55,7 +55,7 @@
 
 ;;Beacon minor mode
 (use-package beacon
-  :ensure t
+  :straight t
   :custom
   ;; 🌙 Smooth and subtle
   (beacon-color "#5c3e99")
@@ -125,12 +125,12 @@ want to use in the modeline *in lieu of* the original.")
 
 ;; Comment and find out if I really need it
 ;; (use-package minions
-;;   :ensure t
+;;   :straight t
 ;;   :init
 ;;   (minions-mode 1))
 
 (use-package mood-line
-  :ensure t
+  :straight t
   :init
   (mood-line-mode 1))
 
@@ -167,48 +167,17 @@ want to use in the modeline *in lieu of* the original.")
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(conda-anaconda-home "/Users/luis.moneda/miniconda3")
- '(package-selected-packages
-   '(straight org-sliced-images gptel ob-mermaid aider aidermacs langtool
-	      org-modern nov shrface consult vertico citar-org-roam
-	      citar-embark citar ox-bibtex ivy-bibtex ox-gfm
-	      spacious-padding golden-ratio embark-consult embark
-	      exec-path-from-shell smex ob-chatgpt-shell
-	      quelpa-use-package copilot org-emms emms chatgpt-shell
-	      pyimport electric-operator org-present org-tree-slide
-	      org-transclusion org-mind-map consult-org-roam
-	      org-download org-remark org-ql org-roam-bibtex olivetti
-	      org-roam-ui org-roam deadgrep org-bullets
-	      virtualenvwrapper simple-httpd column-enforce-mode conda
-	      pyvenv pyenv-mode pyenv magit default-text-scale
-	      zygospore writeroom-mode with-editor which-key try
-	      smartparens smart-mode-line shell-pop restclient
-	      rebecca-theme rainbow-delimiters poet-theme pdf-tools
-	      org-ref orderless ob-async neotree multiple-cursors
-	      multi mood-line minions mindre-theme
-	      markdown-preview-mode lsp-grammarly latex-preview-pane
-	      ivy-posframe imenu-anywhere hide-mode-line helm-bibtex
-	      gscholar-bibtex goto-chg google-translate flymd
-	      expand-region engine-mode disable-mouse diminish diff-hl
-	      counsel-projectile company-posframe company-flx beacon
-	      auto-complete anzu annotate all-the-icons-ivy-rich ag))
- '(package-vc-selected-packages
-   '((wasabi :url "https://github.com/xenodium/wasabi" :branch "main")
-     (magit :url "https://github.com/magit/magit" :branch "master")
-     (agent-shell :url "https://github.com/xenodium/agent-shell")
-     (acp :url "https://github.com/xenodium/acp.el")
-     (claude-code :url
-		  "https://github.com/stevemolitor/claude-code.el")))
  '(pdf-tools-handle-upgrades nil))
 
 ;; Vertico-posframe dependency
 (use-package posframe
-  :ensure t)
+  :straight t)
 
 (use-package all-the-icons
-  :ensure t)
+  :straight t)
 
 (use-package all-the-icons-completion
-  :ensure t
+  :straight t
   :after (marginalia all-the-icons)
   :hook (marginalia-mode . all-the-icons-completion-marginalia-setup)
   :init
@@ -217,7 +186,7 @@ want to use in the modeline *in lieu of* the original.")
 ;; Poet theme change
 ;; https://explog.in/notes/poet.html
 (use-package poet-theme
-  :ensure t)
+  :straight t)
 
 (defun lgm/set-face-attribute-if-defined (face frame &rest args)
   "Set FACE attributes when FACE exists."
@@ -271,7 +240,11 @@ want to use in the modeline *in lieu of* the original.")
   "Set the mindre theme"
   (interactive)
   (load-theme 'mindre)
-  (global-hl-line-mode 0)
+  (global-hl-line-mode 1)
+  ;; #F1ECF7 — very soft, barely-there lavender
+  ;; #EEE8F3 — balanced and elegant
+  ;; #E8E0F0 — a touch more visible, still tasteful
+  (set-face-background 'hl-line "#E8E0F0")
   ;; (setq beacon-color "#000000")
   (lgm/set-face-attribute-if-defined 'org-hide nil :inherit 'unspecified :foreground "#f8f4ed" :background "#f8f4ed")
   (lgm/set-face-attribute-if-defined 'org-indent nil :foreground "#f8f4ed" :background "#f8f4ed")
@@ -304,7 +277,7 @@ want to use in the modeline *in lieu of* the original.")
  '(org-cite ((t (:foreground "forest green"))))
  '(org-cite-key ((t (:foreground "forest green"))))
  '(org-link ((nil (:foreground "cornflowerblue" :underline nil))))
- '(org-quote ((t (:inherit mindre-default :slant italic))))
+ '(org-quote ((t (:inherit mindre-block :slant italic))))
  '(org-ref-cite-face ((t (:foreground "forest green"))))
  '(org-transclusion-keyword ((t (:foreground "dark cyan")))))
 
@@ -315,11 +288,11 @@ want to use in the modeline *in lieu of* the original.")
 
 ;; Hide mode line
 (use-package hide-mode-line
-  :ensure t)
+  :straight t)
 
 ;; Automatically resizes the window I'm focusing
 ;; (use-package golden-ratio
-;;   :ensure t
+;;   :straight t
 ;;   :init
 ;;   (golden-ratio-mode 1)
 ;;   )
@@ -327,7 +300,7 @@ want to use in the modeline *in lieu of* the original.")
 ;; I'm interested only in timestamps, todo keywords, and tables.
 ;; I disable the rest since I prefer my own customizations or other packages.
 (use-package org-modern
-  :ensure t
+  :straight t
   :init
    (setq org-modern-star nil)
    (setq org-modern-block-name nil)
@@ -352,7 +325,7 @@ want to use in the modeline *in lieu of* the original.")
 
    (add-hook 'org-mode-hook #'org-modern-mode)
    (add-hook 'org-agenda-finalize-hook #'org-modern-agenda)
-   ;; (global-org-modern-mode)
+   (global-org-modern-mode)
    )
 
 (provide 'aesthetics-settings)

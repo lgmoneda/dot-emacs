@@ -1,4 +1,4 @@
-;;; os-settings.el --- Settings for editing utilities
+;;; os-settings.el --- Settings for editing utilities  -*- lexical-binding: t; -*-
 
 (cond
     ((string-equal system-type "gnu/linux")
@@ -31,7 +31,7 @@
 (when window-system (set-exec-path-from-shell-PATH))
 
 (use-package exec-path-from-shell
-  :ensure t
+  :straight t
   :init
   (exec-path-from-shell-initialize)
   (exec-path-from-shell-copy-env "OPENAI_API_KEY")

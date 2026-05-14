@@ -139,14 +139,13 @@ display the output in a new temporary buffer."
 	)
 
 ;; (use-package ob-chatgpt-shell
-;;   :ensure t)
+;;   :straight t)
 ;; (use-package ob-dall-e-shell
-;;   :ensure t)
+;;   :straight t)
 
 ;; ChatGPT Shell
 (use-package chatgpt-shell
   ;; :quelpa ((chatgpt-shell :fetcher git :url "https://github.com/xenodium/chatgpt-shell") :upgrade t)
-  :ensure nil
   :straight t
   :init
   ;; (setq chatgpt-repo-path (expand-file-name "chatgpt-shell/" quelpa-build-dir))
@@ -224,12 +223,15 @@ display the output in a new temporary buffer."
 ;; without confirming I want to create another buffer
 (setq async-shell-command-buffer 'new-buffer)
 
+(defcustom lgm/start-org-roam-ai-services-on-startup t
+  "Start org-roam AI Python services automatically after Emacs startup."
+  :type 'boolean
+  :group 'lgm)
+
 (defun start-semantic-search ()
   (interactive)
   (async-shell-command "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m core.semantic_search")
   (delete-window (get-buffer-window (get-buffer "*Async Shell Command*"))))
-
-(start-semantic-search)
 
 ;; Q&A
 
@@ -262,8 +264,6 @@ display the output in a new temporary buffer."
   (interactive)
   (async-shell-command "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m core.qna")
   (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<2>"))))
-
-(start-qna)
 
 ;; Colorful Chunk Semantic Search
 (require 'cl-lib)
@@ -404,7 +404,10 @@ display the output in a new temporary buffer."
   (async-shell-command "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m core.discourse_segmentation")
   (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<3>"))))
 
-(start-discourse-segmentation)
+(when lgm/start-org-roam-ai-services-on-startup
+  (add-hook 'emacs-startup-hook #'start-semantic-search)
+  (add-hook 'emacs-startup-hook #'start-qna)
+  (add-hook 'emacs-startup-hook #'start-discourse-segmentation))
 
 (defun discourse-segmentation-api ()
   "Call the given Python SCRIPT-NAME with the given TEXT as input and
@@ -608,7 +611,7 @@ Provides a selection from a predefined list, but also allows custom input."
 
 ;;gpt.el
 ;; (use-package gptel
-;;   :ensure t
+;;   :straight t
 ;;   :init
 ;;   (setq gptel-api-key (getenv "OPENAI_API_KEY"))
 ;;   (gptel-make-anthropic "Claude" :stream t :key (getenv "ANTHROPIC_API_KEY"))

@@ -10,7 +10,6 @@
 
 ;; for eat terminal backend:
 (use-package eat
-  :ensure nil
   :straight t)
 (setq eat-term-name "xterm-256color")
 

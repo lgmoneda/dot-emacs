@@ -3,7 +3,7 @@
 (setq inferior-R-program-name "/Library/Frameworks/R.framework/Resources/R")
 
 (use-package ess
-	     :ensure t
+	     :straight t
 	     :init
   (setq ess-eval-visibly-p nil)
   (setq ess-ask-for-ess-directory nil)
