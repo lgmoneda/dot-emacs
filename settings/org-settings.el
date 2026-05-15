@@ -659,7 +659,9 @@ this command to copy it"
 (add-hook 'org-agenda-mode-hook
           (lambda ()
             (visual-line-mode -1)
-            (toggle-truncate-lines 1)))
+            (toggle-truncate-lines 1)
+            (when (fboundp 'olivetti-mode)
+              (olivetti-mode 1))))
 
 ;; (use-package org-gcal
 ;;   :straight t
@@ -997,11 +999,25 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
   :type 'boolean
   :group 'lgm)
 
+;; (defcustom lgm/startup-todo-file "~/Dropbox/Agenda/todo.org"
+;;   "Org file to show next to the agenda after Emacs startup."
+;;   :type 'file
+;;   :group 'lgm)
+
+(defun lgm/open-startup-agenda-layout ()
+  "Show the daily Org agenda as the only visible startup buffer."
+  (delete-other-windows)
+  ;; Previously opened `lgm/startup-todo-file' beside the agenda.
+  ;; (find-file (expand-file-name lgm/startup-todo-file))
+  ;; (split-window-right)
+  ;; (other-window 1)
+  (let ((org-agenda-window-setup 'current-window))
+    (org-agenda nil "d")
+    (org-agenda-redo)
+    (delete-other-windows)))
+
 (when lgm/open-org-agenda-on-startup
-  (add-hook 'emacs-startup-hook
-            (lambda ()
-              (org-agenda nil "d")
-              (org-agenda-redo))))
+  (add-hook 'emacs-startup-hook #'lgm/open-startup-agenda-layout 90))
 ;; Open day
 (setq org-agenda-span 'day)
 (global-set-key (kbd "C-c <f10>") (lambda() (interactive)(org-agenda 0 "a")))
@@ -1218,6 +1234,7 @@ With prefix ARG, prompt for destination filename."
 ;; Look & Feel for long-form writing
 (use-package olivetti
   :straight t
+  :hook (org-agenda-mode . olivetti-mode)
   :config
   (setq-default olivetti-body-width 140))
 
