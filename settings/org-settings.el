@@ -55,12 +55,26 @@
 ;; Do not prompt to resume an active clock
 (setq org-clock-persist-query-resume nil)
 
-(defun lgm/clock-in-when-started ()
-"Automatically clock in a task when status is changed to STARTED"
-    (when (string= org-state "STARTED")
-      (org-clock-in)))
+(defun lgm/current-heading-clocked-p ()
+  "Return non-nil when the current heading is the active clock."
+  (and (org-clocking-p)
+       (markerp org-clock-marker)
+       (marker-buffer org-clock-marker)
+       (equal (marker-buffer org-clock-marker) (current-buffer))
+       (save-excursion
+         (org-back-to-heading t)
+         (= (point) (marker-position org-clock-marker)))))
 
-(add-hook 'org-after-todo-state-change-hook 'lgm/clock-in-when-started)
+(defun lgm/sync-clock-with-started-state ()
+  "Clock in STARTED tasks and clock out when leaving STARTED."
+  (cond
+   ((string= org-state "STARTED")
+    (org-clock-in))
+   ((and (string= org-last-state "STARTED")
+         (lgm/current-heading-clocked-p))
+    (org-clock-out nil t))))
+
+(add-hook 'org-after-todo-state-change-hook #'lgm/sync-clock-with-started-state)
 
 ;; Easy jump, clock in and clock out
 (global-set-key (kbd "<f12>") 'org-clock-goto)
@@ -73,10 +87,22 @@
 
 ;; Add clocked-in task to the menubar
 (defun my-clock-string ()
-  (let ((clock-string (substring-no-properties (org-clock-get-clock-string))))
-    (if (string-equal clock-string "")
-        "Clock is not running"
-      clock-string)))
+  (if (and (org-clocking-p)
+           org-clock-start-time
+           (not (equal org-clock-start-time ""))
+           (markerp org-clock-marker)
+           (marker-buffer org-clock-marker)
+           (with-current-buffer (marker-buffer org-clock-marker)
+             (save-excursion
+               (goto-char org-clock-marker)
+               (string= (org-get-todo-state) "STARTED"))))
+      (condition-case nil
+          (let ((clock-string (substring-no-properties (org-clock-get-clock-string))))
+            (if (string-equal clock-string "")
+                "No task"
+              clock-string))
+        (error "No task"))
+    "No task"))
 
 ;; Custom Agenda Views
 ;; Keep this .el file for AI agenda
