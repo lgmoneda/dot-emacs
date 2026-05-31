@@ -75,6 +75,7 @@
 (require 'assistant-settings)
 (require 'catalyst-settings)
 (require 'org-roam-link-recommendations-settings)
+(require 'research-settings)
 (require 'publishing-settings)
 (require 'reading-settings)
 (require 'copilot-settings)
