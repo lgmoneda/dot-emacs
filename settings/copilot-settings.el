@@ -30,6 +30,8 @@
   :hook (agent-shell-mode . corfu-mode)
   :init
   (setq agent-shell-file-completion-enabled t
+        agent-shell-anthropic-default-model-id "claude-sonnet-4-6"
+	agent-shell-anthropic-default-model-name "Sonnet"
         agent-shell-show-welcome-message nil)
   :config
   (setq agent-shell-anthropic-authentication
@@ -43,9 +45,11 @@
         (agent-shell-make-environment-variables :inherit-env t))
   )
 
-(setq agent-shell-openai-codex-acp-command
-      '("/Users/luis.moneda/repos/codex-acp/target/debug/codex-acp"))
+;; When I want to use a local version
+;; (setq agent-shell-openai-codex-acp-command
+;;       '("/Users/luis.moneda/repos/codex-acp/target/debug/codex-acp"))
 (setq agent-shell-openai-default-model-id nil)
+(setq agent-shell-openai-default-session-mode-id "full-access")
 
 (defvar my/agent-shell-codex-profile 'personal
   "Current Codex profile for agent-shell. Either 'personal or 'work.")
@@ -234,7 +238,7 @@ Handles [[id:UUID][desc]], [[target][desc]], and [[target]] forms."
 (setq agent-shell-context-sources nil)
 
 (setq agent-shell-manager-visible-columns
-      '(buffer status annotation mode model))
+      '(buffer status annotation provider model))
 
 ;; Management for agent shell
 ;; (use-package agent-shell-manager
@@ -272,7 +276,10 @@ Otherwise, jump to *Agent-Shell Buffers* (creating it if needed)."
         (let ((win (get-buffer-window buf t)))
           (if (window-live-p win)
               (select-window win)
-            (pop-to-buffer buf)))))))
+            (with-current-buffer buf
+              (if agent-shell-manager--column-widths
+                  (agent-shell-manager-switch-to-side-window)
+                (agent-shell-manager-switch-to-default-window)))))))))
 
 (global-set-key (kbd "C-c m") #'my/agent-shell-manager-smart-toggle)
 
@@ -326,6 +333,28 @@ Otherwise, jump to *Agent-Shell Buffers* (creating it if needed)."
   (define-key embark-file-map (kbd "a") #'my/project-agent-shell)
   )
 
+(use-package agent-shell-model-router
+  :straight (:host github :repo "wandersoncferreira/agent-shell-model-router")
+  :after agent-shell)
+
+(require 'agent-shell-model-router)
+
+;; Layer A: explicit rules. :model matches substrings of model display names.
+(setq agent-shell-model-router-rules
+      '((:name "research"  :model "Opus"
+         :keywords ("research" "investigate" "analyze"))
+        (:name "reply"     :model "Sonnet (1M context)"
+         :keywords ("reply" "send a message"))
+        (:name "code"      :model "Opus"
+         :keywords ("implement" "refactor"))
+        (:name "trivial"   :model "Haiku"
+         :keywords ("typo" "rename" "format"))))
+
+;; Layer B: fallback by complexity.
+(setq agent-shell-model-router-complexity-models
+      '((high   . "Opus") (medium . "Sonnet (1M context)") (low . "Haiku")))
+
+(agent-shell-model-router-mode 1)
 
 ;; (use-package agent-shell-sidebar
 ;;   :after agent-shell
