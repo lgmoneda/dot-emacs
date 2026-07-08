@@ -1947,7 +1947,34 @@ display the output in a new temporary buffer."
 (use-package org-transclusion
   :straight t
   :config
-  (add-to-list 'org-transclusion-extensions 'org-transclusion-indent-mode))
+  (add-to-list 'org-transclusion-extensions 'org-transclusion-indent-mode)
+  (require 'org-transclusion-indent-mode)
+  (org-transclusion-load-extensions-maybe 'force)
+
+  (defun lgm/org-transclusion-add-fringe-to-blank-lines (beg end)
+    "Add org-transclusion's native fringe to blank lines in BEG..END."
+    (when (bound-and-true-p org-indent-mode)
+      (with-silent-modifications
+        (save-excursion
+          (goto-char beg)
+          (while (< (point) end)
+            (let* ((line-beg (line-beginning-position))
+                   (line-end (line-end-position))
+                   (prop-end (min (1+ line-beg) end)))
+              (when (and (= line-beg line-end)
+                         (< line-beg end))
+                (dolist (prop '(line-prefix wrap-prefix))
+                  (let ((prefix (get-text-property line-beg prop)))
+                    (when (and (stringp prefix)
+                               (not (org-transclusion-prefix-has-fringe-p prefix)))
+                      (put-text-property
+                       line-beg prop-end prop
+                       (org-transclusion-append-fringe-to-prefix
+                        prefix 'org-transclusion-fringe)))))))
+            (forward-line 1))))))
+
+  (add-hook 'org-transclusion-after-add-functions
+            #'lgm/org-transclusion-add-fringe-to-blank-lines t))
 
 (with-eval-after-load 'org
   (require `org-transclusion-font-lock)
