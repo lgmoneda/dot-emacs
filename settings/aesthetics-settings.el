@@ -7,8 +7,8 @@
   :straight t)
 
 (use-package mindre-theme
-  ;; :straight t
-    :straight (:local-repo "/Users/luis.moneda/repos/mindre-theme/")
+    :straight nil
+    :load-path "/Users/luis.moneda/repos/mindre-theme/"
     :custom
     (mindre-use-more-bold nil)
     (mindre-use-faded-lisp-parens t)
@@ -193,6 +193,78 @@ want to use in the modeline *in lieu of* the original.")
   (when (facep face)
     (apply #'set-face-attribute face frame args)))
 
+(defun lgm/set-agent-shell-dashboard-faces ()
+  "Make `agent-shell-dashboard' follow the Mindre theme palette."
+  (let ((bg-main "#f8f4ed")
+        (bg-active "#f2f3f5")
+        (fg-main "#2e3338")
+        (gray-silver "#B0BEC5")
+        (gray-dark "#585c60")
+        (purple "#5c3e99")
+        (green "#16524F")
+        (green-light "#3c763d")
+        (yellow-dark "#54433a")
+        (red "#9E0000")
+        (orange "#d47500"))
+    (lgm/set-face-attribute-if-defined
+     'agent-shell-dashboard-banner nil
+     :foreground purple :weight 'normal)
+    (lgm/set-face-attribute-if-defined
+     'agent-shell-dashboard-subtitle nil
+     :foreground gray-dark :weight 'normal)
+    (lgm/set-face-attribute-if-defined
+     'agent-shell-dashboard-attention nil
+     :foreground red :weight 'semi-bold)
+    (lgm/set-face-attribute-if-defined
+     'agent-shell-dashboard-heading-sessions nil
+     :foreground purple :weight 'semi-bold)
+    (lgm/set-face-attribute-if-defined
+     'agent-shell-dashboard-heading-actions nil
+     :foreground green :weight 'semi-bold)
+    (lgm/set-face-attribute-if-defined
+     'agent-shell-dashboard-heading-projects nil
+     :foreground yellow-dark :weight 'semi-bold)
+    (lgm/set-face-attribute-if-defined
+     'agent-shell-dashboard-key nil
+     :foreground purple :weight 'semi-bold)
+    (lgm/set-face-attribute-if-defined
+     'agent-shell-dashboard-model nil
+     :foreground green :weight 'normal)
+    (lgm/set-face-attribute-if-defined
+     'agent-shell-dashboard-dim nil
+     :foreground gray-dark :weight 'normal)
+    (lgm/set-face-attribute-if-defined
+     'agent-shell-dashboard-quote nil
+     :foreground gray-dark :slant 'italic)
+    (lgm/set-face-attribute-if-defined
+     'agent-shell-dashboard-badge-done nil
+     :foreground green :background bg-active
+     :box `(:line-width (1 . -1) :color ,green) :weight 'semi-bold)
+    (lgm/set-face-attribute-if-defined
+     'agent-shell-dashboard-badge-working nil
+     :foreground orange :background bg-active
+     :box `(:line-width (1 . -1) :color ,orange) :weight 'semi-bold)
+    (lgm/set-face-attribute-if-defined
+     'agent-shell-dashboard-badge-waiting nil
+     :foreground red :background bg-active
+     :box `(:line-width (1 . -1) :color ,red) :weight 'semi-bold)
+    (lgm/set-face-attribute-if-defined
+     'agent-shell-dashboard-badge-ready nil
+     :foreground green-light :background bg-main
+     :box `(:line-width (1 . -1) :color ,gray-silver) :weight 'normal)
+    (lgm/set-face-attribute-if-defined
+     'agent-shell-dashboard-badge-wt nil
+     :foreground fg-main :background bg-active
+     :box `(:line-width (1 . -1) :color ,gray-silver) :weight 'semi-bold)))
+
+(with-eval-after-load 'agent-shell-dashboard
+  (lgm/set-agent-shell-dashboard-faces))
+
+(add-hook 'enable-theme-functions
+          (lambda (&rest _)
+            (when (memq 'mindre custom-enabled-themes)
+              (lgm/set-agent-shell-dashboard-faces))))
+
 (defun lgm/set-rebecca-theme ()
   "Set the rebecca theme"
   (interactive)
@@ -250,6 +322,7 @@ want to use in the modeline *in lieu of* the original.")
   (lgm/set-face-attribute-if-defined 'org-indent nil :foreground "#f8f4ed" :background "#f8f4ed")
   (lgm/set-face-attribute-if-defined 'org-link nil :foreground "cornflowerblue" :underline nil)
   (lgm/set-face-attribute-if-defined 'org-agenda-clocking nil :inherit 'unspecified)
+  (lgm/set-agent-shell-dashboard-faces)
   (setq org-todo-keyword-faces
 		'(
 		  ("TODO" . (:inherit (mindre-keyword mindre-strong) :weight medium))

@@ -30,26 +30,146 @@
   :hook (agent-shell-mode . corfu-mode)
   :init
   (setq agent-shell-file-completion-enabled t
-        agent-shell-anthropic-default-model-id "claude-sonnet-4-6"
+        agent-shell-anthropic-default-model-id "sonnet[1m]"
 	agent-shell-anthropic-default-model-name "Sonnet"
+	agent-shell-anthropic-default-session-mode-id "bypassPermissions"
         agent-shell-show-welcome-message nil)
   :config
   (setq agent-shell-anthropic-authentication
         (agent-shell-anthropic-make-authentication
          :api-key (getenv "ANTHROPIC_API_KEY")))
   (setq agent-shell-openai-authentication
-      (agent-shell-openai-make-authentication :login t))
+	(agent-shell-openai-make-authentication :login t))
+  ;; Only display codex and claude, the only agents I've been using
+  (setq agent-shell-agent-configs
+      (list (agent-shell-anthropic-make-claude-code-config)
+            (agent-shell-openai-make-codex-config)))
 
   ;; Environment variables for Codex/OpenAI subprocesses
   (setq agent-shell-openai-codex-environment
         (agent-shell-make-environment-variables :inherit-env t))
   )
 
+;; Aesthetic changes
+(with-eval-after-load 'agent-shell
+  ;; Use the text header so regular faces can style it.
+  (setq agent-shell-header-style 'text)
+
+  (set-face-attribute 'header-line nil
+                      :background 'unspecified
+                      :foreground 'unspecified
+                      :box nil
+                      :weight 'medium
+                      :height 1.20
+                      :extend t)
+
+  (when (facep 'agent-shell-buffer-name)
+    (set-face-attribute 'agent-shell-buffer-name nil
+                        :foreground "#5B3F8C"
+                        :weight 'bold
+                        :height 1.20))
+
+  (when (facep 'agent-shell-model)
+    (set-face-attribute 'agent-shell-model nil
+                        :foreground "#245C73"
+                        :height 1.20))
+
+  (when (facep 'agent-shell-session-directory)
+    (set-face-attribute 'agent-shell-session-directory nil
+                        :foreground "#557A3E"
+                        :height 1.20)))
+
+;; Color user input
+(with-eval-after-load 'agent-shell
+  (dolist (face '(agent-shell-input comint-highlight-input))
+    (when (facep face)
+      (set-face-attribute face nil
+                          :background "#DDECCB"
+                          :foreground 'unspecified
+                          :extend t))))
+
+(defvar-local my/agent-shell-input-block-overlays nil
+  "Overlays used to render agent-shell user messages as blocks.")
+
+(defun my/agent-shell--clear-input-block-overlays (start end)
+  "Remove user-message block overlays between START and END."
+  (setq my/agent-shell-input-block-overlays
+        (seq-remove
+         (lambda (overlay)
+           (if (and (overlay-buffer overlay)
+                    (< (overlay-start overlay) end)
+                    (> (overlay-end overlay) start))
+               (progn
+                 (delete-overlay overlay)
+                 t)
+             nil))
+         my/agent-shell-input-block-overlays)))
+
+(defun my/agent-shell--block-range-bound (range key)
+  "Return KEY from agent-shell UI RANGE."
+  (alist-get key range))
+
+(defun my/agent-shell--render-input-block (result)
+  "Render user-message RESULT from `agent-shell-ui-update-text' as a block."
+  (when-let* (((derived-mode-p 'agent-shell-mode))
+              (padding (alist-get :padding result))
+              (block (alist-get :block result))
+              (start (my/agent-shell--block-range-bound padding :start))
+              (block-start (my/agent-shell--block-range-bound block :start))
+              (end (my/agent-shell--block-range-bound block :end))
+              (state (get-text-property block-start 'agent-shell-ui-state))
+              (qualified-id (map-elt state :qualified-id))
+              ((string-suffix-p "-user_message_chunk" qualified-id)))
+    (when (eq (char-after start) ?\n)
+      (setq start (1+ start)))
+    (my/agent-shell--clear-input-block-overlays start end)
+    (let ((overlay (make-overlay start end nil t nil)))
+      (overlay-put overlay 'face '(:background "#DDECCB" :extend t))
+      (overlay-put overlay 'priority 100)
+      (overlay-put overlay 'evaporate t)
+      (overlay-put overlay 'my/agent-shell-input-block t)
+      (push overlay my/agent-shell-input-block-overlays)))
+  result)
+
+(defun my/agent-shell--render-live-input-block (orig-fun &rest args)
+  "Render a submitted live prompt as a full-width input block."
+  (if (not (derived-mode-p 'agent-shell-mode))
+      (apply orig-fun args)
+    (let ((start (save-excursion
+                   (goto-char (shell-maker--prompt-begin-position))
+                   (line-beginning-position))))
+      (prog1 (apply orig-fun args)
+        (when-let* ((end (and (boundp 'comint-last-input-end)
+                              (markerp comint-last-input-end)
+                              (marker-position comint-last-input-end)))
+                    ((< start end)))
+          (my/agent-shell--clear-input-block-overlays start end)
+          (let ((overlay (make-overlay start end nil t nil)))
+            (overlay-put overlay 'face '(:background "#DDECCB" :extend t))
+            (overlay-put overlay 'priority 100)
+            (overlay-put overlay 'evaporate t)
+            (overlay-put overlay 'my/agent-shell-input-block t)
+            (push overlay my/agent-shell-input-block-overlays)))))))
+
+(with-eval-after-load 'agent-shell-ui
+  (advice-add 'agent-shell-ui-update-text
+              :filter-return #'my/agent-shell--render-input-block))
+
+(with-eval-after-load 'shell-maker
+  (advice-add 'shell-maker-submit
+              :around #'my/agent-shell--render-live-input-block))
+
+;; to know mode ids, use inside an agent shell.
+;; (mapcar (lambda (mode)
+;;           (cons (map-elt mode :name)
+;;                 (map-elt mode :id)))
+;;         (agent-shell--get-available-modes (agent-shell--state)))
+
 ;; When I want to use a local version
 ;; (setq agent-shell-openai-codex-acp-command
 ;;       '("/Users/luis.moneda/repos/codex-acp/target/debug/codex-acp"))
 (setq agent-shell-openai-default-model-id nil)
-(setq agent-shell-openai-default-session-mode-id "full-access")
+(setq agent-shell-openai-default-session-mode-id "agent-full-access")
 
 (defvar my/agent-shell-codex-profile 'personal
   "Current Codex profile for agent-shell. Either 'personal or 'work.")
@@ -235,10 +355,12 @@ Handles [[id:UUID][desc]], [[target][desc]], and [[target]] forms."
   (require 'agent-shell-manager))
 
 (setq agent-shell-manager-ready-status-notification-sound t)
+(setq agent-shell-manager-show-annotation-in-header t)
+(setq agent-shell-manager-rename-buffers-with-annotation nil)
 (setq agent-shell-context-sources nil)
 
 (setq agent-shell-manager-visible-columns
-      '(buffer status annotation provider model))
+      '(buffer status annotation model))
 
 ;; Management for agent shell
 ;; (use-package agent-shell-manager
@@ -332,6 +454,14 @@ Otherwise, jump to *Agent-Shell Buffers* (creating it if needed)."
 (with-eval-after-load 'embark
   (define-key embark-file-map (kbd "a") #'my/project-agent-shell)
   )
+
+(use-package agent-shell-dashboard
+  :straight (:host github :repo "wandersoncferreira/agent-shell-dashboard")
+  :after agent-shell
+  :commands (agent-shell-dashboard))
+
+(define-key my/agent-shell-map (kbd "b")
+	    #'agent-shell-dashboard)
 
 (use-package agent-shell-model-router
   :straight (:host github :repo "wandersoncferreira/agent-shell-model-router")
