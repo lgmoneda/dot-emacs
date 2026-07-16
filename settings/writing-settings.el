@@ -72,6 +72,44 @@
 
 (setq markdown-command "/opt/homebrew/bin/pandoc")
 
+(declare-function agent-shell-markdown-link-url-at-point "agent-shell-markdown" (&optional pos))
+(declare-function agent-shell-markdown-reconstruct "agent-shell-markdown" (beg end))
+
+(defun lmoneda/markdown--url-at (pos)
+  "Return the rendered Markdown URL at POS, when one is available."
+  (or (when (fboundp 'agent-shell-markdown-link-url-at-point)
+        (agent-shell-markdown-link-url-at-point pos))
+      (get-text-property pos 'agent-shell-markdown-url)
+      (get-text-property pos 'shr-url)))
+
+(defun lmoneda/markdown--escape-link-label (label)
+  "Escape LABEL for use inside a Markdown link."
+  (replace-regexp-in-string
+   "[]\\\\[]" "\\\\\\&" label))
+
+(defun lmoneda/markdown--region-as-copy-source (beg end)
+  "Return Markdown for BEG to END, preserving rendered link properties."
+  (if (fboundp 'agent-shell-markdown-reconstruct)
+      (agent-shell-markdown-reconstruct beg end)
+    (let ((pos beg)
+          chunks)
+      (while (< pos end)
+        (let* ((url (lmoneda/markdown--url-at pos))
+               (next (min (or (next-single-property-change
+                                pos 'agent-shell-markdown-url nil end)
+                              end)
+                          (or (next-single-property-change pos 'shr-url nil end)
+                              end)))
+               (text (buffer-substring-no-properties pos next)))
+          (push (if (and url (not (string-empty-p text)))
+                    (format "[%s](%s)"
+                            (lmoneda/markdown--escape-link-label text)
+                            url)
+                  text)
+                chunks)
+          (setq pos next)))
+      (apply #'concat (nreverse chunks)))))
+
 (defun lmoneda/markdown-region-copy-rich-for-slack (beg end)
   "Convert selected Markdown region to rich text and copy it for Slack paste."
   (interactive "r")
@@ -81,7 +119,7 @@
     (user-error "pandoc not found"))
   (unless (executable-find "osascript")
     (user-error "osascript not found"))
-  (let* ((selected-text (buffer-substring-no-properties beg end))
+  (let* ((selected-text (lmoneda/markdown--region-as-copy-source beg end))
          (rtf
           (with-temp-buffer
             (insert selected-text)
@@ -90,12 +128,23 @@
                               "pandoc" t t nil
                               "-f" "gfm" "-t" "rtf" "-s")))
               (unless (zerop exit-code)
-                (user-error "pandoc conversion failed")))
+                (user-error "pandoc RTF conversion failed")))
+            (buffer-string)))
+         (html
+          (with-temp-buffer
+            (insert selected-text)
+            (let ((exit-code (call-process-region
+                              (point-min) (point-max)
+                              "pandoc" t t nil
+                              "-f" "gfm" "-t" "html")))
+              (unless (zerop exit-code)
+                (user-error "pandoc HTML conversion failed")))
             (buffer-string)))
          (tmp-text-file (make-temp-file "markdown-slack-plain-" nil ".txt"))
          (tmp-rtf-file (make-temp-file "markdown-slack-rich-" nil ".rtf"))
+         (tmp-html-file (make-temp-file "markdown-slack-rich-" nil ".html"))
          (jxa-script
-          "ObjC.import(\"Foundation\"); ObjC.import(\"AppKit\"); function run(argv){ const plainPath=argv[0]; const rtfPath=argv[1]; const enc=$.NSUTF8StringEncoding; const plain=$.NSString.stringWithContentsOfFileEncodingError($(plainPath), enc, null); const rtfStr=$.NSString.stringWithContentsOfFileEncodingError($(rtfPath), enc, null); const pb=$.NSPasteboard.generalPasteboard; pb.clearContents; const ok1=pb.setStringForType(plain, $.NSPasteboardTypeString); const rtfData=rtfStr.dataUsingEncoding(enc); const ok2=pb.setDataForType(rtfData, $.NSPasteboardTypeRTF); if (!(ok1 && ok2)) { throw new Error(\"pasteboard write failed\"); } return \"ok\"; }")
+          "ObjC.import(\"Foundation\"); ObjC.import(\"AppKit\"); function run(argv){ const plainPath=argv[0]; const rtfPath=argv[1]; const htmlPath=argv[2]; const enc=$.NSUTF8StringEncoding; const plain=$.NSString.stringWithContentsOfFileEncodingError($(plainPath), enc, null); const rtfStr=$.NSString.stringWithContentsOfFileEncodingError($(rtfPath), enc, null); const htmlStr=$.NSString.stringWithContentsOfFileEncodingError($(htmlPath), enc, null); const pb=$.NSPasteboard.generalPasteboard; pb.clearContents; const ok1=pb.setStringForType(plain, $.NSPasteboardTypeString); const rtfData=rtfStr.dataUsingEncoding(enc); const htmlData=htmlStr.dataUsingEncoding(enc); const ok2=pb.setDataForType(rtfData, $.NSPasteboardTypeRTF); const ok3=pb.setDataForType(htmlData, $.NSPasteboardTypeHTML); if (!(ok1 && ok2 && ok3)) { throw new Error(\"pasteboard write failed\"); } return \"ok\"; }")
          (exit-code nil))
     (unwind-protect
         (progn
@@ -103,17 +152,21 @@
             (insert selected-text))
           (with-temp-file tmp-rtf-file
             (insert rtf))
+          (with-temp-file tmp-html-file
+            (insert html))
           (setq exit-code
                 (call-process "osascript" nil nil nil
                               "-l" "JavaScript"
                               "-e" jxa-script
-                              tmp-text-file tmp-rtf-file))
+                              tmp-text-file tmp-rtf-file tmp-html-file))
           (unless (zerop exit-code)
             (user-error "Setting clipboard rich/plain data failed")))
       (when (file-exists-p tmp-text-file)
         (delete-file tmp-text-file))
       (when (file-exists-p tmp-rtf-file)
-        (delete-file tmp-rtf-file))))
+        (delete-file tmp-rtf-file))
+      (when (file-exists-p tmp-html-file)
+        (delete-file tmp-html-file))))
   (deactivate-mark)
   (message "Copied rich text to clipboard for Slack"))
 

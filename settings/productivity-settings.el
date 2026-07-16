@@ -636,15 +636,24 @@ INFILE is passed as the input file for `call-process'."
      (user-error "Clipboard image copying is not implemented for %s" system-type))))
 
 (defun lgm/copy-image-at-point-to-clipboard ()
-  "Copy the image referenced at point to the system clipboard.
-
-Supports Org file links, Markdown image syntax, and plain file paths."
+  "Copy the current or referenced image to the system clipboard."
   (interactive)
-  (if-let ((file (lgm--image-file-at-point)))
-      (progn
-        (lgm--copy-image-file-to-clipboard file)
-        (message "Copied image to clipboard: %s" (abbreviate-file-name file)))
-    (user-error "No local image file found at point")))
+  (let ((file
+         (or (when (and buffer-file-name
+                        (image-type-from-file-name buffer-file-name))
+               buffer-file-name)
+             (lgm--image-file-at-point))))
+    (unless file
+      (user-error "No local image file found"))
+
+    (setq file (expand-file-name file))
+
+    (unless (file-readable-p file)
+      (user-error "Image is not readable: %s" file))
+
+    (lgm--copy-image-file-to-clipboard file)
+    (message "Copied image to clipboard: %s"
+             (abbreviate-file-name file))))
 
 ;;zygospore lets you revert C-x 1 (delete-other-window) by pressing C-x 1 again
 (use-package zygospore

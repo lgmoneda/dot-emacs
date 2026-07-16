@@ -369,8 +369,8 @@ This should only apply to jupyter-lang blocks."
 (setq org-image-align 'center)
 
 ;; Latex in org
-(setq exec-path (append exec-path '("/Library/TeX/texbin/latex")))
-(setq exec-path (append exec-path '("/usr/local/Cellar/imagemagick/7.1.0-55/bin/magick")))
+(add-to-list 'exec-path "/Library/TeX/texbin")
+(add-to-list 'exec-path "/opt/homebrew/bin")
 
 ;; ;; Add Tikz
 (add-to-list 'org-latex-packages-alist
@@ -1157,6 +1157,72 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
   (setq org-roam-node-display-template
 	(concat "${title:105} "
 		(propertize "${tags:40}" 'face 'org-tag))))
+
+(require 'json)
+
+(defun lgm/projectify--ensure-claude-local-settings (project-dir)
+  "Configure Claude Code auto-memory under PROJECT-DIR."
+  (let* ((claude-dir (expand-file-name ".claude" project-dir))
+         (memory-dir (expand-file-name "memory" claude-dir))
+         (settings-file (expand-file-name "settings.local.json" claude-dir))
+         (settings
+          (if (file-exists-p settings-file)
+              (let ((json-object-type 'hash-table)
+                    (json-array-type 'list)
+                    (json-key-type 'string))
+                (json-read-file settings-file))
+            (make-hash-table :test 'equal))))
+    (unless (hash-table-p settings)
+      (user-error "Claude settings are not a JSON object: %s" settings-file))
+    (make-directory memory-dir t)
+    (puthash "autoMemoryDirectory" (directory-file-name memory-dir) settings)
+    (let ((json-encoding-pretty-print t))
+      (with-temp-file settings-file
+        (insert (json-encode settings))
+        (insert "\n")))))
+
+(defun lgm/projectify-org-roam-file ()
+  "Move the current Org-roam file into a same-named project directory.
+
+For a file named `20260611120000-my-note.org', move it to
+`my-note/20260611120000-my-note.org', create an empty `.project' file in
+that directory, configure Claude Code project-local memory under
+`.claude/memory', switch the current buffer to the moved file, and resync
+the Org-roam database."
+  (interactive)
+  (unless (derived-mode-p 'org-mode)
+    (user-error "Current buffer is not in Org mode"))
+  (unless buffer-file-name
+    (user-error "Current buffer is not visiting a file"))
+  (unless (and (fboundp 'org-roam-file-p)
+               (org-roam-file-p))
+    (user-error "Current file is not an Org-roam file"))
+  (let* ((old-path (expand-file-name buffer-file-name))
+         (old-dir (file-name-directory old-path))
+         (file-name (file-name-nondirectory old-path))
+         (base-name (file-name-base file-name))
+         (project-name (replace-regexp-in-string "\\`[0-9]+-" "" base-name))
+         (target-dir (expand-file-name project-name old-dir))
+         (target-path (expand-file-name file-name target-dir))
+         (project-file (expand-file-name ".project" target-dir))
+         (point-pos (point)))
+    (unless (> (length project-name) 0)
+      (user-error "Could not derive project directory name from %s" file-name))
+    (when (file-exists-p target-path)
+      (user-error "Target file already exists: %s" target-path))
+    (save-buffer)
+    (make-directory target-dir t)
+    (rename-file old-path target-path)
+    (unless (file-exists-p project-file)
+      (write-region "" nil project-file nil 'silent))
+    (lgm/projectify--ensure-claude-local-settings target-dir)
+    (find-alternate-file target-path)
+    (goto-char (min point-pos (point-max)))
+    (when (fboundp 'org-roam-db-sync)
+      (org-roam-db-sync))
+    (message "Moved Org-roam file to %s and configured Claude memory under %s"
+             target-path
+             (expand-file-name ".claude/memory" target-dir))))
 
 ;; Improve org-consult by revealing a heading if folded and keep recentering
 (add-hook 'consult-after-jump-hook (lambda () (org-reveal) (recenter)))
@@ -3043,6 +3109,28 @@ Elsewhere: behave like `org-cycle`."
 ;; price tracker
 (add-to-list 'load-path "~/repos/my-life-scripts/price-tracker")
 (require 'price-tracker)
+
+;; Should I keep it?
+(setq org-latex-compiler "lualatex")
+(setq org-latex-pdf-process
+      '("latexmk -lualatex -shell-escape -interaction=nonstopmode -output-directory=%o %f"))
+
+(setq org-preview-latex-default-process 'dvisvgm)
+
+(setq org-preview-latex-process-alist
+      '((dvisvgm
+         :programs ("xelatex" "dvisvgm")
+         :description "xdv > svg"
+         :message "you need xelatex and dvisvgm."
+         :image-input-type "xdv"
+         :image-output-type "svg"
+         :image-size-adjust (1.7 . 1.5)
+         :latex-compiler
+         ("xelatex -no-pdf -interaction nonstopmode -output-directory %o %f")
+         :image-converter
+         ("dvisvgm %f -n -b min -c %S -o %O"))))
+
+
 
 (provide 'org-settings)
 ;;; org-settings.el ends here

@@ -228,10 +228,18 @@ display the output in a new temporary buffer."
   :type 'boolean
   :group 'lgm)
 
+(defun lgm/async-shell-command-no-window (command buffer-name)
+  "Run COMMAND asynchronously in BUFFER-NAME without displaying its window."
+  (let ((display-buffer-alist
+         (cons `(,(regexp-quote buffer-name) (display-buffer-no-window))
+               display-buffer-alist)))
+    (async-shell-command command buffer-name)))
+
 (defun start-semantic-search ()
   (interactive)
-  (async-shell-command "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m core.semantic_search")
-  (delete-window (get-buffer-window (get-buffer "*Async Shell Command*"))))
+  (lgm/async-shell-command-no-window
+   "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m core.semantic_search"
+   "*org-roam-semantic-search-service*"))
 
 ;; Q&A
 
@@ -262,8 +270,9 @@ display the output in a new temporary buffer."
 
 (defun start-qna ()
   (interactive)
-  (async-shell-command "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m core.qna")
-  (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<2>"))))
+  (lgm/async-shell-command-no-window
+   "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m core.qna"
+   "*org-roam-qna-service*"))
 
 ;; Colorful Chunk Semantic Search
 (require 'cl-lib)
@@ -401,8 +410,9 @@ display the output in a new temporary buffer."
 ;; Using python code to do the parsing so I can apply ml models
 (defun start-discourse-segmentation ()
   (interactive)
-  (async-shell-command "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m core.discourse_segmentation")
-  (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<3>"))))
+  (lgm/async-shell-command-no-window
+   "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m core.discourse_segmentation"
+   "*org-roam-discourse-segmentation-service*"))
 
 (when lgm/start-org-roam-ai-services-on-startup
   (add-hook 'emacs-startup-hook #'start-semantic-search)

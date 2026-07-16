@@ -263,13 +263,15 @@ FEEDBACK-TYPE can be 'accept' or 'correct'."
 
 (defun start-link-type-rec-sys ()
   (interactive)
-  (async-shell-command "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m core.link_rec_sys")
-  (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<6>"))))
+  (lgm/async-shell-command-no-window
+   "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m core.link_rec_sys"
+   "*org-roam-link-recommendation-service*"))
 
 (defun start-link-type-classifier ()
   (interactive)
-  (async-shell-command "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m classifiers.link_type_model_serving --host 0.0.0.0 --port 8000")
-  (delete-window (get-buffer-window (get-buffer "*Async Shell Command*<7>"))))
+  (lgm/async-shell-command-no-window
+   "source ~/.zshrc && conda activate ml3 && cd /Users/luis.moneda/repos/org-roam-ai && python -m classifiers.link_type_model_serving --host 0.0.0.0 --port 8000"
+   "*org-roam-link-type-classifier-service*"))
 
 (defcustom lgm/start-link-recommendation-services-on-startup t
   "Start org-roam link recommendation Python services automatically after Emacs startup."

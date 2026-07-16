@@ -670,6 +670,7 @@ Asks whether to commit and push to GitHub after export."
         (message "✅ Exported Proust HTML with bibliography to: %s" output-file)))))
 
 ;; epub settings
+(require 'cl-lib)
 (require 'subr-x)
 
 (defun my/org-pandoc--collect-args ()
@@ -719,10 +720,33 @@ With prefix arg (C-u), prompt for OUTPUT path."
                   (s (replace-regexp-in-string "[ \t\n\r]+" " " s))
                   ;; remove path separators and other annoying chars
                   (s (replace-regexp-in-string "[/\\\\:*?\"<>|]" "" s))
+                  ;; avoid awkward names like \"Title..epub\"
+                  (s (replace-regexp-in-string "[.[:space:]]+\\'" "" s))
                   ;; keep it tidy
                   (s (replace-regexp-in-string "[[:cntrl:]]" "" s)))
              (string-trim s)))
-       (nonempty (s) (and s (not (string-empty-p (string-trim s))) s)))
+       (nonempty (s) (and s (not (string-empty-p (string-trim s))) s))
+       (utf8-bytes (s)
+           "Return the number of bytes S will use as a UTF-8 filename."
+           (string-bytes (encode-coding-string s 'utf-8)))
+       (shorten-base (s max-bytes)
+           "Shorten S to fit MAX-BYTES as a UTF-8 filename component.
+Append a stable hash when truncation is needed."
+           (if (<= (utf8-bytes s) max-bytes)
+               s
+             (let* ((hash (substring (secure-hash 'sha1 s) 0 8))
+                    (suffix (concat "-" hash))
+                    (budget (- max-bytes (utf8-bytes suffix)))
+                    (used 0)
+                    (result ""))
+               (cl-loop for char across s
+                        for piece = (char-to-string char)
+                        for piece-bytes = (utf8-bytes piece)
+                        while (<= (+ used piece-bytes) budget)
+                        do (setq result (concat result piece)
+                                 used (+ used piece-bytes)))
+               (concat (replace-regexp-in-string "[.[:space:]-]+\\'" "" result)
+                       suffix)))))
 
     (let* ((infile (buffer-file-name))
            (fallback-base (file-name-base infile))
@@ -737,6 +761,10 @@ With prefix arg (C-u), prompt for OUTPUT path."
            (base  (if parts
                       (mapconcat #'identity parts " - ")
                     fallback-base))
+           ;; APFS/HFS+ file names are limited per path component. Keep the
+           ;; generated basename well below that limit and reserve room for
+           ;; \".epub\".
+           (base (shorten-base (sanitize base) 180))
 
            (default-out (expand-file-name (concat base ".epub") "~/Downloads/"))
            (outfile (or output default-out))
@@ -757,7 +785,13 @@ With prefix arg (C-u), prompt for OUTPUT path."
                         (mapconcat #'shell-quote-argument args " ")))
         (setq buffer-read-only t))
 
-      (let ((exit-code (apply #'call-process "pandoc" nil buf t args)))
+      (let ((exit-code
+             (with-current-buffer buf
+               (let ((buffer-read-only nil)
+                     (inhibit-read-only t))
+                 (apply #'call-process "pandoc" nil buf t args)))))
+        (with-current-buffer buf
+          (setq buffer-read-only t))
         (if (and (integerp exit-code) (= exit-code 0))
             (message "EPUB exported: %s" outfile)
           (display-buffer buf)

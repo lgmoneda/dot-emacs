@@ -109,6 +109,15 @@
   "Return KEY from agent-shell UI RANGE."
   (alist-get key range))
 
+(defun my/agent-shell--make-input-block-overlay (start end)
+  "Create an input block overlay between START and END."
+  (let ((overlay (make-overlay start end nil t nil)))
+    (overlay-put overlay 'face '(:background "#DDECCB" :extend t))
+    (overlay-put overlay 'priority 100)
+    (overlay-put overlay 'evaporate t)
+    (overlay-put overlay 'my/agent-shell-input-block t)
+    (push overlay my/agent-shell-input-block-overlays)))
+
 (defun my/agent-shell--render-input-block (result)
   "Render user-message RESULT from `agent-shell-ui-update-text' as a block."
   (when-let* (((derived-mode-p 'agent-shell-mode))
@@ -123,12 +132,7 @@
     (when (eq (char-after start) ?\n)
       (setq start (1+ start)))
     (my/agent-shell--clear-input-block-overlays start end)
-    (let ((overlay (make-overlay start end nil t nil)))
-      (overlay-put overlay 'face '(:background "#DDECCB" :extend t))
-      (overlay-put overlay 'priority 100)
-      (overlay-put overlay 'evaporate t)
-      (overlay-put overlay 'my/agent-shell-input-block t)
-      (push overlay my/agent-shell-input-block-overlays)))
+    (my/agent-shell--make-input-block-overlay start end))
   result)
 
 (defun my/agent-shell--render-live-input-block (orig-fun &rest args)
@@ -142,22 +146,24 @@
         (when-let* ((end (and (boundp 'comint-last-input-end)
                               (markerp comint-last-input-end)
                               (marker-position comint-last-input-end)))
+                    (end (save-excursion
+                           (goto-char end)
+                           (line-end-position)))
                     ((< start end)))
           (my/agent-shell--clear-input-block-overlays start end)
-          (let ((overlay (make-overlay start end nil t nil)))
-            (overlay-put overlay 'face '(:background "#DDECCB" :extend t))
-            (overlay-put overlay 'priority 100)
-            (overlay-put overlay 'evaporate t)
-            (overlay-put overlay 'my/agent-shell-input-block t)
-            (push overlay my/agent-shell-input-block-overlays)))))))
+          (my/agent-shell--make-input-block-overlay start end))))))
 
 (with-eval-after-load 'agent-shell-ui
-  (advice-add 'agent-shell-ui-update-text
-              :filter-return #'my/agent-shell--render-input-block))
+  (unless (advice-member-p #'my/agent-shell--render-input-block
+                           'agent-shell-ui-update-text)
+    (advice-add 'agent-shell-ui-update-text
+                :filter-return #'my/agent-shell--render-input-block)))
 
 (with-eval-after-load 'shell-maker
-  (advice-add 'shell-maker-submit
-              :around #'my/agent-shell--render-live-input-block))
+  (unless (advice-member-p #'my/agent-shell--render-live-input-block
+                           'shell-maker-submit)
+    (advice-add 'shell-maker-submit
+                :around #'my/agent-shell--render-live-input-block)))
 
 ;; to know mode ids, use inside an agent shell.
 ;; (mapcar (lambda (mode)
@@ -473,7 +479,7 @@ Otherwise, jump to *Agent-Shell Buffers* (creating it if needed)."
 (setq agent-shell-model-router-rules
       '((:name "research"  :model "Opus"
          :keywords ("research" "investigate" "analyze"))
-        (:name "reply"     :model "Sonnet (1M context)"
+        (:name "reply"     :model "Sonnet"
          :keywords ("reply" "send a message"))
         (:name "code"      :model "Opus"
          :keywords ("implement" "refactor"))
@@ -482,7 +488,7 @@ Otherwise, jump to *Agent-Shell Buffers* (creating it if needed)."
 
 ;; Layer B: fallback by complexity.
 (setq agent-shell-model-router-complexity-models
-      '((high   . "Opus") (medium . "Sonnet (1M context)") (low . "Haiku")))
+      '((high   . "Opus") (medium . "Sonnet") (low . "Haiku")))
 
 (agent-shell-model-router-mode 1)
 

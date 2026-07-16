@@ -10,6 +10,8 @@
 (defconst lgm/weight--stable-file "~/Dropbox/data-about-luis/weight-tracker/stable_weights.csv")
 (defconst lgm/physical-prog--script "~/repos/my-life-scripts/physical-progress-tracker/physical_progress_tracker.py")
 (defconst lgm/physical-prog--timer-seconds 10)
+(defconst lgm/personal-health--gymday-dir "~/repos/my-life-scripts/gymday/")
+(defconst lgm/personal-health--garmin-dir "~/repos/my-life-scripts/garmin-connect-extractor/")
 
 (defun lgm/weight--path (file-name)
   "Expand FILE-NAME inside the weight tracker directory."
@@ -146,6 +148,72 @@ Plist keys: :timestamp, :weight, :profile."
               (erase-buffer))
             (message "Physical progress capture started. Auto-photo in %ss."
                      lgm/physical-prog--timer-seconds))))))))
+
+(defun lgm/personal-health-data--process-sentinel (process _event)
+  "Sentinel for PROCESS used by `lgm/personal-health-data-run'."
+  (when (memq (process-status process) '(exit signal))
+    (let ((exit-code (process-exit-status process)))
+      (if (= exit-code 0)
+          (message "Personal health data update completed.")
+        (message "Personal health data update failed (exit %s). Check buffer *lgm/personal-health-data*"
+                 exit-code)))))
+
+;;;###autoload
+(defun lgm/personal-health-data-run ()
+  "Run gymday analysis and Garmin export scripts."
+  (interactive)
+  (let ((running-process (get-process "lgm/personal-health-data-process")))
+    (if (and running-process (process-live-p running-process))
+        (message "Personal health data update already running.")
+      (let* ((gymday-dir (file-name-as-directory
+                          (expand-file-name lgm/personal-health--gymday-dir)))
+             (garmin-dir (file-name-as-directory
+                          (expand-file-name lgm/personal-health--garmin-dir)))
+             (gymday-script (expand-file-name "run_analysis.py" gymday-dir))
+             (garmin-script (expand-file-name "export.py" garmin-dir)))
+        (cond
+         ((not (file-exists-p gymday-script))
+          (message "Gymday analysis script not found: %s" gymday-script))
+         ((not (file-exists-p garmin-script))
+          (message "Garmin export script not found: %s" garmin-script))
+         (t
+          (let* ((command
+                  (mapconcat
+                   #'identity
+                   (list
+                    "set -e"
+                    (format "cd %s" (shell-quote-argument gymday-dir))
+                    (mapconcat #'identity
+                               (list (shell-quote-argument lgm/weight--python)
+                                     (shell-quote-argument gymday-script))
+                               " ")
+                    (format "cd %s" (shell-quote-argument garmin-dir))
+                    (mapconcat #'identity
+                               (list (shell-quote-argument lgm/weight--python)
+                                     (shell-quote-argument garmin-script))
+                               " "))
+                   " && "))
+                 (process-buffer (get-buffer-create " *lgm/personal-health-data*"))
+                 (process (make-process
+                           :name "lgm/personal-health-data-process"
+                           :buffer process-buffer
+                           :command (list "zsh" "-lc" command)
+                           :noquery t
+                           :sentinel #'lgm/personal-health-data--process-sentinel)))
+            (with-current-buffer process-buffer
+              (erase-buffer))
+            (message "Personal health data update started."))))))))
+
+(defun lgm/personal-health-data-follow-link (&optional _path _arg)
+  "Run the personal health data update from an Org link."
+  (lgm/personal-health-data-run))
+
+(with-eval-after-load 'org
+  (org-link-set-parameters
+   "personal-health-data-run"
+   :follow #'lgm/personal-health-data-follow-link
+   :face '(:foreground "DeepSkyBlue" :weight bold)
+   :help-echo "Run gymday analysis and Garmin export"))
 
 (provide 'health-settings)
 ;;; health-settings.el ends here
