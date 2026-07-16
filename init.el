@@ -29,6 +29,16 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
+;; These packages are provided outside straight.el. Treat them as externally
+;; supplied so straight does not clone or pull their source when resolving deps.
+(setq straight-built-in-pseudo-packages
+      (append '(mindre-theme zmq) straight-built-in-pseudo-packages))
+
+(let ((zmq-dir (expand-file-name "elpa30/zmq-20241006.1857"
+                                 user-emacs-directory)))
+  (when (file-directory-p zmq-dir)
+    (add-to-list 'load-path zmq-dir)))
+
 ;; Keep package.el out of package installation. Package-managed use-package
 ;; forms must opt into straight with :straight.
 (setq straight-use-package-by-default nil)
@@ -58,7 +68,15 @@
 (setq custom-file "~/.emacs.d/settings/aesthetics-settings.el")
 
 ;; Add my AI assistant configs
-(add-to-list 'load-path "~/repos/catalyst-assistant/")
+;; (add-to-list 'load-path "~/repos/catalyst-assistant/")
+
+(defun lgm/debug-date-to-time-empty (orig string &rest args)
+  (when (equal string "")
+    (message "date-to-time called with empty string\n%s"
+             (with-output-to-string (backtrace))))
+  (apply orig string args))
+
+(advice-add 'date-to-time :around #'lgm/debug-date-to-time-empty)
 
 (require 'editor-settings)
 (require 'productivity-settings)
@@ -69,11 +87,13 @@
 (require 'git-settings)
 (require 'os-settings)
 (require 'org-settings)
+(require 'org-preview-fast-settings)
 ;; (require 'org-agenda-server-settings)
 (require 'python-settings)
 (require 'gpt-settings)
 (require 'assistant-settings)
-(require 'catalyst-settings)
+;; (require 'catalyst-settings)
+(require 'manager-ai-agent-settings)
 (require 'org-roam-link-recommendations-settings)
 (require 'research-settings)
 (require 'publishing-settings)
@@ -82,6 +102,7 @@
 (require 'claude-code-ide-settings)
 (require 'custom-emacs-mcp-server-settings)
 (require 'media-settings)
+(require 'health-settings)
 ;; (require 'scala-settings)
 ;; (require 'clojure-settings)
 ;; (require 'nu-settings)
