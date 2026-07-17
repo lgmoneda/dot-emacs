@@ -24,8 +24,10 @@ games/*
 melpa/*
 quelpa/*
 straight/*
+straight30/*
 .cache/*
 elpa-29/*
+elpa30/*
 .ob-jupyter/*
 tree-sitter/*
 .org-id-locations
@@ -39,3 +41,4 @@ var/*
 .agent-shell/*
 settings/.beads/
 .beads/
+eln-cache*
