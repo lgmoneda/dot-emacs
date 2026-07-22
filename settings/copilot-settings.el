@@ -33,6 +33,7 @@
         agent-shell-anthropic-default-model-id "sonnet[1m]"
 	agent-shell-anthropic-default-model-name "Sonnet"
 	agent-shell-anthropic-default-session-mode-id "bypassPermissions"
+	agent-shell-openai-default-model-id "gpt-5.6-sol"
         agent-shell-show-welcome-message nil)
   :config
   (setq agent-shell-anthropic-authentication
@@ -361,7 +362,7 @@ Handles [[id:UUID][desc]], [[target][desc]], and [[target]] forms."
   (require 'agent-shell-manager))
 
 (setq agent-shell-manager-ready-status-notification-sound t)
-(setq agent-shell-manager-show-annotation-in-header t)
+(setq agent-shell-manager-show-annotation-in-mode-line t)
 (setq agent-shell-manager-rename-buffers-with-annotation nil)
 (setq agent-shell-context-sources nil)
 
@@ -469,44 +470,28 @@ Otherwise, jump to *Agent-Shell Buffers* (creating it if needed)."
 (define-key my/agent-shell-map (kbd "b")
 	    #'agent-shell-dashboard)
 
-(use-package agent-shell-model-router
-  :straight (:host github :repo "wandersoncferreira/agent-shell-model-router")
-  :after agent-shell)
+;; (use-package agent-shell-model-router
+;;   :straight (:host github :repo "wandersoncferreira/agent-shell-model-router")
+;;   :after agent-shell)
 
-(require 'agent-shell-model-router)
+;; (require 'agent-shell-model-router)
 
-;; Layer A: explicit rules. :model matches substrings of model display names.
-(setq agent-shell-model-router-rules
-      '((:name "research"  :model "Opus"
-         :keywords ("research" "investigate" "analyze"))
-        (:name "reply"     :model "Sonnet"
-         :keywords ("reply" "send a message"))
-        (:name "code"      :model "Opus"
-         :keywords ("implement" "refactor"))
-        (:name "trivial"   :model "Haiku"
-         :keywords ("typo" "rename" "format"))))
+;; ;; Layer A: explicit rules. :model matches substrings of model display names.
+;; (setq agent-shell-model-router-rules
+;;       '((:name "research"  :model "Opus"
+;;          :keywords ("research" "investigate" "analyze"))
+;;         (:name "reply"     :model "Sonnet"
+;;          :keywords ("reply" "send a message"))
+;;         (:name "code"      :model "Opus"
+;;          :keywords ("implement" "refactor"))
+;;         (:name "trivial"   :model "Haiku"
+;;          :keywords ("typo" "rename" "format"))))
 
-;; Layer B: fallback by complexity.
-(setq agent-shell-model-router-complexity-models
-      '((high   . "Opus") (medium . "Sonnet") (low . "Haiku")))
+;; ;; Layer B: fallback by complexity.
+;; (setq agent-shell-model-router-complexity-models
+;;       '((high   . "Opus") (medium . "Sonnet") (low . "Haiku")))
 
-(agent-shell-model-router-mode 1)
-
-;; (use-package agent-shell-sidebar
-;;   :after agent-shell
-;;   ;; :vc (:url "https://github.com/cmacrae/agent-shell-sidebar")
-;;   :custom
-;;   (agent-shell-sidebar-width "25%")
-;;   (agent-shell-sidebar-minimum-width 80)
-;;   (agent-shell-sidebar-maximum-width "50%")
-;;   (agent-shell-sidebar-position 'right)
-;;   (agent-shell-sidebar-locked t)
-;;   (agent-shell-sidebar-default-config
-;;    (agent-shell-anthropic-make-claude-code-config))
-;;   ;; :bind
-;;   ;; (("C-c a s" . agent-shell-sidebar-toggle)
-;;   ;;  ("C-c a f" . agent-shell-sidebar-toggle-focus))
-;;   )
+;; (agent-shell-model-router-mode 1)
 
 ;;; ─── MCP auth helper ─────────────────────────────────────────────────────
 
