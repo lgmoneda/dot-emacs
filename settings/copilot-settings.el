@@ -207,6 +207,140 @@
          :load-env (expand-file-name "~/.nurc.env")))
   )
 
+(defcustom my/agent-shell-drawio-command
+  "/Applications/draw.io.app/Contents/MacOS/draw.io"
+  "Path to the Draw.io executable used for agent-shell diagrams."
+  :type 'file
+  :group 'agent-shell)
+
+(defcustom my/agent-shell-drawio-template
+  (expand-file-name "resources/drawio_transparent_template.svg"
+                    user-emacs-directory)
+  "SVG template copied when creating an agent-shell diagram."
+  :type 'file
+  :group 'agent-shell)
+
+(defun my/agent-shell--drawio-export-png (svg-file png-file)
+  "Export SVG-FILE to PNG-FILE using Draw.io."
+  (let ((svg-file (expand-file-name svg-file))
+        (png-file (expand-file-name png-file)))
+    (with-temp-buffer
+      (let ((status
+             (call-process my/agent-shell-drawio-command nil t nil
+                           "-x" "-f" "png" "--transparent" "--scale" "5"
+                           "-o" png-file svg-file)))
+        (unless (and (integerp status)
+                     (zerop status)
+                     (file-exists-p png-file))
+          (error "Draw.io export failed: %s"
+                 (string-trim (buffer-string))))))))
+
+(defun my/agent-shell--drawio-file-hash (file)
+  "Return FILE's SHA-256 hash, or nil while it is unavailable."
+  (when (file-readable-p file)
+    (ignore-errors (secure-hash 'sha256 file))))
+
+(defun my/agent-shell--drawio-wait-for-save (svg-file initial-hash)
+  "Wait until SVG-FILE differs from INITIAL-HASH.
+
+Draw.io may finish its filesystem write shortly after its UI reports
+that the document was saved, so allow a short grace period after RET."
+  (let (saved)
+    (while (not saved)
+      (read-string "Save the diagram in Draw.io, then press RET to attach: ")
+      (let ((deadline (+ (float-time) 10)))
+        (while (and (not saved) (< (float-time) deadline))
+          (setq saved
+                (let ((current-hash
+                       (my/agent-shell--drawio-file-hash svg-file)))
+                  (and current-hash
+                       (not (equal initial-hash current-hash)))))
+          (unless saved
+            (accept-process-output nil 0.25))))
+      (unless saved
+        (message "No saved changes detected; save in Draw.io and try again")))
+    saved))
+
+(defun my/agent-shell--attach-drawio-file (shell-buffer svg-file)
+  "Export SVG-FILE and attach its PNG to SHELL-BUFFER."
+  (let* ((svg-file (expand-file-name svg-file))
+         (png-file (file-name-with-extension
+                    (file-name-sans-extension svg-file) "png")))
+    (my/agent-shell--drawio-export-png svg-file png-file)
+    (let ((context
+           (with-current-buffer shell-buffer
+             (agent-shell--get-files-context
+              :files (list png-file)
+              :agent-cwd (agent-shell-cwd)))))
+      (agent-shell-insert
+       :shell-buffer shell-buffer
+       :text
+       (concat
+        "Please inspect the following diagram and treat its contents "
+        "as part of my request:\n\n"
+        context)))
+    (message "Attached %s; editable source: %s" png-file svg-file)))
+
+(defun my/agent-shell-drawio (&optional attach-existing)
+  "Draw a diagram and attach a PNG preview to the current agent-shell prompt.
+
+Keep the editable SVG and exported PNG under .agent-shell/diagrams.
+After saving the drawing, press RET in Emacs to export it and insert it
+as an `@file' attachment.  This uses agent-shell's native attachment
+pipeline instead of Org image overlays.
+
+With prefix argument ATTACH-EXISTING, select and attach an existing SVG
+without opening Draw.io."
+  (interactive "P")
+  (require 'agent-shell)
+  (unless (derived-mode-p 'agent-shell-mode)
+    (user-error "Run this command from an agent-shell buffer"))
+  (when (shell-maker-busy)
+    (user-error "Agent-shell is busy; wait for the current turn to finish"))
+  (unless (file-executable-p my/agent-shell-drawio-command)
+    (user-error "Draw.io executable not found: %s"
+                my/agent-shell-drawio-command))
+  (unless (file-readable-p my/agent-shell-drawio-template)
+    (user-error "Draw.io template not found: %s"
+                my/agent-shell-drawio-template))
+  (let* ((shell-buffer (current-buffer))
+         (directory (agent-shell--dot-subdir "diagrams")))
+    (if attach-existing
+        (let ((svg-file
+               (read-file-name
+                "Attach existing Draw.io SVG: " directory nil t nil
+                (lambda (path)
+                  (or (file-directory-p path)
+                      (string-equal
+                       (downcase (or (file-name-extension path) ""))
+                       "svg"))))))
+          (my/agent-shell--attach-drawio-file shell-buffer svg-file))
+      (let* ((default-name
+              (format-time-string "diagram-%Y-%m-%d_%H-%M-%S.svg"))
+             (requested-name
+              (string-trim
+               (read-string (format "Diagram filename (%s): " default-name)
+                            nil nil default-name)))
+             (basename
+              (replace-regexp-in-string
+               "[^[:alnum:]_.-]+" "-"
+               (file-name-base (file-name-nondirectory requested-name))))
+             (filename (file-name-with-extension basename "svg"))
+             (svg-file (expand-file-name filename directory))
+             (png-file (file-name-with-extension
+                        (file-name-sans-extension svg-file) "png")))
+        (when (string-empty-p basename)
+          (user-error "Diagram filename must contain letters or numbers"))
+        (when (or (file-exists-p svg-file) (file-exists-p png-file))
+          (user-error "Diagram already exists: %s" filename))
+        (copy-file my/agent-shell-drawio-template svg-file)
+        (let ((template-hash
+               (my/agent-shell--drawio-file-hash svg-file)))
+          (start-process "agent-shell-drawio" nil
+                         my/agent-shell-drawio-command svg-file)
+          (my/agent-shell--drawio-wait-for-save svg-file template-hash))
+        (my/agent-shell--attach-drawio-file shell-buffer svg-file)))))
+
 ;; Create prefix keymap
 (define-prefix-command 'my/agent-shell-map)
 
@@ -243,6 +377,9 @@
 
 (define-key my/agent-shell-map (kbd "d")
 	    #'agent-shell-send-dwim)
+
+(define-key my/agent-shell-map (kbd "g")
+  #'my/agent-shell-drawio)
 
 (defun my/agent-shell-setup-org-roam-links ()
   (require 'org) ;; for org-link face
