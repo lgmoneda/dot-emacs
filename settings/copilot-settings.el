@@ -220,25 +220,51 @@
   :type 'file
   :group 'agent-shell)
 
-(defun my/agent-shell--drawio-export-png (svg-file png-file)
-  "Export SVG-FILE to PNG-FILE using Draw.io."
+(defun my/agent-shell--drawio-export-png (svg-file png-file &optional transparent)
+  "Export SVG-FILE to PNG-FILE using Draw.io.
+
+Use a light rendering theme.  When TRANSPARENT is non-nil, preserve the
+transparent canvas; otherwise use an opaque background for image clients
+that composite transparency onto black."
   (let ((svg-file (expand-file-name svg-file))
         (png-file (expand-file-name png-file)))
     (with-temp-buffer
-      (let ((status
-             (call-process my/agent-shell-drawio-command nil t nil
-                           "-x" "-f" "png" "--transparent" "--scale" "5"
-                           "-o" png-file svg-file)))
+      (let* ((arguments
+              (append
+               '("-x" "-f" "png" "--theme" "light" "--scale" "5")
+               (when transparent '("--transparent"))
+               (list "-o" png-file svg-file)))
+             (status
+              (apply #'call-process my/agent-shell-drawio-command
+                     nil t nil arguments)))
         (unless (and (integerp status)
                      (zerop status)
                      (file-exists-p png-file))
           (error "Draw.io export failed: %s"
                  (string-trim (buffer-string))))))))
 
+(defun my/agent-shell--drawio-make-agent-image (png-file agent-image-file)
+  "Flatten transparent PNG-FILE to opaque AGENT-IMAGE-FILE using sips."
+  (with-temp-buffer
+    (let ((status
+           (call-process "/usr/bin/sips" nil t nil
+                         "-s" "format" "jpeg"
+                         "-s" "formatOptions" "100"
+                         png-file "--out" agent-image-file)))
+      (unless (and (integerp status)
+                   (zerop status)
+                   (file-exists-p agent-image-file))
+        (error "Agent image conversion failed: %s"
+               (string-trim (buffer-string)))))))
+
 (defun my/agent-shell--drawio-file-hash (file)
   "Return FILE's SHA-256 hash, or nil while it is unavailable."
   (when (file-readable-p file)
-    (ignore-errors (secure-hash 'sha256 file))))
+    (ignore-errors
+      (with-temp-buffer
+        (set-buffer-multibyte nil)
+        (insert-file-contents-literally file)
+        (secure-hash 'sha256 (current-buffer))))))
 
 (defun my/agent-shell--drawio-wait-for-save (svg-file initial-hash)
   "Wait until SVG-FILE differs from INITIAL-HASH.
@@ -262,16 +288,29 @@ that the document was saved, so allow a short grace period after RET."
     saved))
 
 (defun my/agent-shell--attach-drawio-file (shell-buffer svg-file)
-  "Export SVG-FILE and attach its PNG to SHELL-BUFFER."
+  "Export SVG-FILE and attach its PNG derivatives to SHELL-BUFFER.
+
+Display a transparent preview in Emacs while attaching an opaque copy
+for image clients that render transparency against black."
   (let* ((svg-file (expand-file-name svg-file))
          (png-file (file-name-with-extension
-                    (file-name-sans-extension svg-file) "png")))
-    (my/agent-shell--drawio-export-png svg-file png-file)
+                    (file-name-sans-extension svg-file) "png"))
+         (agent-image-file
+          (concat (file-name-sans-extension svg-file) "-agent.jpg")))
+    (my/agent-shell--drawio-export-png svg-file png-file t)
+    (my/agent-shell--drawio-make-agent-image png-file agent-image-file)
     (let ((context
            (with-current-buffer shell-buffer
              (agent-shell--get-files-context
-              :files (list png-file)
+              :files (list agent-image-file)
               :agent-cwd (agent-shell-cwd)))))
+      (when-let* ((preview
+                   (agent-shell--load-image
+                    :file-path png-file
+                    :max-width 200)))
+        (add-text-properties 0 (length context)
+                             (list 'display preview)
+                             context))
       (agent-shell-insert
        :shell-buffer shell-buffer
        :text
@@ -279,12 +318,15 @@ that the document was saved, so allow a short grace period after RET."
         "Please inspect the following diagram and treat its contents "
         "as part of my request:\n\n"
         context)))
-    (message "Attached %s; editable source: %s" png-file svg-file)))
+    (message "Attached %s; transparent preview: %s; editable source: %s"
+             agent-image-file png-file svg-file)))
 
 (defun my/agent-shell-drawio (&optional attach-existing)
   "Draw a diagram and attach a PNG preview to the current agent-shell prompt.
 
-Keep the editable SVG and exported PNG under .agent-shell/diagrams.
+Keep the editable SVG and exported images under .agent-shell/diagrams.
+Emacs displays a transparent PNG while the agent receives an opaque
+`-agent.jpg' copy, keeping default black strokes visible to both.
 After saving the drawing, press RET in Emacs to export it and insert it
 as an `@file' attachment.  This uses agent-shell's native attachment
 pipeline instead of Org image overlays.
@@ -328,10 +370,14 @@ without opening Draw.io."
              (filename (file-name-with-extension basename "svg"))
              (svg-file (expand-file-name filename directory))
              (png-file (file-name-with-extension
-                        (file-name-sans-extension svg-file) "png")))
+                        (file-name-sans-extension svg-file) "png"))
+             (agent-image-file
+              (concat (file-name-sans-extension svg-file) "-agent.jpg")))
         (when (string-empty-p basename)
           (user-error "Diagram filename must contain letters or numbers"))
-        (when (or (file-exists-p svg-file) (file-exists-p png-file))
+        (when (or (file-exists-p svg-file)
+                  (file-exists-p png-file)
+                  (file-exists-p agent-image-file))
           (user-error "Diagram already exists: %s" filename))
         (copy-file my/agent-shell-drawio-template svg-file)
         (let ((template-hash
