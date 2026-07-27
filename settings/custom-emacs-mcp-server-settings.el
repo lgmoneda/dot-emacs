@@ -1836,5 +1836,29 @@ Security: Read-only operation, safe for file analysis"
 (emacs-org-mode-mcp-enable)
 (mcp-server-lib-start)
 
+(defvar lmoneda/emacs-mcp-tunnel-process nil
+  "Process running the ChatGPT MCP tunnel.")
+
+(defun lmoneda/emacs-mcp-tunnel-start ()
+  "Start the ChatGPT MCP tunnel for this Emacs instance."
+  (unless (process-live-p lmoneda/emacs-mcp-tunnel-process)
+    (setq lmoneda/emacs-mcp-tunnel-process
+          (make-process
+           :name "emacs-mcp-tunnel"
+           :buffer "*emacs-mcp-tunnel*"
+           :command '("/Users/luis.moneda/.local/bin/tunnel-client"
+                      "run" "--profile" "emacs-local")
+           :connection-type 'pipe
+           :noquery t))))
+
+(defun lmoneda/emacs-mcp-tunnel-stop ()
+  "Stop the ChatGPT MCP tunnel."
+  (when (process-live-p lmoneda/emacs-mcp-tunnel-process)
+    (delete-process lmoneda/emacs-mcp-tunnel-process))
+  (setq lmoneda/emacs-mcp-tunnel-process nil))
+
+(lmoneda/emacs-mcp-tunnel-start)
+(add-hook 'kill-emacs-hook #'lmoneda/emacs-mcp-tunnel-stop)
+
 (provide 'custom-emacs-mcp-server-settings)
 ;;; emacs-mcp-server-settings.el ends here
