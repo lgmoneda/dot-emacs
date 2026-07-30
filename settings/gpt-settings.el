@@ -119,7 +119,6 @@
   "Call the given Python SCRIPT-NAME with the given TEXT as input and
 display the output in a new temporary buffer."
     (interactive)
-	;; (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
 	(let* ((text (if (use-region-p)
                      (buffer-substring-no-properties (region-beginning) (region-end))
                    (read-string "Enter search: ")))
@@ -182,42 +181,429 @@ display the output in a new temporary buffer."
 ;;   :bind
 ;;   ("C-c n r" . whisper-run))
 
-;; Blog functions
-(defun call-roam-search-python-server (input-string)
-  "Call Python server with INPUT-STRING and return the output string."
-  (let ((url-request-method "GET")
-        (url-request-extra-headers
-         '(("Content-Type" . "text/plain"))))
-    (with-current-buffer
-        (url-retrieve-synchronously (concat "http://localhost:8800/api/" input-string))
-      (goto-char (point-min))
-      (search-forward-regexp "\n\n")
-      (buffer-substring (point) (point-max)))))
+;; Org-roam semantic search
+(require 'button)
+(require 'cl-lib)
+(require 'json)
+(require 'seq)
+(require 'subr-x)
+(require 'url)
+
+(defgroup org-roam-semantic-search nil
+  "Semantic search interface for Org-roam."
+  :group 'org-roam)
+
+(defcustom org-roam-semantic-search-default-view 'detailed
+  "Default presentation used for semantic search results."
+  :type '(choice (const :tag "Detailed result list" detailed)
+                 (const :tag "Simple Org response" simple))
+  :group 'org-roam-semantic-search)
+
+(defcustom org-roam-semantic-search-result-count 30
+  "Default number of semantic search results."
+  :type 'integer
+  :group 'org-roam-semantic-search)
+
+(defcustom org-roam-semantic-search-query-preview-length 200
+  "Maximum visible characters before a search query is folded."
+  :type 'integer
+  :group 'org-roam-semantic-search)
+
+(defcustom org-roam-semantic-search-separate-scores t
+  "Add a thin background-colored separation between score badges."
+  :type 'boolean
+  :group 'org-roam-semantic-search)
+
+;; Set to nil for a continuous purple score column.
+(setq org-roam-semantic-search-separate-scores t)
+
+(defface org-roam-semantic-search-score
+  '((t (:inherit org-todo :inverse-video t :weight bold)))
+  "Face used for semantic distance scores."
+  :group 'org-roam-semantic-search)
+
+(defface org-roam-semantic-search-title
+  '((t (:inherit org-agenda-structure :height 1.15)))
+  "Face used for the semantic search buffer title."
+  :group 'org-roam-semantic-search)
+
+(defface org-roam-semantic-search-query
+  '((t (:inherit org-quote :extend t)))
+  "Face used for the semantic search query."
+  :group 'org-roam-semantic-search)
+
+(defface org-roam-semantic-search-hierarchy-arrow
+  '((t (:inherit org-todo :weight bold)))
+  "Face used for separators between hierarchy levels."
+  :group 'org-roam-semantic-search)
+
+(defface org-roam-semantic-search-nearest-parent
+  '((t (:inherit shadow :weight semibold)))
+  "Face used for the nearest parent in a hierarchy."
+  :group 'org-roam-semantic-search)
+
+(defvar-local org-roam-semantic-search--query nil)
+(defvar-local org-roam-semantic-search--result-markers nil)
+(defvar-local org-roam-semantic-search--detail-overlays nil)
+(defvar-local org-roam-semantic-search--query-overlay nil)
+(defvar-local org-roam-semantic-search--result-count nil)
+(defvar-local org-roam-semantic-search--view nil)
+
+(defun call-roam-search-python-server (input-string &optional k format)
+  "Search for INPUT-STRING and return the response body.
+K is the result count.  FORMAT is either `org' or `json'."
+  (let* ((url-request-method "GET")
+         (url-request-extra-headers '(("Accept" . "application/json")))
+         (query (url-hexify-string input-string))
+         (parameters
+          (format "?k=%d&format=%s"
+                  (or k org-roam-semantic-search-result-count)
+                  (or format "org")))
+         (response-buffer
+          (url-retrieve-synchronously
+           (concat "http://localhost:8800/api/" query parameters))))
+    (unless response-buffer
+      (user-error "Semantic search service is unavailable"))
+    (unwind-protect
+        (with-current-buffer response-buffer
+          (goto-char (point-min))
+          (unless (re-search-forward "\r?\n\r?\n" nil t)
+            (user-error "Malformed response from semantic search service"))
+          (decode-coding-string
+           (buffer-substring-no-properties (point) (point-max))
+           'utf-8))
+      (kill-buffer response-buffer))))
+
+(defvar org-roam-semantic-search-mode-map (make-sparse-keymap)
+  "Keymap for `org-roam-semantic-search-mode'.")
+
+(set-keymap-parent org-roam-semantic-search-mode-map special-mode-map)
+(define-key org-roam-semantic-search-mode-map
+            (kbd "n") #'org-roam-semantic-search-next-result)
+(define-key org-roam-semantic-search-mode-map
+            (kbd "p") #'org-roam-semantic-search-previous-result)
+(define-key org-roam-semantic-search-mode-map
+            (kbd "RET") #'org-roam-semantic-search-open-result)
+(define-key org-roam-semantic-search-mode-map
+            (kbd "o") #'org-roam-semantic-search-open-result-other-window)
+(define-key org-roam-semantic-search-mode-map
+            (kbd "TAB") #'org-roam-semantic-search-toggle-details)
+(define-key org-roam-semantic-search-mode-map
+            (kbd "<tab>") #'org-roam-semantic-search-toggle-details)
+(define-key org-roam-semantic-search-mode-map
+            (kbd "<backtab>") #'org-roam-semantic-search-toggle-all-details)
+(define-key org-roam-semantic-search-mode-map
+            (kbd "S-TAB") #'org-roam-semantic-search-toggle-all-details)
+(define-key org-roam-semantic-search-mode-map
+            (kbd "g") #'org-roam-semantic-search-refresh)
+(define-key org-roam-semantic-search-mode-map
+            (kbd "/") #'org-roam-semantic-search-edit-query)
+(define-key org-roam-semantic-search-mode-map
+            (kbd "v") #'org-roam-semantic-search-toggle-view)
+
+(define-derived-mode org-roam-semantic-search-mode special-mode
+  "Semantic Search"
+  "Major mode for browsing Org-roam semantic search results."
+  (setq-local truncate-lines nil)
+  (hl-line-mode 1))
+
+(defun org-roam-semantic-search--move-result (direction)
+  "Move to the next result in DIRECTION, which is 1 or -1."
+  (let* ((positions (mapcar #'marker-position
+                            org-roam-semantic-search--result-markers))
+         (line-start (line-beginning-position))
+         (destination
+          (if (> direction 0)
+              (seq-find (lambda (position) (> position line-start)) positions)
+            (car (last (seq-filter
+                        (lambda (position) (< position line-start))
+                        positions))))))
+    (if destination
+        (goto-char destination)
+      (message "No %s result"
+               (if (> direction 0) "next" "previous")))))
+
+(defun org-roam-semantic-search-next-result ()
+  "Move point to the next semantic search result."
+  (interactive)
+  (org-roam-semantic-search--move-result 1))
+
+(defun org-roam-semantic-search-previous-result ()
+  "Move point to the previous semantic search result."
+  (interactive)
+  (org-roam-semantic-search--move-result -1))
+
+(defun org-roam-semantic-search-open-result ()
+  "Open the Org-roam node represented by the result at point."
+  (interactive)
+  (let ((node-id (get-text-property (point) 'org-roam-node-id)))
+    (unless node-id
+      (user-error "No semantic search result at point"))
+    (org-roam-id-open node-id nil)))
+
+(defun org-roam-semantic-search-open-result-other-window ()
+  "Open the Org-roam node at point in another window."
+  (interactive)
+  (let* ((node-id (get-text-property (point) 'org-roam-node-id))
+         (marker (and node-id (org-id-find node-id 'marker))))
+    (unless node-id
+      (user-error "No semantic search result at point"))
+    (unless marker
+      (user-error "Cannot find Org-roam node %s" node-id))
+    (org-mark-ring-push)
+    (switch-to-buffer-other-window (marker-buffer marker))
+    (goto-char marker)
+    (move-marker marker nil)
+    (org-fold-show-context)))
+
+(defun org-roam-semantic-search--detail-overlay-at-point ()
+  "Return the detail overlay belonging to the result at point."
+  (let ((index (get-text-property (point) 'org-roam-result-index)))
+    (seq-find
+     (lambda (overlay)
+       (eq (overlay-get overlay 'org-roam-result-index) index))
+     org-roam-semantic-search--detail-overlays)))
+
+(defun org-roam-semantic-search--set-details-visible (overlay visible)
+  "Set details in OVERLAY to VISIBLE."
+  (overlay-put overlay 'invisible (not visible))
+  (overlay-put (overlay-get overlay 'fold-indicator)
+               'after-string
+               (unless visible (propertize " …" 'face 'shadow))))
+
+(defun org-roam-semantic-search--set-query-visible (visible)
+  "Set the folded query text to VISIBLE."
+  (overlay-put org-roam-semantic-search--query-overlay
+               'invisible
+               (not visible))
+  (overlay-put
+   (overlay-get org-roam-semantic-search--query-overlay 'fold-indicator)
+   'after-string
+   (unless visible
+     (propertize " …" 'face '(org-roam-semantic-search-query shadow)))))
+
+(defun org-roam-semantic-search-toggle-details ()
+  "Toggle the query or result hierarchy at point."
+  (interactive)
+  (if (get-text-property (point) 'org-roam-semantic-search-query)
+      (if org-roam-semantic-search--query-overlay
+          (org-roam-semantic-search--set-query-visible
+           (overlay-get org-roam-semantic-search--query-overlay 'invisible))
+        (user-error "The search query is already fully visible"))
+    (let ((overlay (org-roam-semantic-search--detail-overlay-at-point)))
+      (unless overlay
+        (user-error "No foldable semantic search result at point"))
+      (org-roam-semantic-search--set-details-visible
+       overlay
+       (overlay-get overlay 'invisible)))))
+
+(defun org-roam-semantic-search-toggle-all-details ()
+  "Show all folded result details, or fold all when all are visible."
+  (interactive)
+  (let ((show (seq-some
+               (lambda (overlay) (overlay-get overlay 'invisible))
+               org-roam-semantic-search--detail-overlays)))
+    (dolist (overlay org-roam-semantic-search--detail-overlays)
+      (org-roam-semantic-search--set-details-visible overlay show))))
+
+(defun org-roam-semantic-search--parent-headings (hierarchy title)
+  "Return parent headings from HIERARCHY, excluding TITLE."
+  (let ((headings (split-string hierarchy " > " t "[[:space:]\n]+")))
+    (when (and headings (string= (car (last headings)) title))
+      (setq headings (butlast headings)))
+    headings))
+
+(defun org-roam-semantic-search--insert-hierarchy (headings)
+  "Insert parent HEADINGS as a vertical hierarchy trail."
+  (let ((last-index (1- (length headings))))
+    (cl-loop for heading in headings
+             for index from 0
+             for nested = (> index 0)
+             for prefix = (if nested "            " "          ")
+             for wrap-prefix = (if nested "              " "          ")
+             for line-start = (point)
+             do
+             (insert prefix)
+             (when nested
+               (insert (propertize
+                        "↳ "
+                        'face 'org-roam-semantic-search-hierarchy-arrow)))
+             (insert (propertize
+                      heading
+                      'face
+                      (if (= index last-index)
+                          'org-roam-semantic-search-nearest-parent
+                        'shadow)))
+             (insert "\n")
+             (add-text-properties
+              line-start
+              (point)
+              `(wrap-prefix ,wrap-prefix)))))
+
+(defun org-roam-semantic-search--insert-result (result index)
+  "Insert RESULT at one-based INDEX into the current result buffer."
+  (let* ((id (alist-get 'id result))
+         (title (alist-get 'title result))
+         (hierarchy (alist-get 'hierarchy result))
+         (score (alist-get 'score result))
+         (parent-headings
+          (org-roam-semantic-search--parent-headings hierarchy title))
+         (start (point))
+         (marker (copy-marker (point))))
+    (push marker org-roam-semantic-search--result-markers)
+    (insert
+     (propertize
+      (format " %.2f " score)
+      'face
+      (if org-roam-semantic-search-separate-scores
+          `(:inherit org-roam-semantic-search-score
+            :box (:line-width (0 . -1)
+                  :color ,(face-background 'default nil t)))
+        'org-roam-semantic-search-score)))
+    (insert "  ")
+    (insert-text-button
+     title
+     'face 'link
+     'follow-link t
+     'help-echo "Open Org-roam node"
+     'node-id id
+     'action (lambda (button)
+               (org-roam-id-open (button-get button 'node-id) nil)))
+    (let ((title-end (point)))
+      (insert "\n")
+      (let ((details-start (point)))
+        (when parent-headings
+          (org-roam-semantic-search--insert-hierarchy parent-headings))
+        (let ((details-end (point)))
+          (when (> details-end details-start)
+            (let ((details (make-overlay details-start details-end))
+                  (indicator (make-overlay title-end title-end)))
+              (overlay-put details 'org-roam-result-index index)
+              (overlay-put details 'fold-indicator indicator)
+              (push details org-roam-semantic-search--detail-overlays)
+              (org-roam-semantic-search--set-details-visible details nil)))
+          (add-text-properties start (point)
+                               `(org-roam-node-id ,id
+                                 org-roam-result-index ,index)))))))
+
+(defun org-roam-semantic-search--render-detailed (payload k)
+  "Render structured search PAYLOAD containing up to K results."
+  (let* ((buf (get-buffer-create "*org-roam-similar-nodes*"))
+         (query (alist-get 'query payload))
+         (results (alist-get 'results payload)))
+    (with-current-buffer buf
+      (remove-overlays)
+      (org-roam-semantic-search-mode)
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (setq-local org-roam-semantic-search--query query)
+        (setq-local org-roam-semantic-search--result-count k)
+        (setq-local org-roam-semantic-search--view 'detailed)
+        (setq-local org-roam-semantic-search--result-markers nil)
+        (setq-local org-roam-semantic-search--detail-overlays nil)
+        (setq-local org-roam-semantic-search--query-overlay nil)
+        (insert (propertize "Semantic search"
+                            'face 'org-roam-semantic-search-title)
+                "\n")
+        (insert (make-string 38 ?─) "\n\n")
+        (let ((query-start (point)))
+          (insert (propertize (concat " " query)
+                              'face 'org-roam-semantic-search-query
+                              'org-roam-semantic-search-query t))
+          (let ((query-end (point)))
+            (when (> (length query)
+                     org-roam-semantic-search-query-preview-length)
+              (let* ((fold-start
+                      (+ query-start
+                         1
+                         org-roam-semantic-search-query-preview-length))
+                     (query-overlay (make-overlay fold-start query-end))
+                     (indicator (make-overlay fold-start fold-start)))
+                (overlay-put query-overlay 'fold-indicator indicator)
+                (setq-local org-roam-semantic-search--query-overlay
+                            query-overlay)
+                (org-roam-semantic-search--set-query-visible nil))))
+          (insert (propertize "\n"
+                              'face 'org-roam-semantic-search-query
+                              'org-roam-semantic-search-query t))
+          (insert "\n"))
+        (cl-loop for result in results
+                 for index from 1
+                 do (org-roam-semantic-search--insert-result result index))
+        (setq org-roam-semantic-search--result-markers
+              (nreverse org-roam-semantic-search--result-markers))
+        (setq org-roam-semantic-search--detail-overlays
+              (nreverse org-roam-semantic-search--detail-overlays))
+        (goto-char (point-min))
+        (when org-roam-semantic-search--result-markers
+          (goto-char (marker-position
+                      (car org-roam-semantic-search--result-markers))))))
+    (pop-to-buffer buf)))
+
+(defun org-roam-semantic-search--show-simple (query k)
+  "Display the plain Org search response for QUERY with K results."
+  (let ((buf (get-buffer-create "*org-roam-similar-nodes*"))
+        (api-output (call-roam-search-python-server query k "org")))
+    (with-current-buffer buf
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (org-mode)
+        (insert api-output)
+        (org-shifttab)
+        (goto-char (point-min))))
+    (pop-to-buffer buf)))
+
+(defun org-roam-semantic-search-api (&optional k view query)
+  "Search Org-roam and display K results using VIEW for QUERY.
+VIEW is `detailed' or `simple'.  When QUERY is nil, use the active
+region or prompt for it.  The current plain Org interface remains
+available with `(org-roam-semantic-search-api nil \\='simple)'."
+  (interactive
+   (list (when current-prefix-arg
+           (prefix-numeric-value current-prefix-arg))))
+  (let* ((query (or query
+                    (if (use-region-p)
+                        (buffer-substring-no-properties
+                         (region-beginning) (region-end))
+                      (read-string "Enter search: "))))
+         (k (or k org-roam-semantic-search-result-count))
+         (view (or view org-roam-semantic-search-default-view)))
+    (pcase view
+      ('simple (org-roam-semantic-search--show-simple query k))
+      ('detailed
+       (org-roam-semantic-search--render-detailed
+        (json-parse-string
+         (call-roam-search-python-server query k "json")
+         :object-type 'alist
+         :array-type 'list)
+        k))
+      (_ (user-error "Unknown semantic search view: %s" view)))))
+
+(defun org-roam-semantic-search-refresh ()
+  "Repeat the search displayed in the current result buffer."
+  (interactive)
+  (org-roam-semantic-search-api
+   org-roam-semantic-search--result-count
+   org-roam-semantic-search--view
+   org-roam-semantic-search--query))
+
+(defun org-roam-semantic-search-edit-query ()
+  "Edit and repeat the current semantic search query."
+  (interactive)
+  (org-roam-semantic-search-api
+   org-roam-semantic-search--result-count
+   'detailed
+   (read-string "Enter search: " org-roam-semantic-search--query)))
+
+(defun org-roam-semantic-search-toggle-view ()
+  "Show the current detailed search using the simple Org view."
+  (interactive)
+  (org-roam-semantic-search-api
+   org-roam-semantic-search--result-count
+   'simple
+   org-roam-semantic-search--query))
 
 (prefer-coding-system 'utf-8)
-
-(defun org-roam-semantic-search-api ()
-  "Call the given Python SCRIPT-NAME with the given TEXT as input and
-display the output in a new temporary buffer."
-    (interactive)
-	(let* ((text (if (use-region-p)
-                     (buffer-substring-no-properties (region-beginning) (region-end))
-                   (read-string "Enter search: ")))
-		   (buf (get-buffer-create "*org-roam-similar-nodes*"))
-		   (api-output (call-roam-search-python-server text)))
-	  (with-current-buffer buf
-		(erase-buffer)
-		(set-buffer-file-coding-system 'utf-8)
-		(org-mode)
-		(insert (decode-coding-string api-output 'utf-8))
-		;; (insert (format "%s" api-output))
-		(org-shifttab)
-		;; (insert "\n [[file:/Users/luis.moneda/Dropbox/Agenda/org-roam-ai/output.jpg]]")
-		;; (org-display-inline-images nil t)
-		(display-buffer buf)
-		)
-	  )
-	)
 
 ;;I change the value of this variable to enable me to run two process in different output buffers
 ;; without confirming I want to create another buffer
