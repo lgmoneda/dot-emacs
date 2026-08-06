@@ -47,23 +47,37 @@
           (eval form))))))
 
 (defun lgm/test-appkit-available-p ()
-  "Return non-nil if `python3' can import AppKit."
-  (and (executable-find "python3")
+  "Return non-nil if JavaScript for Automation can import AppKit."
+  (and (executable-find "osascript")
        (zerop
-        (call-process "python3" nil nil nil
-                      "-c" "from AppKit import NSPasteboard"))))
+        (call-process "osascript" nil nil nil
+                      "-l" "JavaScript" "-e" "ObjC.import('AppKit')"))))
 
 (defun lgm/test-macos-clipboard-has-png-p ()
   "Return non-nil if the macOS clipboard currently contains PNG data."
   (with-temp-buffer
     (let ((status
            (call-process
-            "python3" nil t nil
-            "-c"
+            "osascript" nil t nil
+            "-l" "JavaScript" "-e"
             (concat
-             "from AppKit import NSPasteboard, NSPasteboardTypePNG\n"
-             "pb = NSPasteboard.generalPasteboard()\n"
-             "print('true' if pb.dataForType_(NSPasteboardTypePNG) is not None else 'false')\n"))))
+             "ObjC.import('AppKit');"
+             "const pb = $.NSPasteboard.generalPasteboard;"
+             "pb.dataForType($.NSPasteboardTypePNG) ? 'true' : 'false';"))))
+      (and (zerop status)
+           (string= (string-trim (buffer-string)) "true")))))
+
+(defun lgm/test-macos-clipboard-has-tiff-p ()
+  "Return non-nil if the macOS clipboard currently contains TIFF data."
+  (with-temp-buffer
+    (let ((status
+           (call-process
+            "osascript" nil t nil
+            "-l" "JavaScript" "-e"
+            (concat
+             "ObjC.import('AppKit');"
+             "const pb = $.NSPasteboard.generalPasteboard;"
+             "pb.dataForType($.NSPasteboardTypeTIFF) ? 'true' : 'false';"))))
       (and (zerop status)
            (string= (string-trim (buffer-string)) "true")))))
 
@@ -109,4 +123,5 @@
   (lgm/test-with-sample-markdown-buffer
    (lambda ()
      (lgm/copy-image-at-point-to-clipboard)))
-  (should (lgm/test-macos-clipboard-has-png-p)))
+  (should (lgm/test-macos-clipboard-has-png-p))
+  (should (lgm/test-macos-clipboard-has-tiff-p)))

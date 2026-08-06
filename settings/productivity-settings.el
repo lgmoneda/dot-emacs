@@ -473,14 +473,14 @@ When called interactively, use the current buffer's file. In Dired, use
   "Supported image file extensions for image clipboard helpers.")
 
 (defconst lgm/macos-image-clipboard-types
-  '(("png" . "«class PNGf»")
-    ("jpg" . "«class JPEG»")
-    ("jpeg" . "«class JPEG»")
-    ("gif" . "«class GIFf»")
-    ("tif" . "«class TIFF»")
-    ("tiff" . "«class TIFF»")
-    ("bmp" . "«class BMPf»"))
-  "AppleScript image classes for clipboard image copying on macOS.")
+  '(("png" . "public.png")
+    ("jpg" . "public.jpeg")
+    ("jpeg" . "public.jpeg")
+    ("gif" . "com.compuserve.gif")
+    ("tif" . "public.tiff")
+    ("tiff" . "public.tiff")
+    ("bmp" . "com.microsoft.bmp"))
+  "Pasteboard types for image clipboard copying on macOS.")
 
 (defun lgm--image-mime-type (file)
   "Return the clipboard mime type for FILE, or nil if unsupported."
@@ -603,15 +603,41 @@ INFILE is passed as the input file for `call-process'."
 (defun lgm--copy-image-file-to-clipboard-macos (file)
   "Copy FILE to the macOS clipboard as an image."
   (let* ((extension (downcase (or (file-name-extension file) "")))
-         (image-class
+         (pasteboard-type
           (alist-get extension lgm/macos-image-clipboard-types nil nil #'string=)))
-    (unless image-class
+    (unless pasteboard-type
       (user-error "Unsupported image type for macOS clipboard: %s" extension))
     (lgm--call-process-or-user-error
      "osascript" nil
-     "-e"
-     (format "set the clipboard to (read (POSIX file %S) as %s)"
-             file image-class))))
+     "-l" "JavaScript" "-e"
+     (format
+      (concat
+       "ObjC.import('AppKit'); ObjC.import('Foundation');"
+       "const source = $.NSData.dataWithContentsOfFile($(%S));"
+       "if (!source) throw new Error('Could not read image file');"
+       "const image = $.NSImage.alloc.initWithData(source);"
+       "if (!image) throw new Error('Could not decode image file');"
+       "const type = $(%S);"
+       "const bitmap = $.NSBitmapImageRep.imageRepWithData(source);"
+       "const normalizeOpaquePng = bitmap && !bitmap.hasAlpha"
+       " && type.isEqualToString($.NSPasteboardTypePNG);"
+       "let clipboardImage = image;"
+       "if (normalizeOpaquePng) {"
+       " const jpeg = bitmap.representationUsingTypeProperties("
+       "  $.NSBitmapImageFileTypeJPEG, $({NSImageCompressionFactor: 1.0}));"
+       " if (!jpeg) throw new Error('Could not normalize opaque image');"
+       " clipboardImage = $.NSImage.alloc.initWithData(jpeg);"
+       "}"
+       "const pb = $.NSPasteboard.generalPasteboard;"
+       "pb.clearContents;"
+       "if (!pb.writeObjects($([clipboardImage])))"
+       " throw new Error('Could not set rendered image data');"
+       "if (!normalizeOpaquePng"
+       " && !type.isEqualToString($.NSPasteboardTypeTIFF)"
+       " && (!pb.addTypesOwner($([type]), null)"
+       " || !pb.setDataForType(source, type)))"
+       " throw new Error('Could not set original image data');")
+      file pasteboard-type))))
 
 (defun lgm--copy-image-file-to-clipboard-linux (file)
   "Copy FILE to the clipboard on Linux."
