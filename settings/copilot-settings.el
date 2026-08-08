@@ -33,9 +33,10 @@
         agent-shell-anthropic-default-model-id "sonnet[1m]"
 	agent-shell-anthropic-default-model-name "Sonnet"
 	agent-shell-anthropic-default-session-mode-id "bypassPermissions"
-	agent-shell-openai-default-model-id "gpt-5.6-sol"
         agent-shell-show-welcome-message nil)
   :config
+  (setq agent-shell-openai-default-model-id "gpt-5.6-sol"
+        agent-shell-openai-default-session-mode-id "agent-full-access")
   (setq agent-shell-anthropic-authentication
         (agent-shell-anthropic-make-authentication
          :api-key (getenv "ANTHROPIC_API_KEY")))
@@ -175,8 +176,6 @@
 ;; When I want to use a local version
 ;; (setq agent-shell-openai-codex-acp-command
 ;;       '("/Users/luis.moneda/repos/codex-acp/target/debug/codex-acp"))
-(setq agent-shell-openai-default-model-id nil)
-(setq agent-shell-openai-default-session-mode-id "agent-full-access")
 
 (defvar my/agent-shell-codex-profile 'personal
   "Current Codex profile for agent-shell. Either 'personal or 'work.")
@@ -742,7 +741,7 @@ auth links appear immediately — click them in sequence in the browser."
       (vterm-send-string "claude-nu\n")
       (run-with-timer 4 nil
                       (lambda (name)
-                        (when-let ((buf (get-buffer name)))
+                        (when-let* ((buf (get-buffer name)))
                           (with-current-buffer buf
                             (vterm-send-string "/mcp\n"))))
                       buf-name))
@@ -751,7 +750,7 @@ auth links appear immediately — click them in sequence in the browser."
       (rename-buffer buf-name t)
       (run-with-timer 4 nil
                       (lambda (name)
-                        (when-let ((buf (get-buffer name)))
+                        (when-let* ((buf (get-buffer name)))
                           (with-current-buffer buf
                             (eat-term-send-string eat-terminal "/mcp\n"))))
                       buf-name))

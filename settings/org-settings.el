@@ -229,13 +229,14 @@ menu\nmouse-2 will jump to task"))
 ;;   (pyvenv-mode t))
 
 (defconst lgm/org-jupyter-command
-  (expand-file-name "~/miniconda3/envs/edge/bin/jupyter"))
+  (lgm/conda-env-executable "edge" "jupyter"))
 
 (use-package jupyter
   :straight t
   :after org
   :init
-  (when (file-executable-p lgm/org-jupyter-command)
+  (when (and lgm/org-jupyter-command
+             (file-executable-p lgm/org-jupyter-command))
     (setq jupyter-executable lgm/org-jupyter-command))
   :config
   (require 'ob-jupyter)
@@ -250,8 +251,6 @@ menu\nmouse-2 will jump to task"))
 ;;   :straight t
 ;;   :config
 ;;   (pyvenv-mode t))
-
-;; (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
 
 ;; Fix for 404 error
 (defun gm/jupyter-api-request-xsrf-cookie-error-advice (func &rest args)
@@ -389,7 +388,8 @@ This should only apply to jupyter-lang blocks."
 (setq python-shell-interpreter "python3")
 (venv-initialize-interactive-shells) ;; if you want interactive shell support
 (venv-initialize-eshell) ;; if you want eshell support
-(setq venv-location "/Users/luis.moneda/miniconda3/envs/edge")
+(when-let* ((edge-env (lgm/conda-env-dir "edge")))
+  (setq venv-location edge-env))
 
 ;; ;; To enable editing python code with eglot
 ;; (defun my/org-src-setup-python-ts ()
@@ -1332,7 +1332,7 @@ With prefix ARG, prompt for destination filename."
   :straight t
   :hook (org-agenda-mode . olivetti-mode)
   :config
-  (setq-default olivetti-body-width 140))
+  (setq-default olivetti-body-width 160))
 
 ;; Enable Olivetti for text-related mode such as Org Mode
 (add-hook 'text-mode-hook 'olivetti-mode)
@@ -1797,7 +1797,6 @@ and the clipboard contents as the link URL."
 ;;   "Summarize the selected text using the OpenAI API and display the
 ;; summary in a new temporary buffer."
 ;;   (interactive)
-;;   (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
 ;;   (let* ((selected-text (if (use-region-p)
 ;;                             (buffer-substring-no-properties (region-beginning) (region-end))
 ;; 						  ""
@@ -1817,7 +1816,6 @@ and the clipboard contents as the link URL."
 ;;   "Summarize the selected text using the OpenAI API and display the
 ;; summary in a new temporary buffer."
 ;;   (interactive)
-;;   (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
 ;;   (let* ((selected-text (if (use-region-p)
 ;;                            (buffer-substring-no-properties (region-beginning) (region-end))
 ;;                          (read-string "Enter text to summarize: ")))
@@ -1839,7 +1837,6 @@ and the clipboard contents as the link URL."
 ;; (defun my-openai-summarize-text (text)
 ;;   "Call the OpenAI API and provide it with the given TEXT as input.
 ;; API-KEY is the OpenAI API key to use for the request."
-;;   (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
 ;;   (my-call-python-script "~/Dropbox/Projetos/Emacs/org-roam-ai/api_call.py" text open-ai-summary-prompt)
 ;; )
 

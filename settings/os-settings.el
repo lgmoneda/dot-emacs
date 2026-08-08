@@ -33,18 +33,35 @@
 (use-package exec-path-from-shell
   :straight t
   :init
-  (exec-path-from-shell-initialize)
-  (exec-path-from-shell-copy-env "OPENAI_API_KEY")
-  (exec-path-from-shell-copy-env "WORK_OPENAI_API_KEY")
-  (exec-path-from-shell-copy-env "DATABRICKS_TOKEN")
-  (exec-path-from-shell-copy-env "WORK_OPENAI_BASE_URL")
-  (exec-path-from-shell-copy-env "ANTHROPIC_API_KEY")
-  (exec-path-from-shell-copy-env "GOOGLE_API_KEY")
-  (exec-path-from-shell-copy-env "OPENROUTER_API_KEY")
-  (exec-path-from-shell-copy-env "BRAVESEARCH_API_KEY")
-  (exec-path-from-shell-copy-env "SMUDGE_CLIENT_ID")
-  (exec-path-from-shell-copy-env "SMUDGE_CLIENT_SECRET")
+  ;; (exec-path-from-shell-initialize)
+  ;; (exec-path-from-shell-copy-env "OPENAI_API_KEY")
+  ;; (exec-path-from-shell-copy-env "WORK_OPENAI_API_KEY")
+  ;; (exec-path-from-shell-copy-env "DATABRICKS_TOKEN")
+  ;; (exec-path-from-shell-copy-env "WORK_OPENAI_BASE_URL")
+  ;; (exec-path-from-shell-copy-env "ANTHROPIC_API_KEY")
+  ;; (exec-path-from-shell-copy-env "GOOGLE_API_KEY")
+  ;; (exec-path-from-shell-copy-env "OPENROUTER_API_KEY")
+  ;; (exec-path-from-shell-copy-env "BRAVESEARCH_API_KEY")
+  ;; (exec-path-from-shell-copy-env "SMUDGE_CLIENT_ID")
+  ;; (exec-path-from-shell-copy-env "SMUDGE_CLIENT_SECRET")
   )
+
+(setq exec-path-from-shell-variables
+      '("PATH"
+        "MANPATH"
+        "OPENAI_API_KEY"
+        "WORK_OPENAI_API_KEY"
+        "DATABRICKS_TOKEN"
+        "WORK_OPENAI_BASE_URL"
+        "ANTHROPIC_API_KEY"
+        "GOOGLE_API_KEY"
+        "OPENROUTER_API_KEY"
+        "BRAVESEARCH_API_KEY"
+        "CONTROL_PLANE_API_KEY"
+        "SMUDGE_CLIENT_ID"
+        "SMUDGE_CLIENT_SECRET"))
+
+(exec-path-from-shell-initialize)
 
 (setenv "PATH" (concat (getenv "PATH") ":/Users/luis.moneda/.npm-global/bin"))
 (setq exec-path (append exec-path '("/Users/luis.moneda/.npm-global/bin")))

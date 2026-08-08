@@ -505,7 +505,7 @@ When called interactively, use the current buffer's file. In Dired, use
         (let ((expanded
                (expand-file-name
                 (substitute-in-file-name raw-path)
-                (if-let ((buffer-path (buffer-file-name)))
+                (if-let* ((buffer-path (buffer-file-name)))
                     (file-name-directory buffer-path)
                   default-directory))))
           (unless (file-remote-p expanded)
@@ -810,7 +810,7 @@ If in vterm, return to the last non-vterm buffer (or previous-buffer)."
    ;; Otherwise, switch to last vterm buffer (or create one).
    (t
     (setq my/vterm-last-buffer (current-buffer))
-    (if-let ((buf (my/vterm--last-vterm-buffer)))
+    (if-let* ((buf (my/vterm--last-vterm-buffer)))
         (switch-to-buffer buf)
       (vterm (generate-new-buffer-name "*vterm*"))))))
 

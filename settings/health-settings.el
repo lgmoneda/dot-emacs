@@ -3,7 +3,7 @@
 (require 'subr-x)
 
 (defconst lgm/weight--tracker-dir "~/repos/my-life-scripts/weight-tracker/")
-(defconst lgm/weight--python "/Users/luis.moneda/miniconda3/envs/edge/bin/python3")
+(defconst lgm/weight--python (lgm/conda-env-executable "edge" "python3"))
 (defconst lgm/weight--listen-seconds 45)
 (defconst lgm/weight--raw-file "~/Dropbox/data-about-luis/weight-tracker/weights_log.csv")
 (defconst lgm/weight--events-file "~/Dropbox/data-about-luis/weight-tracker/s200_events.log")
@@ -72,6 +72,9 @@ Plist keys: :timestamp, :weight, :profile."
              (stable-output (expand-file-name lgm/weight--stable-file))
              (before-entry (lgm/weight--latest-stable-entry)))
         (cond
+         ((not (and lgm/weight--python
+                    (file-executable-p lgm/weight--python)))
+          (message "Weight tracker Python not found: %s" lgm/weight--python))
          ((not (file-exists-p tracker-script))
           (message "Weight tracker script not found: %s" tracker-script))
          (t
@@ -126,6 +129,9 @@ Plist keys: :timestamp, :weight, :profile."
       (let* ((script-path (expand-file-name lgm/physical-prog--script))
              (default-directory (file-name-directory script-path)))
         (cond
+         ((not (and lgm/weight--python
+                    (file-executable-p lgm/weight--python)))
+          (message "Physical progress Python not found: %s" lgm/weight--python))
          ((not (file-exists-p script-path))
           (message "Physical progress script not found: %s" script-path))
          (t
@@ -172,6 +178,9 @@ Plist keys: :timestamp, :weight, :profile."
              (gymday-script (expand-file-name "run_analysis.py" gymday-dir))
              (garmin-script (expand-file-name "export.py" garmin-dir)))
         (cond
+         ((not (and lgm/weight--python
+                    (file-executable-p lgm/weight--python)))
+          (message "Personal health data Python not found: %s" lgm/weight--python))
          ((not (file-exists-p gymday-script))
           (message "Gymday analysis script not found: %s" gymday-script))
          ((not (file-exists-p garmin-script))
