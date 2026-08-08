@@ -234,7 +234,7 @@ Slack paste. Without a prefix argument, behave like `kill-ring-save'."
   :straight t)
 
 ;; PATH append
-(setenv "PATH" (concat "/Users/luis.moneda/miniconda3/bin:" (getenv "PATH")))
+(lgm/conda-prepend-base-bin-to-path)
 
 ;;; LATEX
 

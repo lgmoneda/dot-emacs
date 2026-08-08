@@ -37,24 +37,26 @@
 ;; To record voice or when I want to play something quickly and remind it.
 (defun my/list-sounddevice-audio-devices ()
   "Return a list of audio input devices using Python's sounddevice module."
-  (let* ((python-exe (expand-file-name "~/miniconda3/envs/edge/bin/python"))
+  (let* ((python-exe (lgm/conda-env-executable "edge" "python"))
          (py-code "
 import sounddevice as sd
 for i, d in enumerate(sd.query_devices()):
     if d['max_input_channels'] > 0:
         print(f'{i}: {d[\"name\"]}')
-")
-         ;; Use shell-quote-argument to safely handle quoting
-         (cmd (format "%s -c %s"
-                      (shell-quote-argument python-exe)
-                      (shell-quote-argument py-code)))
-         (output (shell-command-to-string cmd))
-         (lines (split-string output "\n" t))) ; t = omit empty lines
-    ;; Parse and return (name . index) pairs
-    (cl-loop for line in lines
-             when (string-match "^\\([0-9]+\\): \\(.*\\)$" line)
-             collect (cons (match-string 2 line)
-                           (match-string 1 line)))))
+"))
+    (unless (and python-exe (file-executable-p python-exe))
+      (user-error "Edge Python executable not found"))
+    (let* (;; Use shell-quote-argument to safely handle quoting
+           (cmd (format "%s -c %s"
+                        (shell-quote-argument python-exe)
+                        (shell-quote-argument py-code)))
+           (output (shell-command-to-string cmd))
+           (lines (split-string output "\n" t))) ; t = omit empty lines
+      ;; Parse and return (name . index) pairs
+      (cl-loop for line in lines
+               when (string-match "^\\([0-9]+\\): \\(.*\\)$" line)
+               collect (cons (match-string 2 line)
+                             (match-string 1 line))))))
 
 (defun my/audio-note ()
   (interactive)
@@ -72,7 +74,10 @@ for i, d in enumerate(sd.query_devices()):
          (fullpath (expand-file-name filename output-dir))
          (buffer "*Audio Note Recording*")
          ;; Command to run Python with conda environment
-         (conda-python-cmd "~/miniconda3/envs/edge/bin/python"))
+         (conda-python-cmd (lgm/conda-env-executable "edge" "python")))
+
+    (unless (and conda-python-cmd (file-executable-p conda-python-cmd))
+      (user-error "Edge Python executable not found"))
 
     ;; Debug output
     (message "Python script path: %s" python-script)
@@ -88,7 +93,7 @@ for i, d in enumerate(sd.query_devices()):
 
     ;; Start the process with conda Python
     (let ((proc (start-process "audio-note" buffer
-                               (expand-file-name conda-python-cmd)
+                               conda-python-cmd
                                python-script
                                device  ; Use the selected device index
                                fullpath)))

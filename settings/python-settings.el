@@ -8,7 +8,8 @@
 (use-package conda
   :straight t
   :init
-  (setq conda-anaconda-home (expand-file-name "/Users/luis.moneda/miniconda3"))
+  (when lgm/conda-base-dir
+    (setq conda-anaconda-home lgm/conda-base-dir))
   ;; :config
   ;; (conda-env-autoactivate-mode 1) ;; activates when it sees env hints
   )
@@ -23,30 +24,35 @@
 (use-package pyvenv
   :straight t)
 
-(setenv "WORKON_HOME" "/Users/luis.moneda/miniconda3/envs")
+(when lgm/conda-envs-dir
+  (setenv "WORKON_HOME" lgm/conda-envs-dir))
 (pyvenv-mode 1)
 
-(defconst lgm/python-default-venv "/Users/luis.moneda/miniconda3/envs/edge")
+(defconst lgm/python-default-venv (lgm/conda-env-dir "edge"))
 (defconst lgm/python-default-executable
-  (expand-file-name "bin/python" lgm/python-default-venv))
+  (lgm/conda-env-executable "edge" "python"))
 (defconst lgm/python-default-bin
-  (expand-file-name "bin" lgm/python-default-venv))
+  (when lgm/python-default-venv
+    (expand-file-name "bin" lgm/python-default-venv)))
 (defconst lgm/python-default-jupyter
-  (expand-file-name "jupyter" lgm/python-default-bin))
+  (lgm/conda-env-executable "edge" "jupyter"))
 (defconst lgm/python-default-jupyter-console
-  (expand-file-name "jupyter-console" lgm/python-default-bin))
+  (lgm/conda-env-executable "edge" "jupyter-console"))
 
-(when (file-executable-p lgm/python-default-executable)
+(when (and lgm/python-default-executable
+           (file-executable-p lgm/python-default-executable))
   (setq pyvenv-virtualenvwrapper-python lgm/python-default-executable
         python-shell-virtualenv-root lgm/python-default-venv))
 
 (defun lgm/pyvenv-activate-default ()
   "Activate the default Python environment when its interpreter exists."
-  (if (file-executable-p lgm/python-default-executable)
+  (if (and lgm/python-default-executable
+           (file-executable-p lgm/python-default-executable))
       (progn
-        (add-to-list 'exec-path lgm/python-default-bin)
-        (setenv "PATH" (concat lgm/python-default-bin path-separator
-                               (or (getenv "PATH") "")))
+        (when lgm/python-default-bin
+          (add-to-list 'exec-path lgm/python-default-bin)
+          (setenv "PATH" (concat lgm/python-default-bin path-separator
+                                 (or (getenv "PATH") ""))))
         (pyvenv-activate lgm/python-default-venv))
     (message "Skipping Python env activation; missing executable: %s"
              lgm/python-default-executable)))
@@ -67,7 +73,6 @@
 	     )
 
 ;; The default pyenv I use
-;; (pyvenv-activate "/Users/luis.moneda/miniconda3/envs/edge")
 (lgm/pyvenv-activate-default)
 
 (defun lgm/org-src-python-buffer-p ()
@@ -99,8 +104,8 @@
 ;; To activate nupy environment
 (defun anupy ()
   (interactive)
-  (pythonic-activate "/Users/luis.moneda/miniconda3/envs/nu")
-  )
+  (when-let* ((nu-env (lgm/conda-env-dir "nu")))
+    (pythonic-activate nu-env)))
 
 ;; I don't want to see the error buffer
 (remove-hook 'anaconda-mode-response-read-fail-hook

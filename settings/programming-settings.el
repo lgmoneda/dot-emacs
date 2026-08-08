@@ -52,11 +52,14 @@
   (eglot-extend-to-xref nil) ;; cover files found through xref (M-.)
   )
 
-;; cargo install emacs-lsp-booster
+;; Install the native helper with: cargo install emacs-lsp-booster
 (use-package eglot-booster
-	:straight ( eglot-booster :type git :host nil :repo "https://github.com/jdtsmith/eglot-booster")
-	:after eglot
-	:config (eglot-booster-mode))
+  :straight (eglot-booster :type git :host nil
+                           :repo "https://github.com/jdtsmith/eglot-booster")
+  :after eglot
+  :config
+  (when (executable-find "emacs-lsp-booster")
+    (eglot-booster-mode)))
 
 ;; Corfu — popup completion in buffer
 ;; corfu-insert-separator is M-SPC, use it to filter candidates
