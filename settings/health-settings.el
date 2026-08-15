@@ -164,6 +164,17 @@ Plist keys: :timestamp, :weight, :profile."
         (message "Personal health data update failed (exit %s). Check buffer *lgm/personal-health-data*"
                  exit-code)))))
 
+(defun lgm/personal-health--garmin-keychain-password-present-p ()
+  "Return non-nil when the configured Garmin account has a Keychain password."
+  (zerop
+   (call-process
+    "zsh" nil nil nil "-lc"
+    (concat
+     "source ~/.zshrc >/dev/null 2>&1 && "
+     "test -n \"$GARMIN_EMAIL\" && "
+     "security find-generic-password -s garmin-connect-export "
+     "-a \"$GARMIN_EMAIL\" >/dev/null 2>&1"))))
+
 ;;;###autoload
 (defun lgm/personal-health-data-run ()
   "Run gymday analysis and Garmin export scripts."
@@ -176,7 +187,10 @@ Plist keys: :timestamp, :weight, :profile."
              (garmin-dir (file-name-as-directory
                           (expand-file-name lgm/personal-health--garmin-dir)))
              (gymday-script (expand-file-name "run_analysis.py" gymday-dir))
-             (garmin-script (expand-file-name "export.py" garmin-dir)))
+             (garmin-script (expand-file-name "export.py" garmin-dir))
+             (garmin-password
+              (unless (lgm/personal-health--garmin-keychain-password-present-p)
+                (read-passwd "Garmin password (stored in macOS Keychain): "))))
         (cond
          ((not (and lgm/weight--python
                     (file-executable-p lgm/weight--python)))
@@ -190,6 +204,7 @@ Plist keys: :timestamp, :weight, :profile."
                   (mapconcat
                    #'identity
                    (list
+                    "source ~/.zshrc >/dev/null 2>&1"
                     "set -e"
                     (format "cd %s" (shell-quote-argument gymday-dir))
                     (mapconcat #'identity
@@ -201,14 +216,18 @@ Plist keys: :timestamp, :weight, :profile."
                                (list (shell-quote-argument lgm/weight--python)
                                      (shell-quote-argument garmin-script))
                                " "))
-                   " && "))
+                 " && "))
                  (process-buffer (get-buffer-create " *lgm/personal-health-data*"))
-                 (process (make-process
-                           :name "lgm/personal-health-data-process"
-                           :buffer process-buffer
-                           :command (list "zsh" "-lc" command)
-                           :noquery t
-                           :sentinel #'lgm/personal-health-data--process-sentinel)))
+                 (process
+                  (let ((process-environment (copy-sequence process-environment)))
+                    (when garmin-password
+                      (setenv "GARMIN_PASSWORD" garmin-password))
+                    (make-process
+                     :name "lgm/personal-health-data-process"
+                     :buffer process-buffer
+                     :command (list "zsh" "-lc" command)
+                     :noquery t
+                     :sentinel #'lgm/personal-health-data--process-sentinel))))
             (with-current-buffer process-buffer
               (erase-buffer))
             (message "Personal health data update started."))))))))
