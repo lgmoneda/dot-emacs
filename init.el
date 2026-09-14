@@ -87,6 +87,7 @@
 (require 'git-settings)
 (require 'os-settings)
 (require 'org-settings)
+(require 'org-roam-embeddings-settings)
 (require 'org-preview-fast-settings)
 ;; (require 'org-agenda-server-settings)
 (require 'python-settings)
