@@ -749,14 +749,14 @@ this command to copy it"
 
 (add-to-list 'org-capture-templates
              '("d" "Personal task"  entry
-               (file+olp "~/Dropbox/Agenda/todo.org" "Life" "Misc")
+               (file+olp "~/Dropbox/Agenda/todo-files/todo.org" "Life" "Misc")
                "* TODO %i%?"
 			   :empty-lines 1))
 
 ;; For headless addition
 (add-to-list 'org-capture-templates
              '("D" "Personal task (programmatic)" entry
-               (file+olp "~/Dropbox/Agenda/todo.org" "Life" "Misc")
+               (file+olp "~/Dropbox/Agenda/todo-files/todo.org" "Life" "Misc")
                "* TODO %i"
                :empty-lines 1
                :immediate-finish t))
@@ -771,7 +771,7 @@ this command to copy it"
 ;; Capture it for today
 (add-to-list 'org-capture-templates
              '("td" "Personal task today (programmatic)" entry
-               (file+olp "~/Dropbox/Agenda/todo.org" "Life" "Misc")
+               (file+olp "~/Dropbox/Agenda/todo-files/todo.org" "Life" "Misc")
                "* TODO %i\nSCHEDULED: %t"
                :empty-lines 1
                :immediate-finish t))
@@ -1015,7 +1015,7 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
 ;; The org mode file is opened with
 ;; Make org agenda open in the right
 (setq org-agenda-window-setup 'other-window)
-(add-to-list 'org-agenda-files  "~/Dropbox/Agenda/todo.org")
+(add-to-list 'org-agenda-files  "~/Dropbox/Agenda/todo-files/todo.org")
 
 ;; Open agenda
 ;; Why did I need the redo?
@@ -1029,7 +1029,7 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
   :type 'boolean
   :group 'lgm)
 
-;; (defcustom lgm/startup-todo-file "~/Dropbox/Agenda/todo.org"
+;; (defcustom lgm/startup-todo-file "~/Dropbox/Agenda/todo-files/todo.org"
 ;;   "Org file to show next to the agenda after Emacs startup."
 ;;   :type 'file
 ;;   :group 'lgm)
@@ -1421,7 +1421,7 @@ With prefix ARG, prompt for destination filename."
 ;; I need to call it to bring org-roam mode
 ;; (org-roam-version)
 (setq personal-dynamic-roam-agenda-files (list-roam-files-with-tags-agenda))
-(setq personal-roam-agenda-files (append '("~/Dropbox/Agenda/todo.org")
+(setq personal-roam-agenda-files (append '("~/Dropbox/Agenda/todo-files/todo.org")
 				   personal-dynamic-roam-agenda-files))
 
 ;; In order to quickly change from Personal to Nu context

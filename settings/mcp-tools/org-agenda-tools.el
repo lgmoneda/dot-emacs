@@ -153,7 +153,7 @@ MCP Parameters:
     ;; Use content directly - no parsing needed since we have separate parameters
     (let* ((body-content content)
            (final-scheduled scheduled)
-           (target-file (expand-file-name "~/Dropbox/Agenda/todo.org"))
+           (target-file (expand-file-name "~/Dropbox/Agenda/todo-files/todo.org"))
            (actual-refile-target (or refile_target "Life/Misc"))  ; Always use refile logic
            (final-location actual-refile-target)
            (refiled nil))
@@ -342,7 +342,7 @@ Optional parameters:
   level - Limit to specific heading level (1 for top-level, 2 for second-level, etc.)
   parent - Show only children of this parent heading (e.g., 'Life' to show Life/* sections)"
   (mcp-server-lib-with-error-handling
-    (let ((target-file (expand-file-name "~/Dropbox/Agenda/todo.org")))
+    (let ((target-file (expand-file-name "~/Dropbox/Agenda/todo-files/todo.org")))
       (org-agenda-mcp--validate-file-path target-file)
       (with-current-buffer (find-file-noselect target-file)
         (let* ((targets (build-refile-targets level))  ; Use org-refile's built-in level filtering

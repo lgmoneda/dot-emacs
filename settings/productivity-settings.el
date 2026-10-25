@@ -930,7 +930,7 @@ If DIR is not part of a project, open a vterm in DIR itself."
   "Path to the Org file used for capturing mobile inbox items.")
 
 (defvar lgm/mobile-agenda-file
-  (expand-file-name "~/Dropbox/Agenda/todo.org")
+  (expand-file-name "~/Dropbox/Agenda/todo-files/todo.org")
   "Path to the main Org agenda file for mobile inbox entries.")
 
 (defconst lgm/mobile-inbox-target-path '("Life" "Inbox")
