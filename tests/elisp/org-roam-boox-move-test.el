@@ -1,0 +1,71 @@
+;;; org-roam-boox-move-test.el --- BOOX file moves -*- lexical-binding: t; -*-
+(require 'ert)
+(require 'org)
+(defvar org-roam-directory)
+(defvar org-roam-db-autosync-mode)
+
+;; Load only these commands, without starting the desktop configuration.
+(let ((source (expand-file-name "../../settings/org-settings.el"
+                                (file-name-directory load-file-name))))
+  (with-temp-buffer
+    (insert-file-contents source)
+    (goto-char (point-min))
+    (condition-case nil
+        (while t
+          (let ((form (read (current-buffer))))
+            (when (and (eq (car-safe form) 'defun)
+                       (string-prefix-p "lmoneda/org-roam-" (symbol-name (cadr form))))
+              (eval form t))))
+      (end-of-file nil))))
+
+(ert-deftest lmoneda/boox-move-round-trip ()
+  (let* ((org-roam-directory (make-temp-file "boox-move-" t))
+         (org-roam-db-autosync-mode nil)
+         (source (expand-file-name "note.org" org-roam-directory))
+         (destination (expand-file-name "roam-boox/note.org" org-roam-directory))
+         (updates nil))
+    (unwind-protect
+        (progn
+          (with-temp-file source (insert "#+title: Test\n"))
+          (with-current-buffer (find-file-noselect source)
+            (cl-letf (((symbol-function 'org-roam-db-clear-file)
+                       (lambda (file) (push (list 'clear file) updates)))
+                      ((symbol-function 'org-roam-db-update-file)
+                       (lambda (file) (push (list 'update file) updates))))
+              (goto-char (point-max))
+              (insert "Pending edit\n")
+              (let ((position (point)))
+                (lmoneda/org-roam-move-to-boox)
+                (should (= position (point))))
+              (should (file-equal-p buffer-file-name destination))
+              (should-not (file-exists-p source))
+              (should-error (lmoneda/org-roam-move-to-boox) :type 'user-error)
+              (lmoneda/org-roam-move-from-boox)
+              (should (file-equal-p buffer-file-name source))
+              (should-not (file-exists-p destination))
+              (should (= (length updates) 4))
+              (should (string-match-p "Pending edit" (buffer-string))))))
+      (dolist (file (list source destination))
+        (when-let* ((buffer (get-file-buffer file))) (kill-buffer buffer)))
+      (delete-directory org-roam-directory t))))
+
+(ert-deftest lmoneda/boox-move-refuses-collision-and-outside-file ()
+  (let* ((root (make-temp-file "boox-guards-" t))
+         (org-roam-directory (expand-file-name "roam" root))
+         (source (expand-file-name "note.org" org-roam-directory))
+         (destination (expand-file-name "roam-boox/note.org" org-roam-directory))
+         (outside (expand-file-name "outside.org" root)))
+    (unwind-protect
+        (progn
+          (make-directory (file-name-directory destination) t)
+          (dolist (file (list source destination outside))
+            (with-temp-file file (insert "Original\n")))
+          (with-current-buffer (find-file-noselect source)
+            (should-error (lmoneda/org-roam-move-to-boox) :type 'user-error)
+            (should-error (lmoneda/org-roam-move-from-boox) :type 'user-error)
+            (should (file-exists-p source)))
+          (with-current-buffer (find-file-noselect outside)
+            (should-error (lmoneda/org-roam-move-to-boox) :type 'user-error)))
+      (dolist (file (list source destination outside))
+        (when-let* ((buffer (get-file-buffer file))) (kill-buffer buffer)))
+      (delete-directory root t))))

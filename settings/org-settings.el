@@ -1158,6 +1158,61 @@ Links back to the meeting using `org-store-link`, without creating an Org-roam I
 	(concat "${title:105} "
 		(propertize "${tags:40}" 'face 'org-tag))))
 
+(load (expand-file-name "org-roam-catalog-settings.el"
+                        (file-name-directory (or load-file-name buffer-file-name)))
+      nil 'nomessage)
+
+(defun lmoneda/org-roam--move-boox-file (to-boox)
+  "Move the current Org file into or out of roam-boox.
+TO-BOOX non-nil selects roam-boox; nil selects the parent roam folder.
+Save pending edits, keep the filename, and refuse to overwrite a file."
+  (unless (and (derived-mode-p 'org-mode) buffer-file-name
+               (file-exists-p buffer-file-name))
+    (user-error "Visit an existing Org file first"))
+  (unless (bound-and-true-p org-roam-directory)
+    (user-error "Org-roam directory is not configured"))
+  (let* ((source (file-truename buffer-file-name))
+         (roam (file-name-as-directory (file-truename org-roam-directory)))
+         (boox (file-name-as-directory
+                (file-truename (expand-file-name "roam-boox" roam))))
+         (destination-dir (if to-boox boox roam))
+         (destination (expand-file-name (file-name-nondirectory source)
+                                        destination-dir)))
+    (unless (and (string-match-p "\\.org\\'" source)
+                 (file-in-directory-p source roam))
+      (user-error "Current file must be an .org file inside %s" roam))
+    (if to-boox
+        (when (file-in-directory-p source boox)
+          (user-error "Current file is already in roam-boox"))
+      (unless (file-in-directory-p source boox)
+        (user-error "Current file is not in roam-boox")))
+    (when (or (file-exists-p destination) (file-symlink-p destination)
+              (get-file-buffer destination))
+      (user-error "Destination already exists or is open: %s" destination))
+    (save-buffer)
+    (make-directory destination-dir t)
+    (rename-file source destination)
+    (set-visited-file-name destination t t)
+    ;; Autosync handles rename-file itself. Otherwise update just these paths.
+    (when (and (not (bound-and-true-p org-roam-db-autosync-mode))
+               (fboundp 'org-roam-db-clear-file)
+               (fboundp 'org-roam-db-update-file))
+      (org-roam-db-clear-file source)
+      (org-roam-db-update-file destination))
+    (message "Moved to %s" (abbreviate-file-name destination))))
+
+(defun lmoneda/org-roam-move-to-boox ()
+  "Move the current Org file to roam-boox under `org-roam-directory'.
+Save pending edits and keep visiting the moved file."
+  (interactive)
+  (lmoneda/org-roam--move-boox-file t))
+
+(defun lmoneda/org-roam-move-from-boox ()
+  "Move the current roam-boox Org file to the parent `org-roam-directory'.
+Save pending edits and keep visiting the moved file."
+  (interactive)
+  (lmoneda/org-roam--move-boox-file nil))
+
 (require 'json)
 
 (defun lgm/projectify--ensure-claude-local-settings (project-dir)
