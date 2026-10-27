@@ -30,6 +30,8 @@
   :hook (agent-shell-mode . corfu-mode)
   :init
   (setq agent-shell-file-completion-enabled t
+        agent-shell-anthropic-claude-acp-command
+        '("/usr/local/bin/claude-agent-acp")
         agent-shell-anthropic-default-model-id "sonnet[1m]"
 	agent-shell-anthropic-default-model-name "Sonnet"
 	agent-shell-anthropic-default-session-mode-id "bypassPermissions"
