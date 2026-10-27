@@ -1602,8 +1602,9 @@ With prefix ARG, prompt for destination filename."
   :after org
   :hook (org-mode . org-download-enable)
   :init
+  ;; Resolve the Dropbox symlink so image links stay relative to each note.
   (setq org-download-image-dir
-        "/Users/luis.moneda/Dropbox/Agenda/roam/resources"))
+        (file-truename "~/Dropbox/Agenda/roam/resources")))
 
 
 
